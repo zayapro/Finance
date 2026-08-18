@@ -4629,9 +4629,13 @@ tbody tr.date-group-row:first-child td{border-top:none;}
    termasuk HP berlayar lebih lebar (601-900px) yang sebelumnya
    masih menampilkan urutan terbalik (tanggal di atas, ikon di bawah). */
 @media (max-width:900px){
-  .banner-top{row-gap:8px;}
+  .banner-top{row-gap:8px;align-items:flex-start;}
   .banner-top-right{flex-wrap:wrap;justify-content:flex-end;row-gap:8px;}
   .banner-date-col{order:3;flex-basis:100%;margin-top:0;}
+  /* Baris ikon (riwayat/lonceng/+) adalah baris pertama di dalam
+     banner-top-right; turunkan sedikit supaya titik tengahnya sejajar
+     dengan titik tengah logo, bukan sejajar di garis paling atas saja. */
+  .banner-top-right{margin-top:2px;}
 }
 @media (max-width:600px){
   .app{padding:0 14px;}
