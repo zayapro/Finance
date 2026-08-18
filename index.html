@@ -3412,6 +3412,33 @@ input[type="number"].year-input{width:110px;font-family:'IBM Plex Mono',monospac
 .btn-ghost:hover{background:#e6e9f5;border-color:#c9cee3;}
 .btn-danger{background:var(--wine);color:#fff;}
 .btn-danger:hover{background:#c81852;}
+
+/* ============ EXPORT MENU (dropdown pilih format Excel/PDF) ============ */
+.export-menu-wrap{position:relative;display:inline-flex;}
+.export-menu{
+  position:absolute; top:calc(100% + 8px); right:0; min-width:210px;
+  background:var(--card); border:1px solid var(--line); border-radius:14px;
+  box-shadow:var(--shadow-md); padding:8px; z-index:var(--z-tooltip);
+  opacity:0; visibility:hidden; transform:translateY(-6px) scale(0.98);
+  transition:opacity .16s ease, transform .16s ease, visibility .16s;
+}
+.export-menu.open{opacity:1; visibility:visible; transform:translateY(0) scale(1);}
+.export-menu-item{
+  display:flex; align-items:center; gap:10px; width:100%; padding:10px 11px;
+  border:none; background:none; border-radius:10px; cursor:pointer;
+  font-family:inherit; font-size:13.5px; font-weight:600; color:var(--ink);
+  text-align:left;
+}
+.export-menu-item:hover{background:var(--paper);}
+.export-menu-item .emi-ic{
+  width:32px; height:32px; border-radius:9px; display:flex; align-items:center;
+  justify-content:center; flex:0 0 auto;
+}
+.export-menu-item .emi-ic svg{width:16px;height:16px;}
+.export-menu-item.emi-xlsx .emi-ic{background:rgba(5,150,105,0.13); color:#059669;}
+.export-menu-item.emi-pdf .emi-ic{background:rgba(225,29,72,0.12); color:#E11D48;}
+.export-menu-item .emi-text{display:flex; flex-direction:column; gap:1px;}
+.export-menu-item .emi-text small{font-weight:500; color:var(--ink-faint); font-size:11px;}
 .icon-btn{transition:background .15s ease, color .15s ease, border-color .15s ease;}
 button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible{
   outline:2px solid var(--forest-glow);outline-offset:2px;
@@ -5030,6 +5057,10 @@ tbody tr.date-group-row:first-child td{border-top:none;}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="supabase-client.js"></script>
+<!-- Pustaka untuk ekspor Excel (.xlsx) & PDF bergaya -->
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
 
@@ -5534,10 +5565,22 @@ document.getElementById('zpPasswordInput').addEventListener('keydown', (e) => {
         <option value="keluar">Keluar</option>
       </select>
       <select id="categoryFilter"><option value="semua">Semua Kategori</option></select>
-      <button class="btn btn-ghost" id="btnExport">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 3v12m0 0-4-4m4 4 4-4M4 21h16"/></svg>
-        Ekspor CSV
-      </button>
+      <div class="export-menu-wrap">
+        <button class="btn btn-ghost" id="btnExport" type="button" aria-haspopup="true" aria-expanded="false">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 3v12m0 0-4-4m4 4 4-4M4 21h16"/></svg>
+          Ekspor
+        </button>
+        <div class="export-menu" id="btnExportMenu">
+          <button type="button" class="export-menu-item emi-xlsx" id="btnExportXlsx">
+            <span class="emi-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="m9 13 6 6M15 13l-6 6"/></svg></span>
+            <span class="emi-text">Unduh Excel<small>.xlsx — tabel & warna rapi</small></span>
+          </button>
+          <button type="button" class="export-menu-item emi-pdf" id="btnExportPdf">
+            <span class="emi-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 15h1.5a1.5 1.5 0 0 0 0-3H9v5M13.5 12v5h1a2 2 0 0 0 0-4h-1zM19 12h-1.5v5M17.5 14.5H19"/></svg></span>
+            <span class="emi-text">Unduh PDF<small>laporan siap cetak/kirim</small></span>
+          </button>
+        </div>
+      </div>
     </div>
 
     <div class="table-wrap">
@@ -6156,10 +6199,22 @@ document.getElementById('zpPasswordInput').addEventListener('keydown', (e) => {
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M18 6l-2.5 2.5M8.5 15.5 6 18"/></svg>
           Sumber
         </button>
-        <button class="btn btn-ghost" id="incExportBtn" type="button" title="Unduh data yang tampil sebagai CSV">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 19h16"/></svg>
-          Export
-        </button>
+        <div class="export-menu-wrap">
+          <button class="btn btn-ghost" id="incExportBtn" type="button" title="Unduh data yang sedang tampil" aria-haspopup="true" aria-expanded="false">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 19h16"/></svg>
+            Export
+          </button>
+          <div class="export-menu" id="incExportMenu">
+            <button type="button" class="export-menu-item emi-xlsx" id="incExportXlsx">
+              <span class="emi-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="m9 13 6 6M15 13l-6 6"/></svg></span>
+              <span class="emi-text">Unduh Excel<small>.xlsx — tabel & warna rapi</small></span>
+            </button>
+            <button type="button" class="export-menu-item emi-pdf" id="incExportPdf">
+              <span class="emi-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 15h1.5a1.5 1.5 0 0 0 0-3H9v5M13.5 12v5h1a2 2 0 0 0 0-4h-1zM19 12h-1.5v5M17.5 14.5H19"/></svg></span>
+              <span class="emi-text">Unduh PDF<small>laporan siap cetak/kirim</small></span>
+            </button>
+          </div>
+        </div>
         <button class="btn btn-primary" id="incAddBtn" type="button">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 5v14M5 12h14"/></svg>
           Tambah

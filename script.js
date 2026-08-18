@@ -533,6 +533,42 @@ function fmtRupiah(n) {
   }
   return rupiahFormatter.format(Math.round(amount));
 }
+/* Format Rupiah polos (selalu IDR, dipakai khusus di file ekspor Excel/PDF
+   supaya angka di laporan konsisten apa pun toggle mata uang di layar). */
+function fmtRupiahPlain(n) {
+  return rupiahFormatter.format(Math.round(Number(n) || 0));
+}
+/* Trigger unduh sebuah Blob dengan nama file tertentu (dipakai ekspor
+   Excel/PDF). */
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+/* Menu dropdown ekspor (Excel/PDF) yang dipakai berulang di beberapa
+   halaman — buka/tutup saat tombol diklik, tutup saat klik di luar atau
+   tekan Escape. */
+function setupExportMenu(btnId, menuId) {
+  const btn = document.getElementById(btnId);
+  const menu = document.getElementById(menuId);
+  if (!btn || !menu) return;
+  const close = () => { menu.classList.remove('open'); btn.setAttribute('aria-expanded', 'false'); };
+  const open = () => { menu.classList.add('open'); btn.setAttribute('aria-expanded', 'true'); };
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    document.querySelectorAll('.export-menu.open').forEach(m => { if (m !== menu) m.classList.remove('open'); });
+    menu.classList.contains('open') ? close() : open();
+  });
+  menu.addEventListener('click', (e) => e.stopPropagation());
+  document.addEventListener('click', close);
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
+  menu._close = close;
+}
 const todayStr = () => new Date().toISOString().slice(0, 10);
 const thisMonthStr = () => new Date().toISOString().slice(0, 7);
 const thisYearStr = () => String(new Date().getFullYear());
@@ -4956,24 +4992,140 @@ function incSourceIconHtmlSafe(source) {
 }
 
 /* Unduh entri yang SEDANG TAMPIL (sesuai cari/filter/periode aktif)
-   sebagai file CSV sederhana yang bisa dibuka di Excel/Sheets. */
-function exportIncomeSourceCsv() {
+   sebagai file Excel (.xlsx) bergaya lewat ExcelJS. */
+async function exportIncomeSourceExcel() {
   const list = incFilteredSortedEntries();
   if (list.length === 0) { showToast('Tidak ada data untuk diekspor.', 'err'); return; }
-  const esc = (v) => `"${String(v == null ? '' : v).replace(/"/g, '""')}"`;
+  if (typeof ExcelJS === 'undefined') { showToast('Pustaka Excel belum siap, coba lagi.', 'err'); return; }
+
+  const total = list.reduce((s, x) => s + (Number(x.amount) || 0), 0);
+  const wb = new ExcelJS.Workbook();
+  wb.creator = 'ZAYAPRO';
+  wb.created = new Date();
+  const ws = wb.addWorksheet('Sumber Pendapatan', { views: [{ state: 'frozen', ySplit: 4 }] });
+
+  ws.columns = [
+    { width: 13 }, { width: 20 }, { width: 20 }, { width: 34 }, { width: 20 }
+  ];
+
+  ws.mergeCells('A1:E1');
+  const titleCell = ws.getCell('A1');
+  titleCell.value = 'ZAYAPRO — Sumber Pendapatan';
+  titleCell.font = { name: 'Calibri', size: 16, bold: true, color: { argb: 'FFFFFFFF' } };
+  titleCell.alignment = { vertical: 'middle', horizontal: 'left' };
+  ws.getRow(1).height = 30;
+
+  ws.mergeCells('A2:E2');
+  const subCell = ws.getCell('A2');
+  subCell.value = `Diunduh ${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })} • ${list.length} catatan • Total ${fmtRupiahPlain(total)}`;
+  subCell.font = { name: 'Calibri', size: 10.5, color: { argb: 'FFD1FAE5' } };
+  ws.getRow(2).height = 20;
+
+  for (let r = 1; r <= 2; r++) {
+    for (let c = 1; c <= 5; c++) {
+      ws.getCell(r, c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0B1220' } };
+    }
+  }
+
   const header = ['Tanggal', 'Sumber', 'Platform', 'Catatan', 'Jumlah (Rp)'];
-  const rows = list.map(x => [x.date || '', x.source || '', x.platform || '', x.note || '', Number(x.amount) || 0]);
-  const csv = [header, ...rows].map(r => r.map(esc).join(',')).join('\r\n');
-  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `sumber-pendapatan-${todayStr()}.csv`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
-  showToast(`${list.length} catatan diekspor ke CSV.`);
+  const headerRow = ws.getRow(4);
+  headerRow.values = header;
+  headerRow.eachCell(cell => {
+    cell.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 };
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF059669' } };
+    cell.alignment = { vertical: 'middle', horizontal: cell.value === 'Jumlah (Rp)' ? 'right' : 'left' };
+    cell.border = { bottom: { style: 'thin', color: { argb: 'FF047857' } } };
+  });
+  headerRow.height = 22;
+
+  list.forEach((x, i) => {
+    const row = ws.addRow([
+      x.date ? new Date(x.date + 'T00:00:00') : '',
+      x.source || '',
+      x.platform || '',
+      x.note || '',
+      Number(x.amount) || 0
+    ]);
+    const zebra = i % 2 === 1;
+    row.eachCell((cell, colNum) => {
+      cell.border = { bottom: { style: 'thin', color: { argb: 'FFE4E8EF' } } };
+      if (zebra) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF4F6F9' } };
+      if (colNum === 1) cell.numFmt = 'dd/mm/yyyy';
+      if (colNum === 5) { cell.numFmt = '#,##0 "Rp"'; cell.alignment = { horizontal: 'right' }; cell.font = { color: { argb: 'FF059669' }, bold: true }; }
+    });
+  });
+
+  const totalRow = ws.addRow(['', '', '', 'TOTAL', total]);
+  totalRow.eachCell((cell, colNum) => {
+    cell.font = { bold: true, size: 11.5 };
+    cell.border = { top: { style: 'medium', color: { argb: 'FF0B1220' } } };
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE6E9F5' } };
+    if (colNum === 5) { cell.numFmt = '#,##0 "Rp"'; cell.alignment = { horizontal: 'right' }; }
+    if (colNum === 4) cell.alignment = { horizontal: 'right' };
+  });
+
+  const buf = await wb.xlsx.writeBuffer();
+  downloadBlob(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), `sumber-pendapatan-${todayStr()}.xlsx`);
+  showToast(`${list.length} catatan diekspor ke Excel.`);
+}
+
+/* Unduh entri yang SEDANG TAMPIL sebagai laporan PDF bergaya. */
+function exportIncomeSourcePdf() {
+  const list = incFilteredSortedEntries();
+  if (list.length === 0) { showToast('Tidak ada data untuk diekspor.', 'err'); return; }
+  if (typeof window.jspdf === 'undefined') { showToast('Pustaka PDF belum siap, coba lagi.', 'err'); return; }
+
+  const total = list.reduce((s, x) => s + (Number(x.amount) || 0), 0);
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
+  const pageW = doc.internal.pageSize.getWidth();
+
+  doc.setFillColor(11, 18, 32);
+  doc.rect(0, 0, pageW, 78, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(18);
+  doc.text('ZAYAPRO', 40, 34);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(11);
+  doc.text('Laporan Sumber Pendapatan', 40, 52);
+  doc.setFontSize(9.5);
+  doc.setTextColor(209, 250, 229);
+  const dateLabel = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+  doc.text(`Diunduh ${dateLabel}  •  ${list.length} catatan`, 40, 66);
+
+  doc.setTextColor(5, 150, 105);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(13);
+  doc.text(fmtRupiahPlain(total), pageW - 40, 52, { align: 'right' });
+
+  doc.autoTable({
+    startY: 96,
+    head: [['Tanggal', 'Sumber', 'Platform', 'Catatan', 'Jumlah']],
+    body: list.map(x => [
+      x.date ? new Date(x.date + 'T00:00:00').toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '-',
+      x.source || '-', x.platform || '-', x.note || '-', fmtRupiahPlain(Number(x.amount) || 0)
+    ]),
+    foot: [['', '', '', 'TOTAL', fmtRupiahPlain(total)]],
+    theme: 'grid',
+    headStyles: { fillColor: [5, 150, 105], textColor: 255, fontStyle: 'bold', fontSize: 9.5 },
+    footStyles: { fillColor: [230, 233, 245], textColor: [19, 26, 42], fontStyle: 'bold', fontSize: 9.5 },
+    bodyStyles: { fontSize: 9, textColor: [19, 26, 42] },
+    alternateRowStyles: { fillColor: [244, 246, 249] },
+    columnStyles: { 4: { halign: 'right', textColor: [5, 150, 105], fontStyle: 'bold' } },
+    margin: { left: 40, right: 40 },
+    styles: { cellPadding: 6, lineColor: [228, 232, 239], lineWidth: 0.5 },
+    didDrawPage: (data) => {
+      const pageCount = doc.internal.getNumberOfPages();
+      doc.setFontSize(8.5);
+      doc.setTextColor(138, 147, 163);
+      doc.text(`Halaman ${data.pageNumber} / ${pageCount}`, pageW - 40, doc.internal.pageSize.getHeight() - 20, { align: 'right' });
+      doc.text('ZAYAPRO — Kelola Uang Masuk & Keluar', 40, doc.internal.pageSize.getHeight() - 20);
+    }
+  });
+
+  doc.save(`sumber-pendapatan-${todayStr()}.pdf`);
+  showToast(`${list.length} catatan diekspor ke PDF.`);
 }
 
 function refreshIncomeSourcePage() {
@@ -5105,7 +5257,11 @@ document.getElementById('incBackBtn').addEventListener('click', closeIncomeSourc
       incToggleChip(chip.dataset.incchip);
     });
   }
-  if (exportBtn) exportBtn.addEventListener('click', exportIncomeSourceCsv);
+  setupExportMenu('incExportBtn', 'incExportMenu');
+  const incExportXlsx = document.getElementById('incExportXlsx');
+  const incExportPdf = document.getElementById('incExportPdf');
+  if (incExportXlsx) incExportXlsx.addEventListener('click', () => { document.getElementById('incExportMenu')._close(); exportIncomeSourceExcel(); });
+  if (incExportPdf) incExportPdf.addEventListener('click', () => { document.getElementById('incExportMenu')._close(); exportIncomeSourcePdf(); });
 })();
 
 /* ---------- Modal Tambah/Edit Pendapatan ---------- */
@@ -7271,27 +7427,162 @@ document.getElementById('btnLoadMoreHistory').addEventListener('click', () => {
 });
 
 /* ==========================================================
-   EKSPOR CSV
+   EKSPOR TRANSAKSI — Excel (.xlsx) & PDF bergaya
 ========================================================== */
-document.getElementById('btnExport').addEventListener('click', () => {
+setupExportMenu('btnExport', 'btnExportMenu');
+
+async function exportTransactionsExcel() {
   const list = getFilteredTransactions();
   if (list.length === 0) { showToast('Tidak ada data untuk diekspor.', 'err'); return; }
+  if (typeof ExcelJS === 'undefined') { showToast('Pustaka Excel belum siap, coba lagi.', 'err'); return; }
 
-  const header = ['Tanggal', 'Tipe', 'Kategori', 'Keterangan', 'Jumlah'];
-  const rows = list.map(t => [
-    t.date, t.type === 'masuk' ? 'Masuk' : 'Keluar', t.category,
-    (t.desc || '').replace(/"/g, '""'), t.amount
-  ]);
-  const csv = [header, ...rows].map(r => r.map(v => `"${v}"`).join(',')).join('\n');
-  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `zayapro_transaksi_${todayStr()}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
-  showToast('CSV berhasil diunduh.');
-});
+  const masuk = list.filter(t => t.type === 'masuk').reduce((s, t) => s + (Number(t.amount) || 0), 0);
+  const keluar = list.filter(t => t.type === 'keluar').reduce((s, t) => s + (Number(t.amount) || 0), 0);
+  const net = masuk - keluar;
+
+  const wb = new ExcelJS.Workbook();
+  wb.creator = 'ZAYAPRO';
+  wb.created = new Date();
+  const ws = wb.addWorksheet('Transaksi', { views: [{ state: 'frozen', ySplit: 4 }] });
+  ws.columns = [{ width: 13 }, { width: 12 }, { width: 20 }, { width: 34 }, { width: 20 }];
+
+  ws.mergeCells('A1:E1');
+  const titleCell = ws.getCell('A1');
+  titleCell.value = 'ZAYAPRO — Riwayat Transaksi';
+  titleCell.font = { name: 'Calibri', size: 16, bold: true, color: { argb: 'FFFFFFFF' } };
+  ws.getRow(1).height = 30;
+
+  ws.mergeCells('A2:E2');
+  const subCell = ws.getCell('A2');
+  subCell.value = `Diunduh ${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })} • ${list.length} transaksi • Masuk ${fmtRupiahPlain(masuk)} • Keluar ${fmtRupiahPlain(keluar)} • Bersih ${fmtRupiahPlain(net)}`;
+  subCell.font = { name: 'Calibri', size: 10, color: { argb: 'FFD1FAE5' } };
+  ws.getRow(2).height = 20;
+  for (let r = 1; r <= 2; r++) for (let c = 1; c <= 5; c++) ws.getCell(r, c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0B1220' } };
+
+  const header = ['Tanggal', 'Tipe', 'Kategori', 'Keterangan', 'Jumlah (Rp)'];
+  const headerRow = ws.getRow(4);
+  headerRow.values = header;
+  headerRow.eachCell(cell => {
+    cell.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 };
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2563EB' } };
+    cell.alignment = { vertical: 'middle', horizontal: cell.value === 'Jumlah (Rp)' ? 'right' : 'left' };
+    cell.border = { bottom: { style: 'thin', color: { argb: 'FF1D4ED8' } } };
+  });
+  headerRow.height = 22;
+
+  list.forEach((t, i) => {
+    const isMasuk = t.type === 'masuk';
+    const row = ws.addRow([
+      t.date ? new Date(t.date + 'T00:00:00') : '',
+      isMasuk ? 'Masuk' : 'Keluar',
+      t.category || '',
+      t.desc || '',
+      Number(t.amount) || 0
+    ]);
+    const zebra = i % 2 === 1;
+    row.eachCell((cell, colNum) => {
+      cell.border = { bottom: { style: 'thin', color: { argb: 'FFE4E8EF' } } };
+      if (zebra) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF4F6F9' } };
+      if (colNum === 1) cell.numFmt = 'dd/mm/yyyy';
+      if (colNum === 2) cell.font = { color: { argb: isMasuk ? 'FF059669' : 'FFE11D48' }, bold: true };
+      if (colNum === 5) {
+        cell.numFmt = '#,##0 "Rp"';
+        cell.alignment = { horizontal: 'right' };
+        cell.font = { color: { argb: isMasuk ? 'FF059669' : 'FFE11D48' }, bold: true };
+      }
+    });
+  });
+
+  const totalRow = ws.addRow(['', '', '', 'TOTAL BERSIH', net]);
+  totalRow.eachCell((cell, colNum) => {
+    cell.font = { bold: true, size: 11.5 };
+    cell.border = { top: { style: 'medium', color: { argb: 'FF0B1220' } } };
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE6E9F5' } };
+    if (colNum === 5) { cell.numFmt = '#,##0 "Rp"'; cell.alignment = { horizontal: 'right' }; }
+    if (colNum === 4) cell.alignment = { horizontal: 'right' };
+  });
+
+  const buf = await wb.xlsx.writeBuffer();
+  downloadBlob(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), `zayapro_transaksi_${todayStr()}.xlsx`);
+  showToast(`${list.length} transaksi diekspor ke Excel.`);
+}
+
+function exportTransactionsPdf() {
+  const list = getFilteredTransactions();
+  if (list.length === 0) { showToast('Tidak ada data untuk diekspor.', 'err'); return; }
+  if (typeof window.jspdf === 'undefined') { showToast('Pustaka PDF belum siap, coba lagi.', 'err'); return; }
+
+  const masuk = list.filter(t => t.type === 'masuk').reduce((s, t) => s + (Number(t.amount) || 0), 0);
+  const keluar = list.filter(t => t.type === 'keluar').reduce((s, t) => s + (Number(t.amount) || 0), 0);
+  const net = masuk - keluar;
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
+  const pageW = doc.internal.pageSize.getWidth();
+
+  doc.setFillColor(11, 18, 32);
+  doc.rect(0, 0, pageW, 90, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(18);
+  doc.text('ZAYAPRO', 40, 34);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(11);
+  doc.text('Laporan Riwayat Transaksi', 40, 52);
+  doc.setFontSize(9.5);
+  doc.setTextColor(200, 210, 235);
+  const dateLabel = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+  doc.text(`Diunduh ${dateLabel}  •  ${list.length} transaksi`, 40, 66);
+
+  doc.setFontSize(9);
+  doc.setTextColor(110, 231, 183);
+  doc.text(`Masuk ${fmtRupiahPlain(masuk)}`, 40, 82);
+  doc.setTextColor(253, 164, 175);
+  doc.text(`Keluar ${fmtRupiahPlain(keluar)}`, 190, 82);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(13);
+  doc.setTextColor(net >= 0 ? 110 : 253, net >= 0 ? 231 : 164, net >= 0 ? 183 : 175);
+  doc.text(`Bersih ${fmtRupiahPlain(net)}`, pageW - 40, 52, { align: 'right' });
+
+  doc.autoTable({
+    startY: 108,
+    head: [['Tanggal', 'Tipe', 'Kategori', 'Keterangan', 'Jumlah']],
+    body: list.map(t => [
+      t.date ? new Date(t.date + 'T00:00:00').toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '-',
+      t.type === 'masuk' ? 'Masuk' : 'Keluar',
+      t.category || '-', t.desc || '-',
+      (t.type === 'masuk' ? '+ ' : '- ') + fmtRupiahPlain(Number(t.amount) || 0)
+    ]),
+    foot: [['', '', '', 'TOTAL BERSIH', fmtRupiahPlain(net)]],
+    theme: 'grid',
+    headStyles: { fillColor: [37, 99, 235], textColor: 255, fontStyle: 'bold', fontSize: 9.5 },
+    footStyles: { fillColor: [230, 233, 245], textColor: [19, 26, 42], fontStyle: 'bold', fontSize: 9.5 },
+    bodyStyles: { fontSize: 8.7, textColor: [19, 26, 42] },
+    alternateRowStyles: { fillColor: [244, 246, 249] },
+    columnStyles: { 4: { halign: 'right', fontStyle: 'bold' } },
+    margin: { left: 40, right: 40 },
+    styles: { cellPadding: 6, lineColor: [228, 232, 239], lineWidth: 0.5 },
+    didParseCell: (data) => {
+      if (data.section === 'body' && data.column.index === 4) {
+        const isMasuk = data.cell.raw.toString().startsWith('+');
+        data.cell.styles.textColor = isMasuk ? [5, 150, 105] : [225, 29, 72];
+      }
+    },
+    didDrawPage: (data) => {
+      const pageCount = doc.internal.getNumberOfPages();
+      doc.setFontSize(8.5);
+      doc.setTextColor(138, 147, 163);
+      doc.text(`Halaman ${data.pageNumber} / ${pageCount}`, pageW - 40, doc.internal.pageSize.getHeight() - 20, { align: 'right' });
+      doc.text('ZAYAPRO — Kelola Uang Masuk & Keluar', 40, doc.internal.pageSize.getHeight() - 20);
+    }
+  });
+
+  doc.save(`zayapro_transaksi_${todayStr()}.pdf`);
+  showToast('PDF berhasil diunduh.');
+}
+
+document.getElementById('btnExportXlsx').addEventListener('click', () => { document.getElementById('btnExportMenu')._close(); exportTransactionsExcel(); });
+document.getElementById('btnExportPdf').addEventListener('click', () => { document.getElementById('btnExportMenu')._close(); exportTransactionsPdf(); });
 
 /* ==========================================================
    TOAST
