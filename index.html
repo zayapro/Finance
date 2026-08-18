@@ -4622,6 +4622,17 @@ tbody tr.date-group-row:first-child td{border-top:none;}
   .form-grid-2{grid-template-columns:1fr;}
   .banner-fx{font-size:9.5px;gap:4px;}
   .banner-fx .fx-label{display:none;}
+  /* ---- Rapikan header banner di HP ----
+     Sebelumnya kolom tanggal+kurs (banner-date-col) ikut di-center
+     secara vertikal berdampingan dengan 3 tombol ikon di dalam
+     .banner-top-right, sehingga baris tanggal dan baris ikon saling
+     tumpang tindih/terlihat berantakan saat wrap di layar sempit.
+     Di sini banner-top-right dipaksa jadi baris penuh sendiri di
+     bawah brand, lalu tanggal+kurs didorong ke barisnya sendiri di
+     bawah tombol ikon — hasilnya 3 baris rapi: logo / ikon / tanggal. */
+  .banner-top{row-gap:8px;}
+  .banner-top-right{width:100%;flex-wrap:wrap;justify-content:flex-end;row-gap:8px;}
+  .banner-date-col{order:3;flex-basis:100%;margin-top:0;}
   /* Di HP, gradien besar (280%) + overlay grid ber-mask yang ikut
      dianimasikan sering bikin browser mobile "kedip" karena harus
      repaint dua layer berat itu tiap frame. Perlambat & sederhanakan
@@ -4637,9 +4648,7 @@ tbody tr.date-group-row:first-child td{border-top:none;}
     background-position:0 0, 0 0;
     opacity:0.55;
   }
-}
-@media (max-width:380px){
-  .banner-top-right{width:100%;}
+  .saldo-block{margin-top:16px;}
 }
 
 /* ============================================================
