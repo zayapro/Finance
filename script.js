@@ -34,24 +34,6 @@ function persistPageTargets(data = pageTargets) {
 }
 let pageTargets = loadPageTargets();
 
-/* Catatan Tugas — mini checklist di kartu "Uang Masuk & Keluar", di
-   samping panel cuaca. Berdiri sendiri, tidak berhubungan dengan data
-   transaksi; disimpan sendiri di localStorage supaya tugas tetap ada
-   walau halaman ditutup/dibuka lagi. */
-const STORAGE_KEY_FLOW_TASKS = 'alirin_flow_tasks_v1';
-function loadFlowTasks() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY_FLOW_TASKS);
-    if (raw) return JSON.parse(raw);
-  } catch (e) { console.error('Gagal memuat catatan tugas', e); }
-  return [];
-}
-function persistFlowTasks(data = flowTasks) {
-  try { localStorage.setItem(STORAGE_KEY_FLOW_TASKS, JSON.stringify(data)); }
-  catch (e) { showToast('Gagal menyimpan catatan tugas.', 'err'); }
-}
-let flowTasks = loadFlowTasks();
-
 /* Timer countdown kartu gabungan "Uang Masuk & Keluar" — menghitung
    mundur ke tengah malam (pergantian hari), dipakai di header kartu
    sebagai kotak JAM/MNT/DTK gaya "Flash Deals". */
@@ -1408,8 +1390,8 @@ function applyFlowDealTuckPosition() {
   // Pendekatan lama menarik SELURUH wrap naik lewat margin-top negatif
   // sejumlah tinggi kartu, lalu dibatasi (capped) supaya tidak lebih
   // tinggi dari banner — supaya bagian atas kartu tidak menyembul di
-  // ATAS banner. Masalahnya: kalau tinggi kartu (weather panel + daftar
-  // tugas + 2 kartu tier grafik) melebihi tinggi banner, cap itu bikin
+  // ATAS banner. Masalahnya: kalau tinggi kartu (2 kartu tier grafik)
+  // melebihi tinggi banner, cap itu bikin
   // tarikannya kurang, sehingga bagian TENGAH kartu (mis. tombol "Lihat
   // Semua") ikut menyembul di bawah banner alih-alih tersembunyi rapi.
   //
@@ -1464,8 +1446,7 @@ function initFlowDealSettle() {
     window.addEventListener('resize', () => applyFlowDealTuckPosition());
     window.addEventListener('load', () => applyFlowDealTuckPosition());
   }
-  // Amati perubahan tinggi kartu (mis. panel cuaca yang baru selesai
-  // fetch, daftar tugas bertambah, dll) supaya tab tetap PAS nempel
+  // Amati perubahan tinggi kartu supaya tab tetap PAS nempel
   // di tepi bawah banner meski konten kartu berubah belakangan — tetap
   // diamati walau sudah "settled" supaya tinggi wrap ikut menyesuaikan.
   if (window.ResizeObserver) {
@@ -1535,36 +1516,6 @@ function renderSummary() {
     `;
   }
 
-  const iconCheck = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>`;
-  const iconTrash = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"/></svg>`;
-  function flowTaskWidgetHtml() {
-    const doneCount = flowTasks.filter(t => t.done).length;
-    const listHtml = flowTasks.length
-      ? flowTasks.map(t => `
-        <div class="ftw-item ${t.done ? 'done' : ''}" data-taskitem="${t.id}">
-          <button type="button" class="ftw-check" data-taskcheck="${t.id}" aria-label="Tandai selesai">${t.done ? iconCheck : ''}</button>
-          <span class="ftw-text">${escapeHtml(t.text)}</span>
-          <button type="button" class="ftw-del" data-taskdel="${t.id}" aria-label="Hapus tugas">${iconTrash}</button>
-        </div>
-      `).join('')
-      : `<div class="ftw-empty">Belum ada tugas. Tambahkan di atas.</div>`;
-    return `
-      <div class="flow-task-widget" id="flowTaskWidget">
-        <div class="ftw-head">
-          <span class="ftw-title">Catatan Tugas</span>
-          <span class="ftw-count">${doneCount}/${flowTasks.length}</span>
-        </div>
-        <form class="ftw-add-row" id="flowTaskForm">
-          <input type="text" id="flowTaskInput" class="ftw-input" placeholder="Tambah tugas..." maxlength="80" autocomplete="off">
-          <button type="submit" class="ftw-add-btn" aria-label="Tambah tugas">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-          </button>
-        </form>
-        <div class="ftw-list" id="flowTaskList">${listHtml}</div>
-      </div>
-    `;
-  }
-
   const cardsHtml = `
     <div class="stat-card fc-card flow-deal-card fade-in-op">
       <div class="flow-deal-top">
@@ -1585,10 +1536,6 @@ function renderSummary() {
         </div>
       </div>
       <div class="flow-deal-body">
-        <div class="flow-deal-flame">
-          <div class="weather-panel" id="weatherPanel">${weatherPanelInnerHTML()}</div>
-          ${flowTaskWidgetHtml()}
-        </div>
         <div class="flow-deal-tiers">
           ${flowTierCard('today', 'Hari Ini', netToday, t.todayIn, t.todayOut, t.todayInCount + t.todayOutCount, 'todayIn', 'todayOut')}
           ${flowTierCard('month', 'Bulan Ini', t.monthIn - t.monthOut, t.monthIn, t.monthOut, t.monthInCount + t.monthOutCount, 'monthIn', 'monthOut')}
@@ -8036,220 +7983,6 @@ document.getElementById('bdAllList').addEventListener('click', (e) => {
 });
 
 /* ==========================================================
-   WIDGET CUACA HARI INI
-   Menggantikan panel "Saldo Bersih Hari Ini" pada kartu "Uang Masuk
-   & Keluar" dengan cuaca real-time lokasi pengguna (via Open-Meteo,
-   gratis & tanpa API key). Lokasi diambil dari GPS browser dahulu,
-   kalau ditolak/gagal baru fallback ke deteksi lokasi dari IP.
-   Cuaca otomatis diperbarui saat: pertama kali dibuka, tab/komputer
-   kembali aktif (visibilitychange), koneksi online lagi, jendela
-   difokuskan, dan tiap 15 menit selama halaman terbuka. Ikon cuaca
-   dianimasikan sesuai kondisinya (matahari berputar, awan melayang,
-   hujan/salju jatuh, kilat menyambar, dsb). */
-let weatherState = { status: 'loading', temp: null, feelsLike: null, code: null, isDay: true, loc: '', updatedAt: null };
-let weatherLastFetchTs = 0;
-const WEATHER_MIN_REFRESH_MS = 5 * 60 * 1000;
-const WEATHER_LABELS = {
-  0: 'Cerah', 1: 'Cerah Berawan', 2: 'Berawan Sebagian', 3: 'Mendung',
-  45: 'Berkabut', 48: 'Berkabut Tebal',
-  51: 'Gerimis Ringan', 53: 'Gerimis', 55: 'Gerimis Lebat', 56: 'Gerimis Beku', 57: 'Gerimis Beku Lebat',
-  61: 'Hujan Ringan', 63: 'Hujan', 65: 'Hujan Lebat', 66: 'Hujan Beku', 67: 'Hujan Beku Lebat',
-  71: 'Salju Ringan', 73: 'Salju', 75: 'Salju Lebat', 77: 'Butiran Salju',
-  80: 'Hujan Sebentar', 81: 'Hujan Sebentar Lebat', 82: 'Hujan Sangat Lebat',
-  85: 'Hujan Salju Ringan', 86: 'Hujan Salju Lebat',
-  95: 'Badai Petir', 96: 'Badai Petir & Es', 99: 'Badai Petir & Es Lebat',
-};
-function weatherIconGroup(code) {
-  if (code === 0) return 'clear';
-  if (code === 1 || code === 2) return 'partly';
-  if (code === 3) return 'cloudy';
-  if (code === 45 || code === 48) return 'fog';
-  if ([51, 53, 55, 56, 57].includes(code)) return 'drizzle';
-  if ([61, 63, 65, 66, 67, 80, 81, 82].includes(code)) return 'rain';
-  if ([71, 73, 75, 77, 85, 86].includes(code)) return 'snow';
-  if ([95, 96, 99].includes(code)) return 'thunder';
-  return 'cloudy';
-}
-function weatherSvgFor(group, isDay) {
-  const sun = `<circle class="wx-sun-core" cx="32" cy="32" r="11"/><g class="wx-sun-rays"><line x1="32" y1="5" x2="32" y2="13"/><line x1="32" y1="51" x2="32" y2="59"/><line x1="5" y1="32" x2="13" y2="32"/><line x1="51" y1="32" x2="59" y2="32"/><line x1="13.1" y1="13.1" x2="18.5" y2="18.5"/><line x1="45.5" y1="45.5" x2="50.9" y2="50.9"/><line x1="13.1" y1="50.9" x2="18.5" y2="45.5"/><line x1="45.5" y1="18.5" x2="50.9" y2="13.1"/></g>`;
-  const moon = `<path class="wx-moon-body" d="M40 11a20 20 0 1 0 11 36 16 16 0 0 1-11-36Z"/><circle class="wx-star s1" cx="14" cy="17" r="1.6"/><circle class="wx-star s2" cx="50" cy="11" r="1.2"/><circle class="wx-star s3" cx="10" cy="38" r="1.3"/>`;
-  const cloudBack = `<ellipse class="wx-cloud wx-cloud-back" cx="27" cy="30" rx="13" ry="9"/><ellipse class="wx-cloud wx-cloud-back" cx="38" cy="27" rx="9" ry="7"/>`;
-  const cloudFront = `<ellipse class="wx-cloud wx-cloud-front" cx="33" cy="39" rx="17" ry="10"/><ellipse class="wx-cloud wx-cloud-front" cx="46" cy="35" rx="10" ry="8"/>`;
-  const rainDrops = (n, cls) => Array.from({ length: n }).map((_, i) =>
-    `<line class="wx-rain-drop ${cls}" style="animation-delay:${(i * 0.28).toFixed(2)}s" x1="${22 + i * 8}" y1="44" x2="${19 + i * 8}" y2="52"/>`).join('');
-  const snowFlakes = (n) => Array.from({ length: n }).map((_, i) =>
-    `<circle class="wx-snow-flake" style="animation-delay:${(i * 0.35).toFixed(2)}s" cx="${20 + i * 8}" cy="44" r="1.7"/>`).join('');
-  const bolt = `<path class="wx-thunder-bolt" d="M35 40 27 52h7l-3 11 12-15h-7l4-8Z"/>`;
-  if (group === 'clear') return `<svg class="wx-svg" viewBox="0 0 64 64">${isDay ? sun : moon}</svg>`;
-  if (group === 'partly') return `<svg class="wx-svg" viewBox="0 0 64 64"><g style="transform:translate(-8px,-8px) scale(0.7)">${isDay ? sun : moon}</g>${cloudFront}</svg>`;
-  if (group === 'cloudy') return `<svg class="wx-svg" viewBox="0 0 64 64">${cloudBack}${cloudFront}</svg>`;
-  if (group === 'fog') return `<svg class="wx-svg" viewBox="0 0 64 64"><line class="wx-fog-line f1" x1="10" y1="22" x2="54" y2="22"/><line class="wx-fog-line f2" x1="6" y1="32" x2="58" y2="32"/><line class="wx-fog-line f3" x1="12" y1="42" x2="52" y2="42"/></svg>`;
-  if (group === 'drizzle') return `<svg class="wx-svg" viewBox="0 0 64 64">${cloudBack}${cloudFront}${rainDrops(3, 'slow')}</svg>`;
-  if (group === 'rain') return `<svg class="wx-svg" viewBox="0 0 64 64">${cloudBack}${cloudFront}${rainDrops(5, '')}</svg>`;
-  if (group === 'snow') return `<svg class="wx-svg" viewBox="0 0 64 64">${cloudBack}${cloudFront}${snowFlakes(5)}</svg>`;
-  if (group === 'thunder') return `<svg class="wx-svg" viewBox="0 0 64 64">${cloudBack}${cloudFront}${bolt}</svg>`;
-  return `<svg class="wx-svg" viewBox="0 0 64 64">${cloudFront}</svg>`;
-}
-function weatherUpdatedLabel(date) {
-  if (!date) return '';
-  return 'Diperbarui ' + date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-}
-function weatherPanelInnerHTML() {
-  const s = weatherState;
-  if (s.status === 'loading') {
-    return `
-      <div class="wx-icon-wrap wx-loading"><svg class="wx-svg wx-spinner" viewBox="0 0 50 50"><circle cx="25" cy="25" r="19"/></svg></div>
-      <div class="wx-info"><div class="wx-desc">Mendeteksi cuaca...</div></div>
-    `;
-  }
-  if (s.status === 'error') {
-    return `
-      <div class="wx-icon-wrap wx-error"><svg class="wx-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg></div>
-      <div class="wx-info">
-        <div class="wx-desc">Cuaca tidak tersedia</div>
-        <button type="button" class="wx-retry" id="wxRetryBtn">Coba lagi</button>
-      </div>
-    `;
-  }
-  const group = weatherIconGroup(s.code);
-  return `
-    <div class="wx-icon-wrap wx-${group}">${weatherSvgFor(group, s.isDay)}</div>
-    <div class="wx-info">
-      <div class="wx-temp mono">${s.temp}°<span class="wx-unit">C</span></div>
-      <div class="wx-desc">${WEATHER_LABELS[s.code] || 'Cuaca'}</div>
-      <div class="wx-loc">${escapeHtml(s.loc || '')}</div>
-      <div class="wx-updated">${weatherUpdatedLabel(s.updatedAt)}</div>
-    </div>
-  `;
-}
-function updateWeatherDOM() {
-  const panel = document.getElementById('weatherPanel');
-  if (panel) panel.innerHTML = weatherPanelInnerHTML();
-}
-async function fetchWeatherAt(lat, lon, locLabel) {
-  try {
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,apparent_temperature,weather_code,is_day&timezone=auto`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error('bad response');
-    const data = await res.json();
-    weatherState = {
-      status: 'ready',
-      temp: Math.round(data.current.temperature_2m),
-      feelsLike: Math.round(data.current.apparent_temperature),
-      code: data.current.weather_code,
-      isDay: data.current.is_day === 1,
-      loc: locLabel,
-      updatedAt: new Date(),
-    };
-  } catch (e) {
-    weatherState.status = 'error';
-  }
-  weatherLastFetchTs = Date.now();
-  updateWeatherDOM();
-}
-async function resolveLocationLabel(lat, lon, fallback) {
-  try {
-    const res = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=id`);
-    const data = await res.json();
-    const city = data.city || data.locality || data.principalSubdivision;
-    return city || fallback;
-  } catch (e) {
-    return fallback;
-  }
-}
-async function fetchWeatherByIP() {
-  try {
-    const res = await fetch('https://ipapi.co/json/');
-    const data = await res.json();
-    const label = [data.city, data.region].filter(Boolean).join(', ') || 'Lokasi Kamu';
-    await fetchWeatherAt(data.latitude, data.longitude, label);
-  } catch (e) {
-    weatherState.status = 'error';
-    weatherLastFetchTs = Date.now();
-    updateWeatherDOM();
-  }
-}
-function refreshWeather(force) {
-  if (!force && Date.now() - weatherLastFetchTs < WEATHER_MIN_REFRESH_MS) return;
-  if (weatherState.status !== 'ready') { weatherState.status = 'loading'; updateWeatherDOM(); }
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const { latitude, longitude } = pos.coords;
-        const label = await resolveLocationLabel(latitude, longitude, 'Lokasi Kamu');
-        fetchWeatherAt(latitude, longitude, label);
-      },
-      () => fetchWeatherByIP(),
-      { enableHighAccuracy: false, timeout: 8000, maximumAge: 10 * 60 * 1000 }
-    );
-  } else {
-    fetchWeatherByIP();
-  }
-}
-function initWeatherWidget() {
-  refreshWeather(true);
-  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refreshWeather(); });
-  window.addEventListener('online', () => refreshWeather(true));
-  window.addEventListener('focus', () => refreshWeather());
-  window.addEventListener('click', (e) => { if (e.target.closest('#wxRetryBtn')) refreshWeather(true); });
-  setInterval(() => refreshWeather(), 15 * 60 * 1000);
-}
-
-/* ==========================================================
-   CATATAN TUGAS — event handling (lihat flowTaskWidgetHtml()
-   & renderSummary() di atas untuk markup-nya). Dipasang sekali
-   lewat delegasi di document supaya tetap jalan meski widgetnya
-   dibuat ulang tiap kali renderSummary() dipanggil.
-========================================================== */
-function refreshFlowTaskWidgetOnly() {
-  const list = document.getElementById('flowTaskList');
-  const widget = document.getElementById('flowTaskWidget');
-  if (!list || !widget) return;
-  const doneCount = flowTasks.filter(t => t.done).length;
-  const countEl = widget.querySelector('.ftw-count');
-  if (countEl) countEl.textContent = `${doneCount}/${flowTasks.length}`;
-  const iconCheck = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>`;
-  const iconTrash = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"/></svg>`;
-  list.innerHTML = flowTasks.length
-    ? flowTasks.map(t => `
-      <div class="ftw-item ${t.done ? 'done' : ''}" data-taskitem="${t.id}">
-        <button type="button" class="ftw-check" data-taskcheck="${t.id}" aria-label="Tandai selesai">${t.done ? iconCheck : ''}</button>
-        <span class="ftw-text">${escapeHtml(t.text)}</span>
-        <button type="button" class="ftw-del" data-taskdel="${t.id}" aria-label="Hapus tugas">${iconTrash}</button>
-      </div>
-    `).join('')
-    : `<div class="ftw-empty">Belum ada tugas. Tambahkan di atas.</div>`;
-}
-document.addEventListener('submit', (e) => {
-  const form = e.target.closest('#flowTaskForm');
-  if (!form) return;
-  e.preventDefault();
-  const input = document.getElementById('flowTaskInput');
-  const text = (input?.value || '').trim();
-  if (!text) return;
-  flowTasks.push({ id: 'task_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7), text, done: false });
-  persistFlowTasks();
-  if (input) input.value = '';
-  refreshFlowTaskWidgetOnly();
-  if (input) input.focus();
-});
-document.addEventListener('click', (e) => {
-  const checkBtn = e.target.closest('[data-taskcheck]');
-  const delBtn = e.target.closest('[data-taskdel]');
-  if (checkBtn) {
-    const id = checkBtn.dataset.taskcheck;
-    const t = flowTasks.find(x => x.id === id);
-    if (t) { t.done = !t.done; persistFlowTasks(); refreshFlowTaskWidgetOnly(); }
-  }
-  if (delBtn) {
-    const id = delBtn.dataset.taskdel;
-    flowTasks = flowTasks.filter(x => x.id !== id);
-    persistFlowTasks();
-    refreshFlowTaskWidgetOnly();
-  }
-});
-
-/* ==========================================================
    INIT
 ========================================================== */
 function refreshAll() {
@@ -8791,7 +8524,6 @@ function init() {
   renderSocial();
   maybeShowDueReminder();
   initFooter();
-  initWeatherWidget();
   initAiChat();
 }
 
