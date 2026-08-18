@@ -3910,9 +3910,22 @@ tbody tr.date-group-row:first-child td{border-top:none;}
 .detail-list-wrap tbody tr:last-child td{border-bottom:none;}
 @media (max-width:640px){
   .detail-list-wrap thead{display:none;}
-  .detail-list-wrap tbody tr{display:flex;flex-direction:column;gap:3px;padding:12px 16px;border-bottom:1px solid var(--line);}
+  .detail-list-wrap tbody tr{
+    display:grid;
+    grid-template-columns:1fr auto;
+    grid-template-areas:
+      "date amount"
+      "cat cat"
+      "desc desc"
+      "actions actions";
+    column-gap:10px;row-gap:4px;padding:12px 16px;border-bottom:1px solid var(--line);
+  }
   .detail-list-wrap tbody td{padding:0;border:none;font-size:13px;}
-  .detail-list-wrap tbody td:last-child{padding-top:6px;}
+  .detail-list-wrap tbody td.date-cell{grid-area:date;text-align:left;align-self:center;}
+  .detail-list-wrap tbody td:nth-child(2){grid-area:cat;}
+  .detail-list-wrap tbody td.desc-cell{grid-area:desc;}
+  .detail-list-wrap tbody td.amount-cell{grid-area:amount;text-align:right;align-self:center;font-size:14px;}
+  .detail-list-wrap tbody td:last-child{grid-area:actions;padding-top:6px;}
 }
 .btn-sm{padding:8px 14px;font-size:12.5px;}
 .detail-page-head{flex-wrap:wrap;}
