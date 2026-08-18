@@ -225,7 +225,7 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
 .notif-badge{
   position:absolute;top:-4px;right:-4px;
   min-width:16px;height:16px;padding:0 4px;border-radius:999px;
-  background:var(--wine);color:#fff;font-size:10px;font-weight:800;
+  background:#FF3B30;color:#fff;font-size:10px;font-weight:800;
   display:flex;align-items:center;justify-content:center;
   border:2px solid var(--forest-deep);
   font-family:'IBM Plex Mono',monospace;
@@ -684,11 +684,11 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   border-top:1px solid rgba(244,247,243,0.14);
   display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:14px 18px;
 }
-/* Hanya tampil di versi desktop & tablet — disembunyikan total di HP
-   (di bawah 768px) atas permintaan, supaya banner tidak terlalu
-   panjang/padat di layar sempit. */
+/* Sebelumnya disembunyikan total di HP (<768px). Sekarang tetap
+   ditampilkan di semua ukuran layar — grid auto-fit di atas otomatis
+   menyusun ulang jadi 1-2 kolom saat lebar sempit. */
 @media (max-width:768px){
-  .saldo-targets{display:none !important;}
+  .saldo-targets{gap:10px 14px;margin-top:14px;padding-top:12px;}
 }
 .saldo-target-item{min-width:0;}
 .saldo-target-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px;gap:8px;}
