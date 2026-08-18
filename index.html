@@ -223,12 +223,14 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
   5%{transform:rotate(5deg);}
 }
 .notif-badge{
-  position:absolute;top:-4px;right:-4px;
-  min-width:16px;height:16px;padding:0 4px;border-radius:999px;
-  background:#FF3B30;color:#fff;font-size:10px;font-weight:800;
+  position:absolute;top:-3px;right:-3px;
+  min-width:18px;height:18px;padding:0 4px;border-radius:999px;
+  background:#FF3B30;color:#fff;font-size:11px;font-weight:700;
   display:flex;align-items:center;justify-content:center;
-  border:2px solid var(--forest-deep);
-  font-family:'IBM Plex Mono',monospace;
+  box-shadow:0 1px 2px rgba(0,0,0,0.25);
+  font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;
+  letter-spacing:-0.02em;
+  line-height:1;
 }
 .notif-panel{
   position:fixed;top:70px;right:24px;
@@ -667,6 +669,12 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 .saldo-toggle:hover{background:rgba(244,247,243,0.18);color:#fff;}
 .saldo-sub{display:flex;gap:22px;margin-top:16px;flex-wrap:wrap;position:relative;z-index:3;}
 .saldo-sub-item{display:flex;align-items:center;gap:8px;min-width:0;}
+@media (max-width:600px){
+  .saldo-sub{gap:10px;justify-content:space-between;flex-wrap:nowrap;}
+  .saldo-sub-item{flex:1 1 0;min-width:0;}
+  .saldo-sub-text{min-width:0;flex:1;}
+  .saldo-sub-text .v{font-size:13px;}
+}
 
 .saldo-sub-item .ic{
   width:28px;height:28px;border-radius:8px;flex-shrink:0;
@@ -4780,6 +4788,21 @@ tbody tr.date-group-row:first-child td{border-top:none;}
   .form-grid-2{grid-template-columns:1fr;}
   .banner-fx{font-size:9.5px;gap:4px;}
   .banner-fx .fx-label{display:none;}
+  /* Di HP, gradien besar (280%) + overlay grid ber-mask yang ikut
+     dianimasikan sering bikin browser mobile "kedip" karena harus
+     repaint dua layer berat itu tiap frame. Perlambat & sederhanakan
+     supaya tetap hidup tapi tidak flicker. */
+  .banner{
+    background-size:180% 180%, 180% 180%, 180% 180%, 200% 200%;
+    animation-duration:34s;
+    transform:translateZ(0);
+    backface-visibility:hidden;
+  }
+  .banner::before{
+    animation:none;
+    background-position:0 0, 0 0;
+    opacity:0.55;
+  }
 }
 @media (max-width:380px){
   .banner-top-right{width:100%;}
