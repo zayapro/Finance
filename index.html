@@ -5028,7 +5028,7 @@ tbody tr.date-group-row:first-child td{border-top:none;}
   .btn{font-size:12px;padding:8px 11px;}
 }
 </style>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="supabase-client.js"></script>
 </head>
 <body>
@@ -5216,7 +5216,6 @@ document.getElementById('zpPasswordInput').addEventListener('keydown', (e) => {
   const user = await zpGetSession();
   if (user) { zpShowApp(); } else { zpShowLoginScreen(); }
 })();
-</script>
 </script>
 
 <div class="app" id="zpAppRoot" style="display:none;">

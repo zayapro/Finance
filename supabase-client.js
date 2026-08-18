@@ -7,6 +7,9 @@
 const SUPABASE_URL = 'https://irjbamgmdbgszkheglig.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_dVKTD1xIk3KFilHiPYNFOg_LNQ_8JMF';
 
+if (!window.supabase) {
+  throw new Error('Gagal load Supabase library dari CDN. Cek koneksi internet atau apakah CDN diblokir.');
+}
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 /* ---------- State user yang sedang login ---------- */
