@@ -4615,6 +4615,24 @@ tbody tr.date-group-row:first-child td{border-top:none;}
 @media (max-width:820px){
   .summary-grid{grid-template-columns:repeat(2,1fr);}
 }
+/* ---- Rapikan header banner di HP ----
+   Sebelumnya kolom tanggal+kurs (banner-date-col) ikut di-center
+   secara vertikal berdampingan dengan 3 tombol ikon di dalam
+   .banner-top-right, sehingga baris tanggal dan baris ikon saling
+   tumpang tindih/terlihat berantakan saat wrap di layar sempit.
+   Di sini banner-top-right dipaksa jadi baris penuh sendiri di
+   bawah brand, lalu tanggal+kurs didorong ke barisnya sendiri di
+   bawah tombol ikon — hasilnya 3 baris rapi: logo / ikon / tanggal.
+   Dipisah ke breakpoint 900px (bukan cuma 600px) supaya tombol
+   ikon (riwayat/notif/tambah) selalu tampil di ATAS dan baris
+   tanggal selalu mengikuti di BAWAHNYA di semua ukuran layar HP,
+   termasuk HP berlayar lebih lebar (601-900px) yang sebelumnya
+   masih menampilkan urutan terbalik (tanggal di atas, ikon di bawah). */
+@media (max-width:900px){
+  .banner-top{row-gap:8px;}
+  .banner-top-right{width:100%;flex-wrap:wrap;justify-content:flex-end;row-gap:8px;}
+  .banner-date-col{order:3;flex-basis:100%;margin-top:0;}
+}
 @media (max-width:600px){
   .app{padding:0 14px;}
   .banner{margin:0 -14px 18px;border-radius:0 0 20px 20px;padding:16px 18px 30px;}
@@ -4622,17 +4640,6 @@ tbody tr.date-group-row:first-child td{border-top:none;}
   .form-grid-2{grid-template-columns:1fr;}
   .banner-fx{font-size:9.5px;gap:4px;}
   .banner-fx .fx-label{display:none;}
-  /* ---- Rapikan header banner di HP ----
-     Sebelumnya kolom tanggal+kurs (banner-date-col) ikut di-center
-     secara vertikal berdampingan dengan 3 tombol ikon di dalam
-     .banner-top-right, sehingga baris tanggal dan baris ikon saling
-     tumpang tindih/terlihat berantakan saat wrap di layar sempit.
-     Di sini banner-top-right dipaksa jadi baris penuh sendiri di
-     bawah brand, lalu tanggal+kurs didorong ke barisnya sendiri di
-     bawah tombol ikon — hasilnya 3 baris rapi: logo / ikon / tanggal. */
-  .banner-top{row-gap:8px;}
-  .banner-top-right{width:100%;flex-wrap:wrap;justify-content:flex-end;row-gap:8px;}
-  .banner-date-col{order:3;flex-basis:100%;margin-top:0;}
   /* Di HP, gradien besar (280%) + overlay grid ber-mask yang ikut
      dianimasikan sering bikin browser mobile "kedip" karena harus
      repaint dua layer berat itu tiap frame. Perlambat & sederhanakan
