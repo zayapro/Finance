@@ -5055,201 +5055,10 @@ tbody tr.date-group-row:first-child td{border-top:none;}
   .btn{font-size:12px;padding:8px 11px;}
 }
 </style>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="supabase-client.js"></script>
-<!-- Pustaka untuk ekspor Excel (.xlsx) & PDF bergaya -->
-<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
 
-<!-- ===== LAYAR LOGIN ZAYAPRO ===== -->
-<style>
-#zpLoginScreen{
-  position:fixed;inset:0;z-index:9999;
-  min-height:100vh;display:flex;align-items:center;justify-content:center;
-  padding:20px;overflow:hidden;
-  background:
-    radial-gradient(circle at 15% 20%, rgba(37,99,235,0.38), transparent 45%),
-    radial-gradient(circle at 85% 15%, rgba(5,150,105,0.24), transparent 50%),
-    radial-gradient(circle at 75% 90%, rgba(225,29,72,0.14), transparent 55%),
-    linear-gradient(120deg, #0B1220, #16213A, #0B1220);
-  background-size:240% 240%, 240% 240%, 240% 240%, 280% 280%;
-  animation: zpBannerDrift 18s ease-in-out infinite;
-}
-#zpLoginScreen::before{
-  content:'';position:absolute;inset:0;
-  background-image:
-    linear-gradient(rgba(244,247,251,0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(244,247,251,0.05) 1px, transparent 1px);
-  background-size:34px 34px;
-  mask-image:radial-gradient(ellipse at 30% 20%, black 0%, transparent 75%);
-  -webkit-mask-image:radial-gradient(ellipse at 30% 20%, black 0%, transparent 75%);
-  animation: zpGridPan 24s linear infinite;
-}
-@keyframes zpGridPan{0%{background-position:0 0,0 0;}100%{background-position:34px 68px,34px 68px;}}
-@keyframes zpBannerDrift{
-  0%{background-position:0% 30%,100% 0%,70% 100%,0% 0%;}
-  33%{background-position:40% 70%,70% 40%,30% 60%,60% 40%;}
-  66%{background-position:70% 20%,30% 80%,60% 20%,30% 100%;}
-  100%{background-position:0% 30%,100% 0%,70% 100%,0% 0%;}
-}
-.zp-orb{position:absolute;border-radius:50%;filter:blur(2px);opacity:0.55;pointer-events:none;animation:zpFloat 7s ease-in-out infinite;}
-@keyframes zpFloat{0%,100%{transform:translateY(0) translateX(0);}50%{transform:translateY(-22px) translateX(10px);}}
-.zp-card{
-  position:relative;width:100%;max-width:380px;background:rgba(255,255,255,0.98);
-  border-radius:22px;padding:34px 30px 28px;box-shadow:0 24px 70px rgba(0,0,0,0.45), 0 2px 0 rgba(255,255,255,0.5) inset;
-  opacity:0;transform:translateY(24px) scale(0.98);
-  animation:zpCardIn 0.7s cubic-bezier(.2,.8,.2,1) forwards 0.15s;
-  border:1px solid rgba(255,255,255,0.6);
-}
-@keyframes zpCardIn{to{opacity:1;transform:translateY(0) scale(1);}}
-.zp-logo{
-  width:52px;height:52px;border-radius:15px;margin:0 auto 16px;
-  display:flex;align-items:center;justify-content:center;
-  background:linear-gradient(135deg,#2563EB,#059669);
-  box-shadow:0 8px 24px rgba(37,99,235,0.35);
-  animation:zpLogoPulse 2.6s ease-in-out infinite;
-}
-@keyframes zpLogoPulse{0%,100%{box-shadow:0 8px 24px rgba(37,99,235,0.35);}50%{box-shadow:0 8px 32px rgba(5,150,105,0.5);}}
-.zp-title{margin:0 0 4px;font-family:'Fraunces',serif;font-weight:600;font-size:24px;color:#131A2A;text-align:center;letter-spacing:-0.01em;}
-.zp-sub{margin:0 0 24px;color:#5B6472;font-size:13.5px;text-align:center;}
-.zp-field{position:relative;margin-bottom:12px;}
-.zp-field input{
-  width:100%;padding:13px 14px 13px 42px;border:1.5px solid #E4E8EF;border-radius:12px;
-  font-size:14px;font-family:'Plus Jakarta Sans',sans-serif;box-sizing:border-box;
-  transition:border-color .2s, box-shadow .2s;background:#FAFBFD;
-}
-.zp-field input:focus{outline:none;border-color:#2563EB;box-shadow:0 0 0 4px rgba(37,99,235,0.12);background:#fff;}
-.zp-field svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#8A93A3;pointer-events:none;transition:color .2s;}
-.zp-field input:focus ~ svg, .zp-field input:focus + svg{color:#2563EB;}
-.zp-error{
-  display:none;font-size:13px;padding:9px 12px;border-radius:9px;margin-bottom:12px;
-  animation:zpShake 0.4s ease;
-}
-.zp-error.err{background:#FEE2E6;color:#E11D48;}
-.zp-error.ok{background:#D1FAE5;color:#047857;}
-@keyframes zpShake{0%,100%{transform:translateX(0);}20%{transform:translateX(-5px);}40%{transform:translateX(5px);}60%{transform:translateX(-3px);}80%{transform:translateX(3px);}}
-.zp-btn-primary{
-  width:100%;padding:13px;margin-bottom:10px;border:none;border-radius:12px;
-  background:linear-gradient(135deg,#2563EB,#1d4fd1);color:#fff;font-weight:700;font-size:14.5px;
-  cursor:pointer;transition:transform .15s, box-shadow .15s;box-shadow:0 6px 18px rgba(37,99,235,0.3);
-  display:flex;align-items:center;justify-content:center;gap:8px;
-  font-family:'Plus Jakarta Sans',sans-serif;
-}
-.zp-btn-primary:hover{transform:translateY(-1px);box-shadow:0 10px 24px rgba(37,99,235,0.4);}
-.zp-btn-primary:active{transform:translateY(0);}
-.zp-btn-primary:disabled{opacity:0.7;cursor:default;transform:none;}
-.zp-btn-secondary{
-  width:100%;padding:12px;border:1.5px solid #E4E8EF;border-radius:12px;background:#fff;color:#131A2A;
-  font-weight:600;font-size:14px;cursor:pointer;transition:background .15s, border-color .15s;
-  font-family:'Plus Jakarta Sans',sans-serif;
-}
-.zp-btn-secondary:hover{background:#F4F6F9;border-color:#C7CEDB;}
-.zp-spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,0.4);border-top-color:#fff;border-radius:50%;animation:zpSpin .7s linear infinite;display:none;}
-@keyframes zpSpin{to{transform:rotate(360deg);}}
-</style>
-
-<div id="zpLoginScreen">
-  <div class="zp-orb" style="width:120px;height:120px;background:#2563EB;top:12%;left:10%;animation-delay:0s;"></div>
-  <div class="zp-orb" style="width:90px;height:90px;background:#059669;bottom:15%;right:12%;animation-delay:1.5s;"></div>
-  <div class="zp-orb" style="width:60px;height:60px;background:#E11D48;top:65%;left:18%;animation-delay:3s;"></div>
-
-  <div class="zp-card">
-    <div class="zp-logo">
-      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-    </div>
-    <h2 class="zp-title">ZAYAPRO</h2>
-    <p class="zp-sub" id="zpSubText">Masuk untuk mengakses data kamu</p>
-
-    <div class="zp-field">
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.4"/><path d="m3 7 9 6 9-6"/></svg>
-      <input id="zpEmailInput" type="email" placeholder="Email" autocomplete="email">
-    </div>
-    <div class="zp-field">
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="10" rx="2.4"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
-      <input id="zpPasswordInput" type="password" placeholder="Password" autocomplete="current-password">
-    </div>
-
-    <div id="zpAuthError" class="zp-error"></div>
-
-    <button id="zpLoginBtn" class="zp-btn-primary">
-      <span id="zpLoginBtnLabel">Masuk</span>
-      <span class="zp-spinner" id="zpLoginSpinner"></span>
-    </button>
-    <button id="zpSignupBtn" class="zp-btn-secondary">Daftar akun baru</button>
-  </div>
-</div>
-
-<script>
-function zpShowLoginScreen() {
-  document.getElementById('zpLoginScreen').style.display = 'flex';
-  const app = document.getElementById('zpAppRoot');
-  if (app) app.style.display = 'none';
-}
-function zpShowApp() {
-  const screen = document.getElementById('zpLoginScreen');
-  screen.style.transition = 'opacity .4s ease';
-  screen.style.opacity = '0';
-  setTimeout(() => {
-    screen.style.display = 'none';
-    screen.style.opacity = '1';
-  }, 380);
-  const app = document.getElementById('zpAppRoot');
-  if (app) app.style.display = '';
-}
-function zpShowAuthError(msg, isSuccess) {
-  const el = document.getElementById('zpAuthError');
-  el.textContent = msg;
-  el.className = 'zp-error ' + (isSuccess ? 'ok' : 'err');
-  el.style.display = 'block';
-}
-function zpSetLoading(loading) {
-  document.getElementById('zpLoginBtn').disabled = loading;
-  document.getElementById('zpLoginBtnLabel').style.display = loading ? 'none' : 'inline';
-  document.getElementById('zpLoginSpinner').style.display = loading ? 'inline-block' : 'none';
-}
-
-document.getElementById('zpLoginBtn').addEventListener('click', async () => {
-  const email = document.getElementById('zpEmailInput').value.trim();
-  const password = document.getElementById('zpPasswordInput').value;
-  if (!email || !password) return zpShowAuthError('Isi email dan password dulu.');
-  zpSetLoading(true);
-  try {
-    await zpSignIn(email, password);
-    zpShowApp();
-  } catch (err) {
-    zpShowAuthError(err.message || 'Gagal masuk. Cek email/password.');
-  } finally {
-    zpSetLoading(false);
-  }
-});
-
-document.getElementById('zpSignupBtn').addEventListener('click', async () => {
-  const email = document.getElementById('zpEmailInput').value.trim();
-  const password = document.getElementById('zpPasswordInput').value;
-  if (!email || !password) return zpShowAuthError('Isi email dan password dulu.');
-  if (password.length < 6) return zpShowAuthError('Password minimal 6 karakter.');
-  try {
-    await zpSignUp(email, password);
-    zpShowAuthError('Akun dibuat! Cek email untuk verifikasi, lalu masuk.', true);
-  } catch (err) {
-    zpShowAuthError(err.message || 'Gagal daftar.');
-  }
-});
-
-document.getElementById('zpPasswordInput').addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') document.getElementById('zpLoginBtn').click();
-});
-
-(async () => {
-  const user = await zpGetSession();
-  if (user) { zpShowApp(); } else { zpShowLoginScreen(); }
-})();
-</script>
-
-<div class="app" id="zpAppRoot" style="display:none;">
+<div class="app">
 
   <div class="app-main">
 
@@ -7139,6 +6948,10 @@ document.getElementById('zpPasswordInput').addEventListener('keydown', (e) => {
 
 <div class="toast-wrap" id="toastWrap"></div>
 
+<!-- Pustaka untuk ekspor Excel (.xlsx) & PDF bergaya -->
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js"></script>
 <script src="script.js"></script>
 </body>
 </html>
