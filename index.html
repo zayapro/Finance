@@ -7,6 +7,7 @@
 <meta name="description" id="appMetaDescription" content="Kelola uang masuk dan keluar, catat transaksi, tagihan, dan hutang dengan mudah bersama ZAYAPRO.">
 <meta name="keywords" id="appMetaKeywords" content="">
 <meta name="robots" content="index, follow">
+<meta name="theme-color" content="#0B1220">
 <link rel="canonical" id="appCanonicalLink" href="">
 <meta property="og:type" content="website">
 <meta property="og:title" id="appOgTitle" content="ZAYAPRO — Kelola Uang Masuk &amp; Keluar">
@@ -47,12 +48,14 @@
   /* ============ Z-INDEX SCALE (skala lapisan) ============
      Semua elemen mengambang/popup memakai variabel ini supaya
      urutan tumpukannya konsisten & tidak saling menutupi:
-     konten kartu < tombol mengambang < halaman penuh (detail/leaderboard/
-     pengaturan widget) < panel notifikasi < modal
-     (tambah/edit/konfirmasi) < toast (paling atas, selalu terlihat). */
+     konten kartu < mini topbar ringkasan (HP) < tombol mengambang <
+     halaman penuh (detail/leaderboard/pengaturan widget) < panel
+     notifikasi < modal (tambah/edit/konfirmasi) < toast (paling atas,
+     selalu terlihat). */
   --z-content:1;
   --z-content-2:2;
   --z-tooltip:5;
+  --z-mini-topbar:40;
   --z-fab:60;
   --z-page:120;
   --z-back-to-top:130;
@@ -68,7 +71,17 @@ body{
   color:var(--ink);
   font-family:var(--font-body);
   -webkit-font-smoothing:antialiased;
+  /* PENTING (fix kedipan banner sticky di HP): 100vh di banyak browser
+     mobile nilainya IKUT BERUBAH saat address bar muncul/hilang ketika
+     discroll, jadi tinggi body dihitung ULANG berkali-kali persis
+     selagi scroll — salah satu pemicu utama layout & repaint berulang
+     yang kelihatan sebagai "kedip" pada banner yang position:sticky.
+     100svh (small viewport height) nilainya TETAP/stabil (dihitung
+     dari kondisi address bar sedang tampil), jadi tidak pernah recalc
+     gara-gara address bar. 100vh tetap dipasang duluan sebagai
+     fallback untuk browser lama yang belum kenal svh. */
   min-height:100vh;
+  min-height:100svh;
   display:flex;
   flex-direction:column;
 }
@@ -110,6 +123,23 @@ a{color:inherit;}
   padding:20px 28px 34px;
   margin:0 -24px 22px;
   color:#F4F7FB;
+  /* PENTING (fix kedipan/tearing saat banner sticky di HP): paksa
+     banner punya layer kompositing GPU sendiri yang stabil, terpisah
+     dari konten lain, supaya browser tidak perlu menggambar ulang
+     (repaint) seluruh banner dari nol tiap frame scroll — cukup
+     memindah layer yang sudah jadi. translateZ(0) + will-change
+     menghasilkan layer itu; backface-visibility & isolation mencegah
+     layer ini "bocor"/tertimpa konten di sekitarnya saat animasi
+     jalan bersamaan dengan sticky. Dulu ini hanya dipasang khusus di
+     breakpoint HP kecil (<=600px); sekarang dipasang di sini supaya
+     berlaku konsisten untuk SEMUA ukuran layar HP/tablet yang membuat
+     banner ini sticky, tidak cuma satu breakpoint. */
+  transform:translateZ(0);
+  -webkit-transform:translateZ(0);
+  will-change:transform;
+  backface-visibility:hidden;
+  -webkit-backface-visibility:hidden;
+  isolation:isolate;
 }
 .banner::before{
   content:'';
@@ -4681,13 +4711,13 @@ tbody tr.date-group-row:first-child td{border-top:none;}
 @media (max-width:600px){
   .app{padding:0 14px;}
   .banner{margin:0 -14px 18px;border-radius:0 0 20px 20px;padding:16px 18px 30px;}
-  /* Diminta: banner tetap nempel di paling atas layar (dengan warna
-     background-nya) saat halaman discroll ke bawah, KHUSUS di HP.
-     position:sticky membuatnya berhenti mengikuti scroll begitu
-     mencapai top:0, lalu "menempel" di situ. z-index:2 sudah ada di
-     .banner (lihat rule dasarnya) supaya konten di bawahnya (kartu
-     dsb.) discroll masuk ke BAWAH banner, bukan menimpanya. */
-  .banner{position:sticky;top:0;}
+  /* PENTING (ganti pendekatan lama): banner BESAR ini (logo + Saldo
+     Total) SEKARANG dibiarkan scroll biasa mengikuti halaman di HP,
+     TIDAK lagi position:sticky. Yang tetap "menempel" permanen di
+     paling atas layar cuma baris ringkasan Pemasukan/Pengeluaran —
+     itu sekarang elemen terpisah (.mini-topbar, lihat blok CSS & HTML
+     tersendiri di bawah) supaya yang nempel benar-benar cuma bagian
+     kecil itu, bukan seluruh banner. */
   .add-btn-desktop{display:none;}
   .form-grid-2{grid-template-columns:1fr;}
   .banner-fx{font-size:9.5px;gap:4px;}
@@ -4695,12 +4725,12 @@ tbody tr.date-group-row:first-child td{border-top:none;}
   /* Di HP, gradien besar (280%) + overlay grid ber-mask yang ikut
      dianimasikan sering bikin browser mobile "kedip" karena harus
      repaint dua layer berat itu tiap frame. Perlambat & sederhanakan
-     supaya tetap hidup tapi tidak flicker. */
+     supaya tetap hidup tapi tidak flicker. (transform/backface untuk
+     layer GPU sudah dipindah ke rule dasar .banner di atas supaya
+     berlaku di semua ukuran layar, tidak diulang lagi di sini.) */
   .banner{
     background-size:180% 180%, 180% 180%, 180% 180%, 200% 200%;
     animation-duration:34s;
-    transform:translateZ(0);
-    backface-visibility:hidden;
   }
   .banner::before{
     animation:none;
@@ -4708,6 +4738,110 @@ tbody tr.date-group-row:first-child td{border-top:none;}
     opacity:0.55;
   }
   .saldo-block{margin-top:16px;}
+}
+
+/* ---- Hentikan sementara animasi dekoratif banner SELAMA halaman
+   sedang discroll (khusus HP, lihat init BannerScrollFreeze di
+   script.js) ----
+   Banner punya beberapa animasi CSS yang hidup terus-menerus
+   (gradient drift, grid pan, garis alir, ombak, partikel naik-turun).
+   Kalau semua itu tetap "hidup" persis selagi layar discroll di HP —
+   saat browser juga sibuk reflow/repaint karena address bar
+   muncul/hilang — hasilnya gampang kelihatan kedip/tearing sesaat.
+   Begitu class "is-scrolling" nempel di <body> (dipasang lewat JS
+   selama scroll berlangsung), semua animasi ini dipause dulu (BUKAN
+   disembunyikan — isinya tetap terlihat, cuma diam sebentar), lalu
+   otomatis lanjut lagi begitu scroll benar-benar berhenti. */
+body.is-scrolling .banner,
+body.is-scrolling .banner::before,
+body.is-scrolling .flow-line svg,
+body.is-scrolling .wave-wrap svg,
+body.is-scrolling .particle{
+  animation-play-state:paused !important;
+}
+
+/* ============================================================
+   MINI TOPBAR — logo+aksi cepat & ringkasan Pemasukan/Pengeluaran
+   yang PERMANEN nempel di paling atas layar, KHUSUS versi HP.
+   ============================================================
+   Ini elemen terpisah dari .banner besar (lihat elemen #miniTopbar
+   di HTML, ditaruh sebagai anak pertama BODY, di LUAR .app). Sengaja
+   dipisah supaya yang menempel permanen di ujung atas layar cuma
+   bagian kecil ini saja — bukan seluruh banner (Saldo Total tetap
+   scroll normal mengikuti halaman seperti konten lain).
+   Isinya 2 baris:
+   1) mtb-top-row: logo/nama app (buka Pengaturan Aplikasi) sejajar
+      dengan 3 ikon aksi cepat — Riwayat, Tagihan & Hutang, Tambah
+      Transaksi — jadi tetap bisa diakses cepat walau banner besar
+      sudah discroll ke atas dan tidak kelihatan lagi.
+   2) mtb-summary-row: ringkasan Pemasukan/Pengeluaran bulan ini.
+   - display:none di desktop/tablet lebar; baru position:fixed & flex
+     di breakpoint HP (≤600px).
+   - Warnanya SENGAJA solid/statis (tidak pakai gradient animasi
+     seperti .banner) supaya elemen fixed ini ringan digambar browser
+     dan tidak menambah risiko kedip, karena ia digambar ulang tiap
+     saat (bukan cuma sesekali seperti elemen sticky biasa).
+   - padding-top pakai env(safe-area-inset-top) supaya warnanya ikut
+     "nembus" sampai ke belakang notch/status bar HP kalau situs ini
+     dibuka sebagai app terpasang (Add to Home Screen) / fullscreen;
+     di tab browser biasa nilainya 0 jadi tidak berpengaruh — warna
+     tetap mepet sampai batas paling atas area konten browser.
+   - Tinggi aktualnya diukur & disimpan otomatis oleh JS ke variabel
+     --mini-topbar-h (lihat initMiniTopbar di script.js), lalu dipakai
+     sebagai padding-top halaman supaya konten di bawahnya tidak
+     ketutup elemen fixed ini. */
+.mini-topbar{display:none;}
+@media (max-width:600px){
+  .mini-topbar{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    position:fixed;
+    top:0;left:0;right:0;
+    z-index:var(--z-mini-topbar);
+    padding:calc(10px + env(safe-area-inset-top, 0px)) 16px 12px;
+    background:var(--forest-deep);
+    box-shadow:0 8px 18px -6px rgba(11,18,32,0.45);
+    color:#F4F7FB;
+  }
+  /* Baris atas: logo/nama app (buka Pengaturan Aplikasi) + 3 ikon
+     aksi cepat (Riwayat, Tagihan & Hutang, Tambah Transaksi) sejajar
+     dalam satu baris. Tombol & ikonnya reuse class yang sama dengan
+     versi di banner besar (.brand-mark/.brand-name, .notif-btn,
+     .notif-badge) supaya gaya visualnya konsisten — cuma ukurannya
+     sedikit lebih ringkas mengingat ruang di mini topbar terbatas. */
+  .mtb-top-row{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+  .mtb-brand{
+    display:flex;align-items:center;gap:8px;min-width:0;
+    background:none;border:none;padding:4px 6px;margin:-4px -6px;
+    border-radius:9px;color:inherit;cursor:pointer;
+    transition:background .15s ease, transform .15s ease;
+  }
+  .mtb-brand:hover{background:rgba(244,247,243,0.10);}
+  .mtb-brand:active{transform:scale(0.97);}
+  .mtb-brand .brand-mark{width:24px;height:24px;border-radius:7px;}
+  .mtb-brand .brand-name{font-size:14.5px;}
+  .mtb-actions{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+  .mtb-actions .notif-btn{width:30px;height:30px;}
+  .mtb-summary-row{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+  .mtb-item{display:flex;align-items:center;gap:8px;min-width:0;flex:1 1 0;}
+  .mtb-item .ic{
+    width:30px;height:30px;border-radius:9px;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;
+    background:rgba(244,247,243,0.12);
+  }
+  .mtb-item .ic.income{color:var(--brass-light);}
+  .mtb-item .ic.expense{color:var(--wine-light);}
+  .mtb-text{min-width:0;}
+  .mtb-text .k{font-size:11px;color:rgba(244,247,243,0.65);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .mtb-text .v{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  /* Dorong seluruh konten halaman ke bawah sejumlah tinggi mini
+     topbar, supaya bagian atas banner besar (logo dsb.) tidak
+     ketutup elemen fixed ini begitu halaman dimuat. Nilai
+     --mini-topbar-h diisi otomatis oleh JS. Fallback 108px dipakai
+     sebelum JS sempat mengukur (mis. sesaat pertama kali render) —
+     dinaikkan dari 64px karena mini topbar sekarang 2 baris.*/
+  body{padding-top:var(--mini-topbar-h, 108px);}
 }
 
 /* ============================================================
@@ -4982,6 +5116,58 @@ tbody tr.date-group-row:first-child td{border-top:none;}
 </style>
 </head>
 <body>
+
+<!-- ===== MINI TOPBAR (LOGO + AKSI CEPAT + RINGKASAN) =====
+     Elemen ini SENGAJA dipisah dari <header class="banner"> di bawah
+     dan ditaruh di sini, di LUAR .app, sebagai anak langsung <body>,
+     supaya position:fixed-nya (lihat CSS .mini-topbar) benar-benar
+     lepas dari alur/lebar .app dan bisa full-width mepet ke ujung
+     atas layar. Cuma tampil di versi mobile (≤600px) — lihat media
+     query CSS-nya. Baris atas (logo + 3 ikon aksi) & badge notifnya
+     disinkronkan lewat JS dengan versi aslinya di banner besar
+     (brandBtn/historyJumpBtn/notifBtn/notifBadge), begitu juga nilai
+     Rp di baris bawah (miniBarIncome/miniBarExpense) disinkronkan
+     setiap kali renderSummary() jalan. -->
+<div class="mini-topbar" id="miniTopbar">
+  <div class="mtb-top-row">
+    <div class="mtb-brand" id="miniBrandBtn" role="button" tabindex="0" title="Pengaturan Aplikasi" aria-label="Buka pengaturan aplikasi">
+      <span class="brand-mark" id="miniBrandMarkIcon">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>
+      </span>
+      <span class="brand-name" id="miniBrandNameText">ZAYAPRO</span>
+    </div>
+    <div class="mtb-actions">
+      <button class="notif-btn" id="miniHistoryBtn" type="button" title="Riwayat Transaksi" aria-label="Lompat ke riwayat transaksi">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 7v5l4 2"/></svg>
+      </button>
+      <div class="notif-wrap">
+        <button class="notif-btn" id="miniNotifBtn" type="button" title="Tagihan &amp; Hutang" aria-label="Lihat tagihan dan hutang">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span class="notif-badge" id="miniNotifBadge" style="display:none;">0</span>
+        </button>
+      </div>
+      <button class="notif-btn" id="miniAddBtn" type="button" title="Tambah Transaksi" aria-label="Tambah transaksi">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>
+      </button>
+    </div>
+  </div>
+  <div class="mtb-summary-row">
+    <div class="mtb-item">
+      <span class="ic income"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 5v14M5 12l7 7 7-7"/></svg></span>
+      <div class="mtb-text">
+        <div class="k">Pemasukan bulan ini</div>
+        <div class="v" id="miniBarIncome">Rp 0</div>
+      </div>
+    </div>
+    <div class="mtb-item">
+      <span class="ic expense"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 19V5M5 12l7-7 7 7"/></svg></span>
+      <div class="mtb-text">
+        <div class="k">Pengeluaran bulan ini</div>
+        <div class="v" id="miniBarExpense">Rp 0</div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <div class="app">
 

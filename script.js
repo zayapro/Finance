@@ -1514,6 +1514,12 @@ function renderSummary() {
   animateSaldo(t.saldo);
   document.getElementById('bannerIncome').textContent = fmtRupiah(t.monthIn);
   document.getElementById('bannerExpense').textContent = fmtRupiah(t.monthOut);
+  // Sinkronkan juga nilai di mini topbar (elemen fixed terpisah,
+  // lihat #miniTopbar) supaya selalu sama dengan yang di banner besar.
+  const miniIncomeEl = document.getElementById('miniBarIncome');
+  const miniExpenseEl = document.getElementById('miniBarExpense');
+  if (miniIncomeEl) miniIncomeEl.textContent = fmtRupiah(t.monthIn);
+  if (miniExpenseEl) miniExpenseEl.textContent = fmtRupiah(t.monthOut);
   renderFlowParticles(t.monthInCount, t.monthOutCount);
   renderSaldoTargets(t);
 
@@ -6802,6 +6808,8 @@ function applyAppSettings(settings) {
   if (footerNameEl) footerNameEl.textContent = name;
   const footerCopyEl = document.getElementById('footerCopyName');
   if (footerCopyEl) footerCopyEl.textContent = name;
+  const miniNameEl = document.getElementById('miniBrandNameText');
+  if (miniNameEl) miniNameEl.textContent = name;
 
   const iconPreset = APP_ICON_PRESETS.find(i => i.key === settings.icon) || APP_ICON_PRESETS[0];
   const logoHtml = settings.logo ? `<img src="${settings.logo}" alt="Logo ${escapeHtml(name)}">` : iconPreset.svg;
@@ -6809,6 +6817,8 @@ function applyAppSettings(settings) {
   if (brandMarkEl) brandMarkEl.innerHTML = logoHtml;
   const footerMarkEl = document.getElementById('footerBrandMarkIcon');
   if (footerMarkEl) footerMarkEl.innerHTML = logoHtml;
+  const miniMarkEl = document.getElementById('miniBrandMarkIcon');
+  if (miniMarkEl) miniMarkEl.innerHTML = logoHtml;
 
   const preset = APP_THEME_PRESETS.find(p => p.key === settings.theme) || APP_THEME_PRESETS[0];
   document.documentElement.style.setProperty('--forest-glow', preset.color);
@@ -7030,6 +7040,13 @@ function openAppSettingsModal() {
 
 document.getElementById('brandBtn').addEventListener('click', openAppSettingsModal);
 document.getElementById('brandBtn').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openAppSettingsModal(); }
+});
+// Versi mini topbar dari tombol brand di atas — aksinya sama persis
+// (buka modal Pengaturan Aplikasi), cuma elemennya beda karena mini
+// topbar posisinya fixed terpisah dari banner besar.
+document.getElementById('miniBrandBtn').addEventListener('click', openAppSettingsModal);
+document.getElementById('miniBrandBtn').addEventListener('keydown', (e) => {
   if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openAppSettingsModal(); }
 });
 
@@ -7632,6 +7649,19 @@ function updateNotifBadge() {
     badge.style.display = 'none';
   }
   notifBtn.classList.toggle('has-alert', overdueCount > 0);
+  // Sinkronkan juga ke badge & status "has-alert" di tombol notif versi
+  // mini topbar (elemen fixed terpisah, lihat #miniNotifBtn).
+  const miniBadge = document.getElementById('miniNotifBadge');
+  const miniNotifBtnEl = document.getElementById('miniNotifBtn');
+  if (miniBadge) {
+    if (total > 0) {
+      miniBadge.textContent = total > 9 ? '9+' : total;
+      miniBadge.style.display = 'flex';
+    } else {
+      miniBadge.style.display = 'none';
+    }
+  }
+  if (miniNotifBtnEl) miniNotifBtnEl.classList.toggle('has-alert', overdueCount > 0);
 }
 
 // Ingatkan pengguna sekali per hari (per sesi browser) kalau ada
@@ -7815,8 +7845,21 @@ window.addEventListener('resize', () => { if (notifPanel.classList.contains('ope
 document.getElementById('historyJumpBtn').addEventListener('click', () => {
   document.getElementById('historySection').scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
+// Versi mini topbar dari tombol Riwayat, Tagihan & Hutang, dan Tambah
+// Transaksi di atas — aksinya sama persis dengan tombol aslinya di
+// banner besar, cuma elemennya beda (mini topbar posisinya fixed
+// terpisah supaya tetap bisa diakses walau banner besar sudah
+// discroll ke atas).
+document.getElementById('miniHistoryBtn').addEventListener('click', () => {
+  document.getElementById('historySection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+document.getElementById('miniAddBtn').addEventListener('click', () => openAddModal());
 
 notifBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  notifPanel.classList.contains('open') ? closeNotifPanel() : openNotifPanel();
+});
+document.getElementById('miniNotifBtn').addEventListener('click', (e) => {
   e.stopPropagation();
   notifPanel.classList.contains('open') ? closeNotifPanel() : openNotifPanel();
 });
@@ -8556,6 +8599,59 @@ function initAiChat() {
   switchAiTab('umum');
 }
 
+// ============================================================
+// FIX KEDIPAN BANNER STICKY SAAT SCROLL (khusus HP)
+// Banner (header hijau-navy di atas) punya beberapa animasi CSS yang
+// hidup terus-menerus (gradient drift, garis alir, ombak, partikel
+// naik-turun) dan posisinya position:sticky di layar HP. Saat halaman
+// discroll di HP, browser sering menghitung ulang layout tiap frame
+// (mis. karena address bar muncul/hilang) — kalau bersamaan dengan
+// animasi yang masih terus jalan, hasilnya bisa kelihatan "kedip"/
+// tearing sesaat karena browser sempat menggambar frame yang belum
+// selesai/lengkap.
+//
+// Solusinya: selama scroll BERLANGSUNG, tempelkan class "is-scrolling"
+// ke <body> supaya semua animasi dekoratif banner dipause dulu lewat
+// CSS (lihat rule body.is-scrolling di index.html) — isinya tetap utuh
+// terlihat, cuma diam sebentar, TIDAK disembunyikan. Class ini dicopot
+// lagi otomatis begitu tidak ada event scroll baru selama ~160ms
+// (dianggap scroll sudah selesai), lalu animasi lanjut seperti biasa.
+let bannerScrollFreezeTimer = null;
+function initBannerScrollFreeze() {
+  window.addEventListener('scroll', () => {
+    document.body.classList.add('is-scrolling');
+    clearTimeout(bannerScrollFreezeTimer);
+    bannerScrollFreezeTimer = setTimeout(() => {
+      document.body.classList.remove('is-scrolling');
+    }, 160);
+  }, { passive: true });
+}
+
+// ============================================================
+// MINI TOPBAR — ukur tinggi asli #miniTopbar lalu simpan ke variabel
+// CSS --mini-topbar-h supaya body bisa dikasih padding-top yang PAS
+// (lihat CSS body{padding-top:var(--mini-topbar-h,64px)} di media
+// query HP). Tinggi elemen ini bisa berubah-ubah (mis. teks Rp jadi
+// lebih panjang & wrap ke 2 baris di layar sangat sempit, atau area
+// aman/notch beda-beda tiap HP lewat env(safe-area-inset-top)), jadi
+// diukur ulang otomatis pakai ResizeObserver, bukan angka tetap.
+function initMiniTopbar() {
+  const bar = document.getElementById('miniTopbar');
+  if (!bar) return;
+  const applyHeight = () => {
+    const h = bar.offsetHeight;
+    if (h > 0) {
+      document.documentElement.style.setProperty('--mini-topbar-h', h + 'px');
+    }
+  };
+  applyHeight();
+  if ('ResizeObserver' in window) {
+    new ResizeObserver(applyHeight).observe(bar);
+  } else {
+    window.addEventListener('resize', applyHeight);
+  }
+}
+
 function init() {
   renderBannerDate();
   initBannerFx();
@@ -8571,6 +8667,8 @@ function init() {
   maybeShowDueReminder();
   initFooter();
   initAiChat();
+  initBannerScrollFreeze();
+  initMiniTopbar();
 }
 
 init();
