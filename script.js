@@ -1315,11 +1315,15 @@ function setDisplayCurrency(next) {
   btn.querySelector('.ct-idr').classList.toggle('active', next === 'IDR');
   btn.querySelector('.ct-usd').classList.toggle('active', next === 'USD');
 
+  // FIX: refreshAll() di bawah ini SUDAH memanggil renderTransactionList(),
+  // renderChart(), renderYearlyBarChart(), dan renderOverviewStats() di
+  // dalamnya — sebelumnya keempatnya dipanggil LAGI secara manual persis
+  // setelah refreshAll(), jadi tiap toggle IDR/USD, grafik & daftar
+  // transaksi digambar ulang dua kali sia-sia (buang kerja render &
+  // berpotensi bikin chart kelihatan kedip). Sekarang cukup panggil
+  // refreshAll() sekali, ditambah renderDevices()/renderNotifPanel() yang
+  // memang tidak termasuk di refreshAll().
   refreshAll();
-  renderTransactionList();
-  renderChart();
-  renderYearlyBarChart();
-  renderOverviewStats();
   renderDevices();
   if (typeof renderNotifPanel === 'function') renderNotifPanel();
 }
@@ -4459,6 +4463,17 @@ function calcIncomeSourceAllTotal() {
    JUTA+" di kartu referensi). */
 function fmtRupiahShort(n) {
   const amount = Number(n) || 0;
+  // FIX: sebelumnya fungsi ini selalu hardcode prefix "Rp" & singkatan
+  // Jt/M/Rb untuk nominal >= Rp1.000, tanpa pernah mengecek toggle
+  // displayCurrency — akibatnya badge "Dapat Rp145 Jt+..." di kartu
+  // Sumber Pendapatan TIDAK ikut berubah ke USD saat mata uang tampilan
+  // di-switch, beda sendiri dari Saldo Total/Pemasukan/Pengeluaran yang
+  // sudah benar. Singkatan Jt/M/Rb itu format khas Rupiah, jadi kalau
+  // mode USD aktif, cukup pakai fmtRupiah() biasa (sudah otomatis
+  // format ke USD lewat usdFormatter).
+  if (typeof displayCurrency !== 'undefined' && displayCurrency === 'USD' && fxBaseRate) {
+    return fmtRupiah(amount);
+  }
   const sign = amount < 0 ? '-' : '';
   const abs = Math.abs(amount);
   if (abs >= 1e9) return `${sign}Rp${(abs / 1e9).toFixed(abs % 1e9 === 0 ? 0 : 1).replace('.', ',')} M`;
