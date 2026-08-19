@@ -1655,14 +1655,30 @@ function renderSummary() {
   const t = calcTotals();
 
   animateSaldo(t.saldo);
-  document.getElementById('bannerIncome').textContent = fmtRupiah(t.monthIn);
-  document.getElementById('bannerExpense').textContent = fmtRupiah(t.monthOut);
+  // FIX "angka tidak tampil utuh di HP": baris Pemasukan/Pengeluaran
+  // bulan ini (baik di banner besar #bannerIncome/#bannerExpense
+  // maupun mini topbar #miniBarIncome/#miniBarExpense) sebelumnya
+  // memakai fmtRupiah() (format penuh, mis. "Rp1.229.970.500") di
+  // dalam kotak sempit yang dibatasi white-space:nowrap +
+  // text-overflow:ellipsis — untuk nominal besar, angkanya kepotong
+  // "Rp 1.229.970...." sebelum sempat kelihatan utuh, apalagi di HP
+  // yang lebarnya sudah dibagi dua dengan sisi Pengeluaran. Baris ini
+  // TIDAK butuh presisi sampai rupiah terakhir (itu peran Saldo Total
+  // di atasnya & kartu Riwayat Transaksi yang lebih detail) jadi aman
+  // dipendekkan pakai fmtRupiahShort() (mis. "Rp1,2 Jt") supaya selalu
+  // muat satu baris & tetap kebaca lengkap berapa pun besar nominalnya.
+  // Nilai penuh tetap disimpan lewat atribut title supaya masih bisa
+  // dicek presisinya (hover di desktop / tap-and-hold di sebagian HP).
+  const bannerIncomeEl = document.getElementById('bannerIncome');
+  const bannerExpenseEl = document.getElementById('bannerExpense');
+  if (bannerIncomeEl) { bannerIncomeEl.textContent = fmtRupiahShort(t.monthIn); bannerIncomeEl.title = fmtRupiah(t.monthIn); }
+  if (bannerExpenseEl) { bannerExpenseEl.textContent = fmtRupiahShort(t.monthOut); bannerExpenseEl.title = fmtRupiah(t.monthOut); }
   // Sinkronkan juga nilai di mini topbar (elemen fixed terpisah,
   // lihat #miniTopbar) supaya selalu sama dengan yang di banner besar.
   const miniIncomeEl = document.getElementById('miniBarIncome');
   const miniExpenseEl = document.getElementById('miniBarExpense');
-  if (miniIncomeEl) miniIncomeEl.textContent = fmtRupiah(t.monthIn);
-  if (miniExpenseEl) miniExpenseEl.textContent = fmtRupiah(t.monthOut);
+  if (miniIncomeEl) { miniIncomeEl.textContent = fmtRupiahShort(t.monthIn); miniIncomeEl.title = fmtRupiah(t.monthIn); }
+  if (miniExpenseEl) { miniExpenseEl.textContent = fmtRupiahShort(t.monthOut); miniExpenseEl.title = fmtRupiah(t.monthOut); }
   renderFlowParticles(t.monthInCount, t.monthOutCount);
   renderSaldoTargets(t);
 

@@ -300,8 +300,8 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
   .isc-bubble-wrap::after{animation:none;opacity:0;}
   /* Ombak dekoratif di kartu "Uang Masuk & Keluar" & footer — cukup
      dibekukan di posisi awal (masih kelihatan sebagai ombak diam,
-     cuma tidak bergeser terus). */
-  .wave-wrap svg, .footer-wave svg{animation:none;}
+     cuma tidak bergeser/mengombak terus). */
+  .wave-wrap, .wave-wrap .wave-layer, .footer-wave svg{animation:none;}
   /* Kilau "peek" tab kartu Saldo Bank & E-Wallet — hiasan penarik
      perhatian saja, aman dibekukan. */
   .fc-peek-handle .fc-peek-chev{animation:none;}
@@ -700,9 +700,37 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
 @keyframes fadeRow{from{opacity:0;}to{opacity:1;}}
 tr.fade-up{animation:fadeRow .35s ease both;}
 
-.wave-wrap{position:absolute;left:0;right:0;bottom:-4px;height:64px;z-index:2;overflow:hidden;line-height:0;}
-.wave-wrap svg{width:200%;height:100%;animation:waveScroll 13s linear infinite;}
+.wave-wrap{
+  position:absolute;left:0;right:0;bottom:-4px;height:64px;z-index:2;
+  overflow:hidden;line-height:0;
+  /* Sentuhan "napas" halus: seluruh lapisan ombak naik-turun tipis
+     (3px) mengikuti kurva ease-in-out (bukan cuma bergeser
+     horizontal datar) supaya kesan air/ombaknya terasa lebih hidup,
+     bukan sekadar tekstur bergeser. Dianimasikan di WRAP (bukan di
+     svg-nya langsung) supaya tidak bentrok dengan animasi scroll
+     horizontal tiap lapisan di bawah — dua transform terpisah di dua
+     elemen (induk & anak) aman digabung browser. */
+  animation:waveBob 6s ease-in-out infinite;
+}
+.wave-wrap .wave-layer{
+  position:absolute;left:0;bottom:0;width:200%;height:100%;
+  will-change:transform;
+}
+/* Dua lapisan ombak dengan kecepatan & ARAH BERLAWANAN (bukan cuma
+   satu lapisan datar seperti sebelumnya) supaya ada kesan
+   kedalaman/parallax khas air laut bertumpuk — lapisan belakang lebih
+   pelan & samar (jauh), lapisan depan lebih cepat, lebih terang, dan
+   gelombangnya lebih besar (dekat). Animasi tetap LINEAR (bukan
+   ease) supaya perulangan tiling-nya (translateX 0 -> -50%, lebar
+   svg 200%) mulus tanpa jeda/sentakan di titik loop. */
+.wave-wrap .wave-back{animation:waveScroll 22s linear infinite;}
+.wave-wrap .wave-front{animation:waveScrollRev 13s linear infinite;}
 @keyframes waveScroll{from{transform:translateX(0);}to{transform:translateX(-50%);}}
+@keyframes waveScrollRev{from{transform:translateX(-50%);}to{transform:translateX(0);}}
+@keyframes waveBob{0%,100%{transform:translateY(0);}50%{transform:translateY(-3px);}}
+@media (prefers-reduced-motion:reduce){
+  .wave-wrap, .wave-wrap .wave-layer{animation:none;}
+}
 
 .saldo-block{position:relative;z-index:3;margin-top:22px;}
 /* ---- Efek kartu Uang Masuk & Keluar nyelip di BELAKANG banner ----
@@ -758,8 +786,32 @@ tr.fade-up{animation:fadeRow .35s ease both;}
    sementara strip latar belakangnya tetap penuh menyentuh kedua sisi
    kartu seperti sebelumnya. */
 .fc-peek-row{
-  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  display:flex;flex-wrap:nowrap;align-items:center;justify-content:space-between;gap:12px;
   max-width:640px;margin:0 auto;
+}
+/* ---- FIX "tampilan berantakan di HP": kartu "Uang Masuk & Keluar"
+   normalnya nyelip di belakang banner dan HANYA tab
+   ".fc-peek-handle" yang boleh terlihat (lihat applyFlowDealTuckPosition
+   di script.js, yang menggeser .flow-deal-card lewat transform supaya
+   isinya — termasuk timer & tombol "Lihat Semua" tiap kartu tier —
+   tersembunyi di belakang jendela overflow:hidden milik
+   .banner-flow-wrap). Perhitungan itu bergantung pada offsetHeight yang
+   diukur lewat JS setelah halaman selesai layout; kalau sempat dipanggil
+   sebelum ukuran final siap (mis. font/ikon yang belum termuat, atau
+   render pertama sebelum JS jalan), isi kartu bisa sempat "bocor"
+   menyembul di ATAS tab peek — persis kesan берantakan yang dikeluhkan
+   (tombol "Lihat Semua" nongol sendirian di atas, terpisah dari
+   ringkasan di bawahnya). Baris ini jadi jaring pengaman independen dari
+   perhitungan pixel manapun: selama kartu belum ".fc-settled" (belum
+   diklik/dibuka), isi atas & badan kartu SELALU disembunyikan total
+   (opacity+visibility+pointer-events), apapun hasil transform JS-nya —
+   jadi cuma tab ringkasan di bawah yang mungkin kelihatan, tidak pernah
+   ada potongan konten lain yang nyempil. */
+.banner-flow-wrap:not(.fc-settled) .flow-deal-top,
+.banner-flow-wrap:not(.fc-settled) .flow-deal-body{
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
 }
 .fc-peek-handle:hover{background:linear-gradient(180deg, var(--card), color-mix(in srgb, var(--fc-accent, #0D9488) 6%, var(--paper)));}
 .fc-peek-handle::before{
@@ -853,22 +905,52 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   background:rgba(244,247,243,0.10);
   border:1px solid rgba(244,247,243,0.18);
   cursor:pointer;
+  /* FIX "ada bayangan kotak pas diklik di HP": browser mobile secara
+     default menggambar highlight sentuh (tap highlight) berbentuk
+     KOTAK/PERSEGI di atas elemen yang diklik, tanpa mengikuti
+     border-radius-nya — di tombol pill bulat seperti ini kelihatan
+     seperti "kotak" nyempil aneh menutupi bentuk bulatnya sesaat
+     setelah disentuh. -webkit-tap-highlight-color:transparent
+     mematikan highlight bawaan itu, dan touch-action:manipulation
+     menghilangkan jeda ~300ms sebelum tap terdaftar (bikin toggle
+     terasa lebih responsif/instan di HP). */
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+  -webkit-user-select:none;user-select:none;
+  transition:background .18s ease, border-color .18s ease, transform .16s cubic-bezier(.22,.9,.3,1), box-shadow .18s ease;
+}
+.currency-toggle:hover{background:rgba(244,247,243,0.15);border-color:rgba(244,247,243,0.26);}
+/* Sentuhan "smooth" saat ditekan: sedikit mengecil lalu balik pas
+   dilepas (transition di atas yang menganimasikannya), jadi ada umpan
+   balik taktil yang halus tanpa perlu kotak/outline bawaan browser. */
+.currency-toggle:active{transform:scale(0.95);}
+/* Ganti outline kotak default (lihat aturan global
+   "button:focus-visible" lain di file ini) dengan cincin fokus yang
+   ikut melengkung bulat mengikuti bentuk pill — tetap ada penanda
+   fokus untuk aksesibilitas (navigasi keyboard), tapi tidak lagi
+   berbentuk kotak. */
+.currency-toggle:focus-visible{
+  outline:none;
+  box-shadow:0 0 0 3px rgba(110,231,183,0.45);
 }
 .currency-toggle .ct-knob{
   position:absolute;top:3px;left:3px;
   width:38px;height:20px;border-radius:999px;
   background:linear-gradient(140deg,var(--brass-light),var(--brass));
   box-shadow:0 3px 8px rgba(0,0,0,0.25);
-  transition:transform .24s cubic-bezier(.22,.9,.3,1);
+  transition:transform .32s cubic-bezier(.34,1.56,.64,1);
 }
 .currency-toggle.usd .ct-knob{transform:translateX(38px);}
 .currency-toggle .ct-opt{
   position:relative;z-index:1;flex:1;text-align:center;
   font-size:10px;font-weight:800;letter-spacing:0.03em;
   color:rgba(244,247,243,0.55);
-  transition:color .2s ease;
+  transition:color .28s ease;
 }
 .currency-toggle .ct-opt.active{color:var(--forest-deep);}
+@media (prefers-reduced-motion:reduce){
+  .currency-toggle,.currency-toggle .ct-knob,.currency-toggle .ct-opt{transition:none;}
+}
 .saldo-row{display:flex;align-items:center;gap:10px;margin-top:4px;min-width:0;}
 .saldo-value{
   font-family:'IBM Plex Mono',monospace;
@@ -5742,10 +5824,14 @@ body.is-scrolling *{
       <div class="saldo-targets" id="saldoTargets"></div>
     </div>
 
-    <div class="wave-wrap">
-      <svg viewBox="0 0 1600 80" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <div class="wave-wrap" aria-hidden="true">
+      <svg class="wave-layer wave-back" viewBox="0 0 1600 80" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M0 40 C 100 10, 200 70, 300 40 S 500 10, 600 40 S 800 70, 900 40 S 1100 10, 1200 40 S 1400 70, 1500 40 L1600 80 L0 80 Z" fill="rgba(244,247,243,0.05)"/>
         <path d="M800 40 C 900 10, 1000 70, 1100 40 S 1300 10, 1400 40 S 1600 70, 1700 40 S 1900 10, 2000 40 S 2200 70, 2300 40 L2400 80 L800 80 Z" fill="rgba(244,247,243,0.05)"/>
+      </svg>
+      <svg class="wave-layer wave-front" viewBox="0 0 1600 80" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M0 48 C 100 20, 200 76, 300 48 S 500 20, 600 48 S 800 76, 900 48 S 1100 20, 1200 48 S 1400 76, 1500 48 L1600 80 L0 80 Z" fill="rgba(244,247,243,0.09)"/>
+        <path d="M800 48 C 900 20, 1000 76, 1100 48 S 1300 20, 1400 48 S 1600 76, 1700 48 S 1900 20, 2000 48 S 2200 76, 2300 48 L2400 80 L800 80 Z" fill="rgba(244,247,243,0.09)"/>
       </svg>
     </div>
   </header>
