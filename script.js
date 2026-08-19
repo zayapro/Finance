@@ -1544,12 +1544,25 @@ function applyFlowDealTuckPosition() {
   // handle yang pernah terlihat — selalu rapi & pas mepet ke banner,
   // berapa pun tinggi kartu atau banner, dan otomatis responsive di
   // semua ukuran layar karena dihitung ulang dari ukuran asli elemen.
-  // TUCK_OVERLAP harus sama dengan margin-top negatif pada
+  // TUCK_OVERLAP harus sama persis dengan margin-top negatif pada
   // .banner-flow-wrap (CSS) — jumlah wrap yang sengaja disembunyikan
   // di BELAKANG banner (bukan cuma ditempel pas di bawahnya) supaya
   // tab handle terlihat benar-benar "nyelip" keluar dari balik banner,
   // bukan sekadar nempel dengan garis sambungan yang kelihatan.
-  const TUCK_OVERLAP = 22;
+  //
+  // FIX "lengkungan tidak rapi / ada celah persegi" di beberapa
+  // perangkat: sebelumnya nilai ini di-hardcode terpisah (22) dari
+  // margin-top CSS-nya (-48px) — begitu salah satu diubah (mis. lewat
+  // breakpoint responsif) tapi yang lain lupa disesuaikan, keduanya
+  // jadi TIDAK SINKRON. Selisihnya muncul sebagai celah kotak/persegi
+  // yang kelihatan di antara lengkungan bawah banner dan ujung atas
+  // kartu — persis kasus yang dilaporkan. Sekarang nilainya dibaca
+  // LANGSUNG dari margin-top CSS yang sebenarnya berlaku saat itu
+  // (getComputedStyle), jadi keduanya mustahil tidak sinkron lagi, di
+  // perangkat/breakpoint manapun, bahkan kalau CSS-nya diubah lagi
+  // nanti.
+  const computedMarginTop = parseFloat(getComputedStyle(wrap).marginTop) || 0;
+  const TUCK_OVERLAP = Math.abs(computedMarginTop);
   const cardHeight = card.offsetHeight;
   const handleHeight = handle.offsetHeight;
   const visibleHeight = wrap.classList.contains('fc-settled') ? cardHeight : handleHeight;

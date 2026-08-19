@@ -2859,16 +2859,36 @@ body.density-compact .income-cards-group{gap:10px;}
   border-radius:10px;pointer-events:none;
 }
 .bar-chart-legend{display:flex;gap:10px;margin-top:14px;justify-content:center;flex-wrap:wrap;}
+/* FIX "angka Masuk/Keluar terpotong di tepi layar": sebelumnya perilaku
+   "aman menyusut" (flex:1 1 0 + min-width:0 + boleh melipat ke baris
+   ke-2) cuma dipasang di breakpoint @media(max-width:600px). Masalahnya,
+   .bar-legend-pill adalah flex item dari .bar-chart-legend (display:flex)
+   yang SECARA DEFAULT sudah punya flex-shrink:1 — jadi begitu pun TANPA
+   breakpoint itu, box pill-nya tetap bisa ikut menyusut kalau ruang
+   kurang (mis. di tablet/layar sedang 600–1024px, atau webview sempit
+   manapun yang lebarnya di ATAS 600px). Bedanya: teks nominal di
+   dalamnya masih white-space:nowrap secara default, yang TIDAK ikut
+   menyusut — akibatnya box pill mengecil tapi tulisan angkanya
+   (mis. "Rp 10.125.504.000") tetap selebar aslinya dan menyembul keluar
+   dari pill sampai terpotong tepi layar, persis kasus yang dilaporkan.
+   Sekarang aturan "aman menyusut" ini dipasang di sini (BUKAN di dalam
+   media query lagi) supaya berlaku di SEMUA lebar layar tanpa jeda —
+   pill selalu berbagi rata lebar baris & angka boleh melipat ke baris
+   ke-2 di dalam pill-nya sendiri kalau memang kurang muat, bukan
+   terpotong/menyembul, pada perangkat apa pun. */
 .bar-legend-pill{
-  display:flex;align-items:center;gap:8px;
+  display:flex;align-items:center;gap:8px;flex:1 1 0;min-width:0;
   padding:8px 14px;border-radius:12px;border:1px solid var(--line);background:var(--paper);
   font-size:12.5px;font-weight:700;color:var(--ink-soft);
   transition:transform .15s ease, box-shadow .15s ease;
 }
 .bar-legend-pill:hover{transform:translateY(-1px);box-shadow:var(--shadow-sm);}
 .bar-legend-pill .legend-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
-.bar-legend-pill .bl-label{color:var(--ink);margin-right:1px;}
-.bar-legend-pill .bl-amount{font-family:'IBM Plex Mono',monospace;font-weight:700;white-space:nowrap;}
+.bar-legend-pill .bl-label{color:var(--ink);margin-right:1px;flex-shrink:0;}
+.bar-legend-pill .bl-amount{
+  font-family:'IBM Plex Mono',monospace;font-weight:700;
+  white-space:normal;overflow-wrap:break-word;min-width:0;
+}
 .bar-legend-pill.in{border-color:rgba(5,150,105,0.22);background:rgba(5,150,105,0.06);}
 .bar-legend-pill.in .bl-amount{color:#047857;}
 .bar-legend-pill.out{border-color:rgba(225,29,72,0.2);background:rgba(225,29,72,0.06);}
@@ -2888,23 +2908,16 @@ body.density-compact .income-cards-group{gap:10px;}
 @media (max-width:600px){
   .charts-grid{gap:14px;margin-bottom:16px;}
   .bar-chart-wrap{height:190px;}
+  /* flex-wrap:nowrap DIPERTAHANKAN di sini secara sengaja (bukan bagian
+     dari fix overflow di atas): supaya di layar HP kedua pill SELALU
+     tetap sejajar 1 baris (bukan numplok ke bawah jadi 2 baris
+     terpisah) — pilihan gaya khusus mobile, ukurannya sendiri sudah
+     aman berkat aturan dasar .bar-legend-pill (berlaku di semua lebar
+     layar, lihat komentar di atas). Padding/font di bawah ini murni
+     kosmetik: memperkecil pill supaya lebih ringkas di layar sempit. */
   .bar-chart-legend{gap:8px;margin-top:12px;flex-wrap:nowrap;}
-  /* FIX "pill Masuk/Keluar numplok ke bawah di HP": sebelumnya kedua
-     pill cuma flex biasa (lebar mengikuti isi teks), jadi begitu
-     nominalnya panjang (mis. "Rp 10.125.504.000") totalnya kelebar
-     dan gagal muat berdampingan -> jatuh ke baris terpisah lewat
-     flex-wrap. Sekarang kedua pill dipaksa berbagi rata lebar baris
-     (flex:1 1 0 + min-width:0) supaya SELALU sejajar 1 baris, dan
-     angka nominal boleh melipat ke baris ke-2 di dalam pill-nya
-     sendiri (bukan overflow / terpotong) kalau memang masih kurang
-     muat di layar yang sangat sempit. ---- */
-  .bar-legend-pill{
-    flex:1 1 0;min-width:0;padding:7px 10px;font-size:11.5px;gap:6px;
-    justify-content:center;
-  }
-  .bar-legend-pill .bl-amount{
-    white-space:normal;overflow-wrap:break-word;text-align:center;
-  }
+  .bar-legend-pill{padding:7px 10px;font-size:11.5px;gap:6px;justify-content:center;}
+  .bar-legend-pill .bl-amount{text-align:center;}
 }
 /* ---- Breakpoint: HP kecil ---- */
 @media (max-width:380px){
