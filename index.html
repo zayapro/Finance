@@ -878,7 +878,16 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   transition:background .15s ease, color .15s ease;
 }
 .saldo-toggle:hover{background:rgba(244,247,243,0.18);color:#fff;}
-.saldo-sub{display:flex;gap:22px;margin-top:16px;flex-wrap:wrap;justify-content:space-between;position:relative;z-index:3;}
+/* Baris Pemasukan/Pengeluaran bulan ini: SENGAJA justify-content:flex-start
+   (bukan space-between) supaya di layar lebar (desktop/tablet) kedua item
+   ini tetap NEMPEL rapat & mengelompok tepat di bawah "Saldo Total",
+   bukan malah ketarik melebar ke ujung kiri-kanan banner (space-between
+   pada banner selebar 1180px bikin dua item ini kelihatan terpisah jauh
+   dari angka saldo di atasnya, seperti melayang sendiri-sendiri di
+   pojok). Di HP (≤600px) tetap dikembalikan ke space-between lewat
+   media query di bawah, karena di lebar sempit itu justru bikin kedua
+   item mengisi rata lebar layar dengan rapi. */
+.saldo-sub{display:flex;gap:22px;margin-top:16px;flex-wrap:wrap;justify-content:flex-start;position:relative;z-index:3;}
 .saldo-sub-item{display:flex;align-items:center;gap:8px;min-width:0;}
 @media (max-width:600px){
   .saldo-sub{gap:10px;justify-content:space-between;flex-wrap:nowrap;}
@@ -3540,36 +3549,47 @@ input[type="number"].year-input{width:110px;font-family:'IBM Plex Mono',monospac
     padding:10px 4px;
     font-size:12.5px;
   }
-  .controls-row{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:10px;
-    margin:14px 0 16px;
-  }
-  /* Kolom cari (baris 1, penuh lebar) & tombol Ekspor (baris terakhir,
-     penuh lebar) masing-masing menempati 2 kolom sekaligus; tipe &
-     kategori berdampingan pas di tengah (baris 2). Urutan elemen di
-     HTML persis sudah: cari, tipe, kategori, ekspor — jadi cukup diatur
-     lewat grid-column, tidak perlu ubah markup. */
-  .controls-row .field-inline{grid-column:1 / -1;min-width:0;}
-  .controls-row #typeFilter{grid-column:1;width:100%;min-width:0;}
-  .controls-row #categoryFilter{grid-column:2;width:100%;min-width:0;}
-  .controls-row .export-menu-wrap{grid-column:1 / -1;}
-  .controls-row .export-menu-wrap .btn{width:100%;justify-content:center;}
-  .controls-row .export-menu{left:0;right:0;min-width:0;}
-  .controls-row select{padding:9px 8px;}
 }
-/* Di layar HP yang lebih sempit lagi, dua dropdown (Tipe & Kategori)
-   berdampingan jadi terlalu sempit untuk menampung teksnya (mis.
-   "Semua Kategori" ketiban panah, lihat foto yang dilaporkan) --
-   jadi di bawah lebar ini keduanya ditumpuk 1 kolom penuh saja,
-   masing-masing di barisnya sendiri, biar teksnya tidak pernah
-   kepotong/ketiban panah lagi. */
-@media (max-width:380px){
-  .controls-row #typeFilter,
-  .controls-row #categoryFilter{
-    grid-column:1 / -1;
+/* ---- Baris filter (cari, tipe, kategori, ekspor) di HP & tablet:
+   SATU BARIS ke samping (scroll horizontal), bukan ditumpuk ke bawah.
+   Sebelumnya di bawah 600px keempatnya dipaksa ke grid 2 kolom (jadi
+   3 baris bertumpuk), dan di bawah 380px malah jadi 4 baris penuh —
+   makan banyak ruang vertikal. Sekarang keempatnya sejajar dalam satu
+   baris yang bisa digeser (swipe) ke samping kalau memang tidak muat,
+   dengan lebar tiap field dijaga tetap nyaman dibaca (tidak
+   menyempit acak) & scrollbar-nya disembunyikan biar rapi. ---- */
+@media (max-width:900px){
+  .controls-row{
+    display:flex;
+    flex-wrap:nowrap;
+    align-items:center;
+    gap:8px;
+    margin:14px 0 16px;
+    overflow-x:auto;
+    overflow-y:hidden;
+    -webkit-overflow-scrolling:touch;
+    scroll-snap-type:x proximity;
+    scrollbar-width:none;
+    -ms-overflow-style:none;
+    padding-bottom:2px;
   }
+  .controls-row::-webkit-scrollbar{display:none;}
+  .controls-row .field-inline{
+    flex:0 0 auto;width:min(58vw,240px);min-width:170px;scroll-snap-align:start;
+  }
+  .controls-row #typeFilter{
+    flex:0 0 auto;width:auto;min-width:112px;scroll-snap-align:start;
+  }
+  .controls-row #categoryFilter{
+    flex:0 0 auto;width:auto;min-width:130px;scroll-snap-align:start;
+  }
+  .controls-row .export-menu-wrap{flex:0 0 auto;scroll-snap-align:start;}
+  .controls-row .export-menu-wrap .btn{white-space:nowrap;}
+  .controls-row select{padding:9px 26px 9px 10px;}
+  .controls-row .export-menu{left:auto;right:0;min-width:210px;}
+}
+@media (max-width:600px){
+  .controls-row .field-inline{width:min(64vw,220px);min-width:150px;}
 }
 .export-menu{
   position:absolute; top:calc(100% + 8px); right:0; min-width:210px;
