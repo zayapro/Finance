@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>ZAYAPRO — Kelola Uang Masuk &amp; Keluar</title>
 <meta name="description" id="appMetaDescription" content="Kelola uang masuk dan keluar, catat transaksi, tagihan, dan hutang dengan mudah bersama ZAYAPRO.">
 <meta name="keywords" id="appMetaKeywords" content="">
@@ -66,6 +66,19 @@
 }
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;}
+html{
+  /* Warna dasar html (bukan body) SENGAJA disamakan dengan warna
+     banner (--forest-deep), bukan --paper. Dengan viewport-fit=cover
+     di atas, halaman ini digambar edge-to-edge sampai belakang
+     notch/status bar HP (kalau situs dibuka fullscreen / lewat "Add
+     to Home Screen"). Karena banner ada di paling atas halaman, area
+     paling atas layar itu SEHARUSNYA gelap senada banner, bukan putih
+     — kalau html tetap default (atau warna --paper/terang), area di
+     belakang notch akan sempat kelihatan putih/nyelip sebelum banner
+     sempat digambar.
+  */
+  background:var(--forest-deep);
+}
 body{
   background:var(--paper);
   color:var(--ink);
@@ -123,23 +136,28 @@ a{color:inherit;}
   padding:20px 28px 34px;
   margin:0 -24px 22px;
   color:#F4F7FB;
-  /* PENTING (fix kedipan/tearing saat banner sticky di HP): paksa
-     banner punya layer kompositing GPU sendiri yang stabil, terpisah
-     dari konten lain, supaya browser tidak perlu menggambar ulang
-     (repaint) seluruh banner dari nol tiap frame scroll — cukup
-     memindah layer yang sudah jadi. translateZ(0) + will-change
-     menghasilkan layer itu; backface-visibility & isolation mencegah
-     layer ini "bocor"/tertimpa konten di sekitarnya saat animasi
-     jalan bersamaan dengan sticky. Dulu ini hanya dipasang khusus di
-     breakpoint HP kecil (<=600px); sekarang dipasang di sini supaya
-     berlaku konsisten untuk SEMUA ukuran layar HP/tablet yang membuat
-     banner ini sticky, tidak cuma satu breakpoint. */
-  transform:translateZ(0);
-  -webkit-transform:translateZ(0);
-  will-change:transform;
-  backface-visibility:hidden;
-  -webkit-backface-visibility:hidden;
-  isolation:isolate;
+  /* Warna dasar solid (fallback) DI BAWAH lapisan gradient di atas.
+     Kalau lapisan gradient (background-image) sesaat gagal digambar
+     ulang tepat waktu oleh browser — misalnya persis saat teks di
+     dalam banner (Saldo Total/Pemasukan/Pengeluaran) baru saja
+     di-update lewat JS setelah refresh — background-color solid ini
+     tetap tampil sebagai dasarnya. Tanpa ini, area yang belum sempat
+     digambar ulang akan menampakkan warna halaman (--paper, terang)
+     alih-alih gelap, kelihatan seperti banner "sobek"/pecah sesaat. */
+  background-color:var(--forest-deep);
+  /* CATATAN: dulu di sini ada transform:translateZ(0) + will-change +
+     backface-visibility + isolation untuk memaksa banner ini punya
+     layer kompositing GPU sendiri — perlu waktu itu karena banner
+     masih position:sticky. Sekarang banner SUDAH TIDAK sticky lagi
+     (scroll biasa; lihat .mini-topbar untuk elemen yang sticky/fixed
+     di HP), jadi paksaan layer itu sudah tidak relevan — dan ternyata
+     jadi salah satu penyebab banner sempat "sobek/pecah" sesaat saat
+     refresh: setiap kali teks di dalam banner di-update oleh JS,
+     browser harus me-raster ULANG SELURUH layer terisolasi itu
+     (termasuk semua tombol di dalamnya), dan di HP yang GPU/CPU-nya
+     pas-pasan kadang gagal selesai dalam satu frame. Makanya properti
+     itu dilepas di sini.
+  */
 }
 .banner::before{
   content:'';
@@ -399,7 +417,7 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
 .notif-tab-btn[data-notiftab="hutang"].active .cnt{background:rgba(124,58,237,0.16);color:#6D28D9;}
 
 /* ---- Daftar & kartu item ---- */
-.notif-list{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;gap:9px;padding:2px;margin:-2px;}
+.notif-list{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;display:flex;flex-direction:column;gap:9px;padding:2px;margin:-2px;}
 .notif-list::-webkit-scrollbar{width:5px;}
 .notif-list::-webkit-scrollbar-thumb{background:var(--line);border-radius:99px;}
 .notif-item{
@@ -3319,6 +3337,49 @@ input[type="number"].year-input{width:110px;font-family:'IBM Plex Mono',monospac
 
 /* ============ EXPORT MENU (dropdown pilih format Excel/PDF) ============ */
 .export-menu-wrap{position:relative;display:inline-flex;}
+
+/* ---- Rapikan tab (Semua/Mingguan/Bulanan/Tahunan) & baris filter
+   (cari, tipe, kategori, ekspor) khusus layar HP. Sebelumnya keduanya
+   cuma flex-wrap biasa: tab terakhir ("Tahunan") sering jatuh sendirian
+   ke baris baru menyisakan banyak ruang kosong, dan lebar tiap field di
+   baris filter jadi tidak rata/acak tergantung isi teksnya. Sekarang
+   dirapikan jadi grid yang konsisten & penuh lebar layar. ---- */
+@media (max-width:600px){
+  .tabs{
+    display:grid;
+    grid-template-columns:repeat(2, 1fr);
+    gap:6px;
+    width:100%;
+    max-width:100%;
+  }
+  .tab-btn{
+    width:100%;
+    text-align:center;
+    padding:10px 8px;
+  }
+  /* Tab "Lihat Semua" Tagihan & Hutang isinya cuma 3 (Semua/Tagihan/
+     Hutang, bukan 4 seperti tab Riwayat Transaksi), jadi lebih rapi
+     kalau tetap 1 baris 3 kolom rata daripada ikut grid 2 kolom di
+     atas (yang bikin item ke-3 sendirian di baris baru). */
+  #bdAllTabs{grid-template-columns:repeat(3, 1fr);}
+  .controls-row{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin:14px 0 16px;
+  }
+  /* Kolom cari (baris 1, penuh lebar) & tombol Ekspor (baris terakhir,
+     penuh lebar) masing-masing menempati 2 kolom sekaligus; tipe &
+     kategori berdampingan pas di tengah (baris 2). Urutan elemen di
+     HTML persis sudah: cari, tipe, kategori, ekspor — jadi cukup diatur
+     lewat grid-column, tidak perlu ubah markup. */
+  .controls-row .field-inline{grid-column:1 / -1;min-width:0;}
+  .controls-row #typeFilter{grid-column:1;width:100%;min-width:0;}
+  .controls-row #categoryFilter{grid-column:2;width:100%;min-width:0;}
+  .controls-row .export-menu-wrap{grid-column:1 / -1;}
+  .controls-row .export-menu-wrap .btn{width:100%;justify-content:center;}
+  .controls-row .export-menu{left:0;right:0;min-width:0;}
+}
 .export-menu{
   position:absolute; top:calc(100% + 8px); right:0; min-width:210px;
   background:var(--card); border:1px solid var(--line); border-radius:14px;
@@ -3578,6 +3639,10 @@ tbody tr.date-group-row:first-child td{border-top:none;}
   padding:24px;box-shadow:var(--shadow-md);
   transform:translateY(14px) scale(0.98);transition:transform .18s ease;
   max-height:86vh;overflow-y:auto;
+  /* Cegah scroll di dalam modal "nembus"/lanjut ke halaman di
+     belakangnya begitu mentok atas/bawah (efek rubber-band nyasar ke
+     background) — terutama kerasa di iPhone Safari. */
+  overscroll-behavior:contain;
 }
 .modal-overlay.open .modal{transform:translateY(0) scale(1);}
 .modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
@@ -3747,6 +3812,13 @@ tbody tr.date-group-row:first-child td{border-top:none;}
   .tx-modal::before{animation:none;}
 }
 @media (max-width:600px){
+  /* Sama seperti banner: animasi background-position yang jalan terus
+     (garis sheen di atas modal) mahal untuk di-repaint terus-menerus,
+     apalagi selagi user mengetik nominal (keyboard HP terbuka = browser
+     sudah sibuk reflow). Dimatikan khusus di layar HP supaya popup
+     Tambah Transaksi tetap terasa ringan/smooth; warna garisnya tetap
+     kelihatan (statis di posisi awal), cuma tidak bergeser-geser. */
+  .tx-modal::before{animation:none;}
   .tx-modal{padding:0 20px 22px;border-radius:22px;}
   .tx-modal .modal-head{padding:20px 0 14px;}
   .tx-modal #txAmount{font-size:25px;}
@@ -3768,7 +3840,7 @@ tbody tr.date-group-row:first-child td{border-top:none;}
   z-index:var(--z-page);opacity:0;pointer-events:none;
   transform:translateY(16px);
   transition:opacity .2s ease, transform .2s ease;
-  overflow-y:auto;
+  overflow-y:auto;overscroll-behavior:contain;
 }
 .detail-page-overlay.open{opacity:1;pointer-events:auto;transform:translateY(0);}
 .detail-page{max-width:1180px;margin:0 auto;padding:22px 24px 40px;}
@@ -4710,7 +4782,17 @@ tbody tr.date-group-row:first-child td{border-top:none;}
 }
 @media (max-width:600px){
   .app{padding:0 14px;}
-  .banner{margin:0 -14px 18px;border-radius:0 0 20px 20px;padding:16px 18px 30px;}
+  .banner{
+    margin:0 -14px 18px;border-radius:0 0 20px 20px;
+    /* padding-top dasar (16px) + tambahan env(safe-area-inset-top)
+       supaya kalau situs ini dibuka fullscreen/PWA (viewport-fit=cover
+       di atas bikin konten bisa nembus sampai belakang notch), logo &
+       tombol di baris atas banner tidak ketutup notch/status bar —
+       tapi WARNA banner (background-color forest-deep di atas) tetap
+       mengisi sampai paling atas layar. Di tab browser biasa nilai
+       env() ini 0, jadi tidak berpengaruh sama sekali. */
+    padding:calc(16px + env(safe-area-inset-top, 0px)) 18px 30px;
+  }
   /* PENTING (ganti pendekatan lama): banner BESAR ini (logo + Saldo
      Total) SEKARANG dibiarkan scroll biasa mengikuti halaman di HP,
      TIDAK lagi position:sticky. Yang tetap "menempel" permanen di
@@ -4800,9 +4882,50 @@ body.is-scrolling .particle{
     top:0;left:0;right:0;
     z-index:var(--z-mini-topbar);
     padding:calc(10px + env(safe-area-inset-top, 0px)) 16px 12px;
-    background:var(--forest-deep);
+    /* Disamakan dengan warna banner besar (radial highlight biru/hijau
+       di atas gradasi forest-deep -> forest-mid), tapi TANPA animasi
+       bergerak (background-position statis) supaya mini-topbar yang
+       fixed & sering digambar ulang ini tetap ringan dan tidak
+       menambah risiko kedip — cuma warnanya saja yang dibuat senada
+       dengan banner, bukan animasinya. */
+    background:
+      radial-gradient(circle at 15% 0%, rgba(37,99,235,0.32), transparent 55%),
+      radial-gradient(circle at 90% 100%, rgba(5,150,105,0.20), transparent 60%),
+      linear-gradient(120deg, var(--forest-deep), var(--forest-mid));
+    background-color:var(--forest-deep);
     box-shadow:0 8px 18px -6px rgba(11,18,32,0.45);
     color:#F4F7FB;
+    /* PENTING (fix "dobel" dgn banner besar): dulu mini-topbar ini
+       LANGSUNG tampil dari awal halaman dimuat, jadi begitu buka
+       app, dia numpuk keliatan dobel sama ringkasan Pemasukan/
+       Pengeluaran yang juga ada di banner besar tepat di bawahnya.
+       Sekarang mini-topbar disembunyikan dulu (digeser ke atas layar
+       via translateY, BUKAN display:none — supaya tetap bisa
+       dianimasikan mulus) dan baru digeser turun/muncul (lihat class
+       .mtb-active) SETELAH banner besar discroll keluar dari layar.
+       Class .mtb-active ditambahkan otomatis lewat pengecekan posisi
+       scroll (lihat initMiniTopbar di script.js) begitu <header class="banner">
+       sudah tidak kelihatan lagi. */
+    transform:translateY(-100%);
+    /* visibility ditambahkan supaya saat mini-topbar tersembunyi di
+       luar layar, tombol-tombol di dalamnya (Riwayat/Notif/Tambah)
+       benar-benar tidak bisa "kena" tab keyboard atau kebaca screen
+       reader (pointer-events:none saja tidak cukup untuk itu -- masih
+       bisa difokus lewat keyboard walau tak kelihatan). Delay 0s
+       linear .28s pada visibility, dikombinasi dengan transition
+       transform di atas: waktu MUNCUL (.mtb-active ditambah) langsung
+       jadi visible tanpa jeda; waktu HILANG (.mtb-active dicopot) baru
+       jadi hidden PAS animasi geser ke atas selesai (bukan hilang
+       tiba-tiba di tengah animasi). */
+    visibility:hidden;
+    transition:transform .28s cubic-bezier(.4,0,.2,1), visibility 0s linear .28s;
+    pointer-events:none;
+  }
+  .mini-topbar.mtb-active{
+    transform:translateY(0);
+    visibility:visible;
+    transition:transform .28s cubic-bezier(.4,0,.2,1), visibility 0s linear 0s;
+    pointer-events:auto;
   }
   /* Baris atas: logo/nama app (buka Pengaturan Aplikasi) + 3 ikon
      aksi cepat (Riwayat, Tagihan & Hutang, Tambah Transaksi) sejajar
@@ -4835,13 +4958,36 @@ body.is-scrolling .particle{
   .mtb-text{min-width:0;}
   .mtb-text .k{font-size:11px;color:rgba(244,247,243,0.65);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .mtb-text .v{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  /* Dorong seluruh konten halaman ke bawah sejumlah tinggi mini
-     topbar, supaya bagian atas banner besar (logo dsb.) tidak
-     ketutup elemen fixed ini begitu halaman dimuat. Nilai
-     --mini-topbar-h diisi otomatis oleh JS. Fallback 108px dipakai
-     sebelum JS sempat mengukur (mis. sesaat pertama kali render) —
-     dinaikkan dari 64px karena mini topbar sekarang 2 baris.*/
-  body{padding-top:var(--mini-topbar-h, 108px);}
+  /* CATATAN (berubah dari sebelumnya): dulu body SELALU diberi
+     padding-top sebesar tinggi mini-topbar dari awal render, supaya
+     banner besar tidak ketutup mini-topbar yang saat itu selalu
+     tampil. Sekarang mini-topbar disembunyikan (translateY) sampai
+     banner besar discroll keluar layar (lihat rule .mtb-active di
+     atas & initMiniTopbar di script.js), jadi padding-top TIDAK
+     dibutuhkan lagi di awal — kalau tetap dipasang, malah bikin
+     jarak kosong kosong di atas banner sebelum discroll. Begitu
+     mini-topbar aktif (sudah discroll), dia cukup menumpuk/overlay
+     di atas konten yang memang sudah discroll lewat, sama seperti
+     pola sticky-header pada umumnya, tidak perlu dorong ulang
+     layout body.
+
+     Tapi karena sekarang mini-topbar bisa MENUMPUK di atas konten
+     (bukan dorong layout lagi), tombol "Riwayat" (historyJumpBtn /
+     miniHistoryBtn di script.js, keduanya scrollIntoView ke
+     #historySection) perlu penyesuaian: kalau tidak diberi jarak,
+     judul kartu Riwayat bisa ketutup mini-topbar begitu discroll ke
+     situ. --mini-topbar-h (sudah diukur otomatis lewat ResizeObserver
+     di initMiniTopbar, script.js) dipakai lagi di sini sebagai
+     scroll-margin-top supaya browser otomatis kasih jarak pas ketika
+     scrollIntoView dipanggil — tidak perlu hitung manual di JS. */
+  #historySection{scroll-margin-top:calc(var(--mini-topbar-h, 108px) + 12px);}
+  /* Tombol "Riwayat Transaksi" (baik di banner besar/historyJumpBtn
+     maupun mini-topbar/miniHistoryBtn) sekarang lompat LANGSUNG ke
+     tabelnya (#txTableWrap), bukan ke awal section (yang masih ada
+     kartu Ringkasan Total & tab/filter dulu sebelum tabel kelihatan).
+     scroll-margin-top yang sama dipakai supaya tabel tidak ketutup
+     mini-topbar begitu sudah discroll ke situ. */
+  #txTableWrap{scroll-margin-top:calc(var(--mini-topbar-h, 108px) + 12px);}
 }
 
 /* ============================================================
@@ -5034,7 +5180,21 @@ body.is-scrolling .particle{
   .brand-name{font-size:16.5px;}
   .banner-date{font-size:10.5px;}
   .banner-fx{font-size:9px;}
-  .notif-wrap .notif-btn,
+  /* PENTING (fix ikon banner tidak sejajar/beda ukuran): SEBELUMNYA
+     selector di sini cuma ".notif-wrap .notif-btn" — yang di HTML
+     hanya membungkus tombol lonceng (Tagihan & Hutang). Tombol
+     Riwayat (historyJumpBtn) & Tambah (btnAddMobile) TIDAK dibungkus
+     .notif-wrap, jadi keduanya ketinggalan tetap di ukuran default
+     34x34 sementara lonceng mengecil ke 30x30 — 3 ikon jadi beda
+     tinggi/lebar & kelihatan tidak rata sebaris. Sekarang disamakan:
+     SEMUA tombol ikon di banner (".banner-top-right .notif-btn",
+     mencakup ketiganya baik yang dibungkus .notif-wrap atau tidak)
+     dan di mini-topbar (".mtb-actions .notif-btn") dipaksa 30x30 yang
+     sama persis, supaya sejajar rapi di banner besar MAUPUN pas
+     sudah berubah jadi mini-topbar ketika discroll — tidak ada lagi
+     "lompatan" ukuran antara kedua kondisi itu. */
+  .banner-top-right .notif-btn,
+  .mtb-actions .notif-btn,
   .ai-fab-note-btn{width:30px;height:30px;border-radius:8px;}
   .notif-btn svg{width:16px;height:16px;}
   .notif-badge{min-width:14px;height:14px;font-size:9px;}
@@ -5503,7 +5663,7 @@ body.is-scrolling .particle{
       </div>
     </div>
 
-    <div class="table-wrap">
+    <div class="table-wrap" id="txTableWrap">
       <table>
         <thead>
           <tr>
