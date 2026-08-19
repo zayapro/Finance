@@ -150,6 +150,27 @@ body[data-banner-anim="static"] .banner::before,
 body[data-banner-anim="static"] .flow-line svg,
 body[data-banner-anim="static"] .banner-fx .fx-dot,
 body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !important;}
+
+/* ---- FIX FLICKER BANNER DI HP ----
+   .banner (mode default "wave") menganimasikan background-position di
+   4 lapisan gradient sekaligus, dan .banner::before menganimasikan
+   grid titik-titik dengan cara yang sama. Animasi background-position
+   itu MAHAL untuk digambar ulang browser (beda dari animasi
+   transform/opacity yang murah karena ditangani GPU) — setiap frame,
+   seluruh gradient harus di-repaint dari nol. Di banyak HP (terutama
+   yang GPU/CPU-nya terbatas), beban repaint terus-menerus ini bikin
+   browser sesekali gagal menggambar frame tepat waktu, sehingga
+   sesaat area banner terlihat kosong/putih sebelum tergambar lagi —
+   itulah kedip-kedip yang dikeluhkan pengguna. Makanya di lebar layar
+   ponsel, animasi berat ini dimatikan secara default (setara mode
+   "static" bawaan), sementara animasi lain yang ringan tetap jalan.
+   Kalau pengguna sudah memilih mode lain secara eksplisit di
+   Pengaturan (lines/shimmer/static), pilihan itu tetap dihormati
+   karena selector-nya lebih spesifik daripada aturan di bawah ini. */
+@media (max-width:640px){
+  .banner{animation:none;background-position:15% 25%, 85% 15%, 75% 90%, 20% 20%;}
+  .banner::before{animation:none;}
+}
 .flow-line{position:absolute;left:0;right:0;top:44%;height:90px;z-index:1;opacity:0.55;pointer-events:none;}
 .flow-line svg{width:220%;height:100%;animation:flowLineScroll 22s linear infinite;}
 @keyframes flowLineScroll{from{transform:translateX(0);}to{transform:translateX(-54.5%);}}
