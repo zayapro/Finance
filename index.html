@@ -736,7 +736,6 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 }
 .fc-peek-handle{
   position:relative;
-  display:flex;align-items:center;justify-content:space-between;gap:12px;
   margin:0 -22px -20px;padding:17px 16px 13px 18px;
   border-radius:0 0 20px 20px;
   background:linear-gradient(180deg, var(--card), var(--paper));
@@ -746,6 +745,21 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   box-shadow:0 14px 14px -14px rgba(15,23,42,0.28), 0 2px 0 rgba(37,99,235,0.05) inset;
   clip-path:inset(0 0 -40px 0 round 0 0 20px 20px);
   transition:box-shadow .18s ease, transform .35s cubic-bezier(.22,1,.36,1), opacity .3s ease, background .18s ease;
+}
+/* ---- Baris konten (ikon+label+tombol) dipisah dari .fc-peek-handle
+   supaya bisa dibatasi lebar maksimalnya sendiri. .fc-peek-handle boleh
+   full-bleed selebar kartu (untuk strip/latar & sudut lengkungnya), tapi
+   ISI-nya (fc-peek-info & tombol) TIDAK ikut melar sampai ujung — di
+   tablet/desktop di mana kartu "Uang Masuk & Keluar" bisa sangat lebar,
+   justify-content:space-between pada elemen selebar itu bikin label &
+   tombol "Lihat Ringkasan" terpisah jauh dengan jarak kosong raksasa di
+   tengah (kelihatan berantakan/tidak nyambung). max-width + margin:auto
+   di sini menjaga jarak label<->tombol tetap wajar di layar manapun,
+   sementara strip latar belakangnya tetap penuh menyentuh kedua sisi
+   kartu seperti sebelumnya. */
+.fc-peek-row{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  max-width:640px;margin:0 auto;
 }
 .fc-peek-handle:hover{background:linear-gradient(180deg, var(--card), color-mix(in srgb, var(--fc-accent, #0D9488) 6%, var(--paper)));}
 .fc-peek-handle::before{
@@ -1459,7 +1473,8 @@ tr.fade-up{animation:fadeRow .35s ease both;}
      diringkas jadi format singkat lewat fmtRupiahShort di script.js,
      lihat cardsHtml) supaya semua elemen tetap rapi & tidak
      kepotong. */
-  .fc-peek-handle{padding:13px 12px 10px 13px;gap:8px;}
+  .fc-peek-handle{padding:13px 12px 10px 13px;}
+  .fc-peek-row{gap:8px;max-width:none;}
   .fc-peek-icon{width:27px;height:27px;border-radius:9px;}
   .fc-peek-icon svg{width:15px;height:15px;}
   .fc-peek-info{gap:8px;}
@@ -1504,7 +1519,8 @@ tr.fade-up{animation:fadeRow .35s ease both;}
    rapi (ikon+judul+baris Masuk-Keluar+tombol jadi kurang muat) di HP
    kecil seperti iPhone SE/Android layar 360px. */
 @media (max-width:380px){
-  .fc-peek-handle{padding:11px 9px 9px 11px;gap:6px;}
+  .fc-peek-handle{padding:11px 9px 9px 11px;}
+  .fc-peek-row{gap:6px;}
   .fc-peek-info{gap:6px;}
   .fc-peek-icon{width:24px;height:24px;border-radius:7px;}
   .fc-peek-icon svg{width:13px;height:13px;}

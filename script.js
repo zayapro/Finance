@@ -1751,18 +1751,20 @@ function renderSummary() {
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m6 15 6-6 6 6"/></svg>
       </button>
       <div class="fc-peek-handle" id="fcPeekHandle">
-        <div class="fc-peek-info">
-          <span class="fc-peek-icon">${iconMiniWallet}</span>
-          <div class="fc-peek-text">
-            <span class="fc-peek-handle-label">Ringkasan transaksi kamu</span>
-            <span class="fc-peek-mini">
-              <span class="fc-peek-mini-in">Masuk <b>${fmtRupiahShort(t.todayIn)}</b></span>
-              <span class="fc-peek-mini-dot">•</span>
-              <span class="fc-peek-mini-out">Keluar <b>${fmtRupiahShort(t.todayOut)}</b></span>
-            </span>
+        <div class="fc-peek-row">
+          <div class="fc-peek-info">
+            <span class="fc-peek-icon">${iconMiniWallet}</span>
+            <div class="fc-peek-text">
+              <span class="fc-peek-handle-label">Ringkasan transaksi kamu</span>
+              <span class="fc-peek-mini">
+                <span class="fc-peek-mini-in">Masuk <b>${fmtRupiahShort(t.todayIn)}</b></span>
+                <span class="fc-peek-mini-dot">•</span>
+                <span class="fc-peek-mini-out">Keluar <b>${fmtRupiahShort(t.todayOut)}</b></span>
+              </span>
+            </div>
           </div>
+          <span class="fc-peek-handle-btn">Lihat Ringkasan<span class="fc-peek-chev"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span></span>
         </div>
-        <span class="fc-peek-handle-btn">Lihat Ringkasan<span class="fc-peek-chev"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span></span>
       </div>
     </div>
   `;
