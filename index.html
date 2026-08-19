@@ -2888,14 +2888,29 @@ body.density-compact .income-cards-group{gap:10px;}
 @media (max-width:600px){
   .charts-grid{gap:14px;margin-bottom:16px;}
   .bar-chart-wrap{height:190px;}
-  .bar-chart-legend{gap:8px;margin-top:12px;}
-  .bar-legend-pill{padding:7px 12px;font-size:11.5px;gap:6px;}
+  .bar-chart-legend{gap:8px;margin-top:12px;flex-wrap:nowrap;}
+  /* FIX "pill Masuk/Keluar numplok ke bawah di HP": sebelumnya kedua
+     pill cuma flex biasa (lebar mengikuti isi teks), jadi begitu
+     nominalnya panjang (mis. "Rp 10.125.504.000") totalnya kelebar
+     dan gagal muat berdampingan -> jatuh ke baris terpisah lewat
+     flex-wrap. Sekarang kedua pill dipaksa berbagi rata lebar baris
+     (flex:1 1 0 + min-width:0) supaya SELALU sejajar 1 baris, dan
+     angka nominal boleh melipat ke baris ke-2 di dalam pill-nya
+     sendiri (bukan overflow / terpotong) kalau memang masih kurang
+     muat di layar yang sangat sempit. ---- */
+  .bar-legend-pill{
+    flex:1 1 0;min-width:0;padding:7px 10px;font-size:11.5px;gap:6px;
+    justify-content:center;
+  }
+  .bar-legend-pill .bl-amount{
+    white-space:normal;overflow-wrap:break-word;text-align:center;
+  }
 }
 /* ---- Breakpoint: HP kecil ---- */
 @media (max-width:380px){
   .bar-chart-wrap{height:170px;}
-  .bar-legend-pill{flex:1 1 calc(50% - 8px);justify-content:center;padding:7px 8px;font-size:11px;}
-  .bar-legend-pill .bl-amount{font-size:10.5px;}
+  .bar-legend-pill{padding:7px 8px;font-size:10.5px;gap:5px;}
+  .bar-legend-pill .bl-amount{font-size:10px;}
 }
 
 /* ============ PERANGKAT & SOSIAL MEDIA ============ */
