@@ -5050,11 +5050,11 @@ body.is-scrolling *{
   .mini-topbar{
     display:flex;
     flex-direction:column;
-    gap:10px;
+    gap:8px;
     position:fixed;
     top:0;left:0;right:0;
     z-index:var(--z-mini-topbar);
-    padding:calc(10px + env(safe-area-inset-top, 0px)) 16px 12px;
+    padding:calc(9px + env(safe-area-inset-top, 0px)) 14px 10px;
     /* Disamakan dengan warna banner besar (radial highlight biru/hijau
        di atas gradasi forest-deep -> forest-mid), tapi TANPA animasi
        bergerak (background-position statis) supaya mini-topbar yang
@@ -5114,32 +5114,39 @@ body.is-scrolling *{
      versi di banner besar (.brand-mark/.brand-name, .notif-btn,
      .notif-badge) supaya gaya visualnya konsisten — cuma ukurannya
      sedikit lebih ringkas mengingat ruang di mini topbar terbatas. */
-  .mtb-top-row{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+  .mtb-top-row{display:flex;align-items:center;justify-content:space-between;gap:8px;}
   .mtb-brand{
-    display:flex;align-items:center;gap:8px;min-width:0;
+    display:flex;align-items:center;gap:7px;min-width:0;
     background:none;border:none;padding:4px 6px;margin:-4px -6px;
     border-radius:9px;color:inherit;cursor:pointer;
     transition:background .15s ease, transform .15s ease;
   }
   .mtb-brand:hover{background:rgba(244,247,243,0.10);}
   .mtb-brand:active{transform:scale(0.97);}
-  .mtb-brand .brand-mark{width:30px;height:30px;border-radius:8px;}
-  .mtb-brand .brand-name{font-size:15px;}
-  .mtb-actions{display:flex;align-items:center;gap:8px;flex-shrink:0;}
-  .mtb-actions .notif-btn{width:30px;height:30px;}
-  .mtb-summary-row{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+  .mtb-brand .brand-mark{width:28px;height:28px;border-radius:8px;flex-shrink:0;}
+  .mtb-brand .brand-name{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .mtb-actions{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+  .mtb-actions .notif-btn{width:28px;height:28px;}
+  .mtb-summary-row{display:flex;align-items:center;justify-content:space-between;gap:6px;}
   .mtb-item{display:flex;align-items:center;gap:6px;min-width:0;flex:1 1 0;}
   .mtb-item .ic{
-    width:23px;height:23px;border-radius:7px;flex-shrink:0;
+    width:21px;height:21px;border-radius:6px;flex-shrink:0;
     display:flex;align-items:center;justify-content:center;
     background:rgba(244,247,243,0.12);
   }
-  .mtb-item .ic svg{width:11px;height:11px;}
+  .mtb-item .ic svg{width:10px;height:10px;}
   .mtb-item .ic.income{color:var(--brass-light);}
   .mtb-item .ic.expense{color:var(--wine-light);}
   .mtb-text{min-width:0;}
-  .mtb-text .k{font-size:9.5px;color:rgba(244,247,243,0.65);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .mtb-text .v{font-family:'IBM Plex Mono',monospace;font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .mtb-text .k{font-size:9px;color:rgba(244,247,243,0.65);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .mtb-text .v{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  @media (max-width:380px){
+    .mtb-brand .brand-name{font-size:13px;}
+    .mtb-item .ic{width:19px;height:19px;}
+    .mtb-item .ic svg{width:9px;height:9px;}
+    .mtb-text .k{font-size:8.5px;}
+    .mtb-text .v{font-size:11px;}
+  }
   /* CATATAN (berubah dari sebelumnya): dulu body SELALU diberi
      padding-top sebesar tinggi mini-topbar dari awal render, supaya
      banner besar tidak ketutup mini-topbar yang saat itu selalu
@@ -5162,14 +5169,14 @@ body.is-scrolling *{
      di initMiniTopbar, script.js) dipakai lagi di sini sebagai
      scroll-margin-top supaya browser otomatis kasih jarak pas ketika
      scrollIntoView dipanggil — tidak perlu hitung manual di JS. */
-  #historySection{scroll-margin-top:calc(var(--mini-topbar-h, 108px) + 12px);}
+  #historySection{scroll-margin-top:calc(var(--mini-topbar-h, 96px) + 12px);}
   /* Tombol "Riwayat Transaksi" (baik di banner besar/historyJumpBtn
      maupun mini-topbar/miniHistoryBtn) sekarang lompat LANGSUNG ke
      tabelnya (#txTableWrap), bukan ke awal section (yang masih ada
      kartu Ringkasan Total & tab/filter dulu sebelum tabel kelihatan).
      scroll-margin-top yang sama dipakai supaya tabel tidak ketutup
      mini-topbar begitu sudah discroll ke situ. */
-  #txTableWrap{scroll-margin-top:calc(var(--mini-topbar-h, 108px) + 12px);}
+  #txTableWrap{scroll-margin-top:calc(var(--mini-topbar-h, 96px) + 12px);}
 }
 
 /* ============================================================
