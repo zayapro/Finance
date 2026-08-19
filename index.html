@@ -1433,12 +1433,23 @@ tr.fade-up{animation:fadeRow .35s ease both;}
    Ditaruh setelah breakpoint 480px/380px di atas supaya menang pada
    urutan CSS di lebar yang sama. */
 @media (max-width:600px){
-  /* Tab "peek" (judul ringkas sebelum kartu dibuka penuh) */
-  .fc-peek-handle{padding:14px 14px 11px 15px;}
-  .fc-peek-icon{width:28px;height:28px;border-radius:9px;}
-  .fc-peek-handle-label{font-size:11.5px;}
-  .fc-peek-mini{font-size:10px;}
-  .fc-peek-handle-btn{font-size:9.5px;padding:8px 12px;}
+  /* Tab "peek" (judul ringkas sebelum kartu dibuka penuh).
+     FIX: sebelumnya di HP kecil baris "Masuk/Keluar" gampang
+     kepotong (ellipsis) sebelum tombol "Lihat Ringkasan" karena
+     ikon+label+mini-preview+tombol berebut ruang di satu baris —
+     font & ikon diperkecil lagi di sini (nominalnya sendiri sudah
+     diringkas jadi format singkat lewat fmtRupiahShort di script.js,
+     lihat cardsHtml) supaya semua elemen tetap rapi & tidak
+     kepotong. */
+  .fc-peek-handle{padding:13px 12px 10px 13px;gap:8px;}
+  .fc-peek-icon{width:27px;height:27px;border-radius:9px;}
+  .fc-peek-icon svg{width:15px;height:15px;}
+  .fc-peek-info{gap:8px;}
+  .fc-peek-handle-label{font-size:11px;}
+  .fc-peek-mini{font-size:9.5px;gap:5px;}
+  .fc-peek-mini-dot{font-size:8px;}
+  .fc-peek-handle-btn{font-size:8.5px;padding:7px 11px;gap:4px;}
+  .fc-peek-handle .fc-peek-chev svg{width:10px;height:10px;}
 
   /* Header kartu: ikon + judul + kotak timer JAM/MNT/DTK */
   .flow-deal-top{margin-bottom:14px;gap:10px;}
@@ -1475,13 +1486,14 @@ tr.fade-up{animation:fadeRow .35s ease both;}
    rapi (ikon+judul+baris Masuk-Keluar+tombol jadi kurang muat) di HP
    kecil seperti iPhone SE/Android layar 360px. */
 @media (max-width:380px){
-  .fc-peek-handle{padding:12px 10px 10px 12px;gap:7px;}
-  .fc-peek-info{gap:7px;}
-  .fc-peek-icon{width:26px;height:26px;border-radius:8px;}
-  .fc-peek-handle-label{font-size:10.5px;}
-  .fc-peek-mini{font-size:9px;gap:4px;}
-  .fc-peek-handle-btn{font-size:8.5px;padding:6.5px 9px;gap:3px;}
-  .fc-peek-handle .fc-peek-chev svg{width:10px;height:10px;}
+  .fc-peek-handle{padding:11px 9px 9px 11px;gap:6px;}
+  .fc-peek-info{gap:6px;}
+  .fc-peek-icon{width:24px;height:24px;border-radius:7px;}
+  .fc-peek-icon svg{width:13px;height:13px;}
+  .fc-peek-handle-label{font-size:10px;}
+  .fc-peek-mini{font-size:8.5px;gap:3px;}
+  .fc-peek-handle-btn{font-size:8px;padding:6px 8px;gap:3px;white-space:nowrap;}
+  .fc-peek-handle .fc-peek-chev svg{width:9px;height:9px;}
 }
 
 /* Kartu ikut dimiringkan secara 3D (perspective tilt) mengikuti posisi

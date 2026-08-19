@@ -1681,6 +1681,16 @@ function renderSummary() {
   // Ikon dompet kecil dipakai pada handle "Lihat Ringkasan" (lihat
   // redesign di bawah, dekat cardsHtml) supaya tab peek tidak cuma
   // teks polos, ada penanda visual yang konsisten dengan tema kartu.
+  //
+  // FIX overflow di HP: baris preview Masuk/Keluar pada tab peek ini
+  // sebelumnya pakai fmtRupiah() (format penuh, mis. "Rp1.125.120.000")
+  // — untuk nominal besar, teks jadi kepanjangan dan section "Keluar"
+  // ikut terpotong (ellipsis) sebelum angkanya sempat kelihatan di
+  // layar sempit. Baris preview ini cuma ringkasan sebelum kartu detail
+  // dibuka (angka lengkap tetap tampil di kartu tier "Hari Ini" & "Bulan
+  // Ini" setelah tab diklik), jadi aman pakai fmtRupiahShort() (mis.
+  // "Rp1,1 M") supaya selalu ringkas & muat satu baris berapa pun besar
+  // nominalnya — bukan cuma diperkecil ukuran fontnya.
   const iconMiniWallet = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2.6"/><path d="M3 10h18"/><circle cx="16" cy="14.4" r="1.3" fill="currentColor" stroke="none"/></svg>`;
   const netToday = t.todayIn - t.todayOut;
 
@@ -1746,9 +1756,9 @@ function renderSummary() {
           <div class="fc-peek-text">
             <span class="fc-peek-handle-label">Ringkasan transaksi kamu</span>
             <span class="fc-peek-mini">
-              <span class="fc-peek-mini-in">Masuk <b>${fmtRupiah(t.todayIn)}</b></span>
+              <span class="fc-peek-mini-in">Masuk <b>${fmtRupiahShort(t.todayIn)}</b></span>
               <span class="fc-peek-mini-dot">•</span>
-              <span class="fc-peek-mini-out">Keluar <b>${fmtRupiah(t.todayOut)}</b></span>
+              <span class="fc-peek-mini-out">Keluar <b>${fmtRupiahShort(t.todayOut)}</b></span>
             </span>
           </div>
         </div>
