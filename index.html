@@ -758,11 +758,33 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 }
 .fc-peek-text{min-width:0;display:flex;flex-direction:column;gap:2px;}
 .fc-peek-handle-label{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink);font-weight:700;font-size:12.5px;}
-.fc-peek-mini{display:flex;align-items:center;gap:6px;font-size:10.5px;color:var(--ink-faint);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+/* FIX "Keluar ... mepet/terpotong mendadak ke tombol bulat di HP":
+   sebelumnya overflow ditangani di LEVEL CONTAINER .fc-peek-mini
+   (display:flex + text-overflow:ellipsis). Masalahnya, text-overflow:
+   ellipsis cuma bekerja pada SATU simpul teks yang overflow di dalam
+   konteks block/inline biasa — begitu container-nya display:flex
+   dengan beberapa elemen anak terpisah (span Masuk, titik pemisah,
+   span Keluar), browser TIDAK bisa menyisipkan "..." di antara elemen-
+   elemen itu; yang terjadi cuma separuh anak terakhir dipotong mentah
+   tanpa "...", dan karena .fc-peek-mini juga tidak diberi min-width:0,
+   ia bisa mendorong lebar tombol "LIHAT RINGKASAN" di sebelahnya jadi
+   kelihatan "mepet"/nyaris nabrak bentuk bulatnya, bukan berhenti rapi
+   sebelum tombol.
+   Sekarang overflow ditangani per-span: "Masuk ..." selalu diprioritas-
+   kan tampil UTUH (flex-shrink:0), sedangkan "Keluar ..." yang menyusut
+   & memotong dirinya sendiri dengan "..." yang SUNGGUHAN kalau ruang
+   kurang (overflow:hidden + text-overflow:ellipsis + min-width:0 di
+   levelnya sendiri, bukan di container flex). Titik pemisah juga tidak
+   pernah ikut menyusut/hilang duluan. Hasilnya: previewnya selalu
+   berhenti rapi sebelum tombol, tidak pernah nabrak/mepet ke
+   lengkungannya, di lebar layar berapa pun. */
+.fc-peek-mini{display:flex;align-items:center;gap:6px;min-width:0;font-size:10.5px;color:var(--ink-faint);font-weight:600;}
 .fc-peek-mini b{font-family:'IBM Plex Mono',monospace;font-weight:700;letter-spacing:-0.01em;}
+.fc-peek-mini-in{flex-shrink:0;white-space:nowrap;}
 .fc-peek-mini .fc-peek-mini-in b{color:var(--brass);}
+.fc-peek-mini-out{min-width:12px;flex-shrink:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .fc-peek-mini .fc-peek-mini-out b{color:var(--wine);}
-.fc-peek-mini-dot{opacity:0.45;}
+.fc-peek-mini-dot{opacity:0.45;flex-shrink:0;}
 .fc-peek-handle-btn{
   display:flex;align-items:center;gap:6px;flex-shrink:0;
   background:transparent;
@@ -3119,24 +3141,35 @@ body.density-compact .income-cards-group{gap:10px;}
 .section-head > div{min-width:0;}
 .section-head h2{font-size:18px;}
 .section-subtitle{display:block;font-size:11px;color:var(--ink-faint);font-weight:600;margin-top:3px;letter-spacing:0.01em;}
+/* PIL "chip-total" (mis. Selisih/Net Total): bentuk oval/pil (border-radius:
+   999px) HARUS selalu bulat sempurna di ujung, tidak pernah pipih/kotak
+   di device manapun — makanya lebar & tingginya SELALU mengikuti isi
+   (inline-flex + white-space:nowrap + flex-shrink:0), tidak pernah
+   dipaksa menyempit sendiri.
+   Yang menyesuaikan ukuran layar justru KONTENnya (ikon, jarak, padding,
+   ukuran font) lewat clamp() — jadi teksnya "mengikuti" perangkat secara
+   HALUS/kontinu (scaling proporsional terhadap lebar layar), bukan
+   loncat-loncat di 2 breakpoint tetap seperti sebelumnya, dan bukan pula
+   dipotong "..." kalau kurang muat (ellipsis DIHAPUS) — angkanya akan
+   selalu tampil utuh, cuma makin kecil hurufnya kalau layarnya makin
+   sempit. */
 .chip-total{
-  display:inline-flex;align-items:center;gap:6px;
-  font-family:'IBM Plex Mono',monospace;font-size:12.5px;font-weight:700;color:var(--forest-glow);
+  display:inline-flex;align-items:center;gap:clamp(4px,1.1vw,6px);
+  font-family:'IBM Plex Mono',monospace;
+  font-size:clamp(9.5px,2.6vw,12.5px);font-weight:700;color:var(--forest-glow);
   background:rgba(37,99,235,0.08);border:1px solid rgba(37,99,235,0.18);
-  padding:6px 13px;border-radius:999px;white-space:nowrap;
-  flex-shrink:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;
+  padding:clamp(5px,1.3vw,6px) clamp(9px,3vw,13px);border-radius:999px;
+  white-space:nowrap;flex-shrink:0;
 }
+.chip-total svg{width:clamp(10px,2.6vw,12px);height:clamp(10px,2.6vw,12px);flex-shrink:0;}
 @media (max-width:600px){
   .section-card{padding:16px 16px;margin-bottom:14px;border-radius:12px;}
   .section-head{margin-bottom:12px;}
   .section-head h2{font-size:15.5px;}
-  .chip-total{font-size:11.5px;padding:5px 11px;}
 }
 @media (max-width:380px){
   .section-card{padding:14px 12px;}
   .section-head{gap:8px;}
-  .chip-total{font-size:10.5px;padding:5px 9px;gap:4px;}
-  .chip-total svg{width:10px;height:10px;flex-shrink:0;}
 }
 
 /* ============ BERITA EKONOMI TERKINI ============ */
@@ -5464,7 +5497,10 @@ body.is-scrolling *{
   .section-head h2{font-size:14.5px;}
   .section-subtitle{font-size:10px;}
   .eyebrow{font-size:10px;letter-spacing:0.12em;}
-  .chip-total{font-size:10.5px;padding:5px 10px;}
+  /* .chip-total TIDAK di-override di sini lagi: ukurannya sudah fluid
+     lewat clamp() di aturan dasarnya (lihat definisi .chip-total di
+     atas) supaya bulatan pil-nya selalu utuh & tulisannya menyesuaikan
+     halus mengikuti lebar layar, bukan loncat ke angka tetap di sini. */
 
   /* ---- Banner atas: logo, nama app, tanggal, ikon lonceng ---- */
   /* PENTING (fix overflow/geser horizontal tipis di HP): margin negatif
