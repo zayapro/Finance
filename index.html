@@ -4665,22 +4665,18 @@ tbody tr.date-group-row:first-child td{border-top:none;}
    secara vertikal berdampingan dengan 3 tombol ikon di dalam
    .banner-top-right, sehingga baris tanggal dan baris ikon saling
    tumpang tindih/terlihat berantakan saat wrap di layar sempit.
-   Di sini banner-top-right dipaksa jadi baris penuh sendiri di
-   bawah brand, lalu tanggal+kurs didorong ke barisnya sendiri di
-   bawah tombol ikon — hasilnya 3 baris rapi: logo / ikon / tanggal.
-   Dipisah ke breakpoint 900px (bukan cuma 600px) supaya tombol
-   ikon (riwayat/notif/tambah) selalu tampil di ATAS dan baris
-   tanggal selalu mengikuti di BAWAHNYA di semua ukuran layar HP,
-   termasuk HP berlayar lebih lebar (601-900px) yang sebelumnya
-   masih menampilkan urutan terbalik (tanggal di atas, ikon di bawah). */
+   banner-date-col dipaksa jadi baris sendiri DI BAWAH baris ikon
+   (order:3 + flex-basis:100%) supaya rapi: baris ikon lalu baris
+   tanggal. SEBELUMNYA .banner-top (pembungkus logo + blok kanan ini)
+   dibiarkan boleh wrap juga, jadi blok kanan ini malah ikut turun ke
+   baris terpisah DI BAWAH logo alih-alih sejajar di sampingnya.
+   Sekarang dipaksa nowrap supaya logo & blok kanan selalu satu baris,
+   dan align-items:center supaya blok kanan (2 baris: ikon+tanggal)
+   sejajar vertikal di tengah tinggi logo — bukan nempel rata atas. */
 @media (max-width:900px){
-  .banner-top{row-gap:8px;align-items:flex-start;}
+  .banner-top{row-gap:8px;align-items:center;flex-wrap:nowrap;}
   .banner-top-right{flex-wrap:wrap;justify-content:flex-end;row-gap:8px;}
   .banner-date-col{order:3;flex-basis:100%;margin-top:0;}
-  /* Baris ikon (riwayat/lonceng/+) adalah baris pertama di dalam
-     banner-top-right; turunkan sedikit supaya titik tengahnya sejajar
-     dengan titik tengah logo, bukan sejajar di garis paling atas saja. */
-  .banner-top-right{margin-top:2px;}
 }
 @media (max-width:600px){
   .app{padding:0 14px;}
