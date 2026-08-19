@@ -1544,25 +1544,12 @@ function applyFlowDealTuckPosition() {
   // handle yang pernah terlihat — selalu rapi & pas mepet ke banner,
   // berapa pun tinggi kartu atau banner, dan otomatis responsive di
   // semua ukuran layar karena dihitung ulang dari ukuran asli elemen.
-  // TUCK_OVERLAP harus sama persis dengan margin-top negatif pada
+  // TUCK_OVERLAP harus sama dengan margin-top negatif pada
   // .banner-flow-wrap (CSS) — jumlah wrap yang sengaja disembunyikan
   // di BELAKANG banner (bukan cuma ditempel pas di bawahnya) supaya
   // tab handle terlihat benar-benar "nyelip" keluar dari balik banner,
   // bukan sekadar nempel dengan garis sambungan yang kelihatan.
-  //
-  // FIX "lengkungan tidak rapi / ada celah persegi" di beberapa
-  // perangkat: sebelumnya nilai ini di-hardcode terpisah (22) dari
-  // margin-top CSS-nya (-48px) — begitu salah satu diubah (mis. lewat
-  // breakpoint responsif) tapi yang lain lupa disesuaikan, keduanya
-  // jadi TIDAK SINKRON. Selisihnya muncul sebagai celah kotak/persegi
-  // yang kelihatan di antara lengkungan bawah banner dan ujung atas
-  // kartu — persis kasus yang dilaporkan. Sekarang nilainya dibaca
-  // LANGSUNG dari margin-top CSS yang sebenarnya berlaku saat itu
-  // (getComputedStyle), jadi keduanya mustahil tidak sinkron lagi, di
-  // perangkat/breakpoint manapun, bahkan kalau CSS-nya diubah lagi
-  // nanti.
-  const computedMarginTop = parseFloat(getComputedStyle(wrap).marginTop) || 0;
-  const TUCK_OVERLAP = Math.abs(computedMarginTop);
+  const TUCK_OVERLAP = 22;
   const cardHeight = card.offsetHeight;
   const handleHeight = handle.offsetHeight;
   const visibleHeight = wrap.classList.contains('fc-settled') ? cardHeight : handleHeight;
@@ -8988,7 +8975,51 @@ function initMiniTopbar() {
   }
 }
 
+// ============ TELEGRAM WEBAPP — SINKRONKAN WARNA BAR ATAS/BAWAH ============
+// Saat situs ini dibuka lewat browser bawaan Telegram (in-app browser /
+// Telegram Mini App), area status bar/header di ATAS halaman & bar
+// navigasi di BAWAH (di Android/iOS) ikut dikontrol Telegram, BUKAN oleh
+// meta "theme-color" biasa (itu cuma dibaca browser standar, Telegram
+// punya API warnanya sendiri). Tanpa ini, bar tsb tampil warna default
+// Telegram (putih/hitam) walau isi halaman sudah gelap navy senada
+// --forest-deep -- itulah selisih warna "belang" yang terlihat di HP.
+// initTelegramWebApp() menyamakan warna header & background Telegram
+// persis dengan warna dasar banner (--forest-deep) begitu app dibuka,
+// dan otomatis tidak melakukan apa-apa (aman) kalau halaman ini dibuka
+// BUKAN dari dalam Telegram (window.Telegram.WebApp tidak akan ada).
+function initTelegramWebApp() {
+  try {
+    const tg = window.Telegram && window.Telegram.WebApp;
+    if (!tg) return; // bukan dibuka dari dalam Telegram -> tidak melakukan apa-apa
+
+    tg.ready();
+    // expand(): buka WebView Telegram ke tinggi penuh (bukan cuma separuh
+    // layar seperti bottom-sheet kecil) supaya tidak ada celah warna asing
+    // di antara konten app & bar Telegram.
+    if (typeof tg.expand === 'function') tg.expand();
+    if (typeof tg.disableVerticalSwipes === 'function') tg.disableVerticalSwipes();
+
+    const rootStyles = getComputedStyle(document.documentElement);
+    const forestDeep = (rootStyles.getPropertyValue('--forest-deep') || '#0B1220').trim();
+
+    // setHeaderColor menerima nama warna preset ("bg_color","secondary_bg_color")
+    // ATAU hex custom tergantung versi Bot API klien Telegram -- try/catch
+    // per pemanggilan supaya versi klien yang lebih lama (belum dukung hex
+    // custom di setHeaderColor) tidak bikin sisa fungsi ini ikut gagal.
+    try { tg.setHeaderColor(forestDeep); } catch (e) { /* versi klien lama: abaikan */ }
+    try { tg.setBackgroundColor(forestDeep); } catch (e) { /* abaikan */ }
+    // setBottomBarColor cuma ada di Bot API versi baru (bar navigasi bawah
+    // khusus iOS) -- dicek dulu supaya tidak error di klien lama.
+    if (typeof tg.setBottomBarColor === 'function') {
+      try { tg.setBottomBarColor(forestDeep); } catch (e) { /* abaikan */ }
+    }
+  } catch (e) {
+    console.warn('initTelegramWebApp dilewati:', e);
+  }
+}
+
 function init() {
+  initTelegramWebApp();
   renderBannerDate();
   initBannerFx();
   initNews();

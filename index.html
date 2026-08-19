@@ -8,6 +8,12 @@
 <meta name="keywords" id="appMetaKeywords" content="">
 <meta name="robots" content="index, follow">
 <meta name="theme-color" content="#0B1220">
+<!-- SDK resmi Telegram WebApp: dimuat lebih dulu (sebelum script.js)
+     supaya window.Telegram.WebApp sudah tersedia saat initTelegramWebApp()
+     dipanggil. Kalau halaman ini dibuka BUKAN dari dalam Telegram
+     (mis. browser biasa), variabel Telegram tetap ada tapi API-nya jadi
+     no-op/aman -- lihat pengecekan window.Telegram?.WebApp di script.js. -->
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -758,33 +764,11 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 }
 .fc-peek-text{min-width:0;display:flex;flex-direction:column;gap:2px;}
 .fc-peek-handle-label{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink);font-weight:700;font-size:12.5px;}
-/* FIX "Keluar ... mepet/terpotong mendadak ke tombol bulat di HP":
-   sebelumnya overflow ditangani di LEVEL CONTAINER .fc-peek-mini
-   (display:flex + text-overflow:ellipsis). Masalahnya, text-overflow:
-   ellipsis cuma bekerja pada SATU simpul teks yang overflow di dalam
-   konteks block/inline biasa — begitu container-nya display:flex
-   dengan beberapa elemen anak terpisah (span Masuk, titik pemisah,
-   span Keluar), browser TIDAK bisa menyisipkan "..." di antara elemen-
-   elemen itu; yang terjadi cuma separuh anak terakhir dipotong mentah
-   tanpa "...", dan karena .fc-peek-mini juga tidak diberi min-width:0,
-   ia bisa mendorong lebar tombol "LIHAT RINGKASAN" di sebelahnya jadi
-   kelihatan "mepet"/nyaris nabrak bentuk bulatnya, bukan berhenti rapi
-   sebelum tombol.
-   Sekarang overflow ditangani per-span: "Masuk ..." selalu diprioritas-
-   kan tampil UTUH (flex-shrink:0), sedangkan "Keluar ..." yang menyusut
-   & memotong dirinya sendiri dengan "..." yang SUNGGUHAN kalau ruang
-   kurang (overflow:hidden + text-overflow:ellipsis + min-width:0 di
-   levelnya sendiri, bukan di container flex). Titik pemisah juga tidak
-   pernah ikut menyusut/hilang duluan. Hasilnya: previewnya selalu
-   berhenti rapi sebelum tombol, tidak pernah nabrak/mepet ke
-   lengkungannya, di lebar layar berapa pun. */
-.fc-peek-mini{display:flex;align-items:center;gap:6px;min-width:0;font-size:10.5px;color:var(--ink-faint);font-weight:600;}
+.fc-peek-mini{display:flex;align-items:center;gap:6px;font-size:10.5px;color:var(--ink-faint);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .fc-peek-mini b{font-family:'IBM Plex Mono',monospace;font-weight:700;letter-spacing:-0.01em;}
-.fc-peek-mini-in{flex-shrink:0;white-space:nowrap;}
 .fc-peek-mini .fc-peek-mini-in b{color:var(--brass);}
-.fc-peek-mini-out{min-width:12px;flex-shrink:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .fc-peek-mini .fc-peek-mini-out b{color:var(--wine);}
-.fc-peek-mini-dot{opacity:0.45;flex-shrink:0;}
+.fc-peek-mini-dot{opacity:0.45;}
 .fc-peek-handle-btn{
   display:flex;align-items:center;gap:6px;flex-shrink:0;
   background:transparent;
@@ -2881,36 +2865,16 @@ body.density-compact .income-cards-group{gap:10px;}
   border-radius:10px;pointer-events:none;
 }
 .bar-chart-legend{display:flex;gap:10px;margin-top:14px;justify-content:center;flex-wrap:wrap;}
-/* FIX "angka Masuk/Keluar terpotong di tepi layar": sebelumnya perilaku
-   "aman menyusut" (flex:1 1 0 + min-width:0 + boleh melipat ke baris
-   ke-2) cuma dipasang di breakpoint @media(max-width:600px). Masalahnya,
-   .bar-legend-pill adalah flex item dari .bar-chart-legend (display:flex)
-   yang SECARA DEFAULT sudah punya flex-shrink:1 — jadi begitu pun TANPA
-   breakpoint itu, box pill-nya tetap bisa ikut menyusut kalau ruang
-   kurang (mis. di tablet/layar sedang 600–1024px, atau webview sempit
-   manapun yang lebarnya di ATAS 600px). Bedanya: teks nominal di
-   dalamnya masih white-space:nowrap secara default, yang TIDAK ikut
-   menyusut — akibatnya box pill mengecil tapi tulisan angkanya
-   (mis. "Rp 10.125.504.000") tetap selebar aslinya dan menyembul keluar
-   dari pill sampai terpotong tepi layar, persis kasus yang dilaporkan.
-   Sekarang aturan "aman menyusut" ini dipasang di sini (BUKAN di dalam
-   media query lagi) supaya berlaku di SEMUA lebar layar tanpa jeda —
-   pill selalu berbagi rata lebar baris & angka boleh melipat ke baris
-   ke-2 di dalam pill-nya sendiri kalau memang kurang muat, bukan
-   terpotong/menyembul, pada perangkat apa pun. */
 .bar-legend-pill{
-  display:flex;align-items:center;gap:8px;flex:1 1 0;min-width:0;
+  display:flex;align-items:center;gap:8px;
   padding:8px 14px;border-radius:12px;border:1px solid var(--line);background:var(--paper);
   font-size:12.5px;font-weight:700;color:var(--ink-soft);
   transition:transform .15s ease, box-shadow .15s ease;
 }
 .bar-legend-pill:hover{transform:translateY(-1px);box-shadow:var(--shadow-sm);}
 .bar-legend-pill .legend-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
-.bar-legend-pill .bl-label{color:var(--ink);margin-right:1px;flex-shrink:0;}
-.bar-legend-pill .bl-amount{
-  font-family:'IBM Plex Mono',monospace;font-weight:700;
-  white-space:normal;overflow-wrap:break-word;min-width:0;
-}
+.bar-legend-pill .bl-label{color:var(--ink);margin-right:1px;}
+.bar-legend-pill .bl-amount{font-family:'IBM Plex Mono',monospace;font-weight:700;white-space:nowrap;}
 .bar-legend-pill.in{border-color:rgba(5,150,105,0.22);background:rgba(5,150,105,0.06);}
 .bar-legend-pill.in .bl-amount{color:#047857;}
 .bar-legend-pill.out{border-color:rgba(225,29,72,0.2);background:rgba(225,29,72,0.06);}
@@ -2930,16 +2894,23 @@ body.density-compact .income-cards-group{gap:10px;}
 @media (max-width:600px){
   .charts-grid{gap:14px;margin-bottom:16px;}
   .bar-chart-wrap{height:190px;}
-  /* flex-wrap:nowrap DIPERTAHANKAN di sini secara sengaja (bukan bagian
-     dari fix overflow di atas): supaya di layar HP kedua pill SELALU
-     tetap sejajar 1 baris (bukan numplok ke bawah jadi 2 baris
-     terpisah) — pilihan gaya khusus mobile, ukurannya sendiri sudah
-     aman berkat aturan dasar .bar-legend-pill (berlaku di semua lebar
-     layar, lihat komentar di atas). Padding/font di bawah ini murni
-     kosmetik: memperkecil pill supaya lebih ringkas di layar sempit. */
   .bar-chart-legend{gap:8px;margin-top:12px;flex-wrap:nowrap;}
-  .bar-legend-pill{padding:7px 10px;font-size:11.5px;gap:6px;justify-content:center;}
-  .bar-legend-pill .bl-amount{text-align:center;}
+  /* FIX "pill Masuk/Keluar numplok ke bawah di HP": sebelumnya kedua
+     pill cuma flex biasa (lebar mengikuti isi teks), jadi begitu
+     nominalnya panjang (mis. "Rp 10.125.504.000") totalnya kelebar
+     dan gagal muat berdampingan -> jatuh ke baris terpisah lewat
+     flex-wrap. Sekarang kedua pill dipaksa berbagi rata lebar baris
+     (flex:1 1 0 + min-width:0) supaya SELALU sejajar 1 baris, dan
+     angka nominal boleh melipat ke baris ke-2 di dalam pill-nya
+     sendiri (bukan overflow / terpotong) kalau memang masih kurang
+     muat di layar yang sangat sempit. ---- */
+  .bar-legend-pill{
+    flex:1 1 0;min-width:0;padding:7px 10px;font-size:11.5px;gap:6px;
+    justify-content:center;
+  }
+  .bar-legend-pill .bl-amount{
+    white-space:normal;overflow-wrap:break-word;text-align:center;
+  }
 }
 /* ---- Breakpoint: HP kecil ---- */
 @media (max-width:380px){
@@ -3141,35 +3112,24 @@ body.density-compact .income-cards-group{gap:10px;}
 .section-head > div{min-width:0;}
 .section-head h2{font-size:18px;}
 .section-subtitle{display:block;font-size:11px;color:var(--ink-faint);font-weight:600;margin-top:3px;letter-spacing:0.01em;}
-/* PIL "chip-total" (mis. Selisih/Net Total): bentuk oval/pil (border-radius:
-   999px) HARUS selalu bulat sempurna di ujung, tidak pernah pipih/kotak
-   di device manapun — makanya lebar & tingginya SELALU mengikuti isi
-   (inline-flex + white-space:nowrap + flex-shrink:0), tidak pernah
-   dipaksa menyempit sendiri.
-   Yang menyesuaikan ukuran layar justru KONTENnya (ikon, jarak, padding,
-   ukuran font) lewat clamp() — jadi teksnya "mengikuti" perangkat secara
-   HALUS/kontinu (scaling proporsional terhadap lebar layar), bukan
-   loncat-loncat di 2 breakpoint tetap seperti sebelumnya, dan bukan pula
-   dipotong "..." kalau kurang muat (ellipsis DIHAPUS) — angkanya akan
-   selalu tampil utuh, cuma makin kecil hurufnya kalau layarnya makin
-   sempit. */
 .chip-total{
-  display:inline-flex;align-items:center;gap:clamp(4px,1.1vw,6px);
-  font-family:'IBM Plex Mono',monospace;
-  font-size:clamp(9.5px,2.6vw,12.5px);font-weight:700;color:var(--forest-glow);
+  display:inline-flex;align-items:center;gap:6px;
+  font-family:'IBM Plex Mono',monospace;font-size:12.5px;font-weight:700;color:var(--forest-glow);
   background:rgba(37,99,235,0.08);border:1px solid rgba(37,99,235,0.18);
-  padding:clamp(5px,1.3vw,6px) clamp(9px,3vw,13px);border-radius:999px;
-  white-space:nowrap;flex-shrink:0;
+  padding:6px 13px;border-radius:999px;white-space:nowrap;
+  flex-shrink:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;
 }
-.chip-total svg{width:clamp(10px,2.6vw,12px);height:clamp(10px,2.6vw,12px);flex-shrink:0;}
 @media (max-width:600px){
   .section-card{padding:16px 16px;margin-bottom:14px;border-radius:12px;}
   .section-head{margin-bottom:12px;}
   .section-head h2{font-size:15.5px;}
+  .chip-total{font-size:11.5px;padding:5px 11px;}
 }
 @media (max-width:380px){
   .section-card{padding:14px 12px;}
   .section-head{gap:8px;}
+  .chip-total{font-size:10.5px;padding:5px 9px;gap:4px;}
+  .chip-total svg{width:10px;height:10px;flex-shrink:0;}
 }
 
 /* ============ BERITA EKONOMI TERKINI ============ */
@@ -5204,6 +5164,11 @@ body.is-scrolling *{
       radial-gradient(circle at 75% 90%, rgba(225,29,72,0.14), transparent 55%),
       linear-gradient(120deg, var(--forest-deep), var(--forest-mid), var(--forest-deep));
     background-color:var(--forest-deep);
+    /* Ujung bawah dibuat melengkung (20px) senada dengan kelengkungan
+       kartu "Saldo Bank & E-Wallet" (.stat-card border-radius:20px),
+       supaya kartu ringkasan mengambang ini terasa satu bahasa desain
+       dengan kartu-kartu lain di halaman, bukan kotak lurus/kaku. */
+    border-radius:0 0 20px 20px;
     box-shadow:0 8px 18px -6px rgba(11,18,32,0.45);
     color:#F4F7FB;
     /* PENTING (fix "dobel" dgn banner besar): dulu mini-topbar ini
@@ -5497,10 +5462,7 @@ body.is-scrolling *{
   .section-head h2{font-size:14.5px;}
   .section-subtitle{font-size:10px;}
   .eyebrow{font-size:10px;letter-spacing:0.12em;}
-  /* .chip-total TIDAK di-override di sini lagi: ukurannya sudah fluid
-     lewat clamp() di aturan dasarnya (lihat definisi .chip-total di
-     atas) supaya bulatan pil-nya selalu utuh & tulisannya menyesuaikan
-     halus mengikuti lebar layar, bukan loncat ke angka tetap di sini. */
+  .chip-total{font-size:10.5px;padding:5px 10px;}
 
   /* ---- Banner atas: logo, nama app, tanggal, ikon lonceng ---- */
   /* PENTING (fix overflow/geser horizontal tipis di HP): margin negatif
