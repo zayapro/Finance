@@ -148,7 +148,7 @@ body[data-banner-anim="shimmer"] .flow-line svg{animation-duration:34s;}
 body[data-banner-anim="static"] .banner,
 body[data-banner-anim="static"] .banner::before,
 body[data-banner-anim="static"] .flow-line svg,
-body[data-banner-anim="static"] .banner-fx .fx-dot,
+body[data-banner-anim="static"] .banner-fx .fx-dot::after,
 body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !important;}
 
 /* ---- FIX FLICKER BANNER DI HP ----
@@ -205,13 +205,20 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
   cursor:default;white-space:nowrap;
 }
 .banner-fx .fx-dot{
+  position:relative;
   width:6px;height:6px;border-radius:50%;background:#34D399;flex-shrink:0;
+}
+.banner-fx .fx-dot::after{
+  content:'';
+  position:absolute;inset:0;border-radius:50%;
+  background:#34D399;opacity:0.55;
   animation:fxPulse 1.7s ease-in-out infinite;
+  will-change:transform,opacity;
 }
 @keyframes fxPulse{
-  0%{box-shadow:0 0 0 0 rgba(52,211,153,0.55);}
-  70%{box-shadow:0 0 0 6px rgba(52,211,153,0);}
-  100%{box-shadow:0 0 0 0 rgba(52,211,153,0);}
+  0%{transform:scale(1);opacity:0.55;}
+  70%{transform:scale(2);opacity:0;}
+  100%{transform:scale(2);opacity:0;}
 }
 .banner-fx .fx-label{color:rgba(244,247,243,0.5);font-weight:600;}
 .banner-fx .fx-value{
@@ -1129,16 +1136,33 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   position:absolute;width:7px;height:7px;border-radius:50%;
   background:var(--dot-color,#059669);transform:translate(-50%,-50%);
   pointer-events:none;z-index:2;
-  animation:ftcLivePulse 2.2s ease-out infinite;
 }
-.ftc-live-dot.out{animation-delay:.4s;}
+/* FIX KEDIP saat kartu "Ringkasan transaksi kamu" dibuka: dulu titik
+   ini berdenyut dengan animasi box-shadow (0 -> 9px), yang MAHAL
+   digambar ulang browser tiap frame — sama seperti kasus banner yang
+   sudah diperbaiki sebelumnya. Karena ada 4 titik (2 per grafik x 2
+   grafik) berdenyut BERSAMAAN begitu kartu dibuka penuh, beban
+   gambar-ulangnya menumpuk dan bikin kedip di HP. Sekarang efek
+   "ring" dibuat lewat pseudo-element yang di-scale + opacity-nya
+   dianimasikan (bukan box-shadow) — jenis animasi ini murah karena
+   cukup ditangani GPU/compositor, tidak perlu gambar ulang tiap
+   frame, jadi hasil visualnya sama tapi tidak lagi bikin kedip. */
+.ftc-live-dot::after{
+  content:'';
+  position:absolute;inset:0;border-radius:50%;
+  background:var(--dot-color,#059669);
+  opacity:0.55;
+  animation:ftcLivePulse 2.2s ease-out infinite;
+  will-change:transform,opacity;
+}
+.ftc-live-dot.out::after{animation-delay:.4s;}
 @keyframes ftcLivePulse{
-  0%{box-shadow:0 0 0 0 color-mix(in srgb, var(--dot-color,#059669) 55%, transparent);}
-  70%{box-shadow:0 0 0 9px transparent;}
-  100%{box-shadow:0 0 0 0 transparent;}
+  0%{transform:scale(1);opacity:0.55;}
+  70%{transform:scale(3.4);opacity:0;}
+  100%{transform:scale(3.4);opacity:0;}
 }
 @media (prefers-reduced-motion:reduce){
-  .ftc-live-dot{animation:none;}
+  .ftc-live-dot::after{animation:none;}
 }
 .ftc-chart-tooltip{
   position:absolute;pointer-events:none;opacity:0;z-index:6;
