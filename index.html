@@ -20,7 +20,24 @@
 <link rel="apple-touch-icon" id="appTouchIconLink" href="">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&family=Libre+Baskerville:wght@400;700&family=Source+Sans+3:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<!-- FIX "BANNER MEMUTIH SAAT REFRESH DI HP": sebelumnya font Google di
+     bawah ini dimuat lewat <link rel="stylesheet"> BIASA, yang sifatnya
+     render-blocking -- browser WAJIB menunggu file CSS font ini selesai
+     diunduh dari server Google dulu sebelum boleh mulai menggambar
+     apa pun di layar, TERMASUK <style> kritis tepat di bawahnya yang
+     berisi warna latar gelap html/.banner. Di jaringan mobile yang
+     lambat/naik-turun (apalagi pas refresh, beda dgn navigasi SPA yang
+     kadang masih pegang cache), jeda tunggu font itu bikin layar sempat
+     kelihatan PUTIH POLOS (warna default browser) sebelum CSS gelap
+     sempat diterapkan -- itulah "banner memutih" yang dikeluhkan.
+     Solusinya pola standar "preload + swap": <link rel="preload"> minta
+     browser unduh file font DI LATAR BELAKANG tanpa menahan render,
+     lalu begitu selesai (onload) baru statusnya diubah jadi stylesheet
+     aktif. <noscript> di bawah jadi fallback kalau JS/onload tidak
+     jalan (browser lama / JS dimatikan), supaya font tetap termuat. -->
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&family=Libre+Baskerville:wght@400;700&family=Source+Sans+3:wght@400;500;600;700;800&display=swap">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&family=Libre+Baskerville:wght@400;700&family=Source+Sans+3:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&family=Libre+Baskerville:wght@400;700&family=Source+Sans+3:wght@400;500;600;700;800&display=swap" rel="stylesheet"></noscript>
 <style>
 /* ============ TOKENS ============ */
 :root{
@@ -3870,7 +3887,7 @@ tbody tr.date-group-row:first-child td{border-top:none;}
   z-index:var(--z-page);opacity:0;pointer-events:none;
   transform:translateY(16px);
   transition:opacity .2s ease, transform .2s ease;
-  overflow-y:auto;overscroll-behavior:contain;
+  overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
 }
 .detail-page-overlay.open{opacity:1;pointer-events:auto;transform:translateY(0);}
 .detail-page{max-width:1180px;margin:0 auto;padding:22px 24px 40px;}
