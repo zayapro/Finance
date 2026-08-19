@@ -1410,12 +1410,23 @@ function applyFlowDealTuckPosition() {
   const cardHeight = card.offsetHeight;
   const handleHeight = handle.offsetHeight;
   const visibleHeight = wrap.classList.contains('fc-settled') ? cardHeight : handleHeight;
-  const wrapHeight = visibleHeight + TUCK_OVERLAP;
-  wrap.style.height = Math.max(0, wrapHeight) + 'px';
-  // Kartu selalu digeser supaya tepi BAWAHNYA pas di tepi bawah wrap —
-  // begitu bagian atas wrap (setinggi TUCK_OVERLAP) tersembunyi di
-  // belakang banner, sisa yang terlihat persis selebar visibleHeight.
-  card.style.transform = `translateY(${wrapHeight - cardHeight}px)`;
+  const wrapHeight = Math.max(0, visibleHeight + TUCK_OVERLAP);
+  const translateY = wrapHeight - cardHeight;
+  // PENTING (fix flicker banner di HP): wrap & kartu punya CSS
+  // `transition` pada height/transform. Sebelumnya baris di bawah
+  // SELALU menulis ulang style walau nilainya sama persis dengan
+  // sebelumnya — dan fungsi ini dipanggil sangat sering (tiap event
+  // "resize", termasuk yang dipicu HANYA oleh address bar browser HP
+  // muncul/hilang saat scroll, bukan oleh perubahan lebar layar
+  // sungguhan). Tulis-ulang beruntun itu memicu transisi berulang di
+  // area yang nyelip tepat di belakang banner, dan itu yang terlihat
+  // sebagai banner "kedip-kedip" saat discroll di ponsel. Sekarang
+  // kita cek dulu: kalau nilainya tidak berubah, jangan sentuh DOM
+  // sama sekali supaya tidak ada transisi/repaint yang tidak perlu.
+  const newHeightPx = wrapHeight + 'px';
+  const newTransform = `translateY(${translateY}px)`;
+  if (wrap.style.height !== newHeightPx) wrap.style.height = newHeightPx;
+  if (card.style.transform !== newTransform) card.style.transform = newTransform;
 }
 function initFlowDealSettle() {
   const wrap = document.getElementById('bannerFlowWrap');
@@ -1443,7 +1454,29 @@ function initFlowDealSettle() {
   }
   if (!flowDealResizeBound) {
     flowDealResizeBound = true;
-    window.addEventListener('resize', () => applyFlowDealTuckPosition());
+    // PENTING (fix flicker banner di HP): jangan langsung recalc di
+    // setiap event "resize" mentah-mentah. Browser mobile memicu event
+    // "resize" berkali-kali saat address bar muncul/hilang ketika
+    // pengguna scroll — padahal LEBAR layar sama sekali tidak berubah.
+    // Kalau kita tetap recalc & tulis ulang height/transform tiap kali
+    // itu terjadi, transisi CSS-nya kepicu berulang-ulang persis di
+    // belakang banner dan kelihatan seperti kedip-kedip. Makanya di
+    // sini kita cek dulu: apakah LEBAR window benar-benar berubah?
+    // Kalau cuma tinggi yang berubah (efek address bar), abaikan.
+    // Selain itu dibungkus requestAnimationFrame supaya tidak
+    // recalc lebih dari sekali per frame saat resize beruntun (mis.
+    // saat rotasi layar / resize jendela di desktop).
+    let lastKnownWidth = window.innerWidth;
+    let resizeRafId = null;
+    window.addEventListener('resize', () => {
+      if (window.innerWidth === lastKnownWidth) return; // cuma tinggi yg berubah, abaikan
+      lastKnownWidth = window.innerWidth;
+      if (resizeRafId) cancelAnimationFrame(resizeRafId);
+      resizeRafId = requestAnimationFrame(() => {
+        resizeRafId = null;
+        applyFlowDealTuckPosition();
+      });
+    });
     window.addEventListener('load', () => applyFlowDealTuckPosition());
   }
   // Amati perubahan tinggi kartu supaya tab tetap PAS nempel
@@ -1451,7 +1484,20 @@ function initFlowDealSettle() {
   // diamati walau sudah "settled" supaya tinggi wrap ikut menyesuaikan.
   if (window.ResizeObserver) {
     if (flowDealResizeObserver) flowDealResizeObserver.disconnect();
-    flowDealResizeObserver = new ResizeObserver(() => applyFlowDealTuckPosition());
+    let roRafId = null;
+    flowDealResizeObserver = new ResizeObserver(() => {
+      // Throttle ke 1x per frame — ResizeObserver bisa memanggil callback
+      // beberapa kali beruntun (mis. saat chart di dalam kartu digambar
+      // ulang), dan applyFlowDealTuckPosition() sekarang sudah aman untuk
+      // dipanggil berkali-kali (skip write kalau nilai sama), tapi tetap
+      // ditahan ke 1x/frame supaya lebih hemat & tidak ada race dengan
+      // resize handler di atas.
+      if (roRafId) return;
+      roRafId = requestAnimationFrame(() => {
+        roRafId = null;
+        applyFlowDealTuckPosition();
+      });
+    });
     const cardEl = wrap.querySelector('.flow-deal-card');
     if (cardEl) flowDealResizeObserver.observe(cardEl);
     const handleEl = wrap.querySelector('.fc-peek-handle');
