@@ -84,8 +84,13 @@ let pageTargets = loadPageTargets();
    mundur ke tengah malam (pergantian hari), dipakai di header kartu
    sebagai kotak JAM/MNT/DTK gaya "Flash Deals". */
 let flowResetTimerInterval = null;
+let flowResetTimerVisHandler = null;
 function startFlowResetTimer() {
   clearInterval(flowResetTimerInterval);
+  if (flowResetTimerVisHandler) {
+    document.removeEventListener('visibilitychange', flowResetTimerVisHandler);
+    flowResetTimerVisHandler = null;
+  }
   const elH = document.getElementById('flowTimerH');
   const elM = document.getElementById('flowTimerM');
   const elS = document.getElementById('flowTimerS');
@@ -104,6 +109,20 @@ function startFlowResetTimer() {
   }
   tick();
   flowResetTimerInterval = setInterval(tick, 1000);
+  // FIX BUG "LOMPAT" YANG SAMA SEPERTI KURS: hentikan interval detik
+  // ini saat halaman disembunyikan (HP dikunci/pindah app), lalu
+  // sinkronkan ulang begitu terlihat lagi, supaya angka countdown-nya
+  // tidak sempat "meloncat" pas kembali ke app.
+  flowResetTimerVisHandler = () => {
+    if (document.hidden) {
+      clearInterval(flowResetTimerInterval);
+    } else {
+      tick();
+      clearInterval(flowResetTimerInterval);
+      flowResetTimerInterval = setInterval(tick, 1000);
+    }
+  };
+  document.addEventListener('visibilitychange', flowResetTimerVisHandler);
 }
 
 /* ==========================================================
@@ -834,16 +853,54 @@ function tickBannerFx() {
   fxDisplayedRate = shown;
 
   el.textContent = `Rp ${shown.toLocaleString('id-ID')}`;
-  el.classList.remove('up', 'down');
-  if (prev != null && shown !== prev) {
-    el.classList.add(shown > prev ? 'up' : 'down');
+  // FIX: sebelumnya classList.remove('up','down') dipanggil TIAP detik
+  // tanpa syarat, walau warnanya tidak berubah — itu artinya browser
+  // dipaksa menghitung ulang style elemen ini 1x/detik selamanya,
+  // termasuk pas lagi scroll. Sekarang DOM cuma disentuh kalau warnanya
+  // benar-benar berubah (naik/turun/reset), jadi kerjanya jauh lebih
+  // jarang dan tidak menyumbang beban recalculation tiap detik.
+  const nextCls = prev != null && shown !== prev ? (shown > prev ? 'up' : 'down') : '';
+  if (el.dataset.fxCls !== nextCls) {
+    el.classList.remove('up', 'down');
+    if (nextCls) el.classList.add(nextCls);
+    el.dataset.fxCls = nextCls;
   }
 }
 
+let fxTickInterval = null;
+let fxFetchInterval = null;
 function initBannerFx() {
   fetchUsdIdrRate().then(tickBannerFx);
-  setInterval(tickBannerFx, 1000);
-  setInterval(fetchUsdIdrRate, 5 * 60 * 1000); // segarkan kurs asli tiap 5 menit
+
+  // FIX BUG "LOMPAT" SAAT KEMBALI KE APP: timer detak kurs & fetch
+  // berkala sebelumnya jalan terus tanpa peduli tab/layar HP lagi
+  // aktif atau tidak. Saat HP dikunci lalu dibuka lagi setelah lama,
+  // browser sering "mengejar" banyak tick yang tertunda sekaligus —
+  // hasilnya banner kelihatan patah/lompat sesaat pas app dibuka
+  // kembali. Sekarang kedua timer benar-benar DIHENTIKAN saat halaman
+  // disembunyikan (document.hidden), dan dimulai ULANG bersih (tick
+  // sekali dulu supaya tampilan langsung akurat, baru lanjut interval)
+  // begitu halaman terlihat lagi.
+  function startFxTimers() {
+    stopFxTimers();
+    fxTickInterval = setInterval(tickBannerFx, 1000);
+    fxFetchInterval = setInterval(fetchUsdIdrRate, 5 * 60 * 1000);
+  }
+  function stopFxTimers() {
+    clearInterval(fxTickInterval);
+    clearInterval(fxFetchInterval);
+    fxTickInterval = null;
+    fxFetchInterval = null;
+  }
+  startFxTimers();
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      stopFxTimers();
+    } else {
+      fetchUsdIdrRate().then(tickBannerFx);
+      startFxTimers();
+    }
+  });
 }
 
 /* ==========================================================
