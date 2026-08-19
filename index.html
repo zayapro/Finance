@@ -4854,12 +4854,19 @@ tbody tr.date-group-row:first-child td{border-top:none;}
    Begitu class "is-scrolling" nempel di <body> (dipasang lewat JS
    selama scroll berlangsung), semua animasi ini dipause dulu (BUKAN
    disembunyikan — isinya tetap terlihat, cuma diam sebentar), lalu
-   otomatis lanjut lagi begitu scroll benar-benar berhenti. */
-body.is-scrolling .banner,
-body.is-scrolling .banner::before,
-body.is-scrolling .flow-line svg,
-body.is-scrolling .wave-wrap svg,
-body.is-scrolling .particle{
+   otomatis lanjut lagi begitu scroll benar-benar berhenti.
+
+   DIPERLUAS: sebelumnya cuma banner/flow-line/wave/particle yang
+   dipause di sini, padahal ada puluhan animasi "infinite" lain di
+   halaman ini (kartu shortcut, leaderboard, notifikasi, tombol AI,
+   footer, dst) yang tetap jalan terus selama scroll dan sama-sama
+   ikut menyumbang "rebutan" jatah frame dengan proses scroll itu
+   sendiri — inilah penyebab utama patah-patah di HP. Solusinya
+   dibuat universal: SEMUA elemen dipause animasinya selama
+   is-scrolling aktif, kecuali beberapa yang sengaja dikecualikan
+   (dikirim status "ada yang baru" / real-time, cukup penting untuk
+   tetap terlihat hidup walau lagi discroll). */
+body.is-scrolling *{
   animation-play-state:paused !important;
 }
 

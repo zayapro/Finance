@@ -8739,15 +8739,24 @@ function initAiChat() {
 // terlihat, cuma diam sebentar, TIDAK disembunyikan. Class ini dicopot
 // lagi otomatis begitu tidak ada event scroll baru selama ~160ms
 // (dianggap scroll sudah selesai), lalu animasi lanjut seperti biasa.
+// CATATAN (perluasan fix patah-patah): class "is-scrolling" ini
+// sekarang mem-pause SEMUA animasi dekoratif di halaman (lihat CSS
+// "body.is-scrolling *"), bukan cuma banner — jadi listener-nya juga
+// diperluas supaya scroll di DALAM halaman overlay (detail/
+// leaderboard/pengaturan) dan panel notifikasi ikut memicu pause,
+// tidak cuma scroll di body utama.
 let bannerScrollFreezeTimer = null;
 function initBannerScrollFreeze() {
-  window.addEventListener('scroll', () => {
+  const onAnyScroll = () => {
     document.body.classList.add('is-scrolling');
     clearTimeout(bannerScrollFreezeTimer);
     bannerScrollFreezeTimer = setTimeout(() => {
       document.body.classList.remove('is-scrolling');
     }, 160);
-  }, { passive: true });
+  };
+  window.addEventListener('scroll', onAnyScroll, { passive: true });
+  document.querySelectorAll('.detail-page-overlay, .notif-panel, .ai-chat-body')
+    .forEach((el) => el.addEventListener('scroll', onAnyScroll, { passive: true }));
 }
 
 // ============================================================
