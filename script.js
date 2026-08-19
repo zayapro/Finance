@@ -1266,24 +1266,8 @@ document.getElementById('saldoToggle').addEventListener('click', () => {
 });
 
 let saldoAnimFrame = null;
-// PENTING (fix "saldo sempat kelihatan minus/salah" sesaat setelah
-// refresh): render PERTAMA setelah halaman dimuat (refreshAll() awal
-// dari init()) dulu langsung menampilkan angka final tanpa animasi
-// hitung-naik. Animasi hitung-naik (0 -> target) cuma dipakai untuk
-// update BERIKUTNYA (mis. setelah tambah transaksi) yang memang dari
-// keadaan sudah stabil di layar, jadi tidak ada frame antara yang bisa
-// kelihatan seperti angka salah/minus sesaat sebelum settle ke nilai
-// akhir yang benar.
-let saldoFirstRenderDone = false;
 function animateSaldo(target) {
   const el = document.getElementById('saldoValue');
-  if (!saldoFirstRenderDone) {
-    saldoFirstRenderDone = true;
-    cancelAnimationFrame(saldoAnimFrame);
-    el.textContent = fmtRupiah(target);
-    el.dataset.raw = target;
-    return;
-  }
   const start = parseFloat(el.dataset.raw || '0');
   const startTime = performance.now();
   const duration = 700;
@@ -6104,51 +6088,8 @@ function openEditModal(id) {
   openModal(txModal);
 }
 
-/* PENTING (fix modal/panel "goyang"/scroll bocor di iPhone Safari):
-   sekadar body.style.overflow='hidden' TIDAK cukup di Safari iOS —
-   halaman di belakang popup kadang masih bisa ke-scroll/rubber-band
-   saat jari menyentuh area di sekitarnya, kelihatan tidak smooth.
-   lockBodyScroll/unlockBodyScroll dipakai BERSAMA oleh semua jenis
-   popup di app ini (modal .modal-overlay maupun panel Tagihan & Hutang
-   yang punya sistem buka/tutup sendiri) supaya perilakunya konsisten.
-   Body juga dikunci pakai position:fixed (trik yang benar-benar
-   efektif di iOS), sambil menyimpan posisi scroll saat ini supaya
-   begitu popup terakhir ditutup, halaman kembali persis ke posisi
-   semula (bukan lompat ke atas). Pakai penghitung (openModalCount)
-   supaya kalau ada popup bertumpuk, posisi scroll cuma disimpan sekali
-   & dikembalikan sekali juga — tidak saling menimpa. */
-let scrollLockY = 0;
-let openModalCount = 0;
-function lockBodyScroll() {
-  if (openModalCount === 0) {
-    scrollLockY = window.scrollY || document.documentElement.scrollTop || 0;
-    document.body.style.position = 'fixed';
-    document.body.style.top = -scrollLockY + 'px';
-    document.body.style.left = '0';
-    document.body.style.right = '0';
-    document.body.style.overflow = 'hidden';
-  }
-  openModalCount++;
-}
-function unlockBodyScroll() {
-  openModalCount = Math.max(0, openModalCount - 1);
-  if (openModalCount === 0) {
-    document.body.style.position = '';
-    document.body.style.top = '';
-    document.body.style.left = '';
-    document.body.style.right = '';
-    document.body.style.overflow = '';
-    window.scrollTo(0, scrollLockY);
-  }
-}
-function openModal(overlay) {
-  overlay.classList.add('open');
-  lockBodyScroll();
-}
-function closeModal(overlay) {
-  overlay.classList.remove('open');
-  unlockBodyScroll();
-}
+function openModal(overlay) { overlay.classList.add('open'); document.body.style.overflow = 'hidden'; }
+function closeModal(overlay) { overlay.classList.remove('open'); document.body.style.overflow = ''; }
 
 document.getElementById('txForm').addEventListener('submit', (e) => {
   e.preventDefault();
@@ -7890,34 +7831,28 @@ function openNotifPanel() {
   positionNotifPanel();
   notifPanel.classList.add('open');
   notifPanelOverlay.classList.add('open');
-  lockBodyScroll();
+  document.body.style.overflow = 'hidden';
   renderNotifPanel();
   positionNotifPanel();
 }
 function closeNotifPanel() {
   notifPanel.classList.remove('open');
   notifPanelOverlay.classList.remove('open');
-  unlockBodyScroll();
+  document.body.style.overflow = '';
 }
 window.addEventListener('resize', () => { if (notifPanel.classList.contains('open')) positionNotifPanel(); });
 
-// Tombol "Riwayat Transaksi" lompat LANGSUNG ke tabel transaksinya
-// (#txTableWrap), bukan cuma ke awal section (yang sebelum tabel masih
-// ada kartu Ringkasan Total & baris tab/filter) — supaya user sekali
-// klik langsung lihat daftar transaksinya, tanpa perlu scroll manual
-// lagi. Fallback ke #historySection kalau elemen tabelnya entah
-// kenapa tidak ditemukan.
-function scrollToTransactionTable() {
-  const target = document.getElementById('txTableWrap') || document.getElementById('historySection');
-  target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-document.getElementById('historyJumpBtn').addEventListener('click', scrollToTransactionTable);
+document.getElementById('historyJumpBtn').addEventListener('click', () => {
+  document.getElementById('historySection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
 // Versi mini topbar dari tombol Riwayat, Tagihan & Hutang, dan Tambah
 // Transaksi di atas — aksinya sama persis dengan tombol aslinya di
 // banner besar, cuma elemennya beda (mini topbar posisinya fixed
 // terpisah supaya tetap bisa diakses walau banner besar sudah
 // discroll ke atas).
-document.getElementById('miniHistoryBtn').addEventListener('click', scrollToTransactionTable);
+document.getElementById('miniHistoryBtn').addEventListener('click', () => {
+  document.getElementById('historySection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
 document.getElementById('miniAddBtn').addEventListener('click', () => openAddModal());
 
 notifBtn.addEventListener('click', (e) => {
@@ -8694,18 +8629,12 @@ function initBannerScrollFreeze() {
 
 // ============================================================
 // MINI TOPBAR — ukur tinggi asli #miniTopbar lalu simpan ke variabel
-// CSS --mini-topbar-h. Dulu dipakai untuk padding-top body (supaya
-// banner besar tidak ketutup mini-topbar yang saat itu SELALU
-// tampil). Sekarang mini-topbar cuma tampil setelah discroll (lihat
-// .mtb-active di bawah), jadi padding-top body sudah tidak dipakai
-// lagi — tapi variabel tingginya tetap berguna untuk kasih jarak
-// scroll-margin-top ke #historySection (lihat CSS-nya di
-// index.html) supaya judul kartu Riwayat tidak ketutup mini-topbar
-// begitu discroll ke situ lewat tombol Riwayat. Tinggi elemen ini
-// bisa berubah-ubah (mis. teks Rp jadi lebih panjang & wrap ke 2
-// baris di layar sangat sempit, atau area aman/notch beda-beda tiap
-// HP lewat env(safe-area-inset-top)), jadi diukur ulang otomatis
-// pakai ResizeObserver, bukan angka tetap.
+// CSS --mini-topbar-h supaya body bisa dikasih padding-top yang PAS
+// (lihat CSS body{padding-top:var(--mini-topbar-h,64px)} di media
+// query HP). Tinggi elemen ini bisa berubah-ubah (mis. teks Rp jadi
+// lebih panjang & wrap ke 2 baris di layar sangat sempit, atau area
+// aman/notch beda-beda tiap HP lewat env(safe-area-inset-top)), jadi
+// diukur ulang otomatis pakai ResizeObserver, bukan angka tetap.
 function initMiniTopbar() {
   const bar = document.getElementById('miniTopbar');
   if (!bar) return;
@@ -8720,74 +8649,6 @@ function initMiniTopbar() {
     new ResizeObserver(applyHeight).observe(bar);
   } else {
     window.addEventListener('resize', applyHeight);
-  }
-
-  // FIX "DOBEL" DENGAN BANNER BESAR — sebelumnya mini-topbar selalu
-  // tampil dari awal render, jadi numpuk kelihatan dobel dengan
-  // ringkasan Pemasukan/Pengeluaran yang juga ada di banner besar
-  // (#banner) tepat di bawahnya. Sekarang mini-topbar baru diberi
-  // class "mtb-active" (lihat CSS .mini-topbar.mtb-active, yang
-  // menggesernya turun ke layar) SETELAH banner besar benar-benar
-  // sudah discroll keluar dari layar (sisi bawah banner <= 0, lihat
-  // getBoundingClientRect().bottom di bawah).
-  //
-  // CATATAN (kenapa bukan pakai IntersectionObserver): percobaan
-  // pertama pakai IntersectionObserver, tapi di HP saat scroll cepat
-  // (momentum scroll) callback-nya sering telat/ke-throttle browser,
-  // jadi mini-topbar baru "nyusul" muncul pas scroll SUDAH berhenti
-  // atau baru kelihatan pas scroll balik ke atas -- bukan langsung
-  // pas banner lewat. Makanya diganti pola yang sama dengan tombol
-  // "Kembali ke atas" di halaman ini (lihat initBackToTop di atas,
-  // sudah terbukti responsif dua arah): dicek ulang posisi banner
-  // tiap frame lewat requestAnimationFrame pada event scroll, bukan
-  // menunggu browser melapor lewat IntersectionObserver.
-  const bannerEl = document.getElementById('banner');
-  if (bannerEl) {
-    const mq = window.matchMedia('(max-width:600px)');
-    let mtbTicking = false;
-    // FIX FLASH SAAT LOAD: kalau browser kebetulan me-restore posisi
-    // scroll (mis. user refresh di tengah halaman), pengecekan
-    // PERTAMA bisa langsung menyalakan .mtb-active. Karena CSS-nya
-    // pakai transition, itu bikin mini-topbar kelihatan "meluncur
-    // turun" sesaat pas halaman baru dimuat -- padahal seharusnya dia
-    // langsung nongol di posisi akhir tanpa animasi (baru discroll
-    // pengguna sungguhan yang harus animasi). mtbFirstCheck menandai
-    // pengecekan pertama itu supaya transition dimatikan sesaat lalu
-    // dinyalakan lagi, tanpa mengubah perilaku setelahnya.
-    let mtbFirstCheck = true;
-    function updateMiniTopbarVisibility() {
-      mtbTicking = false;
-      if (!mq.matches) {
-        bar.classList.remove('mtb-active');
-        mtbFirstCheck = false;
-        return;
-      }
-      // Banner dianggap "sudah lewat" begitu sisi PALING BAWAHnya
-      // sudah di atas batas atas layar (bottom <= 0) -- artinya
-      // seluruh banner, termasuk ringkasan Pemasukan/Pengeluaran di
-      // dalamnya, sudah tidak kelihatan sama sekali lagi.
-      const bannerFullyPassed = bannerEl.getBoundingClientRect().bottom <= 0;
-      if (mtbFirstCheck) {
-        mtbFirstCheck = false;
-        bar.style.transition = 'none';
-        bar.classList.toggle('mtb-active', bannerFullyPassed);
-        void bar.offsetHeight; // paksa reflow supaya browser "commit" tanpa transisi
-        bar.style.transition = '';
-        return;
-      }
-      bar.classList.toggle('mtb-active', bannerFullyPassed);
-    }
-    function requestMiniTopbarUpdate() {
-      if (!mtbTicking) {
-        mtbTicking = true;
-        requestAnimationFrame(updateMiniTopbarVisibility);
-      }
-    }
-    updateMiniTopbarVisibility();
-    window.addEventListener('scroll', requestMiniTopbarUpdate, { passive: true });
-    window.addEventListener('resize', requestMiniTopbarUpdate);
-    if (mq.addEventListener) mq.addEventListener('change', requestMiniTopbarUpdate);
-    else if (mq.addListener) mq.addListener(requestMiniTopbarUpdate);
   }
 }
 
