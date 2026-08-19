@@ -4811,15 +4811,28 @@ body.is-scrolling .particle{
        via translateY, BUKAN display:none — supaya tetap bisa
        dianimasikan mulus) dan baru digeser turun/muncul (lihat class
        .mtb-active) SETELAH banner besar discroll keluar dari layar.
-       Class .mtb-active ditambahkan otomatis oleh IntersectionObserver
-       di initMiniTopbar (script.js) begitu <header class="banner">
+       Class .mtb-active ditambahkan otomatis lewat pengecekan posisi
+       scroll (lihat initMiniTopbar di script.js) begitu <header class="banner">
        sudah tidak kelihatan lagi. */
     transform:translateY(-100%);
-    transition:transform .28s cubic-bezier(.4,0,.2,1);
+    /* visibility ditambahkan supaya saat mini-topbar tersembunyi di
+       luar layar, tombol-tombol di dalamnya (Riwayat/Notif/Tambah)
+       benar-benar tidak bisa "kena" tab keyboard atau kebaca screen
+       reader (pointer-events:none saja tidak cukup untuk itu -- masih
+       bisa difokus lewat keyboard walau tak kelihatan). Delay 0s
+       linear .28s pada visibility, dikombinasi dengan transition
+       transform di atas: waktu MUNCUL (.mtb-active ditambah) langsung
+       jadi visible tanpa jeda; waktu HILANG (.mtb-active dicopot) baru
+       jadi hidden PAS animasi geser ke atas selesai (bukan hilang
+       tiba-tiba di tengah animasi). */
+    visibility:hidden;
+    transition:transform .28s cubic-bezier(.4,0,.2,1), visibility 0s linear .28s;
     pointer-events:none;
   }
   .mini-topbar.mtb-active{
     transform:translateY(0);
+    visibility:visible;
+    transition:transform .28s cubic-bezier(.4,0,.2,1), visibility 0s linear 0s;
     pointer-events:auto;
   }
   /* Baris atas: logo/nama app (buka Pengaturan Aplikasi) + 3 ikon
