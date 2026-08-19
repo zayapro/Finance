@@ -244,7 +244,12 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
 }
 .brand-name{font-family:'Fraunces',serif;font-weight:600;font-size:19px;letter-spacing:-0.01em;white-space:nowrap;}
 .banner-date-col{display:flex;flex-direction:column;align-items:flex-end;gap:4px;min-width:0;}
-.banner-date{font-size:12.5px;color:rgba(244,247,243,0.72);white-space:nowrap;}
+.banner-date{font-size:12.5px;color:rgba(244,247,243,0.72);white-space:nowrap;
+  /* FIX KEDIP: lihat catatan lengkap di .banner-fx .fx-value di bawah —
+     alasan yang sama berlaku di sini karena jamnya juga tidak pernah
+     berubah, tapi sejajar dengan elemen kurs yang berubah tiap detik. */
+  transform:translateZ(0);
+}
 .banner-top-right{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:flex-end;}
 .banner-fx{
   display:flex;align-items:center;gap:6px;
@@ -273,6 +278,21 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
   color:rgba(244,247,243,0.92);font-weight:700;
   transition:color .3s ease;
   font-variant-numeric:tabular-nums;
+  /* FIX KEDIP DI ANGKA KURS & TANGGAL: teks kurs di sini di-update
+     lewat JS SETIAP DETIK selamanya (lihat tickBannerFx di script.js).
+     .banner di belakangnya punya background gradient yang lumayan
+     berat untuk digambar ulang (banyak radial-gradient). Tanpa
+     lapisan render sendiri, browser HP kadang menggambar ulang
+     sebagian area gradient banner di sekitar teks ini setiap kali
+     teksnya berubah — kelihatan seperti kedip halus tapi terus-
+     menerus tiap detik, ikut menjalar ke logo/tanggal di baris yang
+     sama. display:inline-block + transform:translateZ(0) di sini
+     memaksa browser memberi elemen INI SAJA (bukan seluruh banner)
+     lapisan render terpisah yang kecil & murah, jadi update teks
+     tiap detik tidak lagi memicu gambar ulang gradient banner di
+     belakangnya maupun elemen tetangganya (logo, tanggal). */
+  display:inline-block;
+  transform:translateZ(0);
 }
 .banner-fx .fx-value.up{color:#6EE7B7;}
 .banner-fx .fx-value.down{color:#FDA4AF;}
@@ -5332,7 +5352,7 @@ body.is-scrolling *{
   <div class="mtb-top-row">
     <div class="mtb-brand" id="miniBrandBtn" role="button" tabindex="0" title="Pengaturan Aplikasi" aria-label="Buka pengaturan aplikasi">
       <span class="brand-mark" id="miniBrandMarkIcon">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>
       </span>
       <span class="brand-name" id="miniBrandNameText">ZAYAPRO</span>
     </div>
@@ -5395,7 +5415,7 @@ body.is-scrolling *{
       <div class="brand-wrap">
         <div class="brand" id="brandBtn" title="Pengaturan Aplikasi" role="button" tabindex="0" aria-label="Buka pengaturan aplikasi">
           <span class="brand-mark" id="brandMarkIcon">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>
           </span>
           <span class="brand-name" id="brandNameText">ZAYAPRO</span>
         </div>
@@ -5774,7 +5794,7 @@ body.is-scrolling *{
     <div class="footer-top">
       <div class="footer-brand">
         <span class="footer-brand-mark" id="footerBrandMarkIcon">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>
         </span>
         <div>
           <span class="footer-brand-name" id="footerBrandNameText">ZAYAPRO</span>

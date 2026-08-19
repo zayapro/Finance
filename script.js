@@ -616,8 +616,28 @@ function setupExportMenu(btnId, menuId) {
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
   menu._close = close;
 }
-const todayStr = () => new Date().toISOString().slice(0, 10);
-const thisMonthStr = () => new Date().toISOString().slice(0, 7);
+/* FIX BUG TANGGAL/KALENDER: sebelumnya pakai new Date().toISOString(),
+   yang mengonversi ke zona waktu UTC. Untuk pengguna di zona waktu
+   lebih maju dari UTC (mis. WIB/UTC+7), antara jam 00:00-06:59
+   waktu setempat, tanggal UTC-nya MASIH tanggal KEMARIN -- jadi
+   "hari ini" versi app bisa salah mundur 1 hari persis di jam-jam
+   itu (memengaruhi kalender, filter riwayat, status tagihan jatuh
+   tempo, dsb). localDateStr/localMonthStr di bawah mengambil
+   tanggal dari zona waktu SETEMPAT (getFullYear/getMonth/getDate),
+   bukan dari UTC, supaya selalu sesuai kalender di HP pengguna. */
+function localDateStr(date = new Date()) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+function localMonthStr(date = new Date()) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  return `${y}-${m}`;
+}
+const todayStr = () => localDateStr();
+const thisMonthStr = () => localMonthStr();
 const thisYearStr = () => String(new Date().getFullYear());
 
 /* ---------- Helper minggu (ISO 8601) ---------- */
@@ -664,7 +684,7 @@ let notifTab = 'tagihan';
 
 function seedBills() {
   const now = new Date();
-  const plus = (n) => { const x = new Date(now); x.setDate(x.getDate() + n); return x.toISOString().slice(0, 10); };
+  const plus = (n) => { const x = new Date(now); x.setDate(x.getDate() + n); return localDateStr(x); };
   return [
     { id: cryptoId(), name: 'Tagihan Listrik PLN', amount: 250000, dueDate: plus(4), note: '', status: 'belum', recurring: true, createdAt: Date.now() },
     { id: cryptoId(), name: 'Internet Bulanan', amount: 350000, dueDate: plus(-2), note: '', status: 'belum', recurring: true, createdAt: Date.now() },
@@ -672,7 +692,7 @@ function seedBills() {
 }
 function seedDebts() {
   const now = new Date();
-  const plus = (n) => { const x = new Date(now); x.setDate(x.getDate() + n); return x.toISOString().slice(0, 10); };
+  const plus = (n) => { const x = new Date(now); x.setDate(x.getDate() + n); return localDateStr(x); };
   return [
     { id: cryptoId(), name: 'Pinjaman ke Budi', amount: 500000, dueDate: plus(10), note: '', status: 'belum', recurring: false, createdAt: Date.now() },
   ];
@@ -683,7 +703,7 @@ function seedDebts() {
 function addMonthsToDateStr(dateStr, n) {
   const d = new Date(dateStr + 'T00:00:00');
   d.setMonth(d.getMonth() + n);
-  return d.toISOString().slice(0, 10);
+  return localDateStr(d);
 }
 
 function loadBills() {
@@ -769,7 +789,7 @@ function seedData() {
   const d = (offset) => {
     const x = new Date(now);
     x.setDate(x.getDate() - offset);
-    return x.toISOString().slice(0, 10);
+    return localDateStr(x);
   };
   return [
     { id: cryptoId(), type: 'masuk', amount: 4500000, category: 'Gaji', desc: 'Gaji bulanan', date: d(6) },
@@ -2534,7 +2554,7 @@ function buildFlowTierSeries(range) {
     for (let i = 6; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
-      days.push(d.toISOString().slice(0, 10));
+      days.push(localDateStr(d));
     }
     const today = todayStr();
     return days.map(d => {
@@ -3349,12 +3369,12 @@ function getFilteredTransactions() {
   if (activeTab === 'semua') {
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - 27);
-    const cutoffStr = cutoff.toISOString().slice(0, 10);
+    const cutoffStr = localDateStr(cutoff);
     list = list.filter(t => t.date && t.date >= cutoffStr);
   } else if (activeTab === 'mingguan') {
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - 6);
-    const cutoffStr = cutoff.toISOString().slice(0, 10);
+    const cutoffStr = localDateStr(cutoff);
     list = list.filter(t => t.date && t.date >= cutoffStr);
   } else if (activeTab === 'bulanan') {
     list = list.filter(t => t.date && t.date.slice(0, 7) === thisMonthStr());
@@ -3388,7 +3408,7 @@ function formatHistoryDateLabel(dateStr) {
   const today = todayStr();
   const y = new Date();
   y.setDate(y.getDate() - 1);
-  const yesterdayStr = y.toISOString().slice(0, 10);
+  const yesterdayStr = localDateStr(y);
   if (dateStr === today) return 'Hari Ini';
   if (dateStr === yesterdayStr) return 'Kemarin';
   return new Date(dateStr + 'T00:00:00').toLocaleDateString('id-ID', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
@@ -3895,7 +3915,7 @@ function renderDetailMiniChart(key) {
     for (let i = 6; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
-      days.push(d.toISOString().slice(0, 10));
+      days.push(localDateStr(d));
     }
     labels = days.map(d => new Date(d + 'T00:00:00').toLocaleDateString('id-ID', { day: '2-digit', month: 'short' }));
     values = days.map(d => transactions
@@ -4406,7 +4426,7 @@ function lastMonthStr() {
   const d = new Date();
   d.setDate(1);
   d.setMonth(d.getMonth() - 1);
-  return d.toISOString().slice(0, 7);
+  return localMonthStr(d);
 }
 function getIncomeSourceLastMonthEntries() {
   const month = lastMonthStr();
@@ -4579,7 +4599,7 @@ function getIncomeSourceRecentEntries(days = 7) {
   const cutoff = new Date();
   cutoff.setHours(0, 0, 0, 0);
   cutoff.setDate(cutoff.getDate() - (days - 1));
-  const cutoffStr = cutoff.toISOString().slice(0, 10);
+  const cutoffStr = localDateStr(cutoff);
   return incomeSources
     .filter(x => x.date && x.date >= cutoffStr)
     .sort((a, b) => (b.date || '').localeCompare(a.date || '') || String(b.id || '').localeCompare(String(a.id || '')));
@@ -4591,7 +4611,7 @@ function relativeIncomeDateLabel(dateStr) {
   if (dateStr === today) return 'Hari ini';
   const y = new Date();
   y.setDate(y.getDate() - 1);
-  const yesterdayStr = y.toISOString().slice(0, 10);
+  const yesterdayStr = localDateStr(y);
   if (dateStr === yesterdayStr) return 'Kemarin';
   const diffDays = Math.round((new Date(today + 'T00:00:00') - new Date(dateStr + 'T00:00:00')) / 86400000);
   if (diffDays > 1 && diffDays < 7) return diffDays + ' hari lalu';
@@ -4920,7 +4940,7 @@ function incEntriesForPeriod(period) {
     const cutoff = new Date();
     cutoff.setDate(1);
     cutoff.setMonth(cutoff.getMonth() - 2);
-    const cutoffMonth = cutoff.toISOString().slice(0, 7);
+    const cutoffMonth = localMonthStr(cutoff);
     return incomeSources
       .filter(x => x.date && x.date.slice(0, 7) >= cutoffMonth)
       .sort((a, b) => (b.date || '').localeCompare(a.date || '') || String(b.id || '').localeCompare(String(a.id || '')));
@@ -8620,7 +8640,7 @@ if (aiChatSendBtn) aiChatSendBtn.addEventListener('click', sendAiMessage);
 function buildFinancialContextSummary() {
   const totalSaldo = wallets.reduce((s, w) => s + (Number(w.balance) || 0), 0);
   const now = new Date();
-  const monthKey = now.toISOString().slice(0, 7);
+  const monthKey = localMonthStr(now);
   let monthIn = 0, monthOut = 0;
   transactions.forEach(t => {
     if ((t.date || '').slice(0, 7) !== monthKey) return;
