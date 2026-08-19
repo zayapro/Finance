@@ -8629,12 +8629,18 @@ function initBannerScrollFreeze() {
 
 // ============================================================
 // MINI TOPBAR — ukur tinggi asli #miniTopbar lalu simpan ke variabel
-// CSS --mini-topbar-h supaya body bisa dikasih padding-top yang PAS
-// (lihat CSS body{padding-top:var(--mini-topbar-h,64px)} di media
-// query HP). Tinggi elemen ini bisa berubah-ubah (mis. teks Rp jadi
-// lebih panjang & wrap ke 2 baris di layar sangat sempit, atau area
-// aman/notch beda-beda tiap HP lewat env(safe-area-inset-top)), jadi
-// diukur ulang otomatis pakai ResizeObserver, bukan angka tetap.
+// CSS --mini-topbar-h. Dulu dipakai untuk padding-top body (supaya
+// banner besar tidak ketutup mini-topbar yang saat itu SELALU
+// tampil). Sekarang mini-topbar cuma tampil setelah discroll (lihat
+// .mtb-active di bawah), jadi padding-top body sudah tidak dipakai
+// lagi — tapi variabel tingginya tetap berguna untuk kasih jarak
+// scroll-margin-top ke #historySection (lihat CSS-nya di
+// index.html) supaya judul kartu Riwayat tidak ketutup mini-topbar
+// begitu discroll ke situ lewat tombol Riwayat. Tinggi elemen ini
+// bisa berubah-ubah (mis. teks Rp jadi lebih panjang & wrap ke 2
+// baris di layar sangat sempit, atau area aman/notch beda-beda tiap
+// HP lewat env(safe-area-inset-top)), jadi diukur ulang otomatis
+// pakai ResizeObserver, bukan angka tetap.
 function initMiniTopbar() {
   const bar = document.getElementById('miniTopbar');
   if (!bar) return;
@@ -8674,10 +8680,21 @@ function initMiniTopbar() {
   if (bannerEl) {
     const mq = window.matchMedia('(max-width:600px)');
     let mtbTicking = false;
+    // FIX FLASH SAAT LOAD: kalau browser kebetulan me-restore posisi
+    // scroll (mis. user refresh di tengah halaman), pengecekan
+    // PERTAMA bisa langsung menyalakan .mtb-active. Karena CSS-nya
+    // pakai transition, itu bikin mini-topbar kelihatan "meluncur
+    // turun" sesaat pas halaman baru dimuat -- padahal seharusnya dia
+    // langsung nongol di posisi akhir tanpa animasi (baru discroll
+    // pengguna sungguhan yang harus animasi). mtbFirstCheck menandai
+    // pengecekan pertama itu supaya transition dimatikan sesaat lalu
+    // dinyalakan lagi, tanpa mengubah perilaku setelahnya.
+    let mtbFirstCheck = true;
     function updateMiniTopbarVisibility() {
       mtbTicking = false;
       if (!mq.matches) {
         bar.classList.remove('mtb-active');
+        mtbFirstCheck = false;
         return;
       }
       // Banner dianggap "sudah lewat" begitu sisi PALING BAWAHnya
@@ -8685,6 +8702,14 @@ function initMiniTopbar() {
       // seluruh banner, termasuk ringkasan Pemasukan/Pengeluaran di
       // dalamnya, sudah tidak kelihatan sama sekali lagi.
       const bannerFullyPassed = bannerEl.getBoundingClientRect().bottom <= 0;
+      if (mtbFirstCheck) {
+        mtbFirstCheck = false;
+        bar.style.transition = 'none';
+        bar.classList.toggle('mtb-active', bannerFullyPassed);
+        void bar.offsetHeight; // paksa reflow supaya browser "commit" tanpa transisi
+        bar.style.transition = '';
+        return;
+      }
       bar.classList.toggle('mtb-active', bannerFullyPassed);
     }
     function requestMiniTopbarUpdate() {

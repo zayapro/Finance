@@ -4864,7 +4864,18 @@ body.is-scrolling .particle{
      mini-topbar aktif (sudah discroll), dia cukup menumpuk/overlay
      di atas konten yang memang sudah discroll lewat, sama seperti
      pola sticky-header pada umumnya, tidak perlu dorong ulang
-     layout body.*/
+     layout body.
+
+     Tapi karena sekarang mini-topbar bisa MENUMPUK di atas konten
+     (bukan dorong layout lagi), tombol "Riwayat" (historyJumpBtn /
+     miniHistoryBtn di script.js, keduanya scrollIntoView ke
+     #historySection) perlu penyesuaian: kalau tidak diberi jarak,
+     judul kartu Riwayat bisa ketutup mini-topbar begitu discroll ke
+     situ. --mini-topbar-h (sudah diukur otomatis lewat ResizeObserver
+     di initMiniTopbar, script.js) dipakai lagi di sini sebagai
+     scroll-margin-top supaya browser otomatis kasih jarak pas ketika
+     scrollIntoView dipanggil — tidak perlu hitung manual di JS. */
+  #historySection{scroll-margin-top:calc(var(--mini-topbar-h, 108px) + 12px);}
 }
 
 /* ============================================================
@@ -5057,7 +5068,21 @@ body.is-scrolling .particle{
   .brand-name{font-size:16.5px;}
   .banner-date{font-size:10.5px;}
   .banner-fx{font-size:9px;}
-  .notif-wrap .notif-btn,
+  /* PENTING (fix ikon banner tidak sejajar/beda ukuran): SEBELUMNYA
+     selector di sini cuma ".notif-wrap .notif-btn" — yang di HTML
+     hanya membungkus tombol lonceng (Tagihan & Hutang). Tombol
+     Riwayat (historyJumpBtn) & Tambah (btnAddMobile) TIDAK dibungkus
+     .notif-wrap, jadi keduanya ketinggalan tetap di ukuran default
+     34x34 sementara lonceng mengecil ke 30x30 — 3 ikon jadi beda
+     tinggi/lebar & kelihatan tidak rata sebaris. Sekarang disamakan:
+     SEMUA tombol ikon di banner (".banner-top-right .notif-btn",
+     mencakup ketiganya baik yang dibungkus .notif-wrap atau tidak)
+     dan di mini-topbar (".mtb-actions .notif-btn") dipaksa 30x30 yang
+     sama persis, supaya sejajar rapi di banner besar MAUPUN pas
+     sudah berubah jadi mini-topbar ketika discroll — tidak ada lagi
+     "lompatan" ukuran antara kedua kondisi itu. */
+  .banner-top-right .notif-btn,
+  .mtb-actions .notif-btn,
   .ai-fab-note-btn{width:30px;height:30px;border-radius:8px;}
   .notif-btn svg{width:16px;height:16px;}
   .notif-badge{min-width:14px;height:14px;font-size:9px;}
