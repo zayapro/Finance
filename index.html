@@ -3569,9 +3569,13 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 table{width:100%;border-collapse:collapse;min-width:640px;}
 thead th{
   text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:0.07em;
-  color:var(--ink-faint);font-weight:800;padding:12px 14px;border-bottom:1px solid var(--line);
-  background:var(--paper);position:sticky;top:0;
+  color:var(--ink-soft);font-weight:800;padding:12px 14px;
+  border-bottom:1px solid rgba(37,99,235,0.16);
+  background:linear-gradient(180deg, #EEF3FC, #E4EBF9);
+  position:sticky;top:0;
 }
+thead th:first-child{border-top-left-radius:11px;}
+thead th:last-child{border-top-right-radius:11px;}
 tbody td{padding:13px 14px;border-bottom:1px solid var(--line);font-size:13.5px;vertical-align:middle;}
 tbody tr{transition:background .15s ease;}
 tbody tr:nth-child(even){background:rgba(15,23,42,0.014);}
