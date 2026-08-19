@@ -3551,13 +3551,20 @@ input[type="number"].year-input{width:110px;font-family:'IBM Plex Mono',monospac
   }
 }
 /* ---- Baris filter (cari, tipe, kategori, ekspor) di HP & tablet:
-   SATU BARIS ke samping (scroll horizontal), bukan ditumpuk ke bawah.
-   Sebelumnya di bawah 600px keempatnya dipaksa ke grid 2 kolom (jadi
-   3 baris bertumpuk), dan di bawah 380px malah jadi 4 baris penuh —
-   makan banyak ruang vertikal. Sekarang keempatnya sejajar dalam satu
-   baris yang bisa digeser (swipe) ke samping kalau memang tidak muat,
-   dengan lebar tiap field dijaga tetap nyaman dibaca (tidak
-   menyempit acak) & scrollbar-nya disembunyikan biar rapi. ---- */
+   SATU BARIS PENUH, TIDAK PERNAH DISCROLL KE SAMPING. Sebelumnya di
+   bawah 900px baris ini dibuat nowrap + overflow-x:auto, jadi field
+   tipe/kategori/ekspor yang lebar suka kepotong & harus digeser
+   manual buat kelihatan. Sekarang: kolom cari tetap kotak teks biasa
+   (melebar mengisi sisa ruang), sedangkan filter Tipe & Kategori
+   (dua <select> ASLI, fungsi & id-nya sama sekali tidak berubah)
+   serta tombol Ekspor disusutkan jadi tombol ikon kotak kecil yang
+   rapi -- totalnya jauh lebih sempit dari versi teks penuh sehingga
+   selalu muat utuh dalam satu baris tanpa perlu geser. Select asli
+   tetap berfungsi normal (ditumpuk transparan pas di atas ikonnya),
+   jadi listener JS yang sudah ada (change/click berdasar id) tidak
+   perlu diubah sama sekali. ---- */
+.filter-select-wrap{display:contents;}
+.filter-select-ic{display:none;}
 @media (max-width:900px){
   .controls-row{
     display:flex;
@@ -3565,31 +3572,30 @@ input[type="number"].year-input{width:110px;font-family:'IBM Plex Mono',monospac
     align-items:center;
     gap:8px;
     margin:14px 0 16px;
-    overflow-x:auto;
-    overflow-y:hidden;
-    -webkit-overflow-scrolling:touch;
-    scroll-snap-type:x proximity;
-    scrollbar-width:none;
-    -ms-overflow-style:none;
-    padding-bottom:2px;
+    overflow:visible;
   }
-  .controls-row::-webkit-scrollbar{display:none;}
   .controls-row .field-inline{
-    flex:0 0 auto;width:min(58vw,240px);min-width:170px;scroll-snap-align:start;
+    flex:1 1 auto;width:auto;min-width:0;
   }
-  .controls-row #typeFilter{
-    flex:0 0 auto;width:auto;min-width:112px;scroll-snap-align:start;
+  .controls-row .filter-select-wrap{
+    display:flex;position:relative;flex:0 0 auto;
+    width:38px;height:38px;border-radius:9px;
+    border:1px solid var(--line);background:var(--paper);
+    align-items:center;justify-content:center;color:var(--ink-soft);
   }
-  .controls-row #categoryFilter{
-    flex:0 0 auto;width:auto;min-width:130px;scroll-snap-align:start;
+  .controls-row .filter-select-ic{display:flex;pointer-events:none;}
+  .controls-row .filter-select-wrap select{
+    position:absolute;inset:0;width:100%;height:100%;
+    opacity:0;border:none;padding:0;margin:0;font-size:16px;
   }
-  .controls-row .export-menu-wrap{flex:0 0 auto;scroll-snap-align:start;}
-  .controls-row .export-menu-wrap .btn{white-space:nowrap;}
-  .controls-row select{padding:9px 26px 9px 10px;}
+  .controls-row .export-menu-wrap{flex:0 0 auto;}
+  .controls-row .export-menu-wrap .btn{
+    position:relative;padding:0;gap:0;width:38px;height:38px;justify-content:center;
+  }
+  .controls-row .export-menu-wrap .btn-label{
+    position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;
+  }
   .controls-row .export-menu{left:auto;right:0;min-width:210px;}
-}
-@media (max-width:600px){
-  .controls-row .field-inline{width:min(64vw,220px);min-width:150px;}
 }
 .export-menu{
   position:absolute; top:calc(100% + 8px); right:0; min-width:210px;
@@ -5910,16 +5916,22 @@ body.is-scrolling *{
         <span class="search-ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span>
         <input type="search" id="searchInput" placeholder="Cari keterangan atau kategori...">
       </div>
-      <select id="typeFilter">
-        <option value="semua">Semua Tipe</option>
-        <option value="masuk">Masuk</option>
-        <option value="keluar">Keluar</option>
-      </select>
-      <select id="categoryFilter"><option value="semua">Semua Kategori</option></select>
+      <div class="filter-select-wrap" id="typeFilterWrap">
+        <span class="filter-select-ic" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h18l-7 8v6l-4 2v-8L3 4z"/></svg></span>
+        <select id="typeFilter" aria-label="Filter tipe transaksi">
+          <option value="semua">Semua Tipe</option>
+          <option value="masuk">Masuk</option>
+          <option value="keluar">Keluar</option>
+        </select>
+      </div>
+      <div class="filter-select-wrap" id="categoryFilterWrap">
+        <span class="filter-select-ic" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41 13 21 3 11V3h8l8.59 8.59a2 2 0 0 1 0 2.82Z"/><circle cx="7.5" cy="7.5" r="1.3" fill="currentColor" stroke="none"/></svg></span>
+        <select id="categoryFilter" aria-label="Filter kategori"><option value="semua">Semua Kategori</option></select>
+      </div>
       <div class="export-menu-wrap">
-        <button class="btn btn-ghost" id="btnExport" type="button" aria-haspopup="true" aria-expanded="false">
+        <button class="btn btn-ghost" id="btnExport" type="button" aria-haspopup="true" aria-expanded="false" aria-label="Ekspor data">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 3v12m0 0-4-4m4 4 4-4M4 21h16"/></svg>
-          Ekspor
+          <span class="btn-label">Ekspor</span>
         </button>
         <div class="export-menu" id="btnExportMenu">
           <button type="button" class="export-menu-item emi-xlsx" id="btnExportXlsx">
