@@ -3308,14 +3308,16 @@ body.density-compact .income-cards-group{gap:10px;}
 .field-inline{position:relative;flex:1;min-width:170px;}
 .field-inline input[type="search"]{
   width:100%;padding:9px 12px 9px 34px;border-radius:9px;border:1px solid var(--line);
-  font-size:13.5px;background:var(--paper);outline:none;
+  /* 16px: sama seperti input form lain, di bawah ini memicu auto-zoom
+     Safari iOS saat disentuh di HP. */
+  font-size:16px;background:var(--paper);outline:none;
 }
 .field-inline input[type="search"]:focus{border-color:var(--forest-glow);}
 .field-inline .search-ic{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--ink-faint);}
 
 select, input[type="date"], input[type="month"], input[type="week"], input[type="number"]{
   padding:9px 12px;border-radius:9px;border:1px solid var(--line);
-  font-size:13.5px;background:var(--paper);color:var(--ink);outline:none;
+  font-size:16px;background:var(--paper);color:var(--ink);outline:none;
 }
 select:focus,input[type="date"]:focus,input[type="month"]:focus,input[type="week"]:focus,input[type="number"]:focus{border-color:var(--forest-glow);}
 input[type="number"].year-input{width:110px;font-family:'IBM Plex Mono',monospace;}
@@ -4658,7 +4660,9 @@ tbody tr.date-group-row:first-child td{border-top:none;}
 .form-row label{display:block;font-size:12.5px;font-weight:700;color:var(--ink-soft);margin-bottom:6px;}
 .form-row input,.form-row select,.form-row textarea{
   width:100%;padding:10px 12px;border-radius:9px;border:1px solid var(--line);
-  font-size:14px;background:var(--paper);outline:none;
+  /* 16px, bukan 14px: di bawah 16px, Safari iOS auto-zoom begitu input
+     disentuh (lihat catatan di media query mobile-nya juga). */
+  font-size:16px;background:var(--paper);outline:none;
 }
 .form-row select{
   appearance:none;-webkit-appearance:none;-moz-appearance:none;
@@ -5174,7 +5178,14 @@ body.is-scrolling .particle{
   .chip-total{font-size:10.5px;padding:5px 10px;}
 
   /* ---- Banner atas: logo, nama app, tanggal, ikon lonceng ---- */
-  .banner{padding:14px 14px 26px;border-radius:0 0 18px 18px;}
+  /* PENTING (fix overflow/geser horizontal tipis di HP): margin negatif
+     banner WAJIB persis sama besar dengan padding .app di atas (12px),
+     supaya tepi banner pas rata dengan tepi layar. Sebelumnya aturan
+     ini tidak ikut men-set margin, jadi banner masih pakai margin
+     -14px dari breakpoint lain di atas — 2px lebih lebar dari padding
+     .app (12px) yang menang di sini, membuat banner bocor 2px keluar
+     viewport di tiap sisi dan memicu scroll horizontal tipis di HP. */
+  .banner{padding:14px 14px 26px;margin:0 -12px 18px;border-radius:0 0 18px 18px;}
   .brand{gap:7px;padding:5px 6px;margin:-5px -6px;}
   .brand-mark{width:26px;height:26px;border-radius:8px;}
   .brand-name{font-size:16.5px;}
@@ -5224,7 +5235,12 @@ body.is-scrolling .particle{
   .modal-head-icon{width:34px;height:34px;}
   .form-row{margin-bottom:11px;}
   .form-row label{font-size:11px;}
-  .form-row input,.form-row select,.form-row textarea{padding:9px 11px;font-size:13px;border-radius:8px;}
+  /* font-size DIKUNCI minimal 16px (bukan 13px) meski di HP: input di
+     bawah 16px memicu Safari iOS otomatis zoom-in begitu disentuh,
+     yang bikin popup kelihatan "meloncat"/pecah layoutnya sampai user
+     zoom-out manual. Padding dikecilkan sedikit lagi utk kompensasi
+     visual, tapi font tetap 16px agar aman dari auto-zoom. */
+  .form-row input,.form-row select,.form-row textarea{padding:9px 11px;font-size:16px;border-radius:8px;}
   .type-toggle button{padding:9px 6px;font-size:12.5px;}
   .confirm-icon{width:44px;height:44px;}
 
