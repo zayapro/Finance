@@ -1548,22 +1548,24 @@ tr.fade-up{animation:fadeRow .35s ease both;}
    urutan CSS di lebar yang sama. */
 @media (max-width:600px){
   /* Tab "peek" (judul ringkas sebelum kartu dibuka penuh).
-     FIX: sebelumnya di HP kecil baris "Masuk/Keluar" gampang
-     kepotong (ellipsis) sebelum tombol "Lihat Ringkasan" karena
-     ikon+label+mini-preview+tombol berebut ruang di satu baris —
-     font & ikon diperkecil lagi di sini (nominalnya sendiri sudah
-     diringkas jadi format singkat lewat fmtRupiahShort di script.js,
-     lihat cardsHtml) supaya semua elemen tetap rapi & tidak
-     kepotong. */
-  .fc-peek-handle{padding:13px 12px 10px 13px;}
-  .fc-peek-row{gap:8px;max-width:none;}
-  .fc-peek-icon{width:27px;height:27px;border-radius:9px;}
-  .fc-peek-icon svg{width:15px;height:15px;}
-  .fc-peek-info{gap:8px;}
+     FIX "konten mepet ke ujung lengkungan kartu di HP": sebelumnya
+     padding kiri/kanan tab ini (12-13px) lebih kecil dari radius
+     sudut bawah kartu (20px), jadi ikon di kiri & tombol "Lihat
+     Ringkasan" di kanan terlihat nempel/kepotong pas di lengkungan
+     sudut, bukan berjarak rapi dari tepi. Padding kiri/kanan
+     dilebarkan supaya ada jarak aman dari lengkungan, dan sebagai
+     kompensasi supaya semua elemen (ikon+label+mini-preview+tombol)
+     tetap muat satu baris tanpa kepotong, ikon/gap/tombol
+     diperkecil sedikit lagi di bawah. */
+  .fc-peek-handle{padding:14px 16px 12px 16px;}
+  .fc-peek-row{gap:7px;max-width:none;}
+  .fc-peek-icon{width:26px;height:26px;border-radius:9px;}
+  .fc-peek-icon svg{width:14px;height:14px;}
+  .fc-peek-info{gap:7px;}
   .fc-peek-handle-label{font-size:11px;}
-  .fc-peek-mini{font-size:9.5px;gap:5px;}
+  .fc-peek-mini{font-size:9px;gap:4px;}
   .fc-peek-mini-dot{font-size:8px;}
-  .fc-peek-handle-btn{font-size:8.5px;padding:7px 11px;gap:4px;}
+  .fc-peek-handle-btn{font-size:8.5px;padding:6px 10px;gap:4px;}
   .fc-peek-handle .fc-peek-chev svg{width:10px;height:10px;}
 
   /* Header kartu: ikon + judul + kotak timer JAM/MNT/DTK */
@@ -1601,14 +1603,14 @@ tr.fade-up{animation:fadeRow .35s ease both;}
    rapi (ikon+judul+baris Masuk-Keluar+tombol jadi kurang muat) di HP
    kecil seperti iPhone SE/Android layar 360px. */
 @media (max-width:380px){
-  .fc-peek-handle{padding:11px 9px 9px 11px;}
-  .fc-peek-row{gap:6px;}
-  .fc-peek-info{gap:6px;}
-  .fc-peek-icon{width:24px;height:24px;border-radius:7px;}
-  .fc-peek-icon svg{width:13px;height:13px;}
+  .fc-peek-handle{padding:12px 14px 10px 14px;}
+  .fc-peek-row{gap:5px;}
+  .fc-peek-info{gap:5px;}
+  .fc-peek-icon{width:22px;height:22px;border-radius:7px;}
+  .fc-peek-icon svg{width:12px;height:12px;}
   .fc-peek-handle-label{font-size:10px;}
-  .fc-peek-mini{font-size:8.5px;gap:3px;}
-  .fc-peek-handle-btn{font-size:8px;padding:6px 8px;gap:3px;white-space:nowrap;}
+  .fc-peek-mini{font-size:8px;gap:3px;}
+  .fc-peek-handle-btn{font-size:7.5px;padding:6px 8px;gap:3px;white-space:nowrap;}
   .fc-peek-handle .fc-peek-chev svg{width:9px;height:9px;}
 }
 
