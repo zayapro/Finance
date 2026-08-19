@@ -3,6 +3,52 @@
    Semua data disimpan di localStorage browser (tidak ada server).
 ========================================================== */
 
+/* PENTING (fix "patah-patah" saat refresh di HP): ExcelJS, jsPDF, &
+   jspdf-autotable dulu dimuat lewat <script src> statis di index.html
+   dan dieksekusi BLOCKING berurutan setiap kali halaman dibuka —
+   padahal ketiganya cuma dipakai kalau tombol ekspor Excel/PDF benar-
+   benar diklik. Total ukurannya lumayan besar, jadi setiap refresh
+   HP terpaksa parse & eksekusi semuanya duluan sebelum halaman
+   sungguhan interaktif/mulus — itulah salah satu penyebab "patah-
+   patah" yang terasa tepat setelah refresh, terutama di HP/koneksi
+   yang tidak terlalu kencang.
+   Sekarang ketiganya dimuat ON-DEMAND (baru di-fetch & dieksekusi
+   saat tombol ekspor diklik) lewat loadScriptOnce() + ensureExportLibsLoaded()
+   di bawah, dipanggil di awal tiap fungsi export sebelum memakai
+   ExcelJS/jsPDF. Kalau ekspor tidak pernah dipakai dalam sesi itu,
+   ketiga pustaka ini tidak pernah membebani proses refresh sama
+   sekali. */
+const EXPORT_LIB_URLS = [
+  'https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js',
+  'https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js',
+  'https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js'
+];
+const _loadedScriptPromises = {};
+function loadScriptOnce(src) {
+  if (_loadedScriptPromises[src]) return _loadedScriptPromises[src];
+  _loadedScriptPromises[src] = new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = src;
+    s.onload = () => resolve();
+    s.onerror = () => { delete _loadedScriptPromises[src]; reject(new Error('Gagal memuat ' + src)); };
+    document.body.appendChild(s);
+  });
+  return _loadedScriptPromises[src];
+}
+let _exportLibsLoadedPromise = null;
+function ensureExportLibsLoaded() {
+  if (!_exportLibsLoadedPromise) {
+    // jspdf-autotable HARUS dimuat setelah jspdf selesai (dia menempel
+    // ke objek window.jspdf yang sudah ada), jadi dua yang pertama
+    // dimuat berurutan, baru sisanya bisa paralel. ExcelJS independen.
+    _exportLibsLoadedPromise = Promise.all([
+      loadScriptOnce(EXPORT_LIB_URLS[0]),
+      loadScriptOnce(EXPORT_LIB_URLS[1]).then(() => loadScriptOnce(EXPORT_LIB_URLS[2]))
+    ]);
+  }
+  return _exportLibsLoadedPromise;
+}
+
 const STORAGE_KEY = 'alirin_transactions_v1';
 
 const CATEGORIES = {
@@ -5011,6 +5057,9 @@ function incSourceIconHtmlSafe(source) {
 async function exportIncomeSourceExcel() {
   const list = incFilteredSortedEntries();
   if (list.length === 0) { showToast('Tidak ada data untuk diekspor.', 'err'); return; }
+  if (typeof ExcelJS === 'undefined') {
+    try { await ensureExportLibsLoaded(); } catch (e) { showToast('Gagal memuat pustaka Excel. Cek koneksi internet.', 'err'); return; }
+  }
   if (typeof ExcelJS === 'undefined') { showToast('Pustaka Excel belum siap, coba lagi.', 'err'); return; }
 
   const total = list.reduce((s, x) => s + (Number(x.amount) || 0), 0);
@@ -5085,9 +5134,12 @@ async function exportIncomeSourceExcel() {
 }
 
 /* Unduh entri yang SEDANG TAMPIL sebagai laporan PDF bergaya. */
-function exportIncomeSourcePdf() {
+async function exportIncomeSourcePdf() {
   const list = incFilteredSortedEntries();
   if (list.length === 0) { showToast('Tidak ada data untuk diekspor.', 'err'); return; }
+  if (typeof window.jspdf === 'undefined') {
+    try { await ensureExportLibsLoaded(); } catch (e) { showToast('Gagal memuat pustaka PDF. Cek koneksi internet.', 'err'); return; }
+  }
   if (typeof window.jspdf === 'undefined') { showToast('Pustaka PDF belum siap, coba lagi.', 'err'); return; }
 
   const total = list.reduce((s, x) => s + (Number(x.amount) || 0), 0);
@@ -7503,6 +7555,9 @@ setupExportMenu('btnExport', 'btnExportMenu');
 async function exportTransactionsExcel() {
   const list = getFilteredTransactions();
   if (list.length === 0) { showToast('Tidak ada data untuk diekspor.', 'err'); return; }
+  if (typeof ExcelJS === 'undefined') {
+    try { await ensureExportLibsLoaded(); } catch (e) { showToast('Gagal memuat pustaka Excel. Cek koneksi internet.', 'err'); return; }
+  }
   if (typeof ExcelJS === 'undefined') { showToast('Pustaka Excel belum siap, coba lagi.', 'err'); return; }
 
   const masuk = list.filter(t => t.type === 'masuk').reduce((s, t) => s + (Number(t.amount) || 0), 0);
@@ -7576,9 +7631,12 @@ async function exportTransactionsExcel() {
   showToast(`${list.length} transaksi diekspor ke Excel.`);
 }
 
-function exportTransactionsPdf() {
+async function exportTransactionsPdf() {
   const list = getFilteredTransactions();
   if (list.length === 0) { showToast('Tidak ada data untuk diekspor.', 'err'); return; }
+  if (typeof window.jspdf === 'undefined') {
+    try { await ensureExportLibsLoaded(); } catch (e) { showToast('Gagal memuat pustaka PDF. Cek koneksi internet.', 'err'); return; }
+  }
   if (typeof window.jspdf === 'undefined') { showToast('Pustaka PDF belum siap, coba lagi.', 'err'); return; }
 
   const masuk = list.filter(t => t.type === 'masuk').reduce((s, t) => s + (Number(t.amount) || 0), 0);

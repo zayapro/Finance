@@ -726,7 +726,15 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   font-weight:600;
   letter-spacing:-0.01em;
   transition:filter .15s ease;
-  min-width:0;flex:1 1 auto;
+  /* flex:0 1 auto (bukan 1 1 auto): SEBELUMNYA nilai ini memaksa
+     saldo-value melebar mengisi SELURUH sisa lebar baris, sehingga
+     tombol mata (.saldo-toggle) di sampingnya kedorong sampai ke
+     ujung kanan banner — meninggalkan jarak kosong besar antara
+     angka saldo & tombolnya, kelihatan berantakan/tidak nyambung
+     terutama di HP. Sekarang saldo-value cuma selebar teksnya sendiri
+     (boleh menyusut kalau sempit lewat min-width:0 di bawah), jadi
+     tombol mata menempel rapi persis di sebelah angka. */
+  min-width:0;flex:0 1 auto;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
 .saldo-value.is-hidden{
@@ -4780,7 +4788,16 @@ tbody tr.date-group-row:first-child td{border-top:none;}
    dan align-items:center supaya blok kanan (2 baris: ikon+tanggal)
    sejajar vertikal di tengah tinggi logo — bukan nempel rata atas. */
 @media (max-width:900px){
-  .banner-top{row-gap:8px;align-items:center;flex-wrap:nowrap;}
+  /* align-items DIUBAH ke flex-start (bukan center): .banner-top-right
+     berisi 2 baris (baris ikon lalu baris tanggal+kurs di bawahnya,
+     lihat order:3 pada .banner-date-col), sementara logo di
+     .brand-wrap cuma 1 baris. Dengan align-items:center, logo malah
+     disejajarkan ke TENGAH dari total tinggi 2 baris itu, bukan ke
+     baris ikon paling atas — jadi logo turun & kelihatan tidak
+     sejajar dengan ikon riwayat/lonceng/tambah. flex-start membuat
+     logo & baris ikon sama-sama mulai dari atas, jadi benar-benar
+     sebaris. */
+  .banner-top{row-gap:8px;align-items:flex-start;flex-wrap:nowrap;}
   .banner-top-right{flex-wrap:wrap;justify-content:flex-end;row-gap:8px;}
   .banner-date-col{order:3;flex-basis:100%;margin-top:0;}
 }
@@ -7235,10 +7252,13 @@ body.is-scrolling .particle{
 
 <div class="toast-wrap" id="toastWrap"></div>
 
-<!-- Pustaka untuk ekspor Excel (.xlsx) & PDF bergaya -->
-<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js"></script>
+<!-- Pustaka ekspor Excel (.xlsx) & PDF (ExcelJS, jsPDF, jspdf-autotable)
+     SENGAJA TIDAK dimuat statis di sini lagi — lihat catatan
+     "fix patah-patah saat refresh" di awal script.js. Ketiganya
+     sekarang baru di-fetch on-demand oleh ensureExportLibsLoaded()
+     tepat saat tombol ekspor Excel/PDF diklik, supaya refresh
+     halaman tidak perlu menunggu pustaka besar itu dimuat &
+     dieksekusi duluan kalau memang tidak sedang dipakai. -->
 <script src="script.js"></script>
 </body>
 </html>
