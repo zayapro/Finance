@@ -125,6 +125,43 @@ a{color:inherit;}
 .banner{
   position:relative;
   overflow:hidden;
+  border-radius:0 0 28px 28px;
+  padding:20px 28px 34px;
+  margin:0 -24px 22px;
+  color:#F4F7FB;
+  /* Warna dasar solid (fallback) — ini SEKARANG satu-satunya "background"
+     yang dipasang langsung di .banner sendiri. Solid color murah untuk
+     di-(re)paint kapan pun (termasuk pas teks di dalamnya di-update JS),
+     jadi tidak pernah kelihatan sobek/putih walau lapisan gradient di
+     .banner-bg (lihat di bawah) sesaat belum sempat digambar. */
+  background-color:var(--forest-deep);
+}
+/* ---- Lapisan gradient animasi banner, DIPISAH dari .banner sendiri ----
+   Dulu semua gradient + animasinya nempel langsung di .banner. Masalahnya
+   ada 2 skenario yang saling tarik-menarik dan butuh solusi BERBEDA:
+   1) Saat SCROLL cepat di HP: browser perlu terus me-raster ulang lapisan
+      gradient yang berat (4 radial/linear-gradient + animasi
+      background-position) supaya tetap tampil sinkron sambil halaman
+      bergeser. Kalau raster-nya tidak selesai dalam waktu, area banner
+      sempat kelihatan KOSONG/putih total sampai beberapa frame (video
+      pengujian menunjukkan ini bisa terlihat sampai >1 detik pada scroll
+      cepat/fling) — solusinya: elemen ini perlu jadi layer kompositing
+      GPU TERSENDIRI (will-change/transform) supaya browser cukup
+      MENYALIN layer yang sudah pernah digambar saat scroll, bukan
+      menggambar ulang dari nol tiap frame.
+   2) Saat teks di dalam banner di-update JS (Saldo Total, dsb): KALAU
+      seluruh .banner (termasuk teks & tombol di dalamnya) dipaksa jadi
+      1 layer GPU, tiap update teks memaksa raster ULANG SELURUH layer
+      itu (pernah jadi penyebab "sobek" versi lama — lihat riwayat).
+   .banner-bg ini adalah jalan tengahnya: DIA SENDIRI yang jadi layer GPU
+   (position:absolute, terpisah dari konten teks), sementara .banner dan
+   isi teksnya TETAP bukan layer terpisah — jadi update teks tetap murah,
+   TAPI gradient yang berat tetap "warm"/tersimpan sebagai layer siap
+   pakai selama scroll, sehingga tidak lagi sempat kosong. */
+.banner-bg{
+  position:absolute;inset:0;
+  z-index:0;
+  pointer-events:none;
   background:
     radial-gradient(circle at 15% 20%, rgba(37,99,235,0.38), transparent 45%),
     radial-gradient(circle at 85% 15%, rgba(5,150,105,0.24), transparent 50%),
@@ -132,32 +169,9 @@ a{color:inherit;}
     linear-gradient(120deg, var(--forest-deep), var(--forest-mid), var(--forest-deep));
   background-size:240% 240%, 240% 240%, 240% 240%, 280% 280%;
   animation: bannerDrift 18s ease-in-out infinite;
-  border-radius:0 0 28px 28px;
-  padding:20px 28px 34px;
-  margin:0 -24px 22px;
-  color:#F4F7FB;
-  /* Warna dasar solid (fallback) DI BAWAH lapisan gradient di atas.
-     Kalau lapisan gradient (background-image) sesaat gagal digambar
-     ulang tepat waktu oleh browser — misalnya persis saat teks di
-     dalam banner (Saldo Total/Pemasukan/Pengeluaran) baru saja
-     di-update lewat JS setelah refresh — background-color solid ini
-     tetap tampil sebagai dasarnya. Tanpa ini, area yang belum sempat
-     digambar ulang akan menampakkan warna halaman (--paper, terang)
-     alih-alih gelap, kelihatan seperti banner "sobek"/pecah sesaat. */
-  background-color:var(--forest-deep);
-  /* CATATAN: dulu di sini ada transform:translateZ(0) + will-change +
-     backface-visibility + isolation untuk memaksa banner ini punya
-     layer kompositing GPU sendiri — perlu waktu itu karena banner
-     masih position:sticky. Sekarang banner SUDAH TIDAK sticky lagi
-     (scroll biasa; lihat .mini-topbar untuk elemen yang sticky/fixed
-     di HP), jadi paksaan layer itu sudah tidak relevan — dan ternyata
-     jadi salah satu penyebab banner sempat "sobek/pecah" sesaat saat
-     refresh: setiap kali teks di dalam banner di-update oleh JS,
-     browser harus me-raster ULANG SELURUH layer terisolasi itu
-     (termasuk semua tombol di dalamnya), dan di HP yang GPU/CPU-nya
-     pas-pasan kadang gagal selesai dalam satu frame. Makanya properti
-     itu dilepas di sini.
-  */
+  transform:translateZ(0);
+  will-change:transform;
+  backface-visibility:hidden;
 }
 .banner::before{
   content:'';
@@ -170,6 +184,13 @@ a{color:inherit;}
   -webkit-mask-image:radial-gradient(ellipse at 30% 20%, black 0%, transparent 75%);
   z-index:0;
   animation: gridPan 24s linear infinite;
+  /* Sama seperti .banner-bg: pesan grid ini murni dekoratif dan tidak
+     pernah berubah lewat JS, jadi aman & perlu dijadikan layer GPU
+     tersendiri juga supaya ikut "warm" selama scroll, bukan ikut
+     kosong/tertinggal saat .banner-bg sedang di-raster. */
+  transform:translateZ(0);
+  will-change:transform;
+  backface-visibility:hidden;
 }
 @keyframes gridPan{
   0%{background-position:0 0, 0 0;}
@@ -183,17 +204,17 @@ a{color:inherit;}
 }
 
 /* ---- Variasi Model Animasi Banner (dipilih di Pengaturan Aplikasi) ---- */
-body[data-banner-anim="lines"] .banner{animation:none;background-position:15% 25%, 85% 15%, 75% 90%, 20% 20%;}
+body[data-banner-anim="lines"] .banner-bg{animation:none;background-position:15% 25%, 85% 15%, 75% 90%, 20% 20%;}
 body[data-banner-anim="lines"] .banner::before{animation-duration:60s;opacity:0.65;}
 body[data-banner-anim="lines"] .flow-line{opacity:0.95;}
 body[data-banner-anim="lines"] .flow-line svg{animation-duration:10s;}
 
-body[data-banner-anim="shimmer"] .banner{animation-duration:46s;}
+body[data-banner-anim="shimmer"] .banner-bg{animation-duration:46s;}
 body[data-banner-anim="shimmer"] .banner::before{animation-duration:50s;opacity:0.5;}
 body[data-banner-anim="shimmer"] .flow-line{opacity:0.28;}
 body[data-banner-anim="shimmer"] .flow-line svg{animation-duration:34s;}
 
-body[data-banner-anim="static"] .banner,
+body[data-banner-anim="static"] .banner-bg,
 body[data-banner-anim="static"] .banner::before,
 body[data-banner-anim="static"] .flow-line svg,
 body[data-banner-anim="static"] .banner-fx .fx-dot::after,
@@ -216,7 +237,7 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
    Pengaturan (lines/shimmer/static), pilihan itu tetap dihormati
    karena selector-nya lebih spesifik daripada aturan di bawah ini. */
 @media (max-width:640px){
-  .banner{animation:none;background-position:15% 25%, 85% 15%, 75% 90%, 20% 20%;}
+  .banner-bg{animation:none;background-position:15% 25%, 85% 15%, 75% 90%, 20% 20%;}
   .banner::before{animation:none;}
 }
 .flow-line{position:absolute;left:0;right:0;top:44%;height:90px;z-index:1;opacity:0.55;pointer-events:none;}
@@ -4824,9 +4845,11 @@ tbody tr.date-group-row:first-child td{border-top:none;}
      dianimasikan sering bikin browser mobile "kedip" karena harus
      repaint dua layer berat itu tiap frame. Perlambat & sederhanakan
      supaya tetap hidup tapi tidak flicker. (transform/backface untuk
-     layer GPU sudah dipindah ke rule dasar .banner di atas supaya
-     berlaku di semua ukuran layar, tidak diulang lagi di sini.) */
-  .banner{
+     layer GPU sudah dipindah ke .banner-bg di atas supaya berlaku di
+     semua ukuran layar, tidak diulang lagi di sini — animasinya sendiri
+     sudah dimatikan default di breakpoint 640px di atas, dua baris di
+     bawah cuma jaga-jaga kalau nanti breakpoint itu diubah terpisah.) */
+  .banner-bg{
     background-size:180% 180%, 180% 180%, 180% 180%, 200% 200%;
     animation-duration:34s;
   }
@@ -4839,22 +4862,31 @@ tbody tr.date-group-row:first-child td{border-top:none;}
 }
 
 /* ---- Hentikan sementara animasi dekoratif banner SELAMA halaman
-   sedang discroll (khusus HP, lihat init BannerScrollFreeze di
-   script.js) ----
+   sedang discroll ATAU selama popup/halaman dibuka-tutup (khusus HP,
+   lihat freezeBannerAnim/initBannerScrollFreeze di script.js — dipanggil
+   juga dari lockBodyScroll/unlockBodyScroll & semua fungsi buka/tutup
+   halaman penuh) ----
    Banner punya beberapa animasi CSS yang hidup terus-menerus
-   (gradient drift, grid pan, garis alir, ombak, partikel naik-turun).
-   Kalau semua itu tetap "hidup" persis selagi layar discroll di HP —
-   saat browser juga sibuk reflow/repaint karena address bar
-   muncul/hilang — hasilnya gampang kelihatan kedip/tearing sesaat.
-   Begitu class "is-scrolling" nempel di <body> (dipasang lewat JS
-   selama scroll berlangsung), semua animasi ini dipause dulu (BUKAN
-   disembunyikan — isinya tetap terlihat, cuma diam sebentar), lalu
-   otomatis lanjut lagi begitu scroll benar-benar berhenti. */
-body.is-scrolling .banner,
+   (gradient drift di .banner-bg, grid pan, garis alir, ombak, partikel
+   naik-turun). Kalau semua itu tetap "hidup" persis selagi layar
+   discroll cepat di HP atau body.style.position/overflow berubah saat
+   popup dibuka/ditutup, hasilnya gampang kelihatan kedip/patah-patah
+   sesaat — atau, untuk .banner-bg yang beratnya paling besar, bahkan
+   sempat kosong total selama raster belum selesai (lihat juga catatan
+   di .banner-bg mengapa lapisan itu sekarang jadi layer GPU tersendiri
+   — dua perbaikan ini saling melengkapi: layer GPU membuat scroll
+   biasa jadi murah/cepat dikompositkan, freeze ini menjaga supaya
+   animasinya tidak terus memicu raster ulang tepat selagi ada operasi
+   berat lain berlangsung). Begitu class "is-scrolling" nempel di
+   <body>, semua animasi ini dipause dulu (BUKAN disembunyikan — isinya
+   tetap terlihat, cuma diam sebentar), lalu otomatis lanjut lagi begitu
+   proses (scroll/buka-tutup popup) benar-benar berhenti. */
+body.is-scrolling .banner-bg,
 body.is-scrolling .banner::before,
 body.is-scrolling .flow-line svg,
 body.is-scrolling .wave-wrap svg,
-body.is-scrolling .particle{
+body.is-scrolling .particle,
+body.is-scrolling .isc-shortcut-ic-wrap{
   animation-play-state:paused !important;
 }
 
@@ -5356,6 +5388,7 @@ body.is-scrolling .particle{
 
   <!-- ===== BANNER ===== -->
   <header class="banner" id="banner">
+    <div class="banner-bg" aria-hidden="true"></div>
     <div class="flow-field" id="flowField"></div>
     <div class="flow-line">
       <svg viewBox="0 0 900 90" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
