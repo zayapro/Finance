@@ -1266,8 +1266,24 @@ document.getElementById('saldoToggle').addEventListener('click', () => {
 });
 
 let saldoAnimFrame = null;
+// PENTING (fix "saldo sempat kelihatan minus/salah" sesaat setelah
+// refresh): render PERTAMA setelah halaman dimuat (refreshAll() awal
+// dari init()) dulu langsung menampilkan angka final tanpa animasi
+// hitung-naik. Animasi hitung-naik (0 -> target) cuma dipakai untuk
+// update BERIKUTNYA (mis. setelah tambah transaksi) yang memang dari
+// keadaan sudah stabil di layar, jadi tidak ada frame antara yang bisa
+// kelihatan seperti angka salah/minus sesaat sebelum settle ke nilai
+// akhir yang benar.
+let saldoFirstRenderDone = false;
 function animateSaldo(target) {
   const el = document.getElementById('saldoValue');
+  if (!saldoFirstRenderDone) {
+    saldoFirstRenderDone = true;
+    cancelAnimationFrame(saldoAnimFrame);
+    el.textContent = fmtRupiah(target);
+    el.dataset.raw = target;
+    return;
+  }
   const start = parseFloat(el.dataset.raw || '0');
   const startTime = performance.now();
   const duration = 700;
@@ -6088,8 +6104,51 @@ function openEditModal(id) {
   openModal(txModal);
 }
 
-function openModal(overlay) { overlay.classList.add('open'); document.body.style.overflow = 'hidden'; }
-function closeModal(overlay) { overlay.classList.remove('open'); document.body.style.overflow = ''; }
+/* PENTING (fix modal/panel "goyang"/scroll bocor di iPhone Safari):
+   sekadar body.style.overflow='hidden' TIDAK cukup di Safari iOS —
+   halaman di belakang popup kadang masih bisa ke-scroll/rubber-band
+   saat jari menyentuh area di sekitarnya, kelihatan tidak smooth.
+   lockBodyScroll/unlockBodyScroll dipakai BERSAMA oleh semua jenis
+   popup di app ini (modal .modal-overlay maupun panel Tagihan & Hutang
+   yang punya sistem buka/tutup sendiri) supaya perilakunya konsisten.
+   Body juga dikunci pakai position:fixed (trik yang benar-benar
+   efektif di iOS), sambil menyimpan posisi scroll saat ini supaya
+   begitu popup terakhir ditutup, halaman kembali persis ke posisi
+   semula (bukan lompat ke atas). Pakai penghitung (openModalCount)
+   supaya kalau ada popup bertumpuk, posisi scroll cuma disimpan sekali
+   & dikembalikan sekali juga — tidak saling menimpa. */
+let scrollLockY = 0;
+let openModalCount = 0;
+function lockBodyScroll() {
+  if (openModalCount === 0) {
+    scrollLockY = window.scrollY || document.documentElement.scrollTop || 0;
+    document.body.style.position = 'fixed';
+    document.body.style.top = -scrollLockY + 'px';
+    document.body.style.left = '0';
+    document.body.style.right = '0';
+    document.body.style.overflow = 'hidden';
+  }
+  openModalCount++;
+}
+function unlockBodyScroll() {
+  openModalCount = Math.max(0, openModalCount - 1);
+  if (openModalCount === 0) {
+    document.body.style.position = '';
+    document.body.style.top = '';
+    document.body.style.left = '';
+    document.body.style.right = '';
+    document.body.style.overflow = '';
+    window.scrollTo(0, scrollLockY);
+  }
+}
+function openModal(overlay) {
+  overlay.classList.add('open');
+  lockBodyScroll();
+}
+function closeModal(overlay) {
+  overlay.classList.remove('open');
+  unlockBodyScroll();
+}
 
 document.getElementById('txForm').addEventListener('submit', (e) => {
   e.preventDefault();
@@ -7831,28 +7890,34 @@ function openNotifPanel() {
   positionNotifPanel();
   notifPanel.classList.add('open');
   notifPanelOverlay.classList.add('open');
-  document.body.style.overflow = 'hidden';
+  lockBodyScroll();
   renderNotifPanel();
   positionNotifPanel();
 }
 function closeNotifPanel() {
   notifPanel.classList.remove('open');
   notifPanelOverlay.classList.remove('open');
-  document.body.style.overflow = '';
+  unlockBodyScroll();
 }
 window.addEventListener('resize', () => { if (notifPanel.classList.contains('open')) positionNotifPanel(); });
 
-document.getElementById('historyJumpBtn').addEventListener('click', () => {
-  document.getElementById('historySection').scrollIntoView({ behavior: 'smooth', block: 'start' });
-});
+// Tombol "Riwayat Transaksi" lompat LANGSUNG ke tabel transaksinya
+// (#txTableWrap), bukan cuma ke awal section (yang sebelum tabel masih
+// ada kartu Ringkasan Total & baris tab/filter) — supaya user sekali
+// klik langsung lihat daftar transaksinya, tanpa perlu scroll manual
+// lagi. Fallback ke #historySection kalau elemen tabelnya entah
+// kenapa tidak ditemukan.
+function scrollToTransactionTable() {
+  const target = document.getElementById('txTableWrap') || document.getElementById('historySection');
+  target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+document.getElementById('historyJumpBtn').addEventListener('click', scrollToTransactionTable);
 // Versi mini topbar dari tombol Riwayat, Tagihan & Hutang, dan Tambah
 // Transaksi di atas — aksinya sama persis dengan tombol aslinya di
 // banner besar, cuma elemennya beda (mini topbar posisinya fixed
 // terpisah supaya tetap bisa diakses walau banner besar sudah
 // discroll ke atas).
-document.getElementById('miniHistoryBtn').addEventListener('click', () => {
-  document.getElementById('historySection').scrollIntoView({ behavior: 'smooth', block: 'start' });
-});
+document.getElementById('miniHistoryBtn').addEventListener('click', scrollToTransactionTable);
 document.getElementById('miniAddBtn').addEventListener('click', () => openAddModal());
 
 notifBtn.addEventListener('click', (e) => {
