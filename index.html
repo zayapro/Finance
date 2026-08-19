@@ -727,7 +727,10 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   transition:height .6s cubic-bezier(.22,1,.36,1);
 }
 .banner-flow-wrap .flow-deal-card{
-  padding:22px 22px 20px;border-radius:0 0 22px 22px;
+  /* Sudut bawah disamakan (20px) dengan radius kartu "Saldo Bank &
+     E-Wallet" (.stat-card{border-radius:20px}), bukan 22px seperti
+     sebelumnya, supaya bentuk lengkung kedua kartu terasa identik. */
+  padding:22px 22px 20px;border-radius:0 0 20px 20px;
   transition:transform .6s cubic-bezier(.22,1,.36,1);
   will-change:transform;
 }
@@ -735,13 +738,13 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   position:relative;
   display:flex;align-items:center;justify-content:space-between;gap:12px;
   margin:0 -22px -20px;padding:17px 16px 13px 18px;
-  border-radius:0 0 22px 22px;
+  border-radius:0 0 20px 20px;
   background:linear-gradient(180deg, var(--card), var(--paper));
   border-top:1px solid var(--line);
   color:var(--ink-soft);font-size:12px;font-weight:600;
   cursor:pointer;
   box-shadow:0 14px 14px -14px rgba(15,23,42,0.28), 0 2px 0 rgba(37,99,235,0.05) inset;
-  clip-path:inset(0 0 -40px 0 round 0 0 22px 22px);
+  clip-path:inset(0 0 -40px 0 round 0 0 20px 20px);
   transition:box-shadow .18s ease, transform .35s cubic-bezier(.22,1,.36,1), opacity .3s ease, background .18s ease;
 }
 .fc-peek-handle:hover{background:linear-gradient(180deg, var(--card), color-mix(in srgb, var(--fc-accent, #0D9488) 6%, var(--paper)));}
