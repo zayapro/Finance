@@ -239,6 +239,89 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
 .flow-line{position:absolute;left:0;right:0;top:44%;height:90px;z-index:1;opacity:0.55;pointer-events:none;}
 .flow-line svg{width:220%;height:100%;animation:flowLineScroll 22s linear infinite;}
 @keyframes flowLineScroll{from{transform:translateX(0);}to{transform:translateX(-54.5%);}}
+
+/* ============================================================
+   MODE HEMAT PERFORMA DI HP (≤640px)
+   ============================================================
+   Halaman ini punya PULUHAN animasi CSS dekoratif "infinite" yang
+   hidup terus-menerus (gelembung sumber pendapatan melayang, aurora,
+   halo berdenyut, ikon mengambang, efek kartu Peringkat/Leaderboard
+   yang sangat ramai — kilau medali, mahkota, percikan, dsb.), plus
+   beberapa `backdrop-filter:blur()` (efek kaca buram) di panel
+   notifikasi, modal, gelembung sumber pendapatan, dan overlay chat AI.
+   Satu-dua animasi/blur begitu murah untuk digambar GPU, tapi
+   dijumlahkan semuanya JALAN BERSAMAAN, di HP dengan GPU/CPU
+   terbatas inilah yang bikin halaman terasa "berat"/lag, terutama
+   pas scroll atau buka kartu Peringkat.
+
+   Untungnya, hampir semua animasi ini SUDAH punya kondisi aman
+   "nonaktif" yang dirancang untuk pengguna dengan pengaturan
+   `prefers-reduced-motion: reduce` (lihat banyak blok
+   "@media (prefers-reduced-motion:reduce)" di file ini) — di situ,
+   developer sebelumnya sudah menentukan tampilan statis yang aman
+   & tetap enak dilihat untuk tiap elemen. Daripada menulis ulang
+   puluhan kondisi "mati aman" baru dari nol (dan berisiko salah
+   nebak tampilan statisnya), query SEMUA blok reduced-motion itu
+   sekarang diperluas jadi:
+     @media (max-width:640px), (prefers-reduced-motion:reduce)
+   — artinya kondisi "nonaktifkan animasi ini" otomatis juga berlaku
+   di lebar layar HP manapun (bukan cuma saat pengguna eksplisit
+   mengaktifkan pengaturan aksesibilitas tsb di OS-nya). Efeknya:
+   gelembung sumber pendapatan, ikon mengambang, halo berdenyut, dan
+   HAMPIR SELURUH animasi kartu Peringkat (medali, mahkota, kilau,
+   bar mengalir, dsb.) otomatis diam/statis di HP, tapi tetap jalan
+   normal di desktop/tablet lebar layar.
+
+   Beberapa animasi ternyata BELUM punya fallback reduced-motion
+   (kelewat saat itu), jadi ditambahkan manual di bawah ini — dengan
+   nilai statis yang aman (tidak meninggalkan elemen setengah
+   teranimasi / kelihatan aneh). Dikecualikan dari daftar mati ini:
+   titik "live" kurs USD & lonceng notifikasi tagihan/hutang (kedua
+   elemen kecil ini menyampaikan status NYATA, bukan sekadar hiasan,
+   dan biayanya sangat murah karena cuma 1 elemen kecil masing-
+   masing), serta shimmer/spinner loading (cuma jalan sebentar saat
+   memang sedang memuat, bukan selamanya). */
+@media (max-width:640px){
+  /* Gelembung sumber pendapatan yang "pecah" berkala terus-menerus —
+     belum ada fallback reduced-motion sebelumnya, ditambahkan di sini.
+     Nilai statis di bawah = keadaan "diam" alami elemen tsb (scale 1 /
+     opacity 0 memang nilai dasarnya sebelum animasi jalan), jadi aman
+     tanpa efek visual aneh. */
+  .isc-bubble-wrap .isc-bubble-inner{animation:none;}
+  .isc-bubble-wrap::after{animation:none;opacity:0;}
+  /* Ombak dekoratif di kartu "Uang Masuk & Keluar" & footer — cukup
+     dibekukan di posisi awal (masih kelihatan sebagai ombak diam,
+     cuma tidak bergeser terus). */
+  .wave-wrap svg, .footer-wave svg{animation:none;}
+  /* Kilau "peek" tab kartu Saldo Bank & E-Wallet — hiasan penarik
+     perhatian saja, aman dibekukan. */
+  .fc-peek-handle .fc-peek-chev{animation:none;}
+  /* Hiasan footer (cahaya latar, denyut logo, ikon hati) — tampil di
+     SETIAP halaman (footer selalu ada di bawah), jadi walau tiap
+     elemen kecil, totalnya tetap menyumbang beban terus-menerus. */
+  .app-footer::before{animation:none;opacity:.45;}
+  .footer-brand-mark{animation:none;box-shadow:none;}
+  .footer-heart{animation:none;}
+  /* backdrop-filter:blur() (efek kaca buram) MAHAL untuk GPU HP,
+     apalagi kalau elemennya ikut dianimasikan/banyak instance
+     sekaligus (mis. tiap gelembung sumber pendapatan). Warna latar di
+     baliknya sudah cukup pekat tanpa buram ini, jadi aman dimatikan —
+     cuma kehilangan sedikit efek "kaca", tetap terbaca jelas. */
+  .notif-panel-overlay.open,
+  .isc-bubble-inner,
+  .device-status-badge,
+  .news-item-tag,
+  .lb-period-toggle,
+  .lb-hero-net,
+  .modal-overlay,
+  .modal-overlay.open,
+  .ai-chat-overlay.open{
+    backdrop-filter:none !important;
+    -webkit-backdrop-filter:none !important;
+  }
+  .modal-overlay{transition:opacity .22s ease;}
+}
+
 .banner-top{
   display:flex;
   align-items:center;
@@ -700,7 +783,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   .fc-peek-mini{display:none;}
   .fc-peek-icon{width:28px;height:28px;border-radius:9px;}
 }
-@media (prefers-reduced-motion:reduce){
+@media (max-width:640px), (prefers-reduced-motion:reduce){
   .fc-peek-handle .fc-peek-chev{animation:none;}
 }
 
@@ -871,7 +954,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   0%,100%{transform:translate(0,0) scale(1);opacity:1;}
   50%{transform:translate(-16px,16px) scale(1.18);opacity:.82;}
 }
-@media (prefers-reduced-motion:reduce){
+@media (max-width:640px), (prefers-reduced-motion:reduce){
   .income-shortcut-card::before,.income-shortcut-card::after{animation:none;}
 }
 .isc-shortcut-head{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:2px;}
@@ -915,7 +998,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   50%{transform:translateY(-4px);}
 }
 .isc-shortcut-item:hover .isc-shortcut-ic-wrap{animation-play-state:paused;}
-@media (prefers-reduced-motion:reduce){
+@media (max-width:640px), (prefers-reduced-motion:reduce){
   .isc-shortcut-ic-wrap{animation:none;}
 }
 .isc-shortcut-ic{
@@ -954,7 +1037,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 }
 .isc-shortcut-item.is-manual .isc-shortcut-ic::before{border-style:dashed;border-color:#B45309;}
 .isc-shortcut-item.is-manual:hover .isc-shortcut-ic{color:#fff;border-color:#B45309;border-style:solid;background:linear-gradient(135deg,#F59E0B,#B45309);box-shadow:0 8px 16px -4px rgba(180,83,9,0.45);}
-@media (prefers-reduced-motion:reduce){
+@media (max-width:640px), (prefers-reduced-motion:reduce){
   .isc-shortcut-ic::before{animation:none;opacity:0;}
 }
 .isc-shortcut-label{font-size:11px;font-weight:700;color:var(--ink);text-align:center;line-height:1.32;white-space:nowrap;max-width:none;}
@@ -989,7 +1072,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 .isc-shortcut-item:hover .isc-sat:nth-child(3){transition-delay:.12s;}
 .isc-shortcut-item:hover .isc-sat:nth-child(4){transition-delay:.17s;}
 .isc-shortcut-item:hover .isc-sat:nth-child(5){transition-delay:.22s;}
-@media (prefers-reduced-motion:reduce){
+@media (max-width:640px), (prefers-reduced-motion:reduce){
   .isc-sat{transition:none;}
 }
 @media (max-width:680px){
@@ -1254,7 +1337,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   70%{transform:scale(3.4);opacity:0;}
   100%{transform:scale(3.4);opacity:0;}
 }
-@media (prefers-reduced-motion:reduce){
+@media (max-width:640px), (prefers-reduced-motion:reduce){
   .ftc-live-dot::after{animation:none;}
 }
 .ftc-chart-tooltip{
@@ -1291,7 +1374,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 }
 .ftc-btn:hover{background:color-mix(in srgb, var(--fc-accent) 14%, transparent);}
 
-@media (prefers-reduced-motion:reduce){
+@media (max-width:640px), (prefers-reduced-motion:reduce){
   .ftc-btn, .ftc-chip, .ftc-chart-tooltip{transition:none;}
 }
 /* ---- Responsif kartu "Uang Masuk & Keluar" di semua ukuran layar ----
@@ -1403,7 +1486,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   0%{transform:scale(1);opacity:.6;}
   100%{transform:scale(1.45);opacity:0;}
 }
-@media (prefers-reduced-motion: reduce){
+@media (max-width:640px), (prefers-reduced-motion:reduce){
   .income-cards-group .icon-badge.special::after{animation:none;opacity:0;}
 }
 
@@ -1591,7 +1674,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   0%{opacity:0;transform:scale(.4);}
   100%{opacity:1;transform:scale(1);}
 }
-@media (prefers-reduced-motion:reduce){
+@media (max-width:640px), (prefers-reduced-motion:reduce){
   .isc-bubble-wrap.isc-bubble-float-item{
     animation:none;
     bottom:24%;
@@ -1630,7 +1713,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   4%{opacity:.65;transform:scale(1);}
   16%{opacity:0;transform:scale(1.55);}
 }
-@media (prefers-reduced-motion:reduce){
+@media (max-width:640px), (prefers-reduced-motion:reduce){
   .isc-bubble-wrap .isc-bubble-inner{animation:none;}
   .isc-bubble-wrap::after{display:none;}
 }
@@ -1721,7 +1804,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   from{stroke-dashoffset:var(--ring-circ,289);}
   to{stroke-dashoffset:var(--ring-offset,0);}
 }
-@media (prefers-reduced-motion:reduce){
+@media (max-width:640px), (prefers-reduced-motion:reduce){
   .isc-ring-fill{animation:none;stroke-dashoffset:var(--ring-offset,0);}
 }
 .isc-bubble-body:hover .isc-bubble-inner, .isc-bubble-body:focus-visible .isc-bubble-inner{
@@ -1834,7 +1917,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 .isc-pane-enter-from{transform:translateY(100%);opacity:0;}
 .isc-pane-enter-to{transform:translateY(0);opacity:1;}
 .isc-pane-exit-to{transform:translateY(-100%);opacity:0;}
-@media (prefers-reduced-motion:reduce){
+@media (max-width:640px), (prefers-reduced-motion:reduce){
   .isc-pane-sliding{transition:none;}
 }
 .isc-view-toggle{
@@ -1919,7 +2002,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 .isl-row:nth-child(6n+4) .isl-icon{animation-delay:.66s;}
 .isl-row:nth-child(6n+5) .isl-icon{animation-delay:.88s;}
 .isl-row:nth-child(6n+6) .isl-icon{animation-delay:1.1s;}
-@media (prefers-reduced-motion:reduce){
+@media (max-width:640px), (prefers-reduced-motion:reduce){
   .isl-icon{animation:none;}
 }
 .isl-icon svg{width:56%;height:56%;}
@@ -2224,7 +2307,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 .wallet-empty-deals{width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--ink-faint);font-size:12.5px;font-weight:600;text-align:center;padding:20px 10px;}
 .wallet-empty-deals svg{opacity:.6;}
 
-@media (prefers-reduced-motion:reduce){
+@media (max-width:640px), (prefers-reduced-motion:reduce){
   .wallet-deal-card, .wallet-deal-add, .wdc-balance{transition:none;}
 }
 
@@ -2947,7 +3030,7 @@ body.density-compact .income-cards-group{gap:10px;}
   transform:translateY(-3px);
 }
 @keyframes sectionCardIn{to{opacity:1;transform:translateY(0);}}
-@media (prefers-reduced-motion: reduce){
+@media (max-width:640px), (prefers-reduced-motion:reduce){
   .section-card{opacity:1;transform:none;animation:none;}
   .section-card:hover{transform:none;}
 }
@@ -3062,7 +3145,7 @@ body.density-compact .income-cards-group{gap:10px;}
 .news-viewport.static .news-item{scroll-snap-align:start;}
 .news-viewport.empty .news-list{width:100%;flex-direction:row;}
 @keyframes newsSlide{from{transform:translateX(0);}to{transform:translateX(-50%);}}
-@media (prefers-reduced-motion: reduce){
+@media (max-width:640px), (prefers-reduced-motion:reduce){
   .news-viewport .news-list{animation:none;width:100%;overflow-x:auto;}
 }
 
@@ -3330,7 +3413,7 @@ body.density-compact .income-cards-group{gap:10px;}
   .isc-comp-ring{width:32px;height:32px;}
   .isc-comp-ring span{font-size:8.5px;}
 }
-@media (prefers-reduced-motion:reduce){
+@media (max-width:640px), (prefers-reduced-motion:reduce){
   .isc-spot{animation:none;}
   .isc-spot-ring,.isc-comp-ring,.isc-comp-fill{transition:none;}
   .isc-spot-ring,.isc-spot-ring::after{animation:none;}
@@ -3855,7 +3938,7 @@ tbody tr.date-group-row:first-child td{border-top:none;}
 .tx-modal .modal-actions .btn-primary:hover::before{left:130%;}
 .tx-modal .modal-actions .btn-ghost{transition:background .16s ease, border-color .16s ease, transform .16s ease;}
 .tx-modal .modal-actions .btn-ghost:hover{background:#fff;border-color:var(--ink-faint);transform:translateY(-2px);}
-@media (prefers-reduced-motion: reduce){
+@media (max-width:640px), (prefers-reduced-motion:reduce){
   .tx-modal::before{animation:none;}
 }
 @media (max-width:600px){
@@ -3875,7 +3958,7 @@ tbody tr.date-group-row:first-child td{border-top:none;}
 .wallet-modal .wallet-category-toggle button:active{transform:scale(.95);}
 .wallet-preset-chip{transition:all .18s cubic-bezier(.22,.9,.3,1);}
 .wallet-preset-chip:hover{transform:translateY(-2px);}
-@media (prefers-reduced-motion:reduce){
+@media (max-width:640px), (prefers-reduced-motion:reduce){
   .wallet-modal, .wallet-modal .modal-head, .wallet-modal .wallet-preview-card, .wallet-modal #walletForm > *{
     opacity:1;transform:none;animation:none;transition:none;
   }
@@ -4054,7 +4137,7 @@ tbody tr.date-group-row:first-child td{border-top:none;}
 .lb-medal-ribbon{position:absolute;top:-8px;width:8px;height:13px;z-index:-1;background:linear-gradient(180deg,#3B82F6,#1D4ED8);}
 .lb-medal-ribbon.l{left:2px;transform:skewX(-16deg) rotate(-8deg);border-radius:2px 1px 0 0;}
 .lb-medal-ribbon.r{right:2px;transform:skewX(16deg) rotate(8deg);border-radius:1px 2px 0 0;}
-@media (prefers-reduced-motion: reduce){
+@media (max-width:640px), (prefers-reduced-motion:reduce){
   .lb-medal{animation:none;}
 }
 
@@ -4084,7 +4167,7 @@ tbody tr.date-group-row:first-child td{border-top:none;}
   70%{opacity:0;}
   100%{transform:scale(1.38);opacity:0;}
 }
-@media (prefers-reduced-motion: reduce){
+@media (max-width:640px), (prefers-reduced-motion:reduce){
   .lb-avatar-wrap.top{animation:none;}
   .lb-avatar-wrap.top::before{animation:none;}
 }
@@ -4100,7 +4183,7 @@ tbody tr.date-group-row:first-child td{border-top:none;}
 .lb-avatar-wrap.r2 .lb-avatar{border-color:#94A3B8;box-shadow:0 0 0 4px rgba(148,163,184,0.12),0 0 14px rgba(148,163,184,0.3);}
 .lb-avatar-wrap.r3 .lb-avatar{border-color:#D97706;box-shadow:0 0 0 4px rgba(217,119,6,0.12),0 0 14px rgba(217,119,6,0.32);}
 @keyframes lbAvatarGlow{0%,100%{filter:brightness(1);transform:scale(1);}50%{filter:brightness(1.12);transform:scale(1.05);}}
-@media (prefers-reduced-motion: reduce){
+@media (max-width:640px), (prefers-reduced-motion:reduce){
   .lb-avatar-wrap.top .lb-avatar{animation:none;}
 }
 /* Kelap-kelip bintang kecil khusus juara #1 */
@@ -4113,7 +4196,7 @@ tbody tr.date-group-row:first-child td{border-top:none;}
   0%,100%{opacity:.35;transform:scale(.7) rotate(-10deg);}
   50%{opacity:1;transform:scale(1.15) rotate(10deg);}
 }
-@media (prefers-reduced-motion: reduce){
+@media (max-width:640px), (prefers-reduced-motion:reduce){
   .lb-avatar-wrap.r1::after{animation:none;}
 }
 .lb-avatar-crown{
@@ -4123,7 +4206,7 @@ tbody tr.date-group-row:first-child td{border-top:none;}
 }
 .lb-avatar-wrap.r2 .lb-avatar-crown,.lb-avatar-wrap.r3 .lb-avatar-crown{font-size:14.5px;}
 @keyframes lbCrownFloat{0%,100%{transform:translateX(-50%) translateY(0) rotate(-8deg);}50%{transform:translateX(-50%) translateY(-4px) rotate(8deg);}}
-@media (prefers-reduced-motion: reduce){
+@media (max-width:640px), (prefers-reduced-motion:reduce){
   .lb-avatar-crown{animation:none;}
 }
 .lb-vip-badge{
@@ -4136,7 +4219,7 @@ tbody tr.date-group-row:first-child td{border-top:none;}
 }
 .lb-vip-badge svg{flex-shrink:0;}
 @keyframes lbPillShine{0%,100%{filter:brightness(1);}50%{filter:brightness(1.14);}}
-@media (prefers-reduced-motion: reduce){
+@media (max-width:640px), (prefers-reduced-motion:reduce){
   .lb-vip-badge{animation:none;}
 }
 
@@ -4209,7 +4292,7 @@ tbody tr.date-group-row:first-child td{border-top:none;}
 .lb-hero-ic-wrap.out svg{animation:lbIconRiseOut 1.6s cubic-bezier(.4,0,.2,1) infinite;}
 @keyframes lbIconDropIn{0%{transform:translateY(-3px);opacity:.55;}55%{transform:translateY(2px);opacity:1;}100%{transform:translateY(-3px);opacity:.55;}}
 @keyframes lbIconRiseOut{0%{transform:translateY(3px);opacity:.55;}55%{transform:translateY(-2px);opacity:1;}100%{transform:translateY(3px);opacity:.55;}}
-@media (prefers-reduced-motion: reduce){
+@media (max-width:640px), (prefers-reduced-motion:reduce){
   .lb-hero-ic-wrap.in svg, .lb-hero-ic-wrap.out svg{animation:none;}
 }
 
@@ -4226,7 +4309,7 @@ tbody tr.date-group-row:first-child td{border-top:none;}
 .lb-hero-ic-wrap.in.lead{box-shadow:0 0 0 3px rgba(110,231,183,0.22), 0 0 22px rgba(52,211,183,0.55);}
 .lb-hero-ic-wrap.out.lead{box-shadow:0 0 0 3px rgba(253,164,175,0.22), 0 0 22px rgba(251,113,133,0.5);}
 @keyframes lbLeadPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.06);}}
-@media (prefers-reduced-motion: reduce){
+@media (max-width:640px), (prefers-reduced-motion:reduce){
   .lb-hero-ic-wrap.lead, .lb-hero-ic-wrap.lead .lb-hero-crown{animation:none;}
 }
 
@@ -4280,7 +4363,7 @@ tbody tr.date-group-row:first-child td{border-top:none;}
   animation:lbShimmer 1.8s ease-in-out infinite;
 }
 @keyframes lbShimmer{0%{left:-40%;}100%{left:110%;}}
-@media (prefers-reduced-motion: reduce){
+@media (max-width:640px), (prefers-reduced-motion:reduce){
   .lb-hero-bar-fill.in, .lb-hero-bar-fill.out{animation:none;}
   .lb-hero-bar-fill::before, .lb-hero-bar-fill::after{animation:none;display:none;}
 }
@@ -4322,7 +4405,7 @@ tbody tr.date-group-row:first-child td{border-top:none;}
 }
 .lb-hero-spark.burst .lb-hero-spark-core{animation:lbSparkBurstCore .5s ease-out;}
 @keyframes lbSparkBurstCore{0%{transform:translate(-50%,-50%) scale(1.55);filter:brightness(1.5);}100%{transform:translate(-50%,-50%) scale(1);filter:brightness(1);}}
-@media (prefers-reduced-motion: reduce){
+@media (max-width:640px), (prefers-reduced-motion:reduce){
   .lb-hero-spark, .lb-hero-spark-core, .lb-hero-spark-ring, .lb-hero-spark.burst .lb-hero-spark-particle, .lb-hero-spark.burst .lb-hero-spark-core{animation:none;transition:none;}
 }
 .lb-hero-net{
@@ -4382,7 +4465,7 @@ tbody tr.date-group-row:first-child td{border-top:none;}
   .lb-row-amt{font-size:10.5px;}
 }
 
-@media (prefers-reduced-motion: reduce){
+@media (max-width:640px), (prefers-reduced-motion:reduce){
   .lb-hero, .lb-row, .lb-medal, .lb-avatar-wrap.top .lb-avatar, .lb-avatar-crown, .lb-vip-badge, .lb-col, .lb-hero-orb, .lb-title-ic, .lb-hero-crown, .lb-hero-ic-wrap.lead, .lb-hero-pk-dot{animation:none !important;}
 }
 

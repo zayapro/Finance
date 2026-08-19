@@ -4727,6 +4727,21 @@ function startWalletAutoScroll() {
 
   const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (prefersReduced) return;
+  // FIX "BERAT DI HP": loop di bawah ini (lewat requestAnimationFrame)
+  // menggeser strip.scrollLeft SEDIKIT DEMI SEDIKIT 60x PER DETIK,
+  // TANPA PERNAH BERHENTI, selama kartu Saldo Bank & E-Wallet ada di
+  // halaman — bukan cuma sekali animasi lalu selesai. Di HP, tiap
+  // penulisan scrollLeft memaksa browser menghitung ulang posisi
+  // scroll & repaint strip-nya, dan karena ini jalan terus-menerus di
+  // BELAKANG LAYAR juga (tidak berhenti walau kartu sedang discroll
+  // keluar dari layar/tidak terlihat), efeknya numpuk jadi salah satu
+  // penyumbang beban CPU/baterai terus-menerus paling besar di
+  // halaman ini. Di layar HP, geser manual pakai jari (swipe) sudah
+  // alami & mudah, jadi fitur auto-geser ini dimatikan saja di lebar
+  // layar HP -- kartu tetap bisa digeser manual seperti biasa, cuma
+  // tidak lagi bergeser sendiri tanpa disentuh.
+  const isMobile = window.matchMedia && window.matchMedia('(max-width:640px)').matches;
+  if (isMobile) return;
 
   walletAutoScrollState.dir = 1;
   walletAutoScrollState.paused = false;
