@@ -8650,6 +8650,42 @@ function initMiniTopbar() {
   } else {
     window.addEventListener('resize', applyHeight);
   }
+
+  // FIX "DOBEL" DENGAN BANNER BESAR — sebelumnya mini-topbar selalu
+  // tampil dari awal render, jadi numpuk kelihatan dobel dengan
+  // ringkasan Pemasukan/Pengeluaran yang juga ada di banner besar
+  // (#banner) tepat di bawahnya. Sekarang mini-topbar baru diberi
+  // class "mtb-active" (lihat CSS .mini-topbar.mtb-active, yang
+  // menggesernya turun ke layar) SETELAH banner besar benar-benar
+  // sudah discroll keluar dari layar. Begitu user scroll balik ke
+  // atas dan banner besar kelihatan lagi, class ini dicopot lagi
+  // supaya mini-topbar sembunyi lagi — tidak pernah tampil bareng.
+  const bannerEl = document.getElementById('banner');
+  if (bannerEl && 'IntersectionObserver' in window) {
+    const mq = window.matchMedia('(max-width:600px)');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        // entry.isIntersecting = banner besar masih (sebagian) kelihatan
+        // di layar -> mini-topbar disembunyikan. Begitu banner sudah
+        // 100% discroll lewat (isIntersecting jadi false) -> tampilkan.
+        if (mq.matches) {
+          bar.classList.toggle('mtb-active', !entry.isIntersecting);
+        } else {
+          bar.classList.remove('mtb-active');
+        }
+      });
+    }, { threshold: 0, rootMargin: '0px' });
+    observer.observe(bannerEl);
+
+    // Kalau layar di-resize melewati breakpoint HP (mis. rotate/
+    // desktop), pastikan class dicopot supaya tidak nyangkut aktif
+    // di layar lebar (yang mana mini-topbar memang display:none).
+    const handleMqChange = () => {
+      if (!mq.matches) bar.classList.remove('mtb-active');
+    };
+    if (mq.addEventListener) mq.addEventListener('change', handleMqChange);
+    else if (mq.addListener) mq.addListener(handleMqChange);
+  }
 }
 
 function init() {

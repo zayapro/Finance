@@ -4803,6 +4803,24 @@ body.is-scrolling .particle{
     background:var(--forest-deep);
     box-shadow:0 8px 18px -6px rgba(11,18,32,0.45);
     color:#F4F7FB;
+    /* PENTING (fix "dobel" dgn banner besar): dulu mini-topbar ini
+       LANGSUNG tampil dari awal halaman dimuat, jadi begitu buka
+       app, dia numpuk keliatan dobel sama ringkasan Pemasukan/
+       Pengeluaran yang juga ada di banner besar tepat di bawahnya.
+       Sekarang mini-topbar disembunyikan dulu (digeser ke atas layar
+       via translateY, BUKAN display:none — supaya tetap bisa
+       dianimasikan mulus) dan baru digeser turun/muncul (lihat class
+       .mtb-active) SETELAH banner besar discroll keluar dari layar.
+       Class .mtb-active ditambahkan otomatis oleh IntersectionObserver
+       di initMiniTopbar (script.js) begitu <header class="banner">
+       sudah tidak kelihatan lagi. */
+    transform:translateY(-100%);
+    transition:transform .28s cubic-bezier(.4,0,.2,1);
+    pointer-events:none;
+  }
+  .mini-topbar.mtb-active{
+    transform:translateY(0);
+    pointer-events:auto;
   }
   /* Baris atas: logo/nama app (buka Pengaturan Aplikasi) + 3 ikon
      aksi cepat (Riwayat, Tagihan & Hutang, Tambah Transaksi) sejajar
@@ -4835,13 +4853,18 @@ body.is-scrolling .particle{
   .mtb-text{min-width:0;}
   .mtb-text .k{font-size:11px;color:rgba(244,247,243,0.65);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .mtb-text .v{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  /* Dorong seluruh konten halaman ke bawah sejumlah tinggi mini
-     topbar, supaya bagian atas banner besar (logo dsb.) tidak
-     ketutup elemen fixed ini begitu halaman dimuat. Nilai
-     --mini-topbar-h diisi otomatis oleh JS. Fallback 108px dipakai
-     sebelum JS sempat mengukur (mis. sesaat pertama kali render) —
-     dinaikkan dari 64px karena mini topbar sekarang 2 baris.*/
-  body{padding-top:var(--mini-topbar-h, 108px);}
+  /* CATATAN (berubah dari sebelumnya): dulu body SELALU diberi
+     padding-top sebesar tinggi mini-topbar dari awal render, supaya
+     banner besar tidak ketutup mini-topbar yang saat itu selalu
+     tampil. Sekarang mini-topbar disembunyikan (translateY) sampai
+     banner besar discroll keluar layar (lihat rule .mtb-active di
+     atas & initMiniTopbar di script.js), jadi padding-top TIDAK
+     dibutuhkan lagi di awal — kalau tetap dipasang, malah bikin
+     jarak kosong kosong di atas banner sebelum discroll. Begitu
+     mini-topbar aktif (sudah discroll), dia cukup menumpuk/overlay
+     di atas konten yang memang sudah discroll lewat, sama seperti
+     pola sticky-header pada umumnya, tidak perlu dorong ulang
+     layout body.*/
 }
 
 /* ============================================================
