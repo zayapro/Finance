@@ -8657,34 +8657,47 @@ function initMiniTopbar() {
   // (#banner) tepat di bawahnya. Sekarang mini-topbar baru diberi
   // class "mtb-active" (lihat CSS .mini-topbar.mtb-active, yang
   // menggesernya turun ke layar) SETELAH banner besar benar-benar
-  // sudah discroll keluar dari layar. Begitu user scroll balik ke
-  // atas dan banner besar kelihatan lagi, class ini dicopot lagi
-  // supaya mini-topbar sembunyi lagi — tidak pernah tampil bareng.
+  // sudah discroll keluar dari layar (sisi bawah banner <= 0, lihat
+  // getBoundingClientRect().bottom di bawah).
+  //
+  // CATATAN (kenapa bukan pakai IntersectionObserver): percobaan
+  // pertama pakai IntersectionObserver, tapi di HP saat scroll cepat
+  // (momentum scroll) callback-nya sering telat/ke-throttle browser,
+  // jadi mini-topbar baru "nyusul" muncul pas scroll SUDAH berhenti
+  // atau baru kelihatan pas scroll balik ke atas -- bukan langsung
+  // pas banner lewat. Makanya diganti pola yang sama dengan tombol
+  // "Kembali ke atas" di halaman ini (lihat initBackToTop di atas,
+  // sudah terbukti responsif dua arah): dicek ulang posisi banner
+  // tiap frame lewat requestAnimationFrame pada event scroll, bukan
+  // menunggu browser melapor lewat IntersectionObserver.
   const bannerEl = document.getElementById('banner');
-  if (bannerEl && 'IntersectionObserver' in window) {
+  if (bannerEl) {
     const mq = window.matchMedia('(max-width:600px)');
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        // entry.isIntersecting = banner besar masih (sebagian) kelihatan
-        // di layar -> mini-topbar disembunyikan. Begitu banner sudah
-        // 100% discroll lewat (isIntersecting jadi false) -> tampilkan.
-        if (mq.matches) {
-          bar.classList.toggle('mtb-active', !entry.isIntersecting);
-        } else {
-          bar.classList.remove('mtb-active');
-        }
-      });
-    }, { threshold: 0, rootMargin: '0px' });
-    observer.observe(bannerEl);
-
-    // Kalau layar di-resize melewati breakpoint HP (mis. rotate/
-    // desktop), pastikan class dicopot supaya tidak nyangkut aktif
-    // di layar lebar (yang mana mini-topbar memang display:none).
-    const handleMqChange = () => {
-      if (!mq.matches) bar.classList.remove('mtb-active');
-    };
-    if (mq.addEventListener) mq.addEventListener('change', handleMqChange);
-    else if (mq.addListener) mq.addListener(handleMqChange);
+    let mtbTicking = false;
+    function updateMiniTopbarVisibility() {
+      mtbTicking = false;
+      if (!mq.matches) {
+        bar.classList.remove('mtb-active');
+        return;
+      }
+      // Banner dianggap "sudah lewat" begitu sisi PALING BAWAHnya
+      // sudah di atas batas atas layar (bottom <= 0) -- artinya
+      // seluruh banner, termasuk ringkasan Pemasukan/Pengeluaran di
+      // dalamnya, sudah tidak kelihatan sama sekali lagi.
+      const bannerFullyPassed = bannerEl.getBoundingClientRect().bottom <= 0;
+      bar.classList.toggle('mtb-active', bannerFullyPassed);
+    }
+    function requestMiniTopbarUpdate() {
+      if (!mtbTicking) {
+        mtbTicking = true;
+        requestAnimationFrame(updateMiniTopbarVisibility);
+      }
+    }
+    updateMiniTopbarVisibility();
+    window.addEventListener('scroll', requestMiniTopbarUpdate, { passive: true });
+    window.addEventListener('resize', requestMiniTopbarUpdate);
+    if (mq.addEventListener) mq.addEventListener('change', requestMiniTopbarUpdate);
+    else if (mq.addListener) mq.addListener(requestMiniTopbarUpdate);
   }
 }
 
