@@ -3930,6 +3930,11 @@ function openDetailPage(key, opts = {}) {
   renderDetailList(key, list, isIn);
 
   document.getElementById('detailPageOverlay').classList.add('open');
+  // FIX BANNER PATAH-PATAH SAAT HALAMAN INI DIBUKA (HP): lihat
+  // penjelasan lengkap di freezeBannerAnim/initBannerScrollFreeze —
+  // toggling overflow + scrollTo di bawah ini memaksa reflow yang
+  // bentrok dengan animasi gradient banner kalau tidak dipause dulu.
+  freezeBannerAnim(400);
   document.body.style.overflow = 'hidden';
   if (!opts.keepScroll) {
     window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
@@ -3939,6 +3944,7 @@ function openDetailPage(key, opts = {}) {
 function closeDetailPage() {
   document.getElementById('detailPageOverlay').classList.remove('open');
   document.getElementById('detailTargetForm').style.display = 'none';
+  freezeBannerAnim(400);
   document.body.style.overflow = '';
   detailPageContext = null;
 }
@@ -4111,6 +4117,7 @@ function switchLeaderboardPeriod(period) {
 function openLeaderboardPage() {
   if (document.getElementById('bdAllOverlay').classList.contains('open')) closeBdAllPage();
   document.getElementById('leaderboardOverlay').classList.add('open');
+  freezeBannerAnim(400);
   document.body.style.overflow = 'hidden';
   window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
   renderLeaderboard();
@@ -4118,6 +4125,7 @@ function openLeaderboardPage() {
 
 function closeLeaderboardPage() {
   document.getElementById('leaderboardOverlay').classList.remove('open');
+  freezeBannerAnim(400);
   document.body.style.overflow = '';
 }
 
@@ -4239,11 +4247,13 @@ function openWidgetSettingsPage() {
   if (document.getElementById('bdAllOverlay').classList.contains('open')) closeBdAllPage();
   syncWidgetSettingsUI(loadWidgetSettings());
   document.getElementById('widgetSettingsOverlay').classList.add('open');
+  freezeBannerAnim(400);
   document.body.style.overflow = 'hidden';
   window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
 }
 function closeWidgetSettingsPage() {
   document.getElementById('widgetSettingsOverlay').classList.remove('open');
+  freezeBannerAnim(400);
   document.body.style.overflow = '';
 }
 
@@ -5215,12 +5225,14 @@ function openIncomeSourcePage() {
   // padahal datanya ada.
   document.getElementById('incomeSourceOverlay').classList.add('open');
   refreshIncomeSourcePage();
+  freezeBannerAnim(400);
   document.body.style.overflow = 'hidden';
   window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
 }
 
 function closeIncomeSourcePage() {
   document.getElementById('incomeSourceOverlay').classList.remove('open');
+  freezeBannerAnim(400);
   document.body.style.overflow = '';
 }
 
@@ -6120,6 +6132,12 @@ function openEditModal(id) {
 let scrollLockY = 0;
 let openModalCount = 0;
 function lockBodyScroll() {
+  // FIX BANNER PATAH-PATAH SAAT MODAL DIBUKA (HP): body.style.position
+  // yang berubah ke 'fixed' di bawah ini memaksa reflow — kalau animasi
+  // gradient banner masih jalan tepat di frame yang sama, hasilnya
+  // kelihatan tersendat. Freeze dulu animasinya (lihat freezeBannerAnim
+  // di initBannerScrollFreeze) selama transisi modal berlangsung.
+  freezeBannerAnim(500);
   if (openModalCount === 0) {
     scrollLockY = window.scrollY || document.documentElement.scrollTop || 0;
     document.body.style.position = 'fixed';
@@ -6131,6 +6149,10 @@ function lockBodyScroll() {
   openModalCount++;
 }
 function unlockBodyScroll() {
+  // Sama seperti di lockBodyScroll: menutup modal juga mengubah
+  // body.style.position/overflow & memanggil scrollTo — freeze dulu
+  // animasi banner supaya tidak tersendat.
+  freezeBannerAnim(500);
   openModalCount = Math.max(0, openModalCount - 1);
   if (openModalCount === 0) {
     document.body.style.position = '';
@@ -8098,12 +8120,14 @@ function openBdAllPage(initialTab) {
   document.getElementById('bdAllSearchInput').value = '';
 
   document.getElementById('bdAllOverlay').classList.add('open');
+  freezeBannerAnim(400);
   document.body.style.overflow = 'hidden';
   window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
   renderBdAllPage();
 }
 function closeBdAllPage() {
   document.getElementById('bdAllOverlay').classList.remove('open');
+  freezeBannerAnim(400);
   document.body.style.overflow = '';
 }
 
@@ -8665,31 +8689,46 @@ function initAiChat() {
 }
 
 // ============================================================
-// FIX KEDIPAN BANNER STICKY SAAT SCROLL (khusus HP)
+// FIX BANNER "PATAH-PATAH"/KEDIP SAAT SCROLL & SAAT POPUP DIBUKA/DITUTUP
+// (khusus HP)
 // Banner (header hijau-navy di atas) punya beberapa animasi CSS yang
 // hidup terus-menerus (gradient drift, garis alir, ombak, partikel
-// naik-turun) dan posisinya position:sticky di layar HP. Saat halaman
-// discroll di HP, browser sering menghitung ulang layout tiap frame
-// (mis. karena address bar muncul/hilang) — kalau bersamaan dengan
-// animasi yang masih terus jalan, hasilnya bisa kelihatan "kedip"/
-// tearing sesaat karena browser sempat menggambar frame yang belum
-// selesai/lengkap.
+// naik-turun). Animasi background-position seperti ini MAHAL untuk
+// digambar ulang browser — tiap frame seluruh gradient di-repaint dari
+// nol. Kalau repaint berat itu terjadi BERSAMAAN dengan operasi lain
+// yang juga memaksa browser menghitung ulang layout/scroll di frame
+// yang sama, hasilnya kelihatan "patah-patah"/tersendat sesaat. ADA DUA
+// momen ini bisa terjadi:
+//   1) Selagi halaman discroll di HP (mis. saat address bar muncul/
+//      hilang, browser recalc layout tiap frame).
+//   2) Setiap kali popup dibuka/ditutup (modal ATAU halaman penuh
+//      seperti Detail/Leaderboard/Pengaturan Widget/dll) — karena
+//      membuka/menutup popup mengubah body.style.position/overflow
+//      dan kadang memanggil window.scrollTo(), yang sama-sama memicu
+//      reflow paksa di thread yang sama dengan repaint gradient banner.
+//      Sebelumnya freeze ini CUMA dipasang untuk momen (1), sehingga
+//      banner tetap kelihatan tersendat setiap kali ada popup yang
+//      dibuka/ditutup di HP.
 //
-// Solusinya: selama scroll BERLANGSUNG, tempelkan class "is-scrolling"
-// ke <body> supaya semua animasi dekoratif banner dipause dulu lewat
-// CSS (lihat rule body.is-scrolling di index.html) — isinya tetap utuh
-// terlihat, cuma diam sebentar, TIDAK disembunyikan. Class ini dicopot
-// lagi otomatis begitu tidak ada event scroll baru selama ~160ms
-// (dianggap scroll sudah selesai), lalu animasi lanjut seperti biasa.
-let bannerScrollFreezeTimer = null;
+// Solusinya sama untuk kedua momen: selama proses BERLANGSUNG,
+// tempelkan class "is-scrolling" ke <body> supaya semua animasi
+// dekoratif banner dipause dulu lewat CSS (lihat rule body.is-scrolling
+// di index.html) — isinya tetap utuh terlihat, cuma diam sebentar,
+// TIDAK disembunyikan. Class ini dicopot lagi otomatis setelah jeda
+// (dianggap proses sudah selesai), lalu animasi lanjut seperti biasa.
+// freezeBannerAnim() dipakai bersama oleh initBannerScrollFreeze (scroll)
+// dan oleh lockBodyScroll/unlockBodyScroll serta semua fungsi buka/tutup
+// halaman penuh (lihat pemanggilannya di masing-masing fungsi tsb).
+let bannerAnimFreezeTimer = null;
+function freezeBannerAnim(duration = 160) {
+  document.body.classList.add('is-scrolling');
+  clearTimeout(bannerAnimFreezeTimer);
+  bannerAnimFreezeTimer = setTimeout(() => {
+    document.body.classList.remove('is-scrolling');
+  }, duration);
+}
 function initBannerScrollFreeze() {
-  window.addEventListener('scroll', () => {
-    document.body.classList.add('is-scrolling');
-    clearTimeout(bannerScrollFreezeTimer);
-    bannerScrollFreezeTimer = setTimeout(() => {
-      document.body.classList.remove('is-scrolling');
-    }, 160);
-  }, { passive: true });
+  window.addEventListener('scroll', () => freezeBannerAnim(160), { passive: true });
 }
 
 // ============================================================
