@@ -1562,10 +1562,39 @@ function applyFlowDealTuckPosition() {
   if (wrap.style.height !== newHeightPx) wrap.style.height = newHeightPx;
   if (card.style.transform !== newTransform) card.style.transform = newTransform;
 }
+// Gestur tarik (drag/swipe) dengan jari di tab peek — pengganti tombol
+// "Lihat Ringkasan" yang disembunyikan khusus di layar HP (lihat CSS
+// @media max-width:600px). Menarik jari ke bawah sejauh ambang batas
+// tertentu pada tab akan membuka kartu, persis seperti mengklik tab
+// itu sendiri. Tap/klik biasa tetap berfungsi seperti sebelumnya
+// (listener klik terpisah di bawah) — ini murni tambahan gestur, bukan
+// pengganti klik.
+function bindFlowDealDragOpen(wrap, handle) {
+  if (!handle || handle.dataset.dragBound === '1') return;
+  handle.dataset.dragBound = '1';
+  const DRAG_THRESHOLD = 22; // px, jarak tarik minimum sebelum kartu terbuka
+  let startY = null;
+  handle.addEventListener('touchstart', (e) => {
+    if (wrap.classList.contains('fc-settled')) { startY = null; return; }
+    startY = e.touches[0].clientY;
+  }, { passive: true });
+  handle.addEventListener('touchmove', (e) => {
+    if (startY === null || wrap.classList.contains('fc-settled')) return;
+    const deltaY = e.touches[0].clientY - startY;
+    if (deltaY >= DRAG_THRESHOLD) {
+      startY = null;
+      wrap.classList.add('fc-settled');
+      applyFlowDealTuckPosition();
+    }
+  }, { passive: true });
+  handle.addEventListener('touchend', () => { startY = null; });
+  handle.addEventListener('touchcancel', () => { startY = null; });
+}
 function initFlowDealSettle() {
   const wrap = document.getElementById('bannerFlowWrap');
   if (!wrap) return;
   applyFlowDealTuckPosition();
+  bindFlowDealDragOpen(wrap, wrap.querySelector('.fc-peek-handle'));
   if (!flowDealSettleBound) {
     flowDealSettleBound = true;
     // Delegasi klik di wrap (bukan di elemen kartu langsung) supaya tetap
@@ -1770,7 +1799,7 @@ function renderSummary() {
               </span>
             </div>
           </div>
-          <span class="fc-peek-handle-btn">Lihat Ringkasan<span class="fc-peek-chev"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span></span>
+          <span class="fc-peek-handle-btn"><span class="fc-peek-btn-label">Lihat Ringkasan</span><span class="fc-peek-chev"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span></span>
         </div>
       </div>
     </div>

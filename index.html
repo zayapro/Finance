@@ -789,6 +789,19 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   display:flex;flex-wrap:nowrap;align-items:center;justify-content:space-between;gap:12px;
   max-width:640px;margin:0 auto;
 }
+/* ---- Permintaan terbaru: di layar desktop/tablet lebar, baris ini
+   justru DIMINTA rata kiri-kanan penuh (label+ikon nempel ke tepi kiri
+   kartu, tombol "Lihat Ringkasan" nempel ke tepi kanan) — bukan lagi
+   dikumpulkan ke tengah dengan jarak kosong di kedua sisi. Cukup lepas
+   max-width di lebar >600px (breakpoint sama dgn blok mobile di bawah)
+   supaya justify-content:space-between di atas benar-benar menyentuh
+   kedua ujung kartu. Di HP (≤600px) max-width:none sudah lama dipakai
+   juga (lihat blok @media max-width:600px), jadi perilakunya konsisten
+   di semua ukuran layar sekarang — bedanya cuma tombol yang disembunyikan
+   khusus di HP (lihat .fc-peek-btn-label di bawah). */
+@media (min-width:601px){
+  .fc-peek-row{max-width:none;}
+}
 /* ---- FIX "tampilan berantakan di HP": kartu "Uang Masuk & Keluar"
    normalnya nyelip di belakang banner dan HANYA tab
    ".fc-peek-handle" yang boleh terlihat (lihat applyFlowDealTuckPosition
@@ -1567,6 +1580,19 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   .fc-peek-mini-dot{font-size:8px;}
   .fc-peek-handle-btn{font-size:8.5px;padding:6px 10px;gap:4px;}
   .fc-peek-handle .fc-peek-chev svg{width:10px;height:10px;}
+  /* ---- Permintaan terbaru: khusus di HP, tombol "Lihat Ringkasan"
+     (teks+pill) DIHILANGKAN — diganti gestur tarik ke bawah/tap di
+     mana saja pada tab ini (lihat listener touchstart/touchmove di
+     initFlowDealSettle(), script.js). Yang tersisa cuma ikon panah
+     kecil yang berdenyut turun-naik sebagai isyarat "bisa ditarik/
+     diketuk", tanpa pill/border di sekelilingnya supaya tidak lagi
+     terlihat seperti tombol. Tap di mana saja pada tab tetap membuka
+     kartu seperti sebelumnya (handler klik sudah mencakup seluruh
+     .fc-peek-handle, bukan cuma tombolnya). */
+  .fc-peek-handle-btn{border:none;background:transparent;padding:4px;gap:0;}
+  .fc-peek-handle-btn .fc-peek-btn-label{display:none;}
+  .fc-peek-handle:hover .fc-peek-handle-btn,
+  .fc-peek-handle:active .fc-peek-handle-btn{background:transparent;transform:none;filter:none;}
 
   /* Header kartu: ikon + judul + kotak timer JAM/MNT/DTK */
   .flow-deal-top{margin-bottom:14px;gap:10px;}
