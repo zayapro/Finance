@@ -7551,7 +7551,12 @@ body.is-scrolling *{
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4M12 17h.01"/></svg>
           Zona Berbahaya
         </div>
-        <p class="as-group-hint">Menghapus seluruh data (transaksi, target, dompet, tagihan, hutang, dsb) dari database cloud <b>dan</b> perangkat ini. Data yang sama akan ikut hilang di semua perangkat lain yang login dengan akun ini. Tindakan ini tidak bisa dibatalkan.</p>
+        <p class="as-group-hint">Hapus <b>hanya</b> data Tagihan &amp; Hutang (data lain seperti transaksi, target, dompet, dsb tetap aman) dari database cloud <b>dan</b> perangkat ini. Data yang sama akan ikut hilang di semua perangkat lain yang login dengan akun ini. Tindakan ini tidak bisa dibatalkan.</p>
+        <div class="as-section">
+          <button type="button" class="btn btn-danger" id="btnResetBillsDebts" style="width:100%;justify-content:center;">Hapus Data Tagihan &amp; Hutang</button>
+        </div>
+
+        <p class="as-group-hint" style="margin-top:14px;">Menghapus seluruh data (transaksi, target, dompet, tagihan, hutang, sumber pendapatan, dsb) dari database cloud <b>dan</b> perangkat ini. Data yang sama akan ikut hilang di semua perangkat lain yang login dengan akun ini. Tindakan ini tidak bisa dibatalkan.</p>
         <div class="as-section">
           <button type="button" class="btn btn-danger" id="btnResetCloudDb" style="width:100%;justify-content:center;">Reset Database Online</button>
         </div>

@@ -551,11 +551,12 @@ function walletLogoHtml(w) {
   const initials = (w.initials || w.name || '?').trim().slice(0, 3).toUpperCase();
   return `<span class="wallet-logo-badge">${escapeHtml(initials)}</span>`;
 }
+// Sengaja dikosongkan -- database baru/default tidak berisi akun
+// bank/e-wallet contoh apa pun, user menambahkan sendiri lewat tombol
+// "Tambah Akun" (yang tetap memakai WALLET_PRESETS di atas sebagai
+// daftar pilihan cepat saat menambah, bukan diisi otomatis di sini).
 function seedWallets() {
-  return WALLET_PRESETS.map(p => ({
-    id: cryptoId(), name: p.name, category: p.category, color: p.color,
-    initials: p.initials, balance: 0, note: '', photo: null, createdAt: Date.now()
-  }));
+  return [];
 }
 function loadWallets() {
   try {
@@ -689,20 +690,14 @@ const STORAGE_KEY_BILLS = 'alirin_bills_v1';
 const STORAGE_KEY_DEBTS = 'alirin_debts_v1';
 let notifTab = 'tagihan';
 
+// Sengaja dikosongkan -- database baru/default tidak berisi contoh
+// tagihan/hutang apa pun, user menambahkan sendiri lewat tombol
+// "Tambah Tagihan"/"Tambah Hutang".
 function seedBills() {
-  const now = new Date();
-  const plus = (n) => { const x = new Date(now); x.setDate(x.getDate() + n); return localDateStr(x); };
-  return [
-    { id: cryptoId(), name: 'Tagihan Listrik PLN', amount: 250000, dueDate: plus(4), note: '', status: 'belum', recurring: true, createdAt: Date.now() },
-    { id: cryptoId(), name: 'Internet Bulanan', amount: 350000, dueDate: plus(-2), note: '', status: 'belum', recurring: true, createdAt: Date.now() },
-  ];
+  return [];
 }
 function seedDebts() {
-  const now = new Date();
-  const plus = (n) => { const x = new Date(now); x.setDate(x.getDate() + n); return localDateStr(x); };
-  return [
-    { id: cryptoId(), name: 'Pinjaman ke Budi', amount: 500000, dueDate: plus(10), note: '', status: 'belum', recurring: false, createdAt: Date.now() },
-  ];
+  return [];
 }
 
 // Tambah `n` bulan ke tanggal (YYYY-MM-DD), dipakai untuk menjadwalkan ulang
@@ -790,23 +785,12 @@ function persistSocialLinks(data = socialLinks) {
 }
 let socialLinks = loadSocialLinks();
 
-/* ---------- Seed data (hanya jika kosong) ---------- */
+/* ---------- Seed data (hanya jika kosong) ----------
+   Sengaja dikosongkan -- database baru/default tidak berisi contoh
+   transaksi apa pun, user mencatat sendiri transaksi pertamanya
+   lewat tombol tambah transaksi. */
 function seedData() {
-  const now = new Date();
-  const d = (offset) => {
-    const x = new Date(now);
-    x.setDate(x.getDate() - offset);
-    return localDateStr(x);
-  };
-  return [
-    { id: cryptoId(), type: 'masuk', amount: 4500000, category: 'Gaji', desc: 'Gaji bulanan', date: d(6) },
-    { id: cryptoId(), type: 'keluar', amount: 150000, category: 'Makanan', desc: 'Belanja mingguan', date: d(5) },
-    { id: cryptoId(), type: 'keluar', amount: 45000, category: 'Transportasi', desc: 'Bensin', date: d(4) },
-    { id: cryptoId(), type: 'masuk', amount: 350000, category: 'Penjualan', desc: 'Jual barang bekas', date: d(3) },
-    { id: cryptoId(), type: 'keluar', amount: 89000, category: 'Hiburan', desc: 'Langganan streaming', date: d(2) },
-    { id: cryptoId(), type: 'keluar', amount: 220000, category: 'Tagihan', desc: 'Tagihan listrik', date: d(1) },
-    { id: cryptoId(), type: 'masuk', amount: 120000, category: 'Lainnya', desc: 'Uang kembalian', date: d(0) },
-  ];
+  return [];
 }
 
 function cryptoId() {
@@ -7438,6 +7422,29 @@ appSettingsModal.addEventListener('click', (e) => { if (e.target === appSettings
    kelihatan/tidak bisa ditekan. Dialog bawaan browser selalu
    digambar di atas keyboard oleh OS, jadi jauh lebih aman lintas
    perangkat untuk aksi sepenting ini. */
+/* Reset khusus data Tagihan & Hutang saja -- lebih ringan dari reset
+   database penuh di bawah, karena hanya menghapus dua key ini
+   (STORAGE_KEY_BILLS & STORAGE_KEY_DEBTS) via persistBills/persistDebts
+   (yang otomatis ikut mendorong ke cloud lewat cloudStorage), lalu
+   me-render ulang panel notifikasi & halaman "semua tagihan/hutang"
+   -- data lain (transaksi, target, dompet, dsb) sama sekali tidak
+   tersentuh. */
+document.getElementById('btnResetBillsDebts').addEventListener('click', () => {
+  const ok = confirm(
+    'Ini akan menghapus SEMUA data Tagihan & Hutang (bukan data lain seperti transaksi/target/dompet) secara PERMANEN dari database cloud dan perangkat ini. Data yang sama akan ikut hilang di semua perangkat lain yang login dengan akun ini.\n\nLanjutkan?'
+  );
+  if (!ok) return;
+
+  bills = [];
+  debts = [];
+  persistBills();
+  persistDebts();
+  renderNotifPanel();
+  renderBdAllPage();
+
+  showToast('Semua data tagihan & hutang berhasil dihapus.');
+});
+
 document.getElementById('btnResetCloudDb').addEventListener('click', async () => {
   if (typeof window.cloudResetDatabase !== 'function') {
     showToast('Fitur sinkron cloud tidak tersedia di halaman ini.', 'err');
