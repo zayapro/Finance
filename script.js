@@ -7425,6 +7425,54 @@ document.getElementById('asModalCloseBtn').addEventListener('click', () => close
 document.getElementById('btnAsCancel').addEventListener('click', () => closeModal(appSettingsModal));
 appSettingsModal.addEventListener('click', (e) => { if (e.target === appSettingsModal) closeModal(appSettingsModal); });
 
+/* ==========================================================
+   ZONA BERBAHAYA — Reset Database Online (Pengaturan Aplikasi)
+   Menghapus semua data user di tabel kv_store (Supabase) +
+   localStorage perangkat ini lewat window.cloudResetDatabase()
+   yang disediakan cloud-sync.js. Butuh mengetik "RESET" persis
+   di modal konfirmasi sebelum tombol hapus aktif, karena
+   tindakan ini permanen dan memengaruhi semua perangkat yang
+   login dengan akun yang sama.
+========================================================== */
+const resetDbModal = document.getElementById('resetDbModalOverlay');
+const resetDbConfirmInput = document.getElementById('resetDbConfirmInput');
+const btnConfirmResetDb = document.getElementById('btnConfirmResetDb');
+
+document.getElementById('btnResetCloudDb').addEventListener('click', () => {
+  resetDbConfirmInput.value = '';
+  btnConfirmResetDb.disabled = true;
+  btnConfirmResetDb.textContent = 'Ya, Hapus Semua Data';
+  openModal(resetDbModal);
+  setTimeout(() => resetDbConfirmInput.focus(), 50);
+});
+resetDbConfirmInput.addEventListener('input', () => {
+  btnConfirmResetDb.disabled = resetDbConfirmInput.value.trim().toUpperCase() !== 'RESET';
+});
+document.getElementById('btnCancelResetDb').addEventListener('click', () => closeModal(resetDbModal));
+resetDbModal.addEventListener('click', (e) => { if (e.target === resetDbModal) closeModal(resetDbModal); });
+
+btnConfirmResetDb.addEventListener('click', async () => {
+  if (resetDbConfirmInput.value.trim().toUpperCase() !== 'RESET') return;
+  if (typeof window.cloudResetDatabase !== 'function') {
+    showToast('Fitur sinkron cloud tidak tersedia di halaman ini.', 'err');
+    return;
+  }
+  btnConfirmResetDb.disabled = true;
+  btnConfirmResetDb.textContent = 'Menghapus...';
+  const result = await window.cloudResetDatabase();
+  if (result && result.ok) {
+    showToast('Database berhasil direset. Memuat ulang halaman...');
+    setTimeout(() => location.reload(), 900);
+  } else {
+    btnConfirmResetDb.disabled = false;
+    btnConfirmResetDb.textContent = 'Ya, Hapus Semua Data';
+    const msg = result && result.reason === 'not_logged_in'
+      ? 'Kamu belum login ke akun cloud.'
+      : 'Gagal reset database. Coba lagi.';
+    showToast(msg, 'err');
+  }
+});
+
 // Terapkan pengaturan tersimpan sesegera mungkin (sebelum init() lain
 // jalan) supaya nama/logo/warna aksen sudah benar sejak render pertama.
 applyAppSettings(loadAppSettings());

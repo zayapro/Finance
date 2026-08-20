@@ -239,4 +239,38 @@
   window.cloudSignOut = async function () {
     await sb.auth.signOut();
   };
+
+  /* ---------- reset database online ----------
+     Menghapus SEMUA baris milik user yang sedang login di tabel
+     kv_store (cloud), lalu ikut membersihkan localStorage di
+     perangkat ini (kecuali key yang memang murni lokal/tidak
+     disinkron, lihat isCloudExcluded), supaya aplikasi kembali ke
+     kondisi kosong/baru di semua perangkat begitu login ulang.
+     Dipanggil dari tombol "Reset Database Online" di modal
+     Pengaturan Aplikasi (lihat script.js) -- diekspos secara global.
+     Mengembalikan { ok: true } kalau berhasil, atau
+     { ok: false, reason: 'not_logged_in' | 'error', error } kalau gagal. */
+  window.cloudResetDatabase = async function () {
+    if (!currentUser) return { ok: false, reason: 'not_logged_in' };
+
+    const { error } = await sb.from('kv_store').delete().eq('user_id', currentUser.id);
+    if (error) {
+      console.error('Reset database (cloud) gagal:', error);
+      setSyncBadge('err');
+      return { ok: false, reason: 'error', error: error };
+    }
+
+    // Batalkan semua push yang masih tertunda (debounced) supaya data
+    // lama tidak sempat ditulis ulang ke cloud setelah dihapus.
+    Object.keys(pushTimers).forEach(function (k) { clearTimeout(pushTimers[k]); });
+
+    // Bersihkan localStorage perangkat ini juga, kecuali key yang
+    // sengaja tidak ikut disinkron (API key Gemini, riwayat chat AI,
+    // cache berita) -- itu tetap murni preferensi perangkat ini.
+    Object.keys(localStorage).forEach(function (key) {
+      if (!isCloudExcluded(key)) localStorage.removeItem(key);
+    });
+
+    return { ok: true };
+  };
 })();
