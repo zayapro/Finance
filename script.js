@@ -1,6 +1,13 @@
 /* ==========================================================
    ZAYAPRO — Pengelola Uang Masuk & Keluar
-   Semua data disimpan di localStorage browser (tidak ada server).
+   Semua panggilan localStorage di file ini sudah diganti jadi
+   `cloudStorage` (lihat cloud-sync.js, dimuat sebelum file ini).
+   cloudStorage.getItem/setItem/removeItem PUNYA API PERSIS SAMA
+   dengan localStorage biasa (tetap menulis ke localStorage juga,
+   sinkron/instan), tapi setItem/removeItem JUGA mendorong
+   perubahan ke tabel `kv_store` di Supabase di latar belakang.
+   Jadi data yang diketik di satu perangkat otomatis tersedia di
+   perangkat lain, selama login pakai akun yang sama.
 ========================================================== */
 
 /* PENTING (fix "patah-patah" saat refresh di HP): ExcelJS, jsPDF, &
@@ -69,13 +76,13 @@ const SUMMARY_PAGES = {
 const STORAGE_KEY_TARGETS = 'alirin_page_targets_v1';
 function loadPageTargets() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY_TARGETS);
+    const raw = cloudStorage.getItem(STORAGE_KEY_TARGETS);
     if (raw) return JSON.parse(raw);
   } catch (e) { console.error('Gagal memuat target', e); }
   return {};
 }
 function persistPageTargets(data = pageTargets) {
-  try { localStorage.setItem(STORAGE_KEY_TARGETS, JSON.stringify(data)); }
+  try { cloudStorage.setItem(STORAGE_KEY_TARGETS, JSON.stringify(data)); }
   catch (e) { showToast('Gagal menyimpan target.', 'err'); }
 }
 let pageTargets = loadPageTargets();
@@ -139,12 +146,12 @@ const STORAGE_KEY_INCOME_SOURCES = 'alirin_income_sources_v1';
 const STORAGE_KEY_INCOME_SOURCE_VIEW = 'alirin_income_source_view_v1';
 function loadIncomeSourceView() {
   try {
-    const v = localStorage.getItem(STORAGE_KEY_INCOME_SOURCE_VIEW);
+    const v = cloudStorage.getItem(STORAGE_KEY_INCOME_SOURCE_VIEW);
     return v === 'list' ? 'list' : 'bubble';
   } catch (e) { return 'bubble'; }
 }
 function persistIncomeSourceView(v) {
-  try { localStorage.setItem(STORAGE_KEY_INCOME_SOURCE_VIEW, v); } catch (e) { /* abaikan */ }
+  try { cloudStorage.setItem(STORAGE_KEY_INCOME_SOURCE_VIEW, v); } catch (e) { /* abaikan */ }
 }
 let incomeSourceViewMode = loadIncomeSourceView();
 const INCOME_SOURCES = ['Adsense', 'Meta', 'Affiliate', 'Makelar', 'Kelas', 'Store', 'Sosial Media', 'Jasa & Rekber'];
@@ -249,13 +256,13 @@ const STORAGE_KEY_INCOME_SOURCE_CUSTOM = 'alirin_income_source_custom_v1';
 const CUSTOM_SOURCE_COLOR_PRESETS = ['#2563EB', '#0F9D6C', '#D97706', '#DB2777', '#7C3AED', '#0891B2', '#DC2626', '#EA580C', '#059669', '#4338CA'];
 function loadCustomIncomeSources() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY_INCOME_SOURCE_CUSTOM);
+    const raw = cloudStorage.getItem(STORAGE_KEY_INCOME_SOURCE_CUSTOM);
     if (raw) return JSON.parse(raw);
   } catch (e) { console.error('Gagal memuat sumber kustom', e); }
   return [];
 }
 function persistCustomIncomeSources() {
-  try { localStorage.setItem(STORAGE_KEY_INCOME_SOURCE_CUSTOM, JSON.stringify(customIncomeSources)); }
+  try { cloudStorage.setItem(STORAGE_KEY_INCOME_SOURCE_CUSTOM, JSON.stringify(customIncomeSources)); }
   catch (e) { showToast('Gagal menyimpan sumber manual.', 'err'); }
 }
 let customIncomeSources = loadCustomIncomeSources();
@@ -276,13 +283,13 @@ function customSourceByName(name) {
 const STORAGE_KEY_INCOME_PLATFORM_CUSTOM = 'alirin_income_platform_custom_v1';
 function loadCustomIncomePlatforms() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY_INCOME_PLATFORM_CUSTOM);
+    const raw = cloudStorage.getItem(STORAGE_KEY_INCOME_PLATFORM_CUSTOM);
     if (raw) return JSON.parse(raw);
   } catch (e) { console.error('Gagal memuat platform kustom', e); }
   return {};
 }
 function persistCustomIncomePlatforms() {
-  try { localStorage.setItem(STORAGE_KEY_INCOME_PLATFORM_CUSTOM, JSON.stringify(customIncomePlatforms)); }
+  try { cloudStorage.setItem(STORAGE_KEY_INCOME_PLATFORM_CUSTOM, JSON.stringify(customIncomePlatforms)); }
   catch (e) { showToast('Gagal menyimpan platform kustom.', 'err'); }
 }
 let customIncomePlatforms = loadCustomIncomePlatforms();
@@ -306,13 +313,13 @@ function getAllPlatformsForSource(source) {
 const STORAGE_KEY_PLATFORM_ACCOUNT_DETAILS = 'alirin_platform_account_details_v1';
 function loadPlatformAccountDetails() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY_PLATFORM_ACCOUNT_DETAILS);
+    const raw = cloudStorage.getItem(STORAGE_KEY_PLATFORM_ACCOUNT_DETAILS);
     if (raw) return JSON.parse(raw);
   } catch (e) { console.error('Gagal memuat detail akun platform', e); }
   return {};
 }
 function persistPlatformAccountDetails() {
-  try { localStorage.setItem(STORAGE_KEY_PLATFORM_ACCOUNT_DETAILS, JSON.stringify(platformAccountDetails)); }
+  try { cloudStorage.setItem(STORAGE_KEY_PLATFORM_ACCOUNT_DETAILS, JSON.stringify(platformAccountDetails)); }
   catch (e) { showToast('Gagal menyimpan detail akun.', 'err'); }
 }
 let platformAccountDetails = loadPlatformAccountDetails();
@@ -332,13 +339,13 @@ function savePlatformAccountDetail(source, platform, data) {
 const STORAGE_KEY_ACCOUNT_TYPE_CUSTOM = 'alirin_account_type_custom_v1';
 function loadCustomAccountTypes() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY_ACCOUNT_TYPE_CUSTOM);
+    const raw = cloudStorage.getItem(STORAGE_KEY_ACCOUNT_TYPE_CUSTOM);
     if (raw) return JSON.parse(raw);
   } catch (e) { console.error('Gagal memuat jenis akun kustom', e); }
   return [];
 }
 function persistCustomAccountTypes() {
-  try { localStorage.setItem(STORAGE_KEY_ACCOUNT_TYPE_CUSTOM, JSON.stringify(customAccountTypes)); }
+  try { cloudStorage.setItem(STORAGE_KEY_ACCOUNT_TYPE_CUSTOM, JSON.stringify(customAccountTypes)); }
   catch (e) { showToast('Gagal menyimpan jenis akun kustom.', 'err'); }
 }
 let customAccountTypes = loadCustomAccountTypes();
@@ -363,13 +370,13 @@ function registerCustomAccountType(label) {
 const STORAGE_KEY_SOURCE_ICON_OVERRIDES = 'alirin_income_source_icons_v1';
 function loadSourceIconOverrides() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY_SOURCE_ICON_OVERRIDES);
+    const raw = cloudStorage.getItem(STORAGE_KEY_SOURCE_ICON_OVERRIDES);
     if (raw) return JSON.parse(raw);
   } catch (e) { console.error('Gagal memuat ikon kustom sumber', e); }
   return {};
 }
 function persistSourceIconOverrides() {
-  try { localStorage.setItem(STORAGE_KEY_SOURCE_ICON_OVERRIDES, JSON.stringify(sourceIconOverrides)); }
+  try { cloudStorage.setItem(STORAGE_KEY_SOURCE_ICON_OVERRIDES, JSON.stringify(sourceIconOverrides)); }
   catch (e) { showToast('Gagal menyimpan ikon kustom.', 'err'); }
 }
 let sourceIconOverrides = loadSourceIconOverrides();
@@ -401,13 +408,13 @@ function sourceIcon(source) {
 const STORAGE_KEY_PLATFORM_ICON_OVERRIDES = 'alirin_platform_icon_overrides_v1';
 function loadPlatformIconOverrides() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY_PLATFORM_ICON_OVERRIDES);
+    const raw = cloudStorage.getItem(STORAGE_KEY_PLATFORM_ICON_OVERRIDES);
     if (raw) return JSON.parse(raw);
   } catch (e) { console.error('Gagal memuat ikon kustom platform', e); }
   return {};
 }
 function persistPlatformIconOverrides() {
-  try { localStorage.setItem(STORAGE_KEY_PLATFORM_ICON_OVERRIDES, JSON.stringify(platformIconOverrides)); }
+  try { cloudStorage.setItem(STORAGE_KEY_PLATFORM_ICON_OVERRIDES, JSON.stringify(platformIconOverrides)); }
   catch (e) { showToast('Gagal menyimpan ikon kustom platform.', 'err'); }
 }
 let platformIconOverrides = loadPlatformIconOverrides();
@@ -440,17 +447,17 @@ function getPlatformBuiltinIcon(source, platform) {
    gelembung sendiri alih-alih digabung jadi satu gelembung "Meta".
    Status ini murni soal TAMPILAN gelembung; tidak mengubah data
    pendapatan maupun Total Saldo. Disimpan per kombinasi
-   "Sumber::Platform" di localStorage. */
+   "Sumber::Platform" di cloudStorage. */
 const STORAGE_KEY_PLATFORM_BUBBLE_ENABLED = 'alirin_platform_bubble_enabled_v1';
 function loadPlatformBubbleEnabled() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY_PLATFORM_BUBBLE_ENABLED);
+    const raw = cloudStorage.getItem(STORAGE_KEY_PLATFORM_BUBBLE_ENABLED);
     if (raw) return JSON.parse(raw);
   } catch (e) { console.error('Gagal memuat status gelembung platform', e); }
   return {};
 }
 function persistPlatformBubbleEnabled() {
-  try { localStorage.setItem(STORAGE_KEY_PLATFORM_BUBBLE_ENABLED, JSON.stringify(platformBubbleEnabled)); }
+  try { cloudStorage.setItem(STORAGE_KEY_PLATFORM_BUBBLE_ENABLED, JSON.stringify(platformBubbleEnabled)); }
   catch (e) { showToast('Gagal menyimpan pengaturan gelembung platform.', 'err'); }
 }
 let platformBubbleEnabled = loadPlatformBubbleEnabled();
@@ -474,13 +481,13 @@ function setPlatformBubbleEnabled(source, platform, enabled) {
 
 function loadIncomeSources() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY_INCOME_SOURCES);
+    const raw = cloudStorage.getItem(STORAGE_KEY_INCOME_SOURCES);
     if (raw) return JSON.parse(raw);
   } catch (e) { console.error('Gagal memuat data pendapatan', e); }
   return [];
 }
 function persistIncomeSources(data = incomeSources) {
-  try { localStorage.setItem(STORAGE_KEY_INCOME_SOURCES, JSON.stringify(data)); }
+  try { cloudStorage.setItem(STORAGE_KEY_INCOME_SOURCES, JSON.stringify(data)); }
   catch (e) { showToast('Gagal menyimpan data pendapatan.', 'err'); }
 }
 let incomeSources = loadIncomeSources();
@@ -552,7 +559,7 @@ function seedWallets() {
 }
 function loadWallets() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY_WALLETS);
+    const raw = cloudStorage.getItem(STORAGE_KEY_WALLETS);
     if (raw) return JSON.parse(raw);
   } catch (e) { console.error('Gagal memuat data saldo bank/e-wallet', e); }
   const seeded = seedWallets();
@@ -560,7 +567,7 @@ function loadWallets() {
   return seeded;
 }
 function persistWallets(data = wallets) {
-  try { localStorage.setItem(STORAGE_KEY_WALLETS, JSON.stringify(data)); }
+  try { cloudStorage.setItem(STORAGE_KEY_WALLETS, JSON.stringify(data)); }
   catch (e) { showToast('Gagal menyimpan data saldo bank/e-wallet.', 'err'); }
 }
 let wallets = loadWallets();
@@ -708,7 +715,7 @@ function addMonthsToDateStr(dateStr, n) {
 
 function loadBills() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY_BILLS);
+    const raw = cloudStorage.getItem(STORAGE_KEY_BILLS);
     if (raw) return JSON.parse(raw);
   } catch (e) { console.error('Gagal memuat data tagihan', e); }
   const seeded = seedBills();
@@ -717,7 +724,7 @@ function loadBills() {
 }
 function loadDebts() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY_DEBTS);
+    const raw = cloudStorage.getItem(STORAGE_KEY_DEBTS);
     if (raw) return JSON.parse(raw);
   } catch (e) { console.error('Gagal memuat data hutang', e); }
   const seeded = seedDebts();
@@ -725,11 +732,11 @@ function loadDebts() {
   return seeded;
 }
 function persistBills(data = bills) {
-  try { localStorage.setItem(STORAGE_KEY_BILLS, JSON.stringify(data)); }
+  try { cloudStorage.setItem(STORAGE_KEY_BILLS, JSON.stringify(data)); }
   catch (e) { showToast('Gagal menyimpan data tagihan.', 'err'); }
 }
 function persistDebts(data = debts) {
-  try { localStorage.setItem(STORAGE_KEY_DEBTS, JSON.stringify(data)); }
+  try { cloudStorage.setItem(STORAGE_KEY_DEBTS, JSON.stringify(data)); }
   catch (e) { showToast('Gagal menyimpan data hutang.', 'err'); }
 }
 
@@ -742,13 +749,13 @@ let debts = loadDebts();
 const STORAGE_KEY_DEVICES = 'alirin_devices_v1';
 function loadDevices() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY_DEVICES);
+    const raw = cloudStorage.getItem(STORAGE_KEY_DEVICES);
     if (raw) return JSON.parse(raw);
   } catch (e) { console.error('Gagal memuat data perangkat', e); }
   return [];
 }
 function persistDevices(data = devices) {
-  try { localStorage.setItem(STORAGE_KEY_DEVICES, JSON.stringify(data)); }
+  try { cloudStorage.setItem(STORAGE_KEY_DEVICES, JSON.stringify(data)); }
   catch (e) { showToast('Gagal menyimpan data perangkat.', 'err'); }
 }
 let devices = loadDevices();
@@ -772,13 +779,13 @@ const SOCIAL_PLATFORMS = [
 
 function loadSocialLinks() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY_SOCIAL);
+    const raw = cloudStorage.getItem(STORAGE_KEY_SOCIAL);
     if (raw) return JSON.parse(raw);
   } catch (e) { console.error('Gagal memuat tautan sosial media', e); }
   return {};
 }
 function persistSocialLinks(data = socialLinks) {
-  try { localStorage.setItem(STORAGE_KEY_SOCIAL, JSON.stringify(data)); }
+  try { cloudStorage.setItem(STORAGE_KEY_SOCIAL, JSON.stringify(data)); }
   catch (e) { showToast('Gagal menyimpan tautan sosial media.', 'err'); }
 }
 let socialLinks = loadSocialLinks();
@@ -808,7 +815,7 @@ function cryptoId() {
 
 function loadData() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = cloudStorage.getItem(STORAGE_KEY);
     if (raw) return JSON.parse(raw);
   } catch (e) { console.error('Gagal memuat data', e); }
   const seeded = seedData();
@@ -818,7 +825,7 @@ function loadData() {
 
 function persist(data = transactions) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    cloudStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   } catch (e) {
     showToast('Gagal menyimpan data ke browser.', 'err');
   }
@@ -1129,7 +1136,7 @@ function renderNewsList(items) {
 
 function readNewsCache(categoryKey) {
   try {
-    const raw = localStorage.getItem(NEWS_CACHE_KEY_PREFIX + categoryKey);
+    const raw = cloudStorage.getItem(NEWS_CACHE_KEY_PREFIX + categoryKey);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (!parsed || !Array.isArray(parsed.items) || !parsed.items.length) return null;
@@ -1141,7 +1148,7 @@ function readNewsCache(categoryKey) {
 
 function writeNewsCache(categoryKey, items) {
   try {
-    localStorage.setItem(NEWS_CACHE_KEY_PREFIX + categoryKey, JSON.stringify({ items, savedAt: Date.now() }));
+    cloudStorage.setItem(NEWS_CACHE_KEY_PREFIX + categoryKey, JSON.stringify({ items, savedAt: Date.now() }));
   } catch (e) { /* localStorage penuh/diblokir — abaikan, cache bukan fitur wajib */ }
 }
 
@@ -1370,7 +1377,7 @@ const EYE_OPEN_SVG = '<path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><c
 const EYE_OFF_SVG = '<path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a20.3 20.3 0 0 1 5.06-5.94M9.9 4.24A10.94 10.94 0 0 1 12 4c7 0 11 8 11 8a20.3 20.3 0 0 1-3.22 4.6M14.12 14.12a3 3 0 1 1-4.24-4.24"/><path d="M1 1l22 22"/>';
 
 function isSaldoHidden() {
-  const stored = localStorage.getItem(SALDO_HIDE_KEY);
+  const stored = cloudStorage.getItem(SALDO_HIDE_KEY);
   // Default: tersembunyi otomatis demi privasi saat pertama kali dibuka.
   return stored === null ? true : stored === '1';
 }
@@ -1388,7 +1395,7 @@ function applySaldoVisibility() {
 
 document.getElementById('saldoToggle').addEventListener('click', () => {
   const nextHidden = !isSaldoHidden();
-  localStorage.setItem(SALDO_HIDE_KEY, nextHidden ? '1' : '0');
+  cloudStorage.setItem(SALDO_HIDE_KEY, nextHidden ? '1' : '0');
   applySaldoVisibility();
 });
 
@@ -4311,7 +4318,7 @@ const WIDGET_DEFAULTS = {
 
 function loadWidgetSettings() {
   try {
-    const raw = JSON.parse(localStorage.getItem(WIDGET_SETTINGS_KEY) || '{}');
+    const raw = JSON.parse(cloudStorage.getItem(WIDGET_SETTINGS_KEY) || '{}');
     return { ...WIDGET_DEFAULTS, ...raw };
   } catch {
     return { ...WIDGET_DEFAULTS };
@@ -4319,7 +4326,7 @@ function loadWidgetSettings() {
 }
 
 function saveWidgetSettings(settings) {
-  localStorage.setItem(WIDGET_SETTINGS_KEY, JSON.stringify(settings));
+  cloudStorage.setItem(WIDGET_SETTINGS_KEY, JSON.stringify(settings));
 }
 
 function applyWidgetSettings(settings) {
@@ -7036,12 +7043,12 @@ const APP_META_DESC_MAXLEN = 160;
 
 function loadAppSettings() {
   try {
-    const raw = localStorage.getItem(APP_SETTINGS_KEY);
+    const raw = cloudStorage.getItem(APP_SETTINGS_KEY);
     return raw ? { ...APP_SETTINGS_DEFAULTS, ...JSON.parse(raw) } : { ...APP_SETTINGS_DEFAULTS };
   } catch (e) { return { ...APP_SETTINGS_DEFAULTS }; }
 }
 function saveAppSettings(settings) {
-  try { localStorage.setItem(APP_SETTINGS_KEY, JSON.stringify(settings)); }
+  try { cloudStorage.setItem(APP_SETTINGS_KEY, JSON.stringify(settings)); }
   catch (e) { showToast('Gagal menyimpan pengaturan aplikasi.', 'err'); }
 }
 
@@ -7921,7 +7928,7 @@ function updateNotifBadge() {
 const NOTIF_REMINDER_FLAG_KEY = 'alirin_notif_reminder_date_v1';
 function maybeShowDueReminder() {
   try {
-    if (localStorage.getItem(NOTIF_REMINDER_FLAG_KEY) === todayStr()) return;
+    if (cloudStorage.getItem(NOTIF_REMINDER_FLAG_KEY) === todayStr()) return;
   } catch (e) { /* localStorage diblokir — lewati saja pengingatnya */ }
 
   const urgent = [...bills, ...debts].filter(x => x.status === 'belum' && daysUntil(x.dueDate) <= 0);
@@ -7935,7 +7942,7 @@ function maybeShowDueReminder() {
   else msg = `Ada ${dueToday} tagihan/hutang yang jatuh tempo hari ini.`;
 
   showToast(msg, 'err');
-  try { localStorage.setItem(NOTIF_REMINDER_FLAG_KEY, todayStr()); } catch (e) { /* abaikan */ }
+  try { cloudStorage.setItem(NOTIF_REMINDER_FLAG_KEY, todayStr()); } catch (e) { /* abaikan */ }
 }
 
 function renderNotifPanel() {
@@ -8395,6 +8402,30 @@ function initFooter() {
   document.getElementById('footerNavTop').addEventListener('click', () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
+
+  initCloudLogoutButton();
+}
+
+/* Tombol "Keluar" mengambang -- dibuat lewat JS (bukan ditaruh manual
+   di index.html) supaya tidak mengganggu markup footer yang sudah ada.
+   Memanggil window.cloudSignOut() dari cloud-sync.js, yang akan
+   sign-out dari Supabase lalu me-reload halaman ke layar login. */
+function initCloudLogoutButton() {
+  if (document.getElementById('cloudLogoutBtn')) return;
+  if (typeof window.cloudSignOut !== 'function') return;
+  const btn = document.createElement('button');
+  btn.id = 'cloudLogoutBtn';
+  btn.type = 'button';
+  btn.title = 'Keluar dari akun';
+  btn.setAttribute('aria-label', 'Keluar dari akun');
+  btn.style.cssText = 'position:fixed;top:10px;left:10px;z-index:9998;background:rgba(0,0,0,.35);color:#fff;border:none;border-radius:20px;padding:7px 12px;font-size:12px;display:flex;align-items:center;gap:6px;cursor:pointer;opacity:.85;';
+  btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg><span>Keluar</span>';
+  btn.addEventListener('click', () => {
+    if (confirm('Keluar dari akun ini?')) {
+      window.cloudSignOut();
+    }
+  });
+  document.body.appendChild(btn);
 }
 
 /* ==========================================================
@@ -8406,26 +8437,26 @@ const AI_DEFAULT_MODEL = 'gemini-3.7-flash';
 
 function loadAiSettings() {
   try {
-    const raw = localStorage.getItem(AI_SETTINGS_KEY);
+    const raw = cloudStorage.getItem(AI_SETTINGS_KEY);
     if (raw) return JSON.parse(raw);
   } catch (e) { /* abaikan */ }
   return { apiKey: '', model: '' };
 }
 function persistAiSettings(data) {
-  try { localStorage.setItem(AI_SETTINGS_KEY, JSON.stringify(data)); }
+  try { cloudStorage.setItem(AI_SETTINGS_KEY, JSON.stringify(data)); }
   catch (e) { showToast('Gagal menyimpan pengaturan AI.', 'err'); }
 }
 let aiSettings = loadAiSettings();
 
 function loadAiChatHistory() {
   try {
-    const raw = localStorage.getItem(AI_CHAT_HISTORY_KEY);
+    const raw = cloudStorage.getItem(AI_CHAT_HISTORY_KEY);
     if (raw) return JSON.parse(raw);
   } catch (e) { /* abaikan */ }
   return { umum: [], data: [] };
 }
 function persistAiChatHistory() {
-  try { localStorage.setItem(AI_CHAT_HISTORY_KEY, JSON.stringify(aiChatHistory)); }
+  try { cloudStorage.setItem(AI_CHAT_HISTORY_KEY, JSON.stringify(aiChatHistory)); }
   catch (e) { /* biarkan gagal senyap, riwayat chat tidak kritikal */ }
 }
 let aiChatHistory = loadAiChatHistory();

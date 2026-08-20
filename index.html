@@ -5679,6 +5679,71 @@ body.is-scrolling *{
   .modal{padding:14px;}
   .btn{font-size:12px;padding:8px 11px;}
 }
+/* ============ CLOUD SYNC — LOGIN/AUTH OVERLAY ============ */
+#cloudAuthOverlay{
+  position:fixed; inset:0; z-index:99999;
+  background:var(--forest-deep, #0B1220);
+  display:flex; align-items:center; justify-content:center;
+  padding:24px;
+}
+#cloudAuthOverlay.hidden{ display:none; }
+.cloud-auth-card{
+  width:100%; max-width:380px;
+  background:var(--forest-mid, #16213A);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:20px;
+  padding:28px 24px;
+  color:#fff;
+}
+.cloud-auth-card h2{
+  margin:0 0 6px; font-size:22px; font-weight:700;
+}
+.cloud-auth-card p.cloud-auth-sub{
+  margin:0 0 20px; font-size:13.5px; opacity:.65; line-height:1.5;
+}
+.cloud-auth-card label{
+  display:block; font-size:12.5px; opacity:.75; margin:0 0 6px;
+}
+.cloud-auth-card input{
+  width:100%; box-sizing:border-box;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:10px;
+  padding:11px 12px;
+  color:#fff; font-size:14.5px;
+  margin-bottom:14px;
+  outline:none;
+}
+.cloud-auth-card input:focus{ border-color:var(--forest-glow,#2563EB); }
+.cloud-auth-card .cloud-auth-btn{
+  width:100%; border:none; border-radius:10px;
+  padding:12px; font-size:14.5px; font-weight:700;
+  background:var(--forest-glow,#2563EB); color:#fff;
+  cursor:pointer; margin-top:4px;
+}
+.cloud-auth-card .cloud-auth-btn:disabled{ opacity:.6; cursor:not-allowed; }
+.cloud-auth-card .cloud-auth-switch{
+  text-align:center; margin-top:16px; font-size:13px; opacity:.75;
+}
+.cloud-auth-card .cloud-auth-switch a{
+  color:var(--forest-glow,#2563EB); text-decoration:none; font-weight:600; cursor:pointer;
+}
+.cloud-auth-card .cloud-auth-msg{
+  font-size:13px; border-radius:8px; padding:9px 11px; margin-bottom:14px;
+  display:none;
+}
+.cloud-auth-card .cloud-auth-msg.show{ display:block; }
+.cloud-auth-card .cloud-auth-msg.err{ background:rgba(225,29,72,.15); color:#FDA4AF; }
+.cloud-auth-card .cloud-auth-msg.ok{ background:rgba(5,150,105,.15); color:#6EE7B7; }
+#cloudSyncBadge{
+  position:fixed; top:10px; right:10px; z-index:9998;
+  font-size:11px; padding:5px 10px; border-radius:20px;
+  background:rgba(0,0,0,.35); color:#fff; opacity:.85;
+  display:flex; align-items:center; gap:6px;
+  pointer-events:none;
+}
+#cloudSyncBadge .dot{ width:7px; height:7px; border-radius:50%; background:#6EE7B7; }
+#cloudSyncBadge.err .dot{ background:#FDA4AF; }
 </style>
 </head>
 <body>
@@ -7642,6 +7707,35 @@ body.is-scrolling *{
      tepat saat tombol ekspor Excel/PDF diklik, supaya refresh
      halaman tidak perlu menunggu pustaka besar itu dimuat &
      dieksekusi duluan kalau memang tidak sedang dipakai. -->
-<script src="script.js"></script>
+<!-- ===== OVERLAY LOGIN / DAFTAR (CLOUD SYNC) ===== -->
+<div id="cloudAuthOverlay">
+  <div class="cloud-auth-card">
+    <h2 id="cloudAuthTitle">Masuk ke ZAYAPRO</h2>
+    <p class="cloud-auth-sub">Login supaya datamu tersimpan di cloud dan otomatis sama di semua perangkat (HP &amp; laptop).</p>
+    <div class="cloud-auth-msg" id="cloudAuthMsg"></div>
+    <form id="cloudAuthForm">
+      <label for="cloudAuthEmail">Email</label>
+      <input type="email" id="cloudAuthEmail" autocomplete="email" required placeholder="nama@email.com">
+      <label for="cloudAuthPassword">Password</label>
+      <input type="password" id="cloudAuthPassword" autocomplete="current-password" required placeholder="Minimal 6 karakter">
+      <button type="submit" class="cloud-auth-btn" id="cloudAuthSubmitBtn">Masuk</button>
+    </form>
+    <div class="cloud-auth-switch">
+      <span id="cloudAuthSwitchText">Belum punya akun?</span>
+      <a id="cloudAuthSwitchLink">Daftar di sini</a>
+    </div>
+  </div>
+</div>
+<div id="cloudSyncBadge" style="display:none;"><span class="dot"></span><span id="cloudSyncBadgeText">Tersinkron</span></div>
+
+<!-- SDK Supabase, dimuat sebelum cloud-sync.js.
+     CATATAN: script.js SENGAJA TIDAK dimuat statis di sini lagi --
+     cloud-sync.js yang akan menyisipkan <script src="script.js">
+     secara dinamis, tapi HANYA setelah user login & data dari cloud
+     selesai ditarik ke localStorage. Ini mencegah init() di script.js
+     sempat jalan duluan dengan data localStorage lama/kosong sebelum
+     data cloud yang benar tersedia. -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="cloud-sync.js"></script>
 </body>
 </html>
