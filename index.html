@@ -7568,32 +7568,6 @@ body.is-scrolling *{
   </div>
 </div>
 
-<!-- ===== MODAL KONFIRMASI RESET DATABASE ONLINE =====
-     Dipicu dari tombol "Reset Database Online" di Pengaturan
-     Aplikasi (Zona Berbahaya). Meminta user mengetik "RESET" persis
-     supaya tombol konfirmasi aktif -- mencegah terhapus tak sengaja
-     karena tindakan ini menghapus data cloud + lokal sekaligus dan
-     tidak bisa dibatalkan. -->
-<div class="modal-overlay confirm-modal" id="resetDbModalOverlay">
-  <div class="modal">
-    <div class="confirm-icon" style="color:var(--wine);">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4M12 17h.01"/></svg>
-    </div>
-    <h3 style="margin-bottom:6px;">Reset database online?</h3>
-    <p style="color:var(--ink-soft);font-size:13.5px;margin-bottom:14px;">
-      Semua data (transaksi, target, dompet, tagihan, hutang, sumber pendapatan, dsb) akan <b>dihapus permanen</b> dari cloud dan perangkat ini, lalu ikut hilang di semua perangkat lain yang login dengan akun ini. Tindakan ini tidak bisa dibatalkan.
-    </p>
-    <div class="form-row" style="text-align:left;margin-bottom:16px;">
-      <label for="resetDbConfirmInput" style="font-size:12px;font-weight:700;color:var(--ink-soft);">Ketik <b>RESET</b> untuk melanjutkan</label>
-      <input type="text" id="resetDbConfirmInput" autocomplete="off" placeholder="RESET" style="text-transform:uppercase;">
-    </div>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" id="btnCancelResetDb" type="button">Batal</button>
-      <button class="btn btn-danger" id="btnConfirmResetDb" type="button" disabled>Ya, Hapus Semua Data</button>
-    </div>
-  </div>
-</div>
-
 <!-- ===== POPUP TAGIHAN & HUTANG =====
      Sengaja diletakkan di sini (level teratas <body>, di luar <header
      class="banner">), bukan lagi bersarang di dalam tombol pemicunya.

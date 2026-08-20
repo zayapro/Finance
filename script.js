@@ -7429,46 +7429,49 @@ appSettingsModal.addEventListener('click', (e) => { if (e.target === appSettings
    ZONA BERBAHAYA — Reset Database Online (Pengaturan Aplikasi)
    Menghapus semua data user di tabel kv_store (Supabase) +
    localStorage perangkat ini lewat window.cloudResetDatabase()
-   yang disediakan cloud-sync.js. Butuh mengetik "RESET" persis
-   di modal konfirmasi sebelum tombol hapus aktif, karena
-   tindakan ini permanen dan memengaruhi semua perangkat yang
-   login dengan akun yang sama.
-========================================================== */
-const resetDbModal = document.getElementById('resetDbModalOverlay');
-const resetDbConfirmInput = document.getElementById('resetDbConfirmInput');
-const btnConfirmResetDb = document.getElementById('btnConfirmResetDb');
+   yang disediakan cloud-sync.js.
 
-document.getElementById('btnResetCloudDb').addEventListener('click', () => {
-  resetDbConfirmInput.value = '';
-  btnConfirmResetDb.disabled = true;
-  btnConfirmResetDb.textContent = 'Ya, Hapus Semua Data';
-  openModal(resetDbModal);
-  setTimeout(() => resetDbConfirmInput.focus(), 50);
-});
-resetDbConfirmInput.addEventListener('input', () => {
-  btnConfirmResetDb.disabled = resetDbConfirmInput.value.trim().toUpperCase() !== 'RESET';
-});
-document.getElementById('btnCancelResetDb').addEventListener('click', () => closeModal(resetDbModal));
-resetDbModal.addEventListener('click', (e) => { if (e.target === resetDbModal) closeModal(resetDbModal); });
-
-btnConfirmResetDb.addEventListener('click', async () => {
-  if (resetDbConfirmInput.value.trim().toUpperCase() !== 'RESET') return;
+   Konfirmasi SENGAJA pakai confirm()/prompt() bawaan browser
+   (bukan modal custom) supaya tetap bisa dipakai dengan benar di
+   HP -- modal custom dengan input teks berisiko ketutup keyboard
+   virtual di layar kecil sehingga tombol konfirmasinya tidak
+   kelihatan/tidak bisa ditekan. Dialog bawaan browser selalu
+   digambar di atas keyboard oleh OS, jadi jauh lebih aman lintas
+   perangkat untuk aksi sepenting ini. */
+document.getElementById('btnResetCloudDb').addEventListener('click', async () => {
   if (typeof window.cloudResetDatabase !== 'function') {
     showToast('Fitur sinkron cloud tidak tersedia di halaman ini.', 'err');
     return;
   }
-  btnConfirmResetDb.disabled = true;
-  btnConfirmResetDb.textContent = 'Menghapus...';
+
+  const step1 = confirm(
+    'PERINGATAN\n\nIni akan menghapus SEMUA data (transaksi, target, dompet, tagihan, hutang, sumber pendapatan, dsb) secara PERMANEN dari database cloud dan perangkat ini. Data yang sama juga akan hilang di semua perangkat lain yang login dengan akun ini.\n\nLanjutkan?'
+  );
+  if (!step1) return;
+
+  const typed = prompt('Ketik RESET lalu tekan OK untuk konfirmasi terakhir:');
+  if (typed === null) { showToast('Reset dibatalkan.', 'err'); return; }
+  if (typed.trim().toUpperCase() !== 'RESET') {
+    showToast('Ketikan tidak cocok, reset dibatalkan.', 'err');
+    return;
+  }
+
+  const btn = document.getElementById('btnResetCloudDb');
+  const originalLabel = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Menghapus...';
+  showToast('Menghapus database, mohon tunggu...');
+
   const result = await window.cloudResetDatabase();
   if (result && result.ok) {
     showToast('Database berhasil direset. Memuat ulang halaman...');
     setTimeout(() => location.reload(), 900);
   } else {
-    btnConfirmResetDb.disabled = false;
-    btnConfirmResetDb.textContent = 'Ya, Hapus Semua Data';
+    btn.disabled = false;
+    btn.textContent = originalLabel;
     const msg = result && result.reason === 'not_logged_in'
       ? 'Kamu belum login ke akun cloud.'
-      : 'Gagal reset database. Coba lagi.';
+      : 'Gagal reset database: ' + ((result && result.error && result.error.message) || 'Coba lagi atau cek koneksi internet.');
     showToast(msg, 'err');
   }
 });

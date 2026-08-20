@@ -35,6 +35,16 @@
     return CLOUD_EXCLUDE_PREFIX.some(function (p) { return key.indexOf(p) === 0; });
   }
 
+  // Penanda "reset database sedang diproses" -- dipakai supaya
+  // pembersihan localStorage BENAR-BENAR dilakukan di awal proses
+  // load halaman yang baru (lihat boot() di bawah), bukan di halaman
+  // lama yang mungkin masih ada kode/interval berjalan di baliknya
+  // yang berisiko menulis ulang data lama ke localStorage lalu
+  // ke-upload lagi ke cloud sebelum reload sempat terjadi. Key ini
+  // murni penanda lokal, tidak pernah lewat cloudStorage/di-push ke
+  // cloud sama sekali.
+  const RESET_PENDING_KEY = '__zayapro_cloud_reset_pending__';
+
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   window._sb = sb; // tersedia untuk debug di console kalau perlu
 
@@ -219,6 +229,26 @@
     const { data } = await sb.auth.getSession();
     if (data && data.session && data.session.user) {
       currentUser = data.session.user;
+
+      // Kalau halaman ini dimuat ulang SETELAH reset database
+      // (lihat cloudResetDatabase di bawah), bersihkan cloud + local
+      // SEKALI LAGI di sini -- di awal proses load halaman yang baru,
+      // sebelum apa pun lain jalan (termasuk sebelum script.js
+      // disisipkan). Ini jaring pengaman terhadap race condition:
+      // kalau di halaman SEBELUMNYA sempat ada kode lama yang
+      // menulis ulang data lama ke localStorage & meng-upload-nya
+      // lagi ke cloud tepat sebelum reload terjadi, pengulangan di
+      // sini memastikan sisa data itu tetap ikut terhapus bersih.
+      if (localStorage.getItem(RESET_PENDING_KEY) === '1') {
+        try {
+          await sb.from('kv_store').delete().eq('user_id', currentUser.id);
+        } catch (e) { console.error('Reset database (pembersihan ulang) gagal:', e); }
+        Object.keys(localStorage).forEach(function (key) {
+          if (key !== RESET_PENDING_KEY && !isCloudExcluded(key)) localStorage.removeItem(key);
+        });
+        localStorage.removeItem(RESET_PENDING_KEY);
+      }
+
       overlay.classList.add('hidden');
       await pullAllFromCloud();
       startAppOnce();
@@ -249,7 +279,11 @@
      Dipanggil dari tombol "Reset Database Online" di modal
      Pengaturan Aplikasi (lihat script.js) -- diekspos secara global.
      Mengembalikan { ok: true } kalau berhasil, atau
-     { ok: false, reason: 'not_logged_in' | 'error', error } kalau gagal. */
+     { ok: false, reason: 'not_logged_in' | 'error', error } kalau gagal.
+
+     CATATAN: penanda RESET_PENDING_KEY sengaja dipasang supaya
+     boot() di atas mengulang pembersihan ini lagi begitu halaman
+     di-reload -- lihat komentar di boot() untuk alasannya. */
   window.cloudResetDatabase = async function () {
     if (!currentUser) return { ok: false, reason: 'not_logged_in' };
 
@@ -264,11 +298,9 @@
     // lama tidak sempat ditulis ulang ke cloud setelah dihapus.
     Object.keys(pushTimers).forEach(function (k) { clearTimeout(pushTimers[k]); });
 
-    // Bersihkan localStorage perangkat ini juga, kecuali key yang
-    // sengaja tidak ikut disinkron (API key Gemini, riwayat chat AI,
-    // cache berita) -- itu tetap murni preferensi perangkat ini.
+    localStorage.setItem(RESET_PENDING_KEY, '1');
     Object.keys(localStorage).forEach(function (key) {
-      if (!isCloudExcluded(key)) localStorage.removeItem(key);
+      if (key !== RESET_PENDING_KEY && !isCloudExcluded(key)) localStorage.removeItem(key);
     });
 
     return { ok: true };
