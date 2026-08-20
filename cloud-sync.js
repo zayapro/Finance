@@ -51,6 +51,12 @@
   let currentUser = null;
   const pushTimers = {};
   let appStarted = false;
+  // Channel Supabase Realtime (Broadcast) yang dipakai supaya sinyal
+  // "Reset Database Online" sampai LIVE ke semua perangkat/tab lain
+  // yang sedang login dengan akun yang sama -- tanpa mereka perlu
+  // reload manual dulu. Dibuat begitu user diketahui login (lihat
+  // subscribeResetChannel), dan dilepas saat logout.
+  let resetChannel = null;
   // Dinyalakan di awal cloudResetDatabase() untuk memblokir SEMUA
   // push baru ke cloud (lihat cloudStorage.setItem di bawah). Ini
   // menutup celah race condition: tanpa flag ini, sebuah
@@ -122,7 +128,12 @@
   async function pullAllFromCloud() {
     const { data, error } = await sb.from('kv_store').select('key,value').eq('user_id', currentUser.id);
     if (error) { console.error('Gagal menarik data cloud:', error); return false; }
+
+    // Kumpulkan dulu key mana saja yang ADA di cloud sekarang, sambil
+    // menulis nilainya ke localStorage.
+    const cloudKeys = new Set();
     data.forEach(function (row) {
+      cloudKeys.add(row.key);
       // Nilai object/array dari jsonb perlu di-stringify lagi supaya
       // format di localStorage sama seperti saat aplikasi menulisnya
       // sendiri (lihat pembacaan JSON.parse(localStorage.getItem(...))
@@ -133,7 +144,70 @@
       const strVal = (typeof v === 'string') ? v : JSON.stringify(v);
       localStorage.setItem(row.key, strVal);
     });
+
+    // PENTING (perbaikan bug): hapus juga key lokal yang ikut
+    // disinkron ke cloud (bukan key yang sengaja dikecualikan) tapi
+    // SUDAH TIDAK ADA lagi di cloud. Tanpa langkah ini, pull cuma
+    // menambah/menimpa data baru dan membiarkan data lama nyangkut
+    // di localStorage kalau data itu sudah dihapus lewat perangkat
+    // lain -- termasuk lewat "Reset Database Online". Akibatnya
+    // reset/hapus yang dilakukan di satu perangkat TIDAK ikut
+    // kepakai di perangkat lain begitu perangkat lain itu dibuka/
+    // di-reload, karena data lama yang masih nyangkut di
+    // localStorage-nya tidak pernah dibersihkan, dan malah bisa
+    // ke-push balik ke cloud saat aplikasi jalan lagi (seolah reset
+    // tidak pernah terjadi). Dengan ini, cloud jadi sumber kebenaran
+    // setiap kali data ditarik (login / reload halaman).
+    Object.keys(localStorage).forEach(function (key) {
+      if (key === RESET_PENDING_KEY) return; // penanda lokal murni, bukan data app
+      if (isCloudExcluded(key)) return; // memang sengaja device-only
+      if (!cloudKeys.has(key)) localStorage.removeItem(key);
+    });
+
     return true;
+  }
+
+  /* ---------- sinyal reset live antar perangkat (Realtime Broadcast) ----------
+     Broadcast TIDAK butuh publication/replikasi tabel, cukup satu topik
+     channel per user. Setiap perangkat yang login akun yang sama
+     "join" topik ini; begitu salah satu perangkat menekan tombol
+     Reset Database Online, semua perangkat lain yang sedang online di
+     topik itu langsung menerima event 'db_reset' dan ikut membersihkan
+     dirinya sendiri saat itu juga (tidak perlu tunggu reload manual). */
+  function resetTopicFor(userId) { return 'db-reset-' + userId; }
+
+  function subscribeResetChannel(userId) {
+    if (resetChannel) return; // sudah ter-subscribe untuk sesi ini
+    resetChannel = sb.channel(resetTopicFor(userId), { config: { broadcast: { self: false } } });
+    resetChannel.on('broadcast', { event: 'db_reset' }, function () {
+      handleRemoteReset();
+    });
+    resetChannel.subscribe();
+  }
+
+  function unsubscribeResetChannel() {
+    if (resetChannel) {
+      sb.removeChannel(resetChannel);
+      resetChannel = null;
+    }
+  }
+
+  // Dipanggil di perangkat LAIN (bukan yang menekan tombol reset)
+  // begitu broadcast 'db_reset' diterima. Bersihkan localStorage
+  // device ini juga (data cloud-nya sudah pasti kosong, karena
+  // broadcast baru dikirim SETELAH delete ke kv_store sukses), lalu
+  // reload supaya aplikasi mulai lagi dari kondisi kosong -- sama
+  // persis seperti yang terjadi di perangkat yang menekan tombolnya.
+  function handleRemoteReset() {
+    resetting = true;
+    Object.keys(pushTimers).forEach(function (k) { clearTimeout(pushTimers[k]); });
+    Object.keys(localStorage).forEach(function (key) {
+      if (key === RESET_PENDING_KEY) return;
+      if (isCloudExcluded(key)) return;
+      localStorage.removeItem(key);
+    });
+    alert('Database telah direset dari perangkat lain. Halaman akan dimuat ulang.');
+    location.reload();
   }
 
   /* ---------- overlay login/daftar ---------- */
@@ -219,6 +293,7 @@
 
   async function onLoggedIn(user) {
     currentUser = user;
+    subscribeResetChannel(user.id);
     showMsg('Menarik data dari cloud...', 'ok');
     await pullAllFromCloud();
     overlay.classList.add('hidden');
@@ -247,6 +322,7 @@
     const { data } = await sb.auth.getSession();
     if (data && data.session && data.session.user) {
       currentUser = data.session.user;
+      subscribeResetChannel(currentUser.id);
 
       // Kalau halaman ini dimuat ulang SETELAH reset database
       // (lihat cloudResetDatabase di bawah), bersihkan cloud + local
@@ -278,6 +354,7 @@
   sb.auth.onAuthStateChange(function (event, session) {
     if (event === 'SIGNED_OUT') {
       currentUser = null;
+      unsubscribeResetChannel();
       location.reload();
     }
   });
@@ -325,10 +402,31 @@
       return { ok: false, reason: 'error', error: error };
     }
 
+    // Beri tahu SEMUA perangkat/tab lain yang sedang online dengan
+    // akun yang sama, LIVE, supaya mereka ikut membersihkan diri
+    // seketika -- dikirim SETELAH delete di atas sukses, supaya kalau
+    // ada perangkat lain yang langsung pull begitu menerima sinyal
+    // ini, cloud memang sudah benar-benar kosong. Best-effort: kalau
+    // channel belum siap/gagal kirim, perangkat lain tetap akan ikut
+    // bersih dengan sendirinya saat mereka reload/pull berikutnya
+    // (lihat perbaikan di pullAllFromCloud di atas).
+    try {
+      if (resetChannel) resetChannel.send({ type: 'broadcast', event: 'db_reset', payload: {} });
+    } catch (e) { console.error('Gagal mengirim sinyal reset live:', e); }
+
     localStorage.setItem(RESET_PENDING_KEY, '1');
     Object.keys(localStorage).forEach(function (key) {
       if (key !== RESET_PENDING_KEY && !isCloudExcluded(key)) localStorage.removeItem(key);
     });
+
+    // Catatan: `resetting` sengaja DIBIARKAN true sampai halaman
+    // di-reload oleh pemanggil (lihat btnResetCloudDb di script.js,
+    // yang selalu me-reload halaman sesaat setelah ok:true) --
+    // reload otomatis membuat ulang seluruh state modul ini
+    // (termasuk `resetting` kembali ke false). Tetap dikembalikan ke
+    // false di sini juga sebagai jaga-jaga kalau suatu saat pemanggil
+    // berubah dan TIDAK reload halaman setelah reset berhasil.
+    resetting = false;
 
     return { ok: true };
   };
