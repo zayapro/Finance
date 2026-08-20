@@ -219,8 +219,13 @@
     // file selesai dieksekusi -- jadi kita baru <script src="script.js">
     // ke DOM SEKARANG (setelah pasti login & data cloud sudah ditarik),
     // supaya init() tidak jalan lebih dulu dengan data localStorage lama.
+    // Query string ?v=Date.now() sengaja dipasang supaya browser TIDAK
+    // PERNAH memakai versi script.js yang ke-cache -- selalu ambil file
+    // paling baru dari server setiap kali halaman dibuka/reload, supaya
+    // update kode (termasuk fitur reset database ini) langsung berlaku
+    // tanpa perlu hard-refresh manual.
     const s = document.createElement('script');
-    s.src = 'script.js';
+    s.src = 'script.js?v=' + Date.now();
     document.body.appendChild(s);
   }
 
