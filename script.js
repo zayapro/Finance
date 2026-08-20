@@ -2772,11 +2772,28 @@ function setupFlowTierChart(canvas, series) {
       <div class="ftc-tt-row"><span class="lbl">Keluar</span><span class="val out">-${fmtRupiah(s.out)}</span></div>
     `;
     tooltip.style.opacity = '1';
-    const ttWidth = 138;
+    // FIX popup terpotong: sebelumnya lebar tooltip ditebak tetap
+    // (138px) untuk hitung posisi, padahal untuk nominal besar
+    // (mis. "Rp 350.001.000") lebar ASLI tooltip bisa lebih dari
+    // itu — sehingga ia nongol melewati tepi kartu tier yang sempit
+    // dan bagian yang lewat batas ikut kepotong oleh overflow:hidden
+    // kartu (lihat .flow-tier-card). Sekarang lebar & tinggi diukur
+    // LANGSUNG dari elemen setelah kontennya dipasang (offsetWidth/
+    // offsetHeight), dan CSS .ftc-chart-tooltip juga dibatasi
+    // max-width:100% dari area grafik supaya baris Masuk/Keluar turun
+    // ke bawah alih-alih meluber kalau memang tidak muat di kartu
+    // yang sangat sempit — jadi penempatan & ukurannya selalu
+    // menyesuaikan kartu di semua ukuran layar, tidak ada yang
+    // tertutup/terpotong lagi.
+    const ttWidth = tooltip.offsetWidth;
+    const ttHeight = tooltip.offsetHeight;
     let left = x + 12;
     if (left + ttWidth > w) left = x - ttWidth - 12;
-    tooltip.style.left = Math.max(2, left) + 'px';
-    tooltip.style.top = Math.max(0, y - 58) + 'px';
+    left = Math.min(Math.max(2, left), Math.max(2, w - ttWidth - 2));
+    let top = y - 58;
+    top = Math.min(Math.max(0, top), Math.max(0, h - ttHeight));
+    tooltip.style.left = left + 'px';
+    tooltip.style.top = top + 'px';
   }
 
   function pointerMove(clientX) {

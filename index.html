@@ -1490,14 +1490,28 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 .ftc-chart-tooltip{
   position:absolute;pointer-events:none;opacity:0;z-index:6;
   background:var(--forest-deep);color:#fff;padding:8px 10px;border-radius:10px;
-  font-size:11px;white-space:nowrap;box-shadow:0 10px 24px -6px rgba(11,18,32,0.5);
+  font-size:11px;box-shadow:0 10px 24px -6px rgba(11,18,32,0.5);
   transition:opacity .12s ease;transform:translateY(2px);
+  /* FIX popup "Masuk/Keluar" kepotong/nutup elemen lain di kartu
+     sempit: dulu box ini white-space:nowrap TANPA batas lebar, jadi
+     untuk nominal besar ia melebar bebas melewati tepi kartu tier
+     dan bagian yang lewat batas kepotong oleh overflow:hidden induknya
+     (persis kasus di screenshot). Sekarang lebarnya dikunci maksimum
+     seukuran area grafik (wadah relatif terdekatnya, .ftc-chart-wrap)
+     lewat max-width:100% — jadi di perangkat mana pun tooltip TIDAK
+     PERNAH lebih lebar dari kartu tempat ia muncul. */
+  max-width:calc(100% - 4px);
+  box-sizing:border-box;
 }
 .ftc-chart-wrap.active .ftc-chart-tooltip{opacity:1;transform:translateY(0);}
-.ftc-tt-date{font-weight:800;font-size:10.5px;margin-bottom:4px;color:#fff;}
-.ftc-tt-row{display:flex;align-items:center;justify-content:space-between;gap:14px;font-weight:600;line-height:1.55;}
-.ftc-tt-row .lbl{color:rgba(255,255,255,0.6);font-size:10px;}
-.ftc-tt-row .val{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;}
+.ftc-tt-date{font-weight:800;font-size:10.5px;margin-bottom:4px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+/* flex-wrap:wrap = kalau label+nilai memang tidak muat sebaris di kartu
+   yang sangat sempit, nilai turun ke baris berikutnya (bukan dipaksa
+   sebaris lalu kepotong horizontal). lbl & val sendiri tetap nowrap
+   (kata/angka pendek, tidak perlu — dan tidak elok — dipenggal). */
+.ftc-tt-row{display:flex;align-items:baseline;flex-wrap:wrap;justify-content:space-between;column-gap:14px;row-gap:1px;font-weight:600;line-height:1.55;}
+.ftc-tt-row .lbl{color:rgba(255,255,255,0.6);font-size:10px;white-space:nowrap;}
+.ftc-tt-row .val{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;white-space:nowrap;}
 .ftc-tt-row .val.in{color:#6EE7B7;}
 .ftc-tt-row .val.out{color:#FDA4AF;}
 
@@ -1561,6 +1575,8 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   .flow-tier-card{padding:12px 12px 10px;}
   .ftc-chart-wrap{height:58px;margin:6px -2px 5px;}
   .ftc-legend{flex-wrap:wrap;row-gap:6px;}
+  .ftc-tt-row{column-gap:8px;}
+  .ftc-tt-row .val{font-size:9.5px;}
 }
 
 /* ---- Perkecil ISI KONTEN kartu banner "Uang Masuk & Keluar" di HP ----
@@ -1626,6 +1642,16 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   .ftc-chip{font-size:9.5px;}
   .ftc-chip .dot{width:6px;height:6px;}
   .ftc-btn{font-size:10px;padding:6px 12px;}
+
+  /* Popup Masuk/Keluar pada grafik: kartu tier jadi sempit di HP
+     (dua kartu berdampingan), jadi teks & padding popup diperkecil
+     supaya nominal besar tetap muat rapi sebaris tanpa perlu turun
+     ke baris berikutnya atau kepotong tepi kartu. */
+  .ftc-chart-tooltip{padding:6px 8px;border-radius:8px;}
+  .ftc-tt-date{font-size:9.5px;margin-bottom:3px;}
+  .ftc-tt-row{column-gap:10px;}
+  .ftc-tt-row .lbl{font-size:9px;}
+  .ftc-tt-row .val{font-size:10px;}
 
   /* Tombol "Ciutkan" di pojok kartu */
   .fc-collapse-btn{padding:8px;right:14px;bottom:14px;}
