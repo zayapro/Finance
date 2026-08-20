@@ -8454,26 +8454,46 @@ function initFooter() {
   initCloudLogoutButton();
 }
 
-/* Tombol "Keluar" mengambang -- dibuat lewat JS (bukan ditaruh manual
-   di index.html) supaya tidak mengganggu markup footer yang sudah ada.
-   Memanggil window.cloudSignOut() dari cloud-sync.js, yang akan
-   sign-out dari Supabase lalu me-reload halaman ke layar login. */
+/* Tombol "Keluar" -- di desktop/tablet dibuat mengambang lewat JS
+   (bukan ditaruh manual di index.html) supaya tidak mengganggu markup
+   footer yang sudah ada. Di HP, tombol mengambang ini disembunyikan
+   (lihat CSS .cloud-logout-btn-desktop) dan diganti dengan ikon
+   #miniLogoutBtn yang sudah ada di dalam mini-topbar (#miniTopbar),
+   supaya tidak menumpuk dengan logo/nama app yang sama-sama nongkrong
+   di pojok kiri atas pada layar kecil. Keduanya memanggil
+   window.cloudSignOut() dari cloud-sync.js, yang akan sign-out dari
+   Supabase lalu me-reload halaman ke layar login. */
 function initCloudLogoutButton() {
-  if (document.getElementById('cloudLogoutBtn')) return;
   if (typeof window.cloudSignOut !== 'function') return;
-  const btn = document.createElement('button');
-  btn.id = 'cloudLogoutBtn';
-  btn.type = 'button';
-  btn.title = 'Keluar dari akun';
-  btn.setAttribute('aria-label', 'Keluar dari akun');
-  btn.style.cssText = 'position:fixed;top:10px;left:10px;z-index:9998;background:rgba(0,0,0,.35);color:#fff;border:none;border-radius:20px;padding:7px 12px;font-size:12px;display:flex;align-items:center;gap:6px;cursor:pointer;opacity:.85;';
-  btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg><span>Keluar</span>';
-  btn.addEventListener('click', () => {
+
+  const confirmAndSignOut = () => {
     if (confirm('Keluar dari akun ini?')) {
       window.cloudSignOut();
     }
-  });
-  document.body.appendChild(btn);
+  };
+
+  if (!document.getElementById('cloudLogoutBtn')) {
+    const btn = document.createElement('button');
+    btn.id = 'cloudLogoutBtn';
+    btn.type = 'button';
+    btn.className = 'cloud-logout-btn-desktop';
+    btn.title = 'Keluar dari akun';
+    btn.setAttribute('aria-label', 'Keluar dari akun');
+    btn.style.cssText = 'position:fixed;top:10px;left:10px;z-index:9998;background:rgba(0,0,0,.35);color:#fff;border:none;border-radius:20px;padding:7px 12px;font-size:12px;display:flex;align-items:center;gap:6px;cursor:pointer;opacity:.85;';
+    btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg><span>Keluar</span>';
+    btn.addEventListener('click', confirmAndSignOut);
+    document.body.appendChild(btn);
+  }
+
+  // Versi HP: ikon yang sudah ada di mini-topbar, cukup ditampilkan
+  // (default disembunyikan lewat inline style di index.html) & diberi
+  // fungsi klik yang sama dengan versi desktop.
+  const miniBtn = document.getElementById('miniLogoutBtn');
+  if (miniBtn && !miniBtn._logoutBound) {
+    miniBtn._logoutBound = true;
+    miniBtn.style.display = '';
+    miniBtn.addEventListener('click', confirmAndSignOut);
+  }
 }
 
 /* ==========================================================

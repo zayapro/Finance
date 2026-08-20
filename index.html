@@ -5246,6 +5246,13 @@ body.is-scrolling *{
      sebagai padding-top halaman supaya konten di bawahnya tidak
      ketutup elemen fixed ini. */
 .mini-topbar{display:none;}
+/* Tombol "Keluar" mengambang (dibuat lewat JS, lihat initCloudLogoutButton
+   di script.js) hanya untuk desktop/tablet -- di HP dipindah ke dalam
+   mini-topbar (#miniLogoutBtn) supaya tidak menutupi logo/nama app yang
+   posisinya sama-sama di pojok kiri atas layar. */
+@media (max-width:600px){
+  .cloud-logout-btn-desktop{display:none !important;}
+}
 @media (max-width:600px){
   .mini-topbar{
     display:flex;
@@ -5779,6 +5786,9 @@ body.is-scrolling *{
       </div>
       <button class="notif-btn" id="miniAddBtn" type="button" title="Tambah Transaksi" aria-label="Tambah transaksi">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>
+      </button>
+      <button class="notif-btn" id="miniLogoutBtn" type="button" title="Keluar dari akun" aria-label="Keluar dari akun" style="display:none;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
       </button>
     </div>
   </div>
