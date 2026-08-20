@@ -51,6 +51,14 @@
   let currentUser = null;
   const pushTimers = {};
   let appStarted = false;
+  // Dinyalakan di awal cloudResetDatabase() untuk memblokir SEMUA
+  // push baru ke cloud (lihat cloudStorage.setItem di bawah). Ini
+  // menutup celah race condition: tanpa flag ini, sebuah
+  // queuePush() yang sudah terlanjur ter-debounce (700ms) sebelum
+  // tombol reset ditekan bisa saja "menembak" upsert tepat saat
+  // atau setelah proses delete reset berjalan, sehingga data lama
+  // muncul lagi di cloud walau baru saja dihapus.
+  let resetting = false;
 
   /* ---------- wrapper localStorage-compatible ---------- */
   const cloudStorage = {
@@ -66,7 +74,12 @@
     },
     setItem: function (key, value) {
       localStorage.setItem(key, value);
-      if (currentUser && !isCloudExcluded(key)) {
+      // `resetting` sengaja dicek di sini (bukan cuma di
+      // cloudResetDatabase) supaya SETIAP jalur yang bisa memicu
+      // push -- termasuk kode lain yang mungkin menulis ke
+      // cloudStorage tepat di sela-sela proses reset -- otomatis
+      // ikut diblokir, bukan cuma timer yang sudah terlanjur ada.
+      if (currentUser && !isCloudExcluded(key) && !resetting) {
         queuePush(key, value);
       }
     },
@@ -292,16 +305,25 @@
   window.cloudResetDatabase = async function () {
     if (!currentUser) return { ok: false, reason: 'not_logged_in' };
 
+    // PENTING: matikan kemampuan push & batalkan semua timer
+    // tertunda SEBELUM mengirim request delete (bukan sesudahnya).
+    // Kedua baris ini sengaja sinkron & jadi hal PERTAMA yang
+    // dijalankan, supaya tidak ada celah waktu sedikit pun bagi
+    // queuePush() manapun -- yang mungkin sudah terlanjur
+    // ter-debounce dari edit data sesaat sebelum tombol reset
+    // ditekan -- untuk sempat menembak upsert ke kv_store setelah
+    // baris ini dieksekusi. Ini yang sebelumnya menyebabkan data
+    // lama bisa muncul lagi setelah reset.
+    resetting = true;
+    Object.keys(pushTimers).forEach(function (k) { clearTimeout(pushTimers[k]); });
+
     const { error } = await sb.from('kv_store').delete().eq('user_id', currentUser.id);
     if (error) {
       console.error('Reset database (cloud) gagal:', error);
       setSyncBadge('err');
+      resetting = false; // reset gagal -> izinkan sinkron normal lagi
       return { ok: false, reason: 'error', error: error };
     }
-
-    // Batalkan semua push yang masih tertunda (debounced) supaya data
-    // lama tidak sempat ditulis ulang ke cloud setelah dihapus.
-    Object.keys(pushTimers).forEach(function (k) { clearTimeout(pushTimers[k]); });
 
     localStorage.setItem(RESET_PENDING_KEY, '1');
     Object.keys(localStorage).forEach(function (key) {
