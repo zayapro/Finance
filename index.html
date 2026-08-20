@@ -773,6 +773,12 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   box-shadow:0 14px 14px -14px rgba(15,23,42,0.28), 0 2px 0 rgba(37,99,235,0.05) inset;
   clip-path:inset(0 0 -40px 0 round 0 0 20px 20px);
   transition:box-shadow .18s ease, transform .35s cubic-bezier(.22,1,.36,1), opacity .3s ease, background .18s ease;
+  /* FIX "bayangan kotak" saat tab ini diketuk di HP: browser mobile
+     (terutama Safari/Chrome Android) menambahkan highlight kotak abu-
+     abu/biru bawaan di atas elemen yang diklik kalau tidak dimatikan
+     secara eksplisit. touch-action:manipulation juga disertakan supaya
+     tidak ada jeda 300ms & tap terasa lebih responsif. */
+  touch-action:manipulation;-webkit-tap-highlight-color:transparent;
 }
 /* ---- Baris konten (ikon+label+tombol) dipisah dari .fc-peek-handle
    supaya bisa dibatasi lebar maksimalnya sendiri. .fc-peek-handle boleh
@@ -859,6 +865,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   padding:9px 15px;border-radius:999px;
   border:1.4px solid var(--fc-accent-soft, rgba(13,148,136,0.35));
   transition:background .18s ease, box-shadow .18s ease, transform .18s ease;
+  touch-action:manipulation;-webkit-tap-highlight-color:transparent;
 }
 .fc-peek-handle:hover .fc-peek-handle-btn{
   background:color-mix(in srgb, var(--fc-accent, #0D9488) 14%, transparent);
@@ -1526,14 +1533,22 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   .flow-deal-timer{align-items:flex-start;}
   .flow-deal-top{flex-direction:column;}
 }
-/* Di bawah ~540px, dua kartu tier (Hari Ini & Bulan Ini) berdampingan
-   tidak lagi cukup lebar (butuh minimal ±408px) sehingga sebelumnya
-   harus discroll ke samping untuk melihat kartu kedua — kurang rapi
-   di HP. Di breakpoint ini kartu tier ditumpuk vertikal, masing-masing
-   selebar penuh, supaya keduanya langsung terlihat tanpa scroll. */
+/* Di bawah ~540px, dua kartu tier (Hari Ini & Bulan Ini) diatur
+   berjajar KE SAMPING dengan lebar yang seimbang (flex:1 1 0),
+   supaya keduanya langsung terlihat tanpa scroll dan tampak rapi
+   di layar HP. Padding & elemen dalam diperkecil agar muat dengan
+   proporsional. */
 @media (max-width:540px){
-  .flow-deal-tiers{flex-direction:column;overflow-x:visible;}
-  .flow-tier-card{min-width:0;width:100%;}
+  .flow-deal-tiers{flex-direction:row;gap:10px;overflow-x:visible;scroll-snap-type:none;}
+  .flow-tier-card{flex:1 1 0;min-width:0;width:auto;padding:12px 10px 11px;}
+  .ftc-period{font-size:11.5px;}
+  .ftc-count-pill{font-size:8.5px;padding:2px 6px;}
+  .ftc-chart-wrap{height:52px;margin:5px -1px 4px;}
+  .ftc-legend{gap:6px;margin-bottom:8px;flex-wrap:wrap;row-gap:4px;}
+  .ftc-chip{font-size:9px;}
+  .ftc-chip .dot{width:5px;height:5px;}
+  .ftc-chip b{font-size:9.5px;}
+  .ftc-btn{font-size:9.5px;padding:5px 10px;margin-top:6px;}
 }
 @media (max-width:480px){
   .flow-tier-card{padding:13px 13px 11px;}
