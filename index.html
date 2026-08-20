@@ -4894,16 +4894,25 @@ tbody tr.date-group-row:first-child td{border-top:none;}
 .ws-reset-row{display:flex;justify-content:flex-end;margin-top:14px;}
 
 /* ============ BACK TO TOP ============ */
+/* CATATAN PERBAIKAN: sebelumnya background tombol ini persis sama
+   putih (var(--card)) dengan warna kartu-kartu di halaman, jadi saat
+   tombol melayang tepat di atas sudut kartu putih/pucat, tombol jadi
+   nyaris "menyatu" dengan kartu di baliknya — cuma garis bayangan
+   tipis yang membedakan, kelihatan seperti glitch/sambungan warna di
+   semua ukuran layar (mobile/tablet/desktop). Diperbaiki dengan
+   menambah border tegas + shadow lebih kuat berlapis supaya tombol
+   SELALU terlihat jelas melayang di atas konten apa pun warnanya. */
 .back-to-top{
   position:fixed;right:22px;bottom:calc(22px + env(safe-area-inset-bottom, 0px));z-index:var(--z-back-to-top);width:52px;height:52px;border-radius:50%;
-  border:none;background:var(--card);box-shadow:var(--shadow-md);color:var(--forest-glow);
+  border:1.5px solid var(--line);background:var(--card);color:var(--forest-glow);
+  box-shadow:0 10px 24px -6px rgba(15,23,42,0.22), 0 3px 10px rgba(15,23,42,0.14), 0 0 0 4px var(--paper);
   display:flex;align-items:center;justify-content:center;cursor:pointer;
   opacity:0;pointer-events:none;transform:translateY(14px) scale(.85);
-  transition:opacity .25s ease, transform .25s ease, background .2s ease;
+  transition:opacity .25s ease, transform .25s ease, background .2s ease, border-color .2s ease;
   touch-action:manipulation;-webkit-tap-highlight-color:transparent;
 }
 .back-to-top.show{opacity:1;pointer-events:auto;transform:translateY(0) scale(1);}
-.back-to-top:hover{background:var(--forest-deep);color:#fff;}
+.back-to-top:hover{background:var(--forest-deep);border-color:var(--forest-deep);color:#fff;}
 .back-to-top:hover .btt-arrow{animation:bttBounce .6s ease-in-out infinite;}
 .back-to-top:active{transform:scale(.92);}
 @keyframes bttBounce{0%,100%{transform:translateY(0);}50%{transform:translateY(-4px);}}
@@ -4912,7 +4921,7 @@ tbody tr.date-group-row:first-child td{border-top:none;}
 .btt-ring-fg{fill:none;stroke:var(--forest-glow);stroke-width:2.5;stroke-linecap:round;stroke-dasharray:138.2;stroke-dashoffset:138.2;transition:stroke-dashoffset .1s linear;}
 .back-to-top:hover .btt-ring-fg{stroke:#fff;}
 .btt-arrow{position:relative;z-index:1;}
-@media (max-width:640px){.back-to-top{right:14px;bottom:calc(18px + env(safe-area-inset-bottom, 0px));width:44px;height:44px;}}
+@media (max-width:640px){.back-to-top{right:14px;bottom:calc(18px + env(safe-area-inset-bottom, 0px));width:44px;height:44px;box-shadow:0 8px 20px -6px rgba(15,23,42,0.22), 0 2px 8px rgba(15,23,42,0.14), 0 0 0 3px var(--paper);}}
 .detail-add-btn{margin-left:auto;padding:9px 16px;font-size:13px;white-space:nowrap;}
 .detail-target-card{
   background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
