@@ -1533,14 +1533,20 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   .flow-deal-timer{align-items:flex-start;}
   .flow-deal-top{flex-direction:column;}
 }
-/* Di bawah ~540px, dua kartu tier (Hari Ini & Bulan Ini) berdampingan
-   tidak lagi cukup lebar (butuh minimal ±408px) sehingga sebelumnya
-   harus discroll ke samping untuk melihat kartu kedua — kurang rapi
-   di HP. Di breakpoint ini kartu tier ditumpuk vertikal, masing-masing
-   selebar penuh, supaya keduanya langsung terlihat tanpa scroll. */
+/* Di bawah ~540px, dua kartu tier (Hari Ini & Bulan Ini) TETAP
+   berdampingan (bukan ditumpuk vertikal) supaya kartu tidak jadi
+   tinggi/panjang ke bawah — sebelumnya kartu ditumpuk penuh selebar
+   layar yang bikin halaman jadi panjang. Sekarang tiap kartu tier
+   mengambil separuh lebar (flex:1 1 0, min-width:0 supaya boleh
+   menyusut), tanpa perlu scroll ke samping karena keduanya sama-sama
+   pas di lebar layar HP. Baris Masuk/Keluar juga ditumpuk vertikal
+   (bukan sejajar) karena di lebar sesempit ini nominal besar
+   (mis. "Rp 125.020.000") tidak muat sebaris dengan chip satunya. */
 @media (max-width:540px){
-  .flow-deal-tiers{flex-direction:column;overflow-x:visible;}
-  .flow-tier-card{min-width:0;width:100%;}
+  .flow-deal-tiers{flex-direction:row;overflow-x:visible;gap:9px;}
+  .flow-tier-card{min-width:0;width:auto;flex:1 1 0;}
+  .ftc-legend{flex-direction:column;align-items:flex-start;gap:5px;}
+  .ftc-chip{white-space:nowrap;}
 }
 @media (max-width:480px){
   .flow-tier-card{padding:13px 13px 11px;}
