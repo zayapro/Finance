@@ -5689,55 +5689,88 @@ body.is-scrolling *{
 /* ============ CLOUD SYNC — LOGIN/AUTH OVERLAY ============ */
 #cloudAuthOverlay{
   position:fixed; inset:0; z-index:99999;
-  background:var(--forest-deep, #0B1220);
+  background:
+    radial-gradient(760px 420px at 15% -10%, rgba(37,99,235,.35), transparent 60%),
+    radial-gradient(680px 460px at 105% 110%, rgba(16,185,129,.22), transparent 55%),
+    var(--forest-deep, #0B1220);
   display:flex; align-items:center; justify-content:center;
   padding:24px;
 }
 #cloudAuthOverlay.hidden{ display:none; }
 .cloud-auth-card{
   width:100%; max-width:380px;
-  background:var(--forest-mid, #16213A);
-  border:1px solid rgba(255,255,255,.08);
-  border-radius:20px;
-  padding:28px 24px;
+  background:linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.02)), var(--forest-mid, #16213A);
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:22px;
+  padding:32px 26px 26px;
   color:#fff;
+  box-shadow:0 24px 60px -20px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.03) inset;
+  text-align:center;
+  animation:cloudAuthPop .35s cubic-bezier(.2,.8,.25,1);
+}
+@keyframes cloudAuthPop{
+  from{ opacity:0; transform:translateY(10px) scale(.98); }
+  to{ opacity:1; transform:translateY(0) scale(1); }
+}
+.cloud-auth-logo{
+  width:52px; height:52px; margin:0 auto 16px;
+  border-radius:16px;
+  display:flex; align-items:center; justify-content:center;
+  background:linear-gradient(135deg, var(--forest-glow,#2563EB), #16A34A);
+  color:#fff;
+  box-shadow:0 10px 22px -8px rgba(37,99,235,.6);
 }
 .cloud-auth-card h2{
-  margin:0 0 6px; font-size:22px; font-weight:700;
+  margin:0 0 4px; font-size:21px; font-weight:700;
 }
-.cloud-auth-card p.cloud-auth-sub{
-  margin:0 0 20px; font-size:13.5px; opacity:.65; line-height:1.5;
+.cloud-auth-card p.cloud-auth-tagline{
+  margin:0 0 22px; font-size:13px; opacity:.6; font-style:italic;
+  font-family:var(--font-display,'Fraunces',serif);
 }
-.cloud-auth-card label{
-  display:block; font-size:12.5px; opacity:.75; margin:0 0 6px;
+.cloud-auth-card .cloud-auth-field{
+  position:relative; margin-bottom:12px; text-align:left;
+}
+.cloud-auth-card .cloud-auth-field-ic{
+  position:absolute; left:13px; top:50%; transform:translateY(-50%);
+  opacity:.45; pointer-events:none;
 }
 .cloud-auth-card input{
   width:100%; box-sizing:border-box;
   background:rgba(255,255,255,.06);
   border:1px solid rgba(255,255,255,.12);
-  border-radius:10px;
-  padding:11px 12px;
+  border-radius:12px;
+  padding:12px 12px 12px 38px;
   color:#fff; font-size:14.5px;
-  margin-bottom:14px;
   outline:none;
+  transition:border-color .15s, background .15s;
 }
-.cloud-auth-card input:focus{ border-color:var(--forest-glow,#2563EB); }
+.cloud-auth-card input::placeholder{ color:rgba(255,255,255,.4); }
+.cloud-auth-card input:focus{
+  border-color:var(--forest-glow,#2563EB);
+  background:rgba(255,255,255,.09);
+}
 .cloud-auth-card .cloud-auth-btn{
-  width:100%; border:none; border-radius:10px;
-  padding:12px; font-size:14.5px; font-weight:700;
-  background:var(--forest-glow,#2563EB); color:#fff;
-  cursor:pointer; margin-top:4px;
+  width:100%; border:none; border-radius:12px;
+  padding:13px; font-size:14.5px; font-weight:700;
+  background:linear-gradient(135deg, var(--forest-glow,#2563EB), #16A34A);
+  color:#fff;
+  cursor:pointer; margin-top:6px;
+  box-shadow:0 10px 22px -10px rgba(37,99,235,.65);
+  transition:transform .12s, box-shadow .12s, opacity .12s;
 }
-.cloud-auth-card .cloud-auth-btn:disabled{ opacity:.6; cursor:not-allowed; }
+.cloud-auth-card .cloud-auth-btn:hover{ transform:translateY(-1px); box-shadow:0 14px 26px -10px rgba(37,99,235,.75); }
+.cloud-auth-card .cloud-auth-btn:active{ transform:translateY(0); }
+.cloud-auth-card .cloud-auth-btn:disabled{ opacity:.6; cursor:not-allowed; transform:none; }
 .cloud-auth-card .cloud-auth-switch{
-  text-align:center; margin-top:16px; font-size:13px; opacity:.75;
+  text-align:center; margin-top:18px; font-size:13px; opacity:.75;
 }
 .cloud-auth-card .cloud-auth-switch a{
   color:var(--forest-glow,#2563EB); text-decoration:none; font-weight:600; cursor:pointer;
 }
+.cloud-auth-card .cloud-auth-switch a:hover{ text-decoration:underline; }
 .cloud-auth-card .cloud-auth-msg{
-  font-size:13px; border-radius:8px; padding:9px 11px; margin-bottom:14px;
-  display:none;
+  font-size:13px; border-radius:10px; padding:9px 11px; margin-bottom:14px;
+  display:none; text-align:left;
 }
 .cloud-auth-card .cloud-auth-msg.show{ display:block; }
 .cloud-auth-card .cloud-auth-msg.err{ background:rgba(225,29,72,.15); color:#FDA4AF; }
@@ -7734,14 +7767,21 @@ body.is-scrolling *{
 <!-- ===== OVERLAY LOGIN / DAFTAR (CLOUD SYNC) ===== -->
 <div id="cloudAuthOverlay">
   <div class="cloud-auth-card">
+    <div class="cloud-auth-logo">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>
+    </div>
     <h2 id="cloudAuthTitle">Masuk ke ZAYAPRO</h2>
-    <p class="cloud-auth-sub">Login supaya datamu tersimpan di cloud dan otomatis sama di semua perangkat (HP &amp; laptop).</p>
+    <p class="cloud-auth-tagline">Kelola keuanganmu, di mana saja.</p>
     <div class="cloud-auth-msg" id="cloudAuthMsg"></div>
     <form id="cloudAuthForm">
-      <label for="cloudAuthEmail">Email</label>
-      <input type="email" id="cloudAuthEmail" autocomplete="email" required placeholder="nama@email.com">
-      <label for="cloudAuthPassword">Password</label>
-      <input type="password" id="cloudAuthPassword" autocomplete="current-password" required placeholder="Minimal 6 karakter">
+      <div class="cloud-auth-field">
+        <svg class="cloud-auth-field-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z" opacity="0"/><path d="M22 6 12 13 2 6"/><path d="M2 6h20v12H2z"/></svg>
+        <input type="email" id="cloudAuthEmail" autocomplete="email" required placeholder="Email">
+      </div>
+      <div class="cloud-auth-field">
+        <svg class="cloud-auth-field-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+        <input type="password" id="cloudAuthPassword" autocomplete="current-password" required placeholder="Password (min. 6 karakter)">
+      </div>
       <button type="submit" class="cloud-auth-btn" id="cloudAuthSubmitBtn">Masuk</button>
     </form>
     <div class="cloud-auth-switch">

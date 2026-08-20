@@ -29,7 +29,16 @@
   //  - cache berita: cuma cache sementara, tidak penting disamakan
   //  - API key Gemini pribadi user & riwayat chat AI: disimpan lokal saja
   const CLOUD_EXCLUDE_EXACT = ['zayapro_ai_settings', 'zayapro_ai_chat_history'];
-  const CLOUD_EXCLUDE_PREFIX = ['alirin_news_cache_v1_'];
+  // 'sb-' = prefix key internal yang dipakai Supabase sendiri untuk
+  // menyimpan token sesi login (mis. "sb-<ref>-auth-token") di
+  // localStorage. WAJIB dikecualikan dari sinkron/pembersihan di
+  // bawah -- kalau tidak, key ini ikut terhapus setiap kali
+  // pullAllFromCloud() atau reset database membersihkan key yang
+  // "tidak ada di cloud", karena token sesi memang bukan data
+  // aplikasi yang tersimpan di kv_store. Akibatnya sesi login hilang
+  // begitu halaman di-reload (dilempar balik ke layar login) padahal
+  // baru saja berhasil login. (Bug fix)
+  const CLOUD_EXCLUDE_PREFIX = ['alirin_news_cache_v1_', 'sb-'];
   function isCloudExcluded(key) {
     if (CLOUD_EXCLUDE_EXACT.indexOf(key) !== -1) return true;
     return CLOUD_EXCLUDE_PREFIX.some(function (p) { return key.indexOf(p) === 0; });
