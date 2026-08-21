@@ -116,96 +116,23 @@
     }
   }
 
-  // Menyimpan nilai terakhir yang sudah dijadwalkan untuk di-push tapi
-  // BELUM benar-benar terkirim ke Supabase (masih menunggu debounce
-  // 700ms). Dipakai oleh flushPendingPushes() di bawah supaya kalau
-  // halaman ditutup/refresh/pindah tab tepat di jendela 700ms itu,
-  // perubahan (mis. toggle widget "Komposisi Transaksi") tidak hilang
-  // -- kalau tidak, pullAllFromCloud() di load berikutnya akan menimpa
-  // localStorage dengan nilai LAMA dari cloud, seolah perubahan yang
-  // baru saja dilakukan user tidak pernah terjadi / balik lagi.
-  const pendingPushValues = {};
-
-  function doPush(key, rawValue, useKeepalive) {
-    delete pendingPushValues[key];
-    let payload;
-    try { payload = JSON.parse(rawValue); }
-    catch (e) { payload = rawValue; } // string biasa (bukan JSON), simpan apa adanya
-
-    if (useKeepalive) {
-      // Dipanggil dari flushPendingPushes() saat halaman akan
-      // ditutup/disembunyikan (pagehide/visibilitychange). Request lewat
-      // client supabase-js biasa bisa terputus begitu halaman unload,
-      // jadi di sini kita pakai fetch langsung dengan {keepalive:true}
-      // supaya browser tetap mengirimkannya walau halaman sudah pindah/
-      // ditutup -- token sesi diambil langsung dari localStorage (sudah
-      // disimpan otomatis oleh supabase-js) supaya bisa dibaca SECARA
-      // SINKRON tanpa perlu menunggu sb.auth.getSession() (async).
-      try {
-        const tokenRaw = localStorage.getItem('sb-irjbamgmdbgszkheglig-auth-token');
-        let accessToken = SUPABASE_ANON_KEY;
-        if (tokenRaw) {
-          try {
-            const parsed = JSON.parse(tokenRaw);
-            if (parsed && parsed.access_token) accessToken = parsed.access_token;
-          } catch (e) { /* abaikan, pakai anon key */ }
-        }
-        fetch(SUPABASE_URL + '/rest/v1/kv_store?on_conflict=user_id,key', {
-          method: 'POST',
-          keepalive: true,
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': SUPABASE_ANON_KEY,
-            'Authorization': 'Bearer ' + accessToken,
-            'Prefer': 'resolution=merge-duplicates,return=minimal'
-          },
-          body: JSON.stringify({
-            user_id: currentUser.id,
-            key: key,
-            value: payload,
-            updated_at: new Date().toISOString()
-          })
-        }).catch(function () { /* halaman sudah unload, tidak ada yang bisa dilakukan lagi */ });
-      } catch (e) { /* abaikan */ }
-      return;
-    }
-
-    sb.from('kv_store').upsert({
-      user_id: currentUser.id,
-      key: key,
-      value: payload,
-      updated_at: new Date().toISOString()
-    }, { onConflict: 'user_id,key' }).then(function (res) {
-      if (res.error) { console.error('Cloud sync (push) gagal:', key, res.error); setSyncBadge('err'); }
-      else { setSyncBadge('ok'); }
-    });
-  }
-
   function queuePush(key, rawValue) {
     clearTimeout(pushTimers[key]);
-    pendingPushValues[key] = rawValue;
     pushTimers[key] = setTimeout(function () {
-      doPush(key, rawValue, false);
+      let payload;
+      try { payload = JSON.parse(rawValue); }
+      catch (e) { payload = rawValue; } // string biasa (bukan JSON), simpan apa adanya
+      sb.from('kv_store').upsert({
+        user_id: currentUser.id,
+        key: key,
+        value: payload,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'user_id,key' }).then(function (res) {
+        if (res.error) { console.error('Cloud sync (push) gagal:', key, res.error); setSyncBadge('err'); }
+        else { setSyncBadge('ok'); }
+      });
     }, 700);
   }
-
-  // Jaring pengaman: kalau tab disembunyikan (ganti tab/app di HP) atau
-  // halaman mau ditutup/refresh SEBELUM debounce 700ms di atas sempat
-  // jalan, langsung tembak semua push yang masih tertunda saat itu juga
-  // (pakai keepalive) supaya tidak ada perubahan yang batal tersimpan.
-  function flushPendingPushes() {
-    const keys = Object.keys(pendingPushValues);
-    if (!keys.length || !currentUser) return;
-    keys.forEach(function (key) {
-      clearTimeout(pushTimers[key]);
-      delete pushTimers[key];
-      doPush(key, pendingPushValues[key], true);
-    });
-  }
-  document.addEventListener('visibilitychange', function () {
-    if (document.visibilityState === 'hidden') flushPendingPushes();
-  });
-  window.addEventListener('pagehide', flushPendingPushes);
 
   async function pullAllFromCloud() {
     const { data, error } = await sb.from('kv_store').select('key,value').eq('user_id', currentUser.id);
