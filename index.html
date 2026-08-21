@@ -1066,6 +1066,23 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   position:relative;overflow:hidden;isolation:isolate;
   border-top:2.5px solid var(--brass);
   background:var(--card);
+  /* Pinggir kartu disamakan dengan kartu "Saldo Bank & E-Wallet"
+     (.stat-card{border-radius:20px}) -- sebelumnya ikut radius umum
+     .section-card (14px) sehingga sudutnya terasa lebih kotak/berbeda
+     dari kartu ringkasan lain. Warna tetap dibedakan (hijau vs amber),
+     cuma bentuk pinggirnya yang kini identik. */
+  border-radius:20px;
+  transition:transform .22s cubic-bezier(.22,.9,.3,1), box-shadow .25s ease, border-color .22s ease;
+}
+/* Hover pinggir kartu: kartu Saldo Bank & E-Wallet tidak memakai kilau
+   biru generik ".section-card:hover", melainkan bayangan + garis tepi
+   yang ikut warna aksennya sendiri. Disamakan di sini pakai hijau
+   (identik dengan nilai .isc-source-card:hover) supaya bahasa desain
+   pinggir kartunya konsisten. */
+.income-shortcut-card:hover{
+  box-shadow:0 16px 34px rgba(5,150,105,0.17);
+  border-color:rgba(5,150,105,0.30);
+  transform:translateY(-5px);
 }
 /* Latar "aurora" berlapis 3 kabut warna (emerald, emas, teal) yang
    masing-masing melayang perlahan ke arah berbeda dengan durasi &
