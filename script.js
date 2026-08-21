@@ -8156,34 +8156,6 @@ document.getElementById('historyJumpBtn').addEventListener('click', scrollToTran
 document.getElementById('miniHistoryBtn').addEventListener('click', scrollToTransactionTable);
 document.getElementById('miniAddBtn').addEventListener('click', () => openAddModal());
 
-// ===== BOTTOM NAV BERGAYA MOVA (Beranda/Riwayat/Tambah/Saya) =====
-// Navigasi tab bawah ini murni visual/kemudahan akses -- aplikasi
-// tetap satu halaman (scroll), jadi tiap tombol cuma scroll ke
-// section terkait atau memicu aksi yang sudah ada (tambah transaksi).
-(function initMovaBottomNav() {
-  const nav = document.getElementById('movaBottomNav');
-  if (!nav) return;
-  const items = {
-    mbnHome: () => window.scrollTo({ top: 0, behavior: 'smooth' }),
-    mbnHistory: scrollToTransactionTable,
-    mbnAdd: () => openAddModal(),
-    mbnProfile: () => {
-      const target = document.getElementById('profileCard') || document.getElementById('compositionCard');
-      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  };
-  Object.keys(items).forEach((id) => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.addEventListener('click', () => {
-      nav.querySelectorAll('.mbn-item').forEach((btn) => btn.classList.remove('active'));
-      if (id !== 'mbnAdd') el.classList.add('active');
-      else document.getElementById('mbnHome')?.classList.add('active');
-      items[id]();
-    });
-  });
-})();
-
 notifBtn.addEventListener('click', (e) => {
   e.stopPropagation();
   notifPanel.classList.contains('open') ? closeNotifPanel() : openNotifPanel();
