@@ -1070,8 +1070,13 @@ tr.fade-up{animation:fadeRow .35s ease both;}
      (.stat-card{border-radius:20px}) -- sebelumnya ikut radius umum
      .section-card (14px) sehingga sudutnya terasa lebih kotak/berbeda
      dari kartu ringkasan lain. Warna tetap dibedakan (hijau vs amber),
-     cuma bentuk pinggirnya yang kini identik. */
-  border-radius:20px;
+     cuma bentuk pinggirnya yang kini identik.
+     !important dipakai karena aturan ".section-card{border-radius:var(--radius)}"
+     didefinisikan lebih belakang di file ini -- pada spesifisitas CSS
+     yang sama (sama-sama 1 class), aturan yang datang belakangan itu
+     yang menang, jadi radius 20px di sini sempat tertimpa balik ke
+     14px tanpa !important. */
+  border-radius:20px !important;
   transition:transform .22s cubic-bezier(.22,.9,.3,1), box-shadow .25s ease, border-color .22s ease;
 }
 /* Hover pinggir kartu: kartu Saldo Bank & E-Wallet tidak memakai kilau
