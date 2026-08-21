@@ -7811,8 +7811,10 @@ body.is-scrolling *{
         <input type="text" id="aiModelInput" placeholder="gemini-3.7-flash">
         <p class="ai-settings-hint">Kosongkan untuk pakai default (<span class="mono">gemini-3.7-flash</span>). Model lain yang bisa dicoba: <span class="mono">gemini-3.6-flash</span>, <span class="mono">gemini-3.5-flash-lite</span>. Ganti di sini jika API key-mu hanya mendukung model tertentu.</p>
       </div>
+      <p class="ai-settings-hint" id="aiTestResult" style="display:none;margin-top:-4px;"></p>
       <div class="modal-actions">
         <button type="button" class="btn btn-ghost" id="aiSettingsClearBtn">Hapus Key</button>
+        <button type="button" class="btn btn-ghost" id="aiSettingsTestBtn">Tes Koneksi</button>
         <button type="submit" class="btn btn-primary">Simpan</button>
       </div>
     </form>

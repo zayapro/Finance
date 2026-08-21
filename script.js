@@ -8606,6 +8606,8 @@ const aiSettingsForm = document.getElementById('aiSettingsForm');
 const aiApiKeyInput = document.getElementById('aiApiKeyInput');
 const aiModelInput = document.getElementById('aiModelInput');
 const aiSettingsClearBtn = document.getElementById('aiSettingsClearBtn');
+const aiSettingsTestBtn = document.getElementById('aiSettingsTestBtn');
+const aiTestResult = document.getElementById('aiTestResult');
 
 function openAiChatPanel() {
   openModal(aiChatOverlay);
@@ -8651,6 +8653,7 @@ if (aiKeyBannerBtn) aiKeyBannerBtn.addEventListener('click', openAiSettingsModal
 function openAiSettingsModal() {
   aiApiKeyInput.value = aiSettings.apiKey || '';
   aiModelInput.value = aiSettings.model || '';
+  if (aiTestResult) { aiTestResult.style.display = 'none'; aiTestResult.textContent = ''; }
   openModal(aiSettingsModal);
 }
 if (aiSettingsBtn) aiSettingsBtn.addEventListener('click', openAiSettingsModal);
@@ -8671,6 +8674,46 @@ if (aiSettingsClearBtn) aiSettingsClearBtn.addEventListener('click', () => {
   persistAiSettings(aiSettings);
   renderAiKeyBanner();
   showToast('API key Gemini dihapus.');
+});
+
+// Tes cepat: kirim 1 permintaan minimal ke Gemini pakai key & model
+// yang SEDANG DIKETIK di form (belum tentu sudah disimpan), supaya
+// user langsung tahu apakah key/model-nya valid tanpa harus buka
+// chat & mengetik pertanyaan dulu.
+if (aiSettingsTestBtn) aiSettingsTestBtn.addEventListener('click', async () => {
+  const testKey = (aiApiKeyInput.value || '').trim();
+  const testModel = (aiModelInput.value || '').trim() || AI_DEFAULT_MODEL;
+  if (!testKey) {
+    aiTestResult.style.display = 'block';
+    aiTestResult.style.color = '#9F1239';
+    aiTestResult.textContent = 'Isi API key dulu sebelum tes.';
+    return;
+  }
+  aiSettingsTestBtn.disabled = true;
+  aiTestResult.style.display = 'block';
+  aiTestResult.style.color = '';
+  aiTestResult.textContent = 'Menguji koneksi...';
+  try {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(testModel)}:generateContent`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': testKey },
+      body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: 'ping' }] }] }),
+    });
+    if (res.ok) {
+      aiTestResult.style.color = '#059669';
+      aiTestResult.textContent = 'Berhasil! Key & model ini valid dan bisa dipakai.';
+    } else {
+      let detail = '';
+      try { detail = (await res.json()).error?.message || ''; } catch (e) { /* abaikan */ }
+      aiTestResult.style.color = '#9F1239';
+      aiTestResult.textContent = `Gagal (HTTP ${res.status}): ${detail || 'periksa kembali key/model.'}`;
+    }
+  } catch (e) {
+    aiTestResult.style.color = '#9F1239';
+    aiTestResult.textContent = 'Gagal menghubungi Gemini: koneksi diblokir (cek internet/ad-blocker/VPN).';
+  } finally {
+    aiSettingsTestBtn.disabled = false;
+  }
 });
 
 function aiFormatMsgTime(ts) {
@@ -8931,12 +8974,23 @@ async function callGeminiApi(userText, mode) {
     .map(m => ({ role: m.role === 'user' ? 'user' : 'model', parts: [{ text: m.text }] }));
   contents.push({ role: 'user', parts: [{ text: userText }] });
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+  // Catatan perbaikan: sebelumnya API key dikirim lewat query string
+  // (?key=...), cara LAMA yang sudah tidak dianjurkan Google. Key
+  // Gemini yang baru dibuat (terutama key dengan pembatasan API/HTTP
+  // referrer) sering DITOLAK diam-diam lewat cara ini, sehingga fitur
+  // "Tanya AI" terasa "tidak berfungsi" walau key sudah benar. Cara
+  // resmi terbaru adalah mengirim key lewat header `x-goog-api-key`
+  // (lihat https://ai.google.dev/api -- semua contoh permintaan resmi
+  // sekarang memakai header ini, bukan lagi query string).
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
   let res;
   try {
     res = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-goog-api-key': apiKey,
+      },
       body: JSON.stringify({
         contents,
         systemInstruction: { parts: [{ text: systemInstruction }] },
@@ -8992,7 +9046,8 @@ async function sendAiMessage() {
     if (err.message === 'NO_API_KEY') msg = 'API key Gemini belum diatur.';
     else if (err.message === 'FAILED_TO_FETCH') msg = 'Gagal menghubungi Gemini: koneksi diblokir (cek internet, ad-blocker/VPN, atau buka lewat http(s):// bukan file://).';
     else if (err.status === 400) msg = `Permintaan ditolak Gemini (400): ${err.message || 'periksa nama model di Pengaturan.'}`;
-    else if (err.status === 403) msg = `API key Gemini ditolak (403): ${err.message || 'periksa kembali key di Pengaturan.'}`;
+    else if (err.status === 401) msg = `API key Gemini tidak valid (401): ${err.message || 'periksa kembali key di Pengaturan.'}`;
+    else if (err.status === 403) msg = `API key Gemini ditolak (403): ${err.message || 'periksa kembali key di Pengaturan, atau pastikan API Gemini sudah diaktifkan untuk key ini.'}`;
     else if (err.status === 404) msg = `Model "${(aiSettings.model || AI_DEFAULT_MODEL)}" tidak ditemukan (404) untuk API key ini. Coba ganti model di Pengaturan, mis. gemini-3.7-flash, gemini-3.6-flash, atau gemini-3.5-flash-lite.`;
     else if (err.status === 429) msg = 'Kuota/limit Gemini API tercapai. Coba lagi nanti.';
     else if (err.message === 'EMPTY_RESPONSE') msg = 'Gemini tidak memberi jawaban (mungkin diblokir filter keamanan). Coba ubah pertanyaan.';
