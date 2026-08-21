@@ -2054,7 +2054,10 @@ function renderSummary() {
 
   const walletCardHtml = renderWalletCardHtml(iconWalletCard, 3);
 
-  const incomeCardHtml = `<div class="income-cards-group">${sourceCardHtml}${recentCardHtml}${walletCardHtml}</div>`;
+  // Kartu "Sumber Pendapatan" & "Aktivitas 7 Hari Terakhir" sengaja
+  // dihapus permanen dari beranda (tidak lagi dirender), sesuai
+  // permintaan — hanya kartu Saldo Bank & E-Wallet yang tersisa di sini.
+  const incomeCardHtml = `<div class="income-cards-group">${walletCardHtml}</div>`;
 
   const bannerFlowWrap = document.getElementById('bannerFlowWrap');
   if (bannerFlowWrap) bannerFlowWrap.innerHTML = cardsHtml;
@@ -4334,8 +4337,6 @@ const WIDGET_SETTINGS_KEY = 'alirin_widget_settings_v1';
 const WIDGET_DEFAULTS = {
   incomeShortcutCard: true,
   historySection: true,
-  incomeSourceStatCard: true,
-  recentActivityStatCard: true,
   bankWalletStatCard: true,
   compositionCard: true,
   profileCard: true,
@@ -4400,8 +4401,6 @@ function applyIncomeCardsVisibility(settings) {
   const group = document.querySelector('.income-cards-group');
   if (!group) return;
   const rows = [
-    ['.isc-source-card', s.incomeSourceStatCard],
-    ['.isc-recent-card', s.recentActivityStatCard],
     ['.isc-wallet-card', s.bankWalletStatCard],
   ];
   let visibleCount = 0;
