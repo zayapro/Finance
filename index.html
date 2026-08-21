@@ -3296,6 +3296,30 @@ body.density-compact .income-cards-group{gap:10px;}
   .section-card{opacity:1;transform:none;animation:none;}
   .section-card:hover{transform:none;}
 }
+
+/* ==========================================================
+   SUSUNAN KHUSUS TAMPILAN MOBILE (max-width:640px)
+   Cuma mengubah URUTAN tampil kartu-kartu beranda lewat CSS
+   `order` (flex) -- TIDAK ada fitur/konten yang dihapus atau
+   ditambah, dan tampilan desktop/tablet sama sekali tidak
+   tersentuh (di luar breakpoint ini .app-main tetap block biasa
+   dengan urutan DOM aslinya). Urutan mobile: Banner Saldo ->
+   Sumber Pendapatan (jalan pintas) -> kartu kosong placeholder
+   -> trio Sumber Pendapatan Bulan Ini & Bank/E-Wallet -> Grafik
+   Komposisi & Profil -> Berita -> Riwayat Transaksi -> Perangkat
+   & Sosial Media. */
+.placeholder-card{display:none;}
+@media (max-width:640px){
+  .app-main{display:flex;flex-direction:column;}
+  #banner{order:1;}
+  #incomeShortcutCard{order:2;}
+  .placeholder-card{display:block;order:3;min-height:120px;}
+  #bannerFlowWrap{order:4;}
+  .charts-grid{order:5;}
+  #newsSection{order:6;}
+  #historySection{order:7;}
+  #deviceSocialSection{order:8;}
+}
 /* Jeda bertahap antar kartu utama beranda supaya muncul satu-satu, bukan
    serentak (composition -> profile -> news -> history -> device/social). */
 #compositionCard{animation-delay:.02s;}
@@ -6142,6 +6166,12 @@ body.is-scrolling *{
   <section class="summary-grid" id="summaryGrid"></section>
 
   <!-- ===== CHARTS ===== -->
+  <!-- Kartu kosong khusus mobile: reservasi tempat untuk fitur yang belum
+       dibangun, mengikuti posisi pada referensi desain. Sengaja dibiarkan
+       kosong (tidak ada fitur/konten baru di dalamnya) -- lihat aturan
+       posisi mobile-only di blok @media (max-width:640px) pada CSS. -->
+  <section class="section-card placeholder-card" id="mobilePlaceholderCard" aria-hidden="true"></section>
+
   <div class="charts-grid">
     <section class="section-card composition-card" id="compositionCard">
       <div class="section-head">
