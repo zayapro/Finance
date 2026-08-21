@@ -1216,18 +1216,51 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 @media (max-width:640px), (prefers-reduced-motion:reduce){
   .isc-sat{transition:none;}
 }
+/* ---- Versi mobile: dulu berubah total jadi grid wrap (item melompat
+   ke baris baru, garis penghubung dihilangkan) sehingga tampilannya
+   tidak konsisten dengan versi desktop & gampang terlihat berantakan
+   kalau sumbernya banyak. Sekarang strip TETAP satu baris seperti
+   desktop (ikon + garis penghubung menyambung utuh), cuma barisnya
+   jadi bisa digeser (scroll horizontal) kalau lebar totalnya melebihi
+   lebar kartu -- .isc-shortcut-scroll yang membungkus baris inilah
+   yang jadi area scroll-nya, sementara .isc-shortcut-row sendiri
+   melebar mengikuti isi (width:max-content) supaya setiap ikon tetap
+   berjarak rapi & proporsional, bukan dipaksa muat/menyusut. */
+.isc-shortcut-scroll{
+  position:relative;
+}
 @media (max-width:680px){
-  .isc-shortcut-row{flex-wrap:wrap;justify-content:center;gap:26px 8px;}
-  .isc-shortcut-row::before{display:none;}
-  .isc-shortcut-item{flex:0 0 auto;width:74px;}
-  .isc-shortcut-label{white-space:normal;max-width:74px;}
+  .isc-shortcut-scroll{
+    overflow-x:auto;overflow-y:hidden;
+    -webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;
+    scrollbar-width:none;-ms-overflow-style:none;
+    /* Bantalan kanan supaya ikon terakhir ("Sumber Lain") tidak
+       mepet/terpotong tepat di tepi kartu saat discroll penuh. */
+    padding-right:6px;
+  }
+  .isc-shortcut-scroll::-webkit-scrollbar{display:none;height:0;}
+  .isc-shortcut-row{
+    flex-wrap:nowrap;justify-content:flex-start;width:max-content;min-width:100%;
+    gap:22px;padding:0 2px;
+  }
+  /* Garis penghubung dihitung dari titik tengah ikon pertama sampai
+     titik tengah ikon terakhir (setengah lebar ikon = 27px, ikon masih
+     54px di breakpoint ini), bukan lagi persentase seperti versi
+     desktop -- karena lebar baris sekarang mengikuti isi (max-content),
+     bukan lebar kartu, jadi hitungannya harus dalam px supaya garis
+     tetap pas nyambung ke tiap ikon walau jumlah sumbernya berubah. */
+  .isc-shortcut-row::before{left:27px;right:27px;}
+  .isc-shortcut-item{flex:0 0 auto;width:72px;}
+  .isc-shortcut-label{white-space:normal;max-width:72px;}
   .isc-sat{width:22px;height:22px;}
   .isc-shortcut-item:hover .isc-sat{transform:translate(-50%,-50%) rotate(var(--sat-angle,0deg)) translateY(var(--sat-radius-sm,-38px)) rotate(calc(var(--sat-angle,0deg) * -1)) scale(1);}
 }
 @media (max-width:380px){
+  .isc-shortcut-row::before{left:24px;right:24px;top:24px;}
+  .isc-shortcut-item{width:64px;}
+  .isc-shortcut-label{font-size:10.5px;max-width:64px;}
   .isc-shortcut-ic-wrap{width:48px;height:48px;}
   .isc-shortcut-ic{width:48px;height:48px;}
-  .isc-shortcut-label{font-size:10.5px;max-width:70px;}
 }
 
 /* ============ SUMMARY CARDS ============ */
@@ -6032,6 +6065,7 @@ body.is-scrolling *{
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>
       </button>
     </div>
+    <div class="isc-shortcut-scroll">
     <div class="isc-shortcut-row" id="incomeShortcutRow">
       <button type="button" class="isc-shortcut-item" data-shortcut-source="Adsense">
         <span class="isc-shortcut-ic-wrap">
@@ -6104,6 +6138,7 @@ body.is-scrolling *{
         </span>
         <span class="isc-shortcut-label">Sumber Lain</span>
       </button>
+    </div>
     </div>
   </section>
 
