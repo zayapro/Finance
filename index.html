@@ -1062,66 +1062,18 @@ tr.fade-up{animation:fadeRow .35s ease both;}
    pendapatan dari sumber tsb (Google Adsense, Platform Meta, Affiliate,
    Toko Online, Kelas) plus satu ikon "+" untuk menambah sumber manual. */
 .income-shortcut-card{
-  padding:20px 22px 22px;
+  /* Disamakan penuh dengan kartu lain (.section-card): tanpa garis atas
+     berwarna, tanpa radius/hover khusus -- semua properti kotak kartu
+     (background, border, radius, shadow, jarak, animasi masuk & hover)
+     kini murni warisan dari .section-card supaya kartu ini terasa satu
+     keluarga dengan Komposisi Transaksi, Profil Bulanan, Berita, dst. */
   position:relative;overflow:hidden;isolation:isolate;
-  border-top:2.5px solid var(--brass);
-  background:var(--card);
-  /* Pinggir kartu disamakan dengan kartu "Saldo Bank & E-Wallet"
-     (.stat-card{border-radius:20px}) -- sebelumnya ikut radius umum
-     .section-card (14px) sehingga sudutnya terasa lebih kotak/berbeda
-     dari kartu ringkasan lain. Warna tetap dibedakan (hijau vs amber),
-     cuma bentuk pinggirnya yang kini identik.
-     !important dipakai karena aturan ".section-card{border-radius:var(--radius)}"
-     didefinisikan lebih belakang di file ini -- pada spesifisitas CSS
-     yang sama (sama-sama 1 class), aturan yang datang belakangan itu
-     yang menang, jadi radius 20px di sini sempat tertimpa balik ke
-     14px tanpa !important. */
-  border-radius:20px !important;
-  transition:transform .22s cubic-bezier(.22,.9,.3,1), box-shadow .25s ease, border-color .22s ease;
 }
-/* Hover pinggir kartu: kartu Saldo Bank & E-Wallet tidak memakai kilau
-   biru generik ".section-card:hover", melainkan bayangan + garis tepi
-   yang ikut warna aksennya sendiri. Disamakan di sini pakai hijau
-   (identik dengan nilai .isc-source-card:hover) supaya bahasa desain
-   pinggir kartunya konsisten. */
-.income-shortcut-card:hover{
-  box-shadow:0 16px 34px rgba(5,150,105,0.17);
-  border-color:rgba(5,150,105,0.30);
-  transform:translateY(-5px);
-}
-/* Latar "aurora" berlapis 3 kabut warna (emerald, emas, teal) yang
-   masing-masing melayang perlahan ke arah berbeda dengan durasi &
-   delay sendiri-sendiri, jadi campuran warnanya terasa terus bergerak
-   halus tanpa terlihat berulang secara jelas. */
-.income-shortcut-card::before{
-  content:'';position:absolute;inset:-20%;z-index:0;pointer-events:none;
-  background:
-    radial-gradient(circle at 15% 20%, rgba(5,150,105,0.20), transparent 42%),
-    radial-gradient(circle at 88% 12%, rgba(217,119,6,0.18), transparent 45%),
-    radial-gradient(circle at 70% 88%, rgba(13,148,136,0.14), transparent 46%),
-    radial-gradient(circle at 8% 85%, rgba(5,150,105,0.12), transparent 40%);
-  animation:iscAuroraDrift 14s ease-in-out infinite alternate;
-}
-@keyframes iscAuroraDrift{
-  0%{transform:translate(0,0) rotate(0deg) scale(1);}
-  50%{transform:translate(2%,-3%) rotate(4deg) scale(1.06);}
-  100%{transform:translate(-3%,2%) rotate(-3deg) scale(1.04);}
-}
-.income-shortcut-card::after{
-  content:'';position:absolute;top:-42px;right:-34px;width:140px;height:140px;border-radius:50%;
-  background:radial-gradient(circle, rgba(5,150,105,0.18), transparent 72%);
-  pointer-events:none;z-index:0;
-  animation:iscGlowFloat 6s ease-in-out infinite;
-}
-@keyframes iscGlowFloat{
-  0%,100%{transform:translate(0,0) scale(1);opacity:1;}
-  50%{transform:translate(-16px,16px) scale(1.18);opacity:.82;}
-}
-@media (max-width:640px), (prefers-reduced-motion:reduce){
-  .income-shortcut-card::before,.income-shortcut-card::after{animation:none;}
-}
-.isc-shortcut-head{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:2px;}
-.isc-shortcut-head h2{font-size:16.5px;background:linear-gradient(100deg,#065F46,#059669 55%,#B45309);-webkit-background-clip:text;background-clip:text;color:transparent;}
+/* Latar aurora & glow floating dihapus -- kartu lain (Komposisi
+   Transaksi, Profil Bulanan, Berita, dst) tampil polos tanpa dekorasi
+   latar semacam ini, jadi dihilangkan di sini juga supaya kotak kartu
+   benar-benar seragam. */
+.isc-shortcut-head{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
 .isc-shortcut-head .section-subtitle{margin-top:3px;}
 .isc-shortcut-viewall{
   display:inline-flex;align-items:center;gap:4px;flex-shrink:0;
@@ -3353,7 +3305,7 @@ body.density-compact .income-cards-group{gap:10px;}
 #deviceSocialSection{animation-delay:.30s;}
 .section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;}
 .section-head > div{min-width:0;}
-.section-head h2{font-size:18px;}
+.section-head h2,.isc-shortcut-head h2{font-size:18px;}
 .section-subtitle{display:block;font-size:11px;color:var(--ink-faint);font-weight:600;margin-top:3px;letter-spacing:0.01em;}
 .chip-total{
   display:inline-flex;align-items:center;gap:6px;
@@ -3365,7 +3317,7 @@ body.density-compact .income-cards-group{gap:10px;}
 @media (max-width:600px){
   .section-card{padding:16px 16px;margin-bottom:14px;border-radius:12px;}
   .section-head{margin-bottom:12px;}
-  .section-head h2{font-size:15.5px;}
+  .section-head h2,.isc-shortcut-head h2{font-size:15.5px;}
   .chip-total{font-size:11.5px;padding:5px 11px;}
 }
 @media (max-width:380px){
@@ -3376,7 +3328,7 @@ body.density-compact .income-cards-group{gap:10px;}
 }
 
 /* ============ BERITA EKONOMI TERKINI ============ */
-.section-head h2{display:flex;align-items:center;gap:9px;flex-wrap:wrap;}
+.section-head h2,.isc-shortcut-head h2{display:flex;align-items:center;gap:9px;flex-wrap:wrap;}
 .news-live-badge{
   display:inline-flex;align-items:center;gap:5px;
   font-size:10px;font-weight:800;letter-spacing:0.04em;text-transform:uppercase;
@@ -5718,7 +5670,7 @@ body.is-scrolling *{
   .app-footer{padding:22px 16px 16px;margin:14px -12px 0;}
 
   /* ---- Judul & label ---- */
-  .section-head h2{font-size:14.5px;}
+  .section-head h2,.isc-shortcut-head h2{font-size:14.5px;}
   .section-subtitle{font-size:10px;}
   .eyebrow{font-size:10px;letter-spacing:0.12em;}
   .chip-total{font-size:10.5px;padding:5px 10px;}
