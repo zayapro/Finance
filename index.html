@@ -5978,8 +5978,13 @@ body{
 .saldo-block{
   position:relative;z-index:3;
   margin-top:20px;
-  background:#FFFFFF;
-  border-radius:32px;
+  /* Gradasi lembut putih -> abu kebiruan pudar (bukan putih polos lagi),
+     tanpa border. Sudut BAWAH sengaja dibuat siku (bukan membulat)
+     supaya menyatu rapat dengan kartu "Ringkasan transaksi kamu" di
+     bawahnya (.fc-peek-handle) -- keduanya jadi terlihat SATU kartu
+     utuh, bukan dua kartu terpisah dengan celah oranye di antaranya. */
+  background:linear-gradient(165deg, #FFFFFF 0%, #F8F6F2 45%, #EEF1F6 100%);
+  border-radius:32px 32px 0 0;
   padding:26px 24px 12px;
   /* Shadow netral (bukan lagi warna hangat rgba(120,50,0,...)) supaya
      kartu terlihat putih bersih walau duduk di atas gradasi oranye
@@ -6044,7 +6049,7 @@ body{
 
 @media (max-width:600px){
   .banner{padding:16px 16px 20px;border-radius:0 0 24px 24px;}
-  .saldo-block{border-radius:28px;padding:22px 18px 8px;}
+  .saldo-block{border-radius:28px 28px 0 0;padding:22px 18px 8px;}
   .saldo-sub{gap:24px;}
   .brand-mark{width:40px;height:40px;border-radius:13px;}
   .saldo-value{font-size:clamp(28px,9vw,40px);}
@@ -6061,10 +6066,15 @@ body{
 }
 .banner-flow-wrap{margin:-32px 0 18px;}
 .fc-peek-handle{
-  background:#FFFFFF;
+  /* Warna nada akhir dari gradasi .saldo-block (#EEF1F6) supaya
+     sambungannya mulus -- bukan putih flat lagi -- dan box-shadow
+     sendiri dimatikan (none) supaya tidak ada garis bayangan yang
+     memisahkan kartu ini dari kartu Saldo Total di atasnya; keduanya
+     jadi terbaca sebagai SATU kartu, bukan dua kartu bercelah. */
+  background:#EEF1F6;
   border-top:none;
   padding:16px 24px 22px;
-  box-shadow:0 20px 34px -22px rgba(120,50,0,0.20);
+  box-shadow:none;
 }
 .fc-peek-handle::before{
   width:44px;height:4px;background:var(--or-line);top:9px;
