@@ -5983,15 +5983,13 @@ body{
 /* Chip IDR/USD kecil, disisipkan di sebelah angka saldo supaya
    fiturnya tetap ada tanpa mengganggu posisi elemen lain */
 .saldo-row{gap:10px;align-items:flex-end;}
-.currency-toggle{
-  width:60px;height:22px;
-  background:var(--or-chip);border-color:var(--or-line);
-  flex-shrink:0;margin-bottom:6px;
-}
-.currency-toggle .ct-knob{width:28px;height:14px;background:linear-gradient(140deg,var(--or-1),var(--or-2));}
-.currency-toggle.usd .ct-knob{transform:translateX(28px);}
-.currency-toggle .ct-opt{color:var(--or-grey-lt);font-size:8.5px;}
-.currency-toggle .ct-opt.active{color:#fff;}
+/* Chip IDR/USD disembunyikan di redesign ini -- tidak ada di gambar
+   referensi (kartu Saldo Total di referensi cuma menampilkan angka
+   Rupiah polos, tanpa saklar mata uang di sampingnya). Elemen &
+   fungsinya tetap ada di HTML/JS (aman kalau suatu saat mau
+   dimunculkan lagi), cuma disembunyikan lewat display:none supaya
+   tampilannya 100% sama seperti referensi. */
+.currency-toggle{display:none !important;}
 .saldo-value{
   color:var(--or-ink);
   font-family:'Poppins',var(--font-body);
