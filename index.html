@@ -152,16 +152,16 @@ a{color:inherit;}
   position:relative;
   overflow:hidden;
   background:
-    radial-gradient(circle at 15% 20%, rgba(37,99,235,0.38), transparent 45%),
-    radial-gradient(circle at 85% 15%, rgba(5,150,105,0.24), transparent 50%),
-    radial-gradient(circle at 75% 90%, rgba(225,29,72,0.14), transparent 55%),
-    linear-gradient(120deg, var(--forest-deep), var(--forest-mid), var(--forest-deep));
+    radial-gradient(circle at 15% 20%, rgba(255,214,153,0.55), transparent 45%),
+    radial-gradient(circle at 85% 15%, rgba(255,255,255,0.22), transparent 50%),
+    radial-gradient(circle at 75% 90%, rgba(194,65,12,0.30), transparent 55%),
+    linear-gradient(120deg, #FF7A3D, #FF9455, #F2672B);
   background-size:240% 240%, 240% 240%, 240% 240%, 280% 280%;
   animation: bannerDrift 18s ease-in-out infinite;
   border-radius:0 0 28px 28px;
   padding:20px 28px 34px;
   margin:0 -24px 22px;
-  color:#F4F7FB;
+  color:#FFF8F1;
   /* Warna dasar solid (fallback) DI BAWAH lapisan gradient di atas.
      Kalau lapisan gradient (background-image) sesaat gagal digambar
      ulang tepat waktu oleh browser — misalnya persis saat teks di
@@ -170,7 +170,7 @@ a{color:inherit;}
      tetap tampil sebagai dasarnya. Tanpa ini, area yang belum sempat
      digambar ulang akan menampakkan warna halaman (--paper, terang)
      alih-alih gelap, kelihatan seperti banner "sobek"/pecah sesaat. */
-  background-color:var(--forest-deep);
+  background-color:#F2672B;
   /* CATATAN: dulu di sini ada transform:translateZ(0) + will-change +
      backface-visibility + isolation untuk memaksa banner ini punya
      layer kompositing GPU sendiri — perlu waktu itu karena banner
@@ -362,6 +362,22 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
   .brand-mark{animation:none;box-shadow:none;}
 }
 .brand-name{font-family:'Fraunces',serif;font-weight:600;font-size:19px;letter-spacing:-0.01em;white-space:nowrap;}
+/* Versi logo brand di dalam banner "Saldo Total" dibuat senada dengan
+   gradasi oranye baru (bukan hijau brass default), tanpa mengubah
+   logo di mini-topbar/footer yang tetap pakai warna aslinya. */
+.banner .brand-mark{
+  background:linear-gradient(145deg, #FFD9A8, #FF7A3D);
+  color:#7C2D12;
+  animation:bannerBrandMarkPulse 2.6s ease-in-out infinite;
+}
+@keyframes bannerBrandMarkPulse{
+  0%{box-shadow:0 0 0 0 rgba(255,122,61,0.45);}
+  70%{box-shadow:0 0 0 10px rgba(255,122,61,0);}
+  100%{box-shadow:0 0 0 0 rgba(255,122,61,0);}
+}
+@media (prefers-reduced-motion:reduce){
+  .banner .brand-mark{animation:none;box-shadow:none;}
+}
 .banner-date-col{display:flex;flex-direction:column;align-items:flex-end;gap:4px;min-width:0;}
 .banner-date{font-size:12.5px;color:rgba(244,247,243,0.72);white-space:nowrap;
   /* FIX KEDIP: lihat catatan lengkap di .banner-fx .fx-value di bawah —
@@ -842,7 +858,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   visibility:hidden;
   pointer-events:none;
 }
-.fc-peek-handle:hover{background:linear-gradient(180deg, var(--card), color-mix(in srgb, var(--fc-accent, #0D9488) 6%, var(--paper)));}
+.fc-peek-handle:hover{background:linear-gradient(180deg, var(--card), color-mix(in srgb, var(--fc-accent, #F97316) 6%, var(--paper)));}
 .fc-peek-handle::before{
   content:'';position:absolute;top:7px;left:50%;
   width:36px;height:4px;border-radius:999px;
@@ -857,8 +873,8 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 .fc-peek-icon{
   flex-shrink:0;width:32px;height:32px;border-radius:10px;
   display:flex;align-items:center;justify-content:center;
-  background:color-mix(in srgb, var(--fc-accent, #0D9488) 15%, var(--card));
-  color:var(--fc-accent-strong, #115E59);
+  background:color-mix(in srgb, var(--fc-accent, #F97316) 15%, var(--card));
+  color:var(--fc-accent-strong, #C2410C);
 }
 .fc-peek-text{min-width:0;display:flex;flex-direction:column;gap:2px;}
 .fc-peek-handle-label{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink);font-weight:700;font-size:12.5px;}
@@ -870,15 +886,15 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 .fc-peek-handle-btn{
   display:flex;align-items:center;gap:6px;flex-shrink:0;
   background:transparent;
-  color:var(--fc-accent-strong, #115E59);
+  color:var(--fc-accent-strong, #C2410C);
   font-size:10.5px;font-weight:800;letter-spacing:0.03em;text-transform:uppercase;
   padding:9px 15px;border-radius:999px;
-  border:1.4px solid var(--fc-accent-soft, rgba(13,148,136,0.35));
+  border:1.4px solid var(--fc-accent-soft, rgba(249,115,22,0.35));
   transition:background .18s ease, box-shadow .18s ease, transform .18s ease;
   touch-action:manipulation;-webkit-tap-highlight-color:transparent;
 }
 .fc-peek-handle:hover .fc-peek-handle-btn{
-  background:color-mix(in srgb, var(--fc-accent, #0D9488) 14%, transparent);
+  background:color-mix(in srgb, var(--fc-accent, #F97316) 14%, transparent);
   transform:translateY(-1px);
 }
 .fc-peek-handle:active{transform:scale(0.98);}
@@ -966,7 +982,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 .currency-toggle .ct-knob{
   position:absolute;top:3px;left:3px;
   width:38px;height:20px;border-radius:999px;
-  background:linear-gradient(140deg,var(--brass-light),var(--brass));
+  background:linear-gradient(140deg,#FFE4BC,#FF9455);
   box-shadow:0 3px 8px rgba(0,0,0,0.25);
   transition:transform .32s cubic-bezier(.34,1.56,.64,1);
 }
@@ -1392,16 +1408,16 @@ tr.fade-up{animation:fadeRow .35s ease both;}
    transaksi, dan tombol "Lihat Semua" bergaris solid seperti "Ingatkan
    Saya" pada referensi. */
 .flow-deal-card{
-  --fc-accent:#0D9488;--fc-accent-strong:#115E59;--fc-accent-soft:rgba(13,148,136,0.35);
+  --fc-accent:#F97316;--fc-accent-strong:#C2410C;--fc-accent-soft:rgba(249,115,22,0.35);
 }
-.flow-deal-card::before{background:linear-gradient(160deg, rgba(13,148,136,0.09), transparent 58%);}
-.flow-deal-card::after{background:radial-gradient(circle, rgba(13,148,136,0.17), transparent 72%);}
+.flow-deal-card::before{background:linear-gradient(160deg, rgba(249,115,22,0.09), transparent 58%);}
+.flow-deal-card::after{background:radial-gradient(circle, rgba(249,115,22,0.17), transparent 72%);}
 
 .flow-deal-card{
   cursor:default;
   border-top:2.5px solid var(--fc-accent-strong);
 }
-.flow-deal-card:hover{box-shadow:0 16px 34px rgba(13,148,136,0.17);border-color:rgba(13,148,136,0.30);}
+.flow-deal-card:hover{box-shadow:0 16px 34px rgba(249,115,22,0.17);border-color:rgba(249,115,22,0.30);}
 
 /* flex-wrap:nowrap (bukan wrap) supaya kotak timer JAM/MNT/DTK di
    kanan TIDAK PERNAH turun ke bawah judul di layar sempit — judul
@@ -1414,7 +1430,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   margin-bottom:20px;position:relative;z-index:1;flex-wrap:nowrap;
 }
 .flow-deal-title{display:flex;align-items:center;gap:12px;min-width:0;flex:1 1 auto;overflow:hidden;}
-.flow-deal-title .icon-badge{background:linear-gradient(140deg,#5EEAD4,#115E59);box-shadow:0 8px 16px -4px rgba(13,148,136,0.42);flex-shrink:0;}
+.flow-deal-title .icon-badge{background:linear-gradient(140deg,#FDBA74,#C2410C);box-shadow:0 8px 16px -4px rgba(249,115,22,0.42);flex-shrink:0;}
 .flow-deal-title-text{min-width:0;}
 .flow-deal-title-text h3{font-size:16px;font-weight:800;color:var(--ink);letter-spacing:-0.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .flow-deal-sub{font-size:11.5px;font-weight:600;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -1425,9 +1441,9 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 .flow-timer-unit{display:flex;flex-direction:column;align-items:center;gap:3px;}
 .flow-timer-unit .wcc-box{
   min-width:32px;height:30px;padding:0 6px;border-radius:9px;
-  background:var(--forest-deep);color:#fff;font-family:'IBM Plex Mono',monospace;
+  background:#7C2D12;color:#fff;font-family:'IBM Plex Mono',monospace;
   font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:center;
-  box-shadow:0 4px 10px -3px rgba(11,18,32,0.4);
+  box-shadow:0 4px 10px -3px rgba(124,45,18,0.4);
 }
 .flow-timer-unit .wcc-label{font-size:7.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-faint);}
 
@@ -1435,10 +1451,10 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 .flow-deal-tiers{
   flex:1 1 360px;display:flex;gap:12px;overflow-x:auto;
   scroll-snap-type:x proximity;padding:2px 2px 4px;margin:-2px -2px 0;
-  scrollbar-width:thin;scrollbar-color:rgba(13,148,136,0.35) transparent;
+  scrollbar-width:thin;scrollbar-color:rgba(249,115,22,0.35) transparent;
 }
 .flow-deal-tiers::-webkit-scrollbar{height:5px;}
-.flow-deal-tiers::-webkit-scrollbar-thumb{background:rgba(13,148,136,0.35);border-radius:999px;}
+.flow-deal-tiers::-webkit-scrollbar-thumb{background:rgba(249,115,22,0.35);border-radius:999px;}
 
 .flow-tier-card{
   flex:1 1 0;min-width:198px;
