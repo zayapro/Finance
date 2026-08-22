@@ -110,21 +110,21 @@ html{
   background:var(--primary);
 }
 body{
-  /* Titik-titik gradasi di bawah ini DIUKUR LANGSUNG dari sampel
-     piksel foto referensi (bukan tebakan): warna tetap solid oranye
-     (#FF9E36, senada .banner) sampai ±210px dari atas — sesuai tinggi
-     riil .banner — lalu memudar melalui peach/krem dan sudah nyaris
-     putih bersih (#FFFDF7) persis di ±340px, dan tetap flat setelah
-     itu. Ini yang membuat pinggir kartu "Saldo Total" (yang tidak
-     full-bleed) ikut memudar halus dari oranye ke putih seperti pada
-     gambar referensi, alih-alih terpotong tegas ke abu-abu. */
+  /* Dikalibrasi ulang pakai elemen berukuran PASTI di foto referensi
+     (pill divider 36x4px di atas "Ringkasan transaksi kamu") sebagai
+     patokan skala piksel->px, supaya titik transisi di bawah ini jauh
+     lebih presisi dibanding perkiraan sebelumnya: solid oranye
+     (#FF9E36) bertahan sampai ±155px, lalu memudar mengikuti kurva
+     warna asli (peach hangat -> krem -> nyaris putih) dan sudah
+     putih bersih (#FEFFF9) di ±252px, tetap flat setelah itu. */
   background:linear-gradient(180deg,
     #FF9E36 0px,
-    #FF9E36 210px,
-    #FFD9B8 260px,
-    #FFF3E0 300px,
-    #FFFDF7 340px,
-    #FFFDF7 100%);
+    #FF9E36 155px,
+    #FDB468 180px,
+    #FDCC92 205px,
+    #FCE4C2 228px,
+    #FEFFF9 252px,
+    #FEFFF9 100%);
   color:var(--ink);
   font-family:var(--font-body);
   -webkit-font-smoothing:antialiased;
