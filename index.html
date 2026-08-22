@@ -155,8 +155,8 @@ a{color:inherit;}
 .banner{
   position:relative;
   overflow:hidden;
-  background:linear-gradient(160deg, #FF8A50 0%, #F2672B 100%);
-  border-radius:0 0 28px 28px;
+  background:linear-gradient(180deg, #FF8A50 0%, #F2672B 58%, #FF9F68 84%, #FFD9B8 100%);
+  border-radius:0;
   padding:20px 28px 46px;
   margin:0 -24px 0;
   color:#FFF8F1;
@@ -792,20 +792,20 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   /* Sudut bawah disamakan (20px) dengan radius kartu "Saldo Bank &
      E-Wallet" (.stat-card{border-radius:20px}), bukan 22px seperti
      sebelumnya, supaya bentuk lengkung kedua kartu terasa identik. */
-  padding:22px 22px 20px;border-radius:0 0 20px 20px;
+  padding:22px 22px 20px;border-radius:0 0 24px 24px;
   transition:transform .6s cubic-bezier(.22,1,.36,1);
   will-change:transform;
 }
 .fc-peek-handle{
   position:relative;
   margin:0 -46px -20px;padding:20px 20px 16px 22px;
-  border-radius:0 0 20px 20px;
+  border-radius:0 0 24px 24px;
   background:var(--card);
   border-top:1px solid transparent;
   color:var(--ink-soft);font-size:12px;font-weight:600;
   cursor:pointer;
   box-shadow:0 18px 30px -20px rgba(15,23,42,0.20);
-  clip-path:inset(0 0 -40px 0 round 0 0 20px 20px);
+  clip-path:inset(0 0 -40px 0 round 0 0 24px 24px);
   transition:box-shadow .18s ease, transform .35s cubic-bezier(.22,1,.36,1), opacity .3s ease, background .18s ease;
   /* FIX "bayangan kotak" saat tab ini diketuk di HP: browser mobile
      (terutama Safari/Chrome Android) menambahkan highlight kotak abu-
