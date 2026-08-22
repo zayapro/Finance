@@ -159,8 +159,8 @@ a{color:inherit;}
   background-size:240% 240%, 240% 240%, 240% 240%, 280% 280%;
   animation: bannerDrift 18s ease-in-out infinite;
   border-radius:0 0 28px 28px;
-  padding:20px 28px 34px;
-  margin:0 -24px 22px;
+  padding:20px 28px 46px;
+  margin:0 -24px 0;
   color:#FFF8F1;
   /* Warna dasar solid (fallback) DI BAWAH lapisan gradient di atas.
      Kalau lapisan gradient (background-image) sesaat gagal digambar
@@ -758,7 +758,25 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   .wave-wrap, .wave-wrap .wave-layer{animation:none;}
 }
 
-.saldo-block{position:relative;z-index:3;margin-top:22px;}
+.saldo-block{position:relative;z-index:3;}
+/* ---- Kartu putih "Saldo Total" ----
+   Menindih ujung bawah banner oranye (margin-top negatif) dengan
+   z-index lebih tinggi dari .banner-flow-wrap, persis trik yang
+   sudah dipakai banner terhadap flow-wrap (lihat catatan di
+   .banner-flow-wrap) — supaya kartu ini & tab "Ringkasan transaksi
+   kamu" di bawahnya terasa MENYATU jadi satu kartu putih panjang,
+   bukan dua kartu terpisah dengan celah. */
+.saldo-card{
+  position:relative;z-index:2;
+  background:var(--card);
+  margin:-22px -24px 22px;
+  padding:22px 24px 6px;
+  border-radius:24px 24px 0 0;
+  box-shadow:0 20px 44px -26px rgba(15,23,42,0.30);
+}
+@media (max-width:640px){
+  .saldo-card{margin:-18px -24px 22px;padding:18px 20px 4px;border-radius:20px 20px 0 0;}
+}
 /* ---- Efek kartu Uang Masuk & Keluar nyelip di BELAKANG banner ----
    .banner-flow-wrap adalah jendela "overflow:hidden" yang tingginya
    dihitung dinamis (applyFlowDealTuckPosition() di script.js): saat
@@ -943,13 +961,13 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   .fc-collapse-btn{padding:9px;}
 }
 .saldo-label-row{display:flex;align-items:center;justify-content:space-between;gap:10px;}
-.saldo-label{font-size:13px;color:rgba(244,247,243,0.7);font-weight:600;letter-spacing:0.02em;}
+.saldo-label{font-size:13px;color:var(--ink-faint);font-weight:600;letter-spacing:0.02em;}
 .currency-toggle{
   position:relative;flex-shrink:0;
   display:flex;align-items:center;
   width:82px;height:28px;border-radius:999px;padding:3px;
-  background:rgba(244,247,243,0.10);
-  border:1px solid rgba(244,247,243,0.18);
+  background:var(--paper);
+  border:1px solid var(--line);
   cursor:pointer;
   /* FIX "ada bayangan kotak pas diklik di HP": browser mobile secara
      default menggambar highlight sentuh (tap highlight) berbentuk
@@ -965,7 +983,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   -webkit-user-select:none;user-select:none;
   transition:background .18s ease, border-color .18s ease, transform .16s cubic-bezier(.22,.9,.3,1), box-shadow .18s ease;
 }
-.currency-toggle:hover{background:rgba(244,247,243,0.15);border-color:rgba(244,247,243,0.26);}
+.currency-toggle:hover{background:var(--line);border-color:var(--line);}
 /* Sentuhan "smooth" saat ditekan: sedikit mengecil lalu balik pas
    dilepas (transition di atas yang menganimasikannya), jadi ada umpan
    balik taktil yang halus tanpa perlu kotak/outline bawaan browser. */
@@ -990,7 +1008,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 .currency-toggle .ct-opt{
   position:relative;z-index:1;flex:1;text-align:center;
   font-size:10px;font-weight:800;letter-spacing:0.03em;
-  color:rgba(244,247,243,0.55);
+  color:var(--ink-faint);
   transition:color .28s ease;
 }
 .currency-toggle .ct-opt.active{color:var(--forest-deep);}
@@ -1002,6 +1020,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   font-family:'IBM Plex Mono',monospace;
   font-size:clamp(22px, 6.4vw, 42px);
   font-weight:600;
+  color:var(--ink);
   letter-spacing:-0.01em;
   transition:filter .15s ease;
   /* flex:0 1 auto (bukan 1 1 auto): SEBELUMNYA nilai ini memaksa
@@ -1023,12 +1042,12 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   flex-shrink:0;
   width:34px;height:34px;border-radius:9px;
   display:flex;align-items:center;justify-content:center;
-  background:rgba(244,247,243,0.10);
-  border:1px solid rgba(244,247,243,0.16);
-  color:rgba(244,247,243,0.85);
+  background:var(--paper);
+  border:1px solid var(--line);
+  color:var(--ink-soft);
   transition:background .15s ease, color .15s ease;
 }
-.saldo-toggle:hover{background:rgba(244,247,243,0.18);color:#fff;}
+.saldo-toggle:hover{background:var(--line);color:var(--ink);}
 /* Baris Pemasukan/Pengeluaran bulan ini: SENGAJA justify-content:flex-start
    (bukan space-between) supaya di layar lebar (desktop/tablet) kedua item
    ini tetap NEMPEL rapat & mengelompok tepat di bawah "Saldo Total",
@@ -1050,17 +1069,16 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 .saldo-sub-item .ic{
   width:28px;height:28px;border-radius:8px;flex-shrink:0;
   display:flex;align-items:center;justify-content:center;
-  background:rgba(244,247,243,0.12);
 }
-.saldo-sub-item .ic.income{color:var(--brass-light);}
-.saldo-sub-item .ic.expense{color:var(--wine-light);}
+.saldo-sub-item .ic.income{color:var(--brass);background:rgba(5,150,105,0.12);}
+.saldo-sub-item .ic.expense{color:var(--wine);background:rgba(225,29,72,0.12);}
 .saldo-sub-text{min-width:0;}
-.saldo-sub-text .k{font-size:11px;color:rgba(244,247,243,0.65);}
-.saldo-sub-text .v{font-family:'IBM Plex Mono',monospace;font-size:14.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.saldo-sub-text .k{font-size:11px;color:var(--ink-faint);}
+.saldo-sub-text .v{font-family:'IBM Plex Mono',monospace;font-size:14.5px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
 .saldo-targets{
   position:relative;z-index:3;margin-top:18px;padding-top:16px;
-  border-top:1px solid rgba(244,247,243,0.14);
+  border-top:1px solid var(--line);
   display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:14px 18px;
 }
 /* Sebelumnya disembunyikan total di HP (<768px). Sekarang tetap
@@ -1071,15 +1089,15 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 }
 .saldo-target-item{min-width:0;}
 .saldo-target-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px;gap:8px;}
-.saldo-target-name{font-size:11.5px;font-weight:700;color:rgba(244,247,243,0.75);text-transform:uppercase;letter-spacing:0.03em;white-space:normal;line-height:1.3;overflow-wrap:break-word;}
-.saldo-target-pct{font-size:11px;font-weight:700;color:rgba(244,247,243,0.9);flex-shrink:0;margin-top:1px;}
-.saldo-target-track{height:7px;border-radius:999px;background:rgba(244,247,243,0.14);overflow:hidden;}
+.saldo-target-name{font-size:11.5px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:0.03em;white-space:normal;line-height:1.3;overflow-wrap:break-word;}
+.saldo-target-pct{font-size:11px;font-weight:700;color:var(--ink);flex-shrink:0;margin-top:1px;}
+.saldo-target-track{height:7px;border-radius:999px;background:var(--line);overflow:hidden;}
 .saldo-target-fill{height:100%;border-radius:999px;width:0%;transition:width 1s cubic-bezier(.22,.9,.3,1);}
 .saldo-target-fill.in{background:linear-gradient(90deg,#059669,#6EE7B7);}
 .saldo-target-fill.out{background:linear-gradient(90deg,#E11D48,#FDA4AF);}
-.saldo-target-nums{display:flex;flex-wrap:wrap;justify-content:space-between;column-gap:8px;row-gap:2px;margin-top:5px;font-size:11px;color:rgba(244,247,243,0.6);font-family:'IBM Plex Mono',monospace;}
+.saldo-target-nums{display:flex;flex-wrap:wrap;justify-content:space-between;column-gap:8px;row-gap:2px;margin-top:5px;font-size:11px;color:var(--ink-faint);font-family:'IBM Plex Mono',monospace;}
 .saldo-target-nums span{white-space:nowrap;}
-.saldo-target-nums .cur{color:rgba(244,247,243,0.92);font-weight:600;}
+.saldo-target-nums .cur{color:var(--ink);font-weight:600;}
 
 /* ---- Kartu jalan pintas "Sumber Pendapatan" ----
    Diletakkan tepat di bawah kartu "Uang Masuk & Keluar": strip ikon
@@ -5341,7 +5359,6 @@ tbody tr.date-group-row:first-child td{border-top:none;}
     background-position:0 0, 0 0;
     opacity:0.55;
   }
-  .saldo-block{margin-top:16px;}
 }
 
 /* ---- Hentikan sementara animasi dekoratif banner SELAMA halaman
@@ -5738,7 +5755,8 @@ body.is-scrolling *{
      -14px dari breakpoint lain di atas — 2px lebih lebar dari padding
      .app (12px) yang menang di sini, membuat banner bocor 2px keluar
      viewport di tiap sisi dan memicu scroll horizontal tipis di HP. */
-  .banner{padding:14px 14px 26px;margin:0 -12px 18px;border-radius:0 0 18px 18px;}
+  .banner{padding:14px 14px 38px;margin:0 -12px 0;border-radius:0 0 18px 18px;}
+  .saldo-card{margin:-16px -12px 18px;padding:16px 16px 4px;border-radius:18px 18px 0 0;}
   .brand{gap:7px;padding:5px 6px;margin:-5px -6px;}
   .brand-mark{width:30px;height:30px;border-radius:8px;}
   .brand-name{font-size:16.5px;}
@@ -6062,7 +6080,16 @@ body.is-scrolling *{
         </button>
       </div>
     </div>
+  </header>
 
+  <!-- ===== KARTU SALDO (putih, menyelip di bawah banner oranye) =====
+       Dulu blok ini (Saldo Total/angka/Pemasukan-Pengeluaran) ada DI
+       DALAM header oranye dengan teks putih. Sekarang dipindah jadi
+       kartu putih sendiri yang menindih ujung bawah banner (lihat
+       .saldo-card di CSS, margin-top negatif + z-index sama seperti
+       trik "menyelip" yang sudah dipakai .banner-flow-wrap di bawahnya),
+       supaya menyatu rapi dengan tab "Ringkasan transaksi kamu". -->
+  <div class="saldo-card" id="saldoCard">
     <div class="saldo-block">
       <div class="saldo-label-row">
         <div class="saldo-label">Saldo Total</div>
@@ -6098,18 +6125,7 @@ body.is-scrolling *{
 
       <div class="saldo-targets" id="saldoTargets"></div>
     </div>
-
-    <div class="wave-wrap" aria-hidden="true">
-      <svg class="wave-layer wave-back" viewBox="0 0 1600 80" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M0 40 C 100 10, 200 70, 300 40 S 500 10, 600 40 S 800 70, 900 40 S 1100 10, 1200 40 S 1400 70, 1500 40 L1600 80 L0 80 Z" fill="rgba(244,247,243,0.05)"/>
-        <path d="M800 40 C 900 10, 1000 70, 1100 40 S 1300 10, 1400 40 S 1600 70, 1700 40 S 1900 10, 2000 40 S 2200 70, 2300 40 L2400 80 L800 80 Z" fill="rgba(244,247,243,0.05)"/>
-      </svg>
-      <svg class="wave-layer wave-front" viewBox="0 0 1600 80" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M0 48 C 100 20, 200 76, 300 48 S 500 20, 600 48 S 800 76, 900 48 S 1100 20, 1200 48 S 1400 76, 1500 48 L1600 80 L0 80 Z" fill="rgba(244,247,243,0.09)"/>
-        <path d="M800 48 C 900 20, 1000 76, 1100 48 S 1300 20, 1400 48 S 1600 76, 1700 48 S 1900 20, 2000 48 S 2200 76, 2300 48 L2400 80 L800 80 Z" fill="rgba(244,247,243,0.09)"/>
-      </svg>
-    </div>
-  </header>
+  </div>
 
   <div class="banner-flow-wrap" id="bannerFlowWrap"></div>
 
