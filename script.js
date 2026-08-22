@@ -1371,10 +1371,12 @@ function applySaldoVisibility() {
   const valueEl = document.getElementById('saldoValue');
   const iconEl = document.getElementById('saldoEyeIcon');
   const btn = document.getElementById('saldoToggle');
+  const textEl = document.getElementById('saldoToggleText');
   if (!valueEl || !iconEl) return;
   valueEl.classList.toggle('is-hidden', hidden);
   iconEl.innerHTML = hidden ? EYE_OFF_SVG : EYE_OPEN_SVG;
   if (btn) btn.title = hidden ? 'Tampilkan saldo' : 'Sembunyikan saldo';
+  if (textEl) textEl.textContent = hidden ? 'Lihat' : 'Sembunyikan';
 }
 
 document.getElementById('saldoToggle').addEventListener('click', () => {
