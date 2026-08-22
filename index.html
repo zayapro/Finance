@@ -155,13 +155,7 @@ a{color:inherit;}
 .banner{
   position:relative;
   overflow:hidden;
-  background:
-    radial-gradient(circle at 15% 20%, rgba(255,214,153,0.55), transparent 45%),
-    radial-gradient(circle at 85% 15%, rgba(255,255,255,0.22), transparent 50%),
-    radial-gradient(circle at 75% 90%, rgba(194,65,12,0.30), transparent 55%),
-    linear-gradient(120deg, #FF7A3D, #FF9455, #F2672B);
-  background-size:240% 240%, 240% 240%, 240% 240%, 280% 280%;
-  animation: bannerDrift 18s ease-in-out infinite;
+  background:linear-gradient(160deg, #FF8A50 0%, #F2672B 100%);
   border-radius:0 0 28px 28px;
   padding:20px 28px 46px;
   margin:0 -24px 0;
@@ -188,18 +182,14 @@ a{color:inherit;}
      pas-pasan kadang gagal selesai dalam satu frame. Makanya properti
      itu dilepas di sini.
   */
+  /* PERMINTAAN: gradasi disederhanakan jadi flat 2-warna (bukan lagi
+     3 lapisan radial-gradient beranimasi + drift) supaya senada
+     referensi desain yang gradasinya rata/bersih tanpa bercak. Grid
+     titik dekoratif (.banner::before), garis gelombang (.flow-line),
+     dan partikel naik-turun (.flow-field) juga dimatikan di bawah. */
 }
 .banner::before{
-  content:'';
-  position:absolute;inset:0;
-  background-image:
-    linear-gradient(rgba(244,247,251,0.045) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(244,247,251,0.045) 1px, transparent 1px);
-  background-size:34px 34px;
-  mask-image:radial-gradient(ellipse at 30% 20%, black 0%, transparent 75%);
-  -webkit-mask-image:radial-gradient(ellipse at 30% 20%, black 0%, transparent 75%);
-  z-index:0;
-  animation: gridPan 24s linear infinite;
+  content:none;
 }
 @keyframes gridPan{
   0%{background-position:0 0, 0 0;}
@@ -249,7 +239,7 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
   .banner{animation:none;background-position:15% 25%, 85% 15%, 75% 90%, 20% 20%;}
   .banner::before{animation:none;}
 }
-.flow-line{position:absolute;left:0;right:0;top:44%;height:90px;z-index:1;opacity:0.55;pointer-events:none;}
+.flow-line{display:none;}
 .flow-line svg{width:220%;height:100%;animation:flowLineScroll 22s linear infinite;}
 @keyframes flowLineScroll{from{transform:translateX(0);}to{transform:translateX(-54.5%);}}
 
@@ -678,11 +668,7 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
 }
 
 
-.flow-field{
-  position:absolute;inset:0;
-  z-index:1;
-  pointer-events:none;
-}
+.flow-field{display:none;}
 .particle{
   position:absolute;
   border-radius:50%;
@@ -812,13 +798,13 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 }
 .fc-peek-handle{
   position:relative;
-  margin:0 -22px -20px;padding:20px 20px 16px 22px;
+  margin:0 -46px -20px;padding:20px 20px 16px 22px;
   border-radius:0 0 20px 20px;
   background:var(--card);
   border-top:1px solid transparent;
   color:var(--ink-soft);font-size:12px;font-weight:600;
   cursor:pointer;
-  box-shadow:0 14px 14px -14px rgba(15,23,42,0.28), 0 2px 0 rgba(37,99,235,0.05) inset;
+  box-shadow:0 18px 30px -20px rgba(15,23,42,0.20);
   clip-path:inset(0 0 -40px 0 round 0 0 20px 20px);
   transition:box-shadow .18s ease, transform .35s cubic-bezier(.22,1,.36,1), opacity .3s ease, background .18s ease;
   /* FIX "bayangan kotak" saat tab ini diketuk di HP: browser mobile
@@ -827,6 +813,14 @@ tr.fade-up{animation:fadeRow .35s ease both;}
      secara eksplisit. touch-action:manipulation juga disertakan supaya
      tidak ada jeda 300ms & tap terasa lebih responsif. */
   touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+  /* PENTING: margin kiri/kanan di atas (-46px) SENGAJA lebih besar dari
+     sekadar membatalkan padding .flow-deal-card (22px) — karena
+     .banner-flow-wrap (induknya) TIDAK ikut full-bleed seperti .banner
+     & .saldo-card (yang punya margin -24px meniadakan padding .app),
+     jadi tab ini perlu MENIADAKAN JUGA inset .app itu (24px) supaya
+     benar-benar nempel rata sisi ke sisi selebar kartu Saldo Total di
+     atasnya (dulu ada celah abu-abu di kiri-kanan karena cuma
+     menutupi padding kartunya sendiri, tidak sampai ke tepi layar). */
 }
 /* ---- Baris konten (ikon+label+tombol) dipisah dari .fc-peek-handle
    supaya bisa dibatasi lebar maksimalnya sendiri. .fc-peek-handle boleh
@@ -965,7 +959,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   .fc-collapse-btn{padding:9px;}
 }
 .saldo-label-row{display:flex;align-items:center;justify-content:space-between;gap:10px;}
-.saldo-label{font-size:13px;color:var(--ink-faint);font-weight:600;letter-spacing:0.02em;}
+.saldo-label{font-size:14px;color:var(--ink-faint);font-weight:700;letter-spacing:0.02em;}
 .currency-toggle{
   position:relative;flex-shrink:0;
   display:flex;align-items:center;
@@ -1061,8 +1055,8 @@ tr.fade-up{animation:fadeRow .35s ease both;}
    pojok). Di HP (≤600px) tetap dikembalikan ke space-between lewat
    media query di bawah, karena di lebar sempit itu justru bikin kedua
    item mengisi rata lebar layar dengan rapi. */
-.saldo-sub{display:flex;gap:22px;margin-top:16px;flex-wrap:wrap;justify-content:flex-start;position:relative;z-index:3;}
-.saldo-sub-item{display:flex;align-items:center;gap:8px;min-width:0;}
+.saldo-sub{display:flex;gap:26px;margin-top:20px;flex-wrap:wrap;justify-content:flex-start;position:relative;z-index:3;}
+.saldo-sub-item{display:flex;align-items:center;gap:10px;min-width:0;}
 @media (max-width:600px){
   .saldo-sub{gap:10px;justify-content:space-between;flex-wrap:nowrap;}
   .saldo-sub-item{flex:1 1 0;min-width:0;}
@@ -1077,8 +1071,8 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 .saldo-sub-item .ic.income{color:var(--ink-soft);background:none;}
 .saldo-sub-item .ic.expense{color:var(--ink-soft);background:none;}
 .saldo-sub-text{min-width:0;}
-.saldo-sub-text .k{font-size:11px;color:var(--ink-faint);}
-.saldo-sub-text .v{font-family:'IBM Plex Mono',monospace;font-size:14.5px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.saldo-sub-text .k{font-size:12px;color:var(--ink-faint);font-weight:600;}
+.saldo-sub-text .v{font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;font-weight:800;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
 .saldo-targets{
   position:relative;z-index:3;margin-top:18px;padding-top:16px;
@@ -1610,6 +1604,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   .flow-tier-card{padding:13px 13px 11px;}
   .ftc-chart-wrap{height:68px;}
   .banner-flow-wrap .flow-deal-card{padding:18px 16px 16px;}
+  .fc-peek-handle{margin:0 -28px -20px;}
   .flow-deal-title-text h3{font-size:14.5px;}
   .flow-deal-body{gap:16px;}
 }
@@ -1643,7 +1638,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
      kompensasi supaya semua elemen (ikon+label+mini-preview+tombol)
      tetap muat satu baris tanpa kepotong, ikon/gap/tombol
      diperkecil sedikit lagi di bawah. */
-  .fc-peek-handle{padding:14px 16px 12px 16px;}
+  .fc-peek-handle{margin:0 -34px -20px;padding:14px 16px 12px 16px;}
   .fc-peek-row{gap:7px;max-width:none;}
   .fc-peek-icon{width:26px;height:26px;border-radius:9px;}
   .fc-peek-icon svg{width:14px;height:14px;}
@@ -1712,7 +1707,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
    rapi (ikon+judul+baris Masuk-Keluar+tombol jadi kurang muat) di HP
    kecil seperti iPhone SE/Android layar 360px. */
 @media (max-width:380px){
-  .fc-peek-handle{padding:12px 14px 10px 14px;}
+  .fc-peek-handle{margin:0 -26px -20px;padding:12px 14px 10px 14px;}
   .fc-peek-row{gap:5px;}
   .fc-peek-info{gap:5px;}
   .fc-peek-icon{width:22px;height:22px;border-radius:7px;}
