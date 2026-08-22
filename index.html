@@ -65,9 +65,9 @@
   --ink-soft:#5B6472;
   --ink-faint:#8A93A3;
   --line:#E4E8EF;
-  --shadow-sm: 0 3px 14px rgba(13,21,38,0.07);
-  --shadow-md: 0 18px 42px rgba(13,21,38,0.14);
-  --radius: 18px;
+  --shadow-sm: 0 2px 10px rgba(15,23,42,0.06);
+  --shadow-md: 0 14px 36px rgba(15,23,42,0.14);
+  --radius: 14px;
   --font-body:'Plus Jakarta Sans', sans-serif;
   --font-display:'Fraunces', serif;
 
@@ -5886,207 +5886,179 @@ body.is-scrolling *{
 #cloudSyncBadge .dot{ width:7px; height:7px; border-radius:50%; background:#6EE7B7; }
 #cloudSyncBadge.err .dot{ background:#FDA4AF; }
 /* ============================================================
-   REDESIGN "EMERALD AURORA" — ganti total dari tema oranye:
-   banner kaca gelap animasi aurora, kartu saldo glassmorphic
-   melayang, radius lebih besar & lembut, ikon berwarna dalam
-   chip bulat, toggle mata uang pill bergradasi, kartu ringkasan
-   transaksi dengan aksen garis warna di kiri.
+   REDESIGN ORANGE "ZAYAPRO" v2 — disesuaikan sedekat mungkin
+   dengan referensi gambar (warna, ukuran, radius, font).
    ============================================================ */
 :root{
-  --ea-bg-1:#050B14;
-  --ea-bg-2:#0A1730;
-  --ea-bg-3:#0F2027;
-  --ea-emerald:#12D9A8;
-  --ea-emerald-soft:#6EF3CE;
-  --ea-violet:#8B7CFA;
-  --ea-amber:#FFC85C;
-  --ea-rose:#FF6B8B;
-  --ea-paper:#F3F6FA;
-  --ea-ink:#0D1526;
-  --ea-grey:#6B7590;
-  --ea-grey-lt:#A6AEC2;
-  --ea-line:#E6E9F2;
-  --ea-glass:rgba(255,255,255,0.08);
-  --ea-glass-brd:rgba(255,255,255,0.16);
-  --radius:22px;
+  --or-1:#FF9A44;
+  --or-2:#FF7A1F;
+  --or-3:#FF6519;
+  --or-ink:#10162A;
+  --or-paper:#FFF3E8;
+  --or-grey:#8D93A6;
+  --or-grey-lt:#B7BBC9;
+  --or-line:#ECEDF2;
+  --or-chip:#F2F3F7;
 }
-html{background:var(--ea-bg-1);}
+html{background:var(--or-2);}
 body{
-  background-color:var(--ea-paper);
-  background-image:radial-gradient(circle at 12% 0%, rgba(18,217,168,0.16), transparent 42%),
-    radial-gradient(circle at 88% 8%, rgba(139,124,250,0.14), transparent 48%),
-    linear-gradient(180deg, var(--ea-bg-1) 0%, var(--ea-bg-2) 46%, rgba(243,246,250,0) 100%);
+  background-color:var(--or-paper);
+  background-image:linear-gradient(180deg, var(--or-2) 0%, var(--or-1) 34%, rgba(255,243,232,0) 100%);
   background-repeat:no-repeat;
-  background-size:100% 100%, 100% 100%, 100% 560px;
+  background-size:100% 480px;
 }
-
-/* ---- Banner: kaca gelap + aurora animasi tetap hidup, dipertajam ---- */
 .banner{
-  background:
-    radial-gradient(circle at 18% 15%, rgba(18,217,168,0.30), transparent 46%),
-    radial-gradient(circle at 82% 10%, rgba(139,124,250,0.28), transparent 50%),
-    radial-gradient(circle at 60% 95%, rgba(255,107,139,0.10), transparent 55%),
-    linear-gradient(150deg, var(--ea-bg-1) 0%, var(--ea-bg-2) 55%, var(--ea-bg-3) 100%) !important;
-  background-color:var(--ea-bg-1) !important;
-  border-radius:0 0 36px 36px;
-  padding:18px 20px 30px;
+  background:linear-gradient(160deg, #FF9548 0%, var(--or-2) 55%, var(--or-3) 100%) !important;
+  background-color:var(--or-2) !important;
+  animation:none !important;
+  padding:20px 20px 24px;
 }
-.banner::before{opacity:0.5 !important;}
-.flow-line{opacity:0.4;}
+.banner::before{opacity:0 !important;animation:none !important;}
+.flow-line{display:none;}
 .wave-wrap{display:none;}
 
-/* ---- Logo ---- */
+/* ---- Logo "ZAYAPRO" ---- */
 .brand{padding:4px 6px;margin:-4px -6px;}
 .brand-mark{
-  width:42px;height:42px;border-radius:14px;
-  background:linear-gradient(135deg, var(--ea-emerald), var(--ea-violet));
-  color:#04140F;
-  box-shadow:0 6px 16px -4px rgba(18,217,168,0.45);
+  width:46px;height:46px;border-radius:15px;
+  background:#FFFFFF;
+  color:#FF3D2E;
+  box-shadow:0 4px 12px rgba(0,0,0,0.14);
 }
-.brand-mark svg{width:19px;height:19px;}
-.brand-name{color:#F5F8FF;font-family:'Poppins',var(--font-body);font-weight:800;font-size:19px;letter-spacing:0.01em;}
+.brand-mark svg{width:20px;height:20px;}
+.brand-name{color:#FFFFFF;font-family:'Poppins',var(--font-body);font-weight:800;font-size:21px;letter-spacing:0.01em;}
 
-/* ---- Tanggal + kurs ---- */
-.banner-date{color:rgba(245,248,255,0.92);font-weight:600;font-size:13.5px;}
+/* ---- Tanggal + baris kurs kecil di bawahnya (mengisi slot yang
+   sama seperti indikator kecil pada referensi) ---- */
+.banner-date{color:#FFFFFF;font-weight:600;font-size:14.5px;}
 .banner-date-col{gap:5px;}
-.banner-fx{display:flex !important;font-size:10.5px;color:rgba(245,248,255,0.6);}
-.banner-fx .fx-dot{background:var(--ea-emerald-soft);}
-.banner-fx .fx-dot::after{background:var(--ea-emerald-soft);}
-.banner-fx .fx-label{color:rgba(245,248,255,0.5);}
-.banner-fx .fx-value{color:rgba(245,248,255,0.92);}
+.banner-fx{display:flex !important;font-size:11px;color:rgba(255,255,255,0.85);}
+.banner-fx .fx-dot{background:#FFFFFF;}
+.banner-fx .fx-dot::after{background:#FFFFFF;}
+.banner-fx .fx-label{color:rgba(255,255,255,0.75);}
+.banner-fx .fx-value{color:#FFFFFF;}
+.banner-fx .fx-value.up,.banner-fx .fx-value.down{color:#FFFFFF;}
 
-/* ---- Tombol ikon bulat kanan-atas: kaca ---- */
-.banner-top-right{gap:9px;}
+/* ---- 3 tombol ikon bulat kanan-atas ---- */
+.banner-top-right{gap:10px;}
 .banner-top-right .notif-btn{
-  width:40px;height:40px;border-radius:13px;
-  background:var(--ea-glass);
-  border:1px solid var(--ea-glass-brd);
-  color:#F5F8FF;
-  backdrop-filter:blur(8px);
-  -webkit-backdrop-filter:blur(8px);
+  width:44px;height:44px;border-radius:50%;
+  background:rgba(255,255,255,0.24);
+  border:none;
+  color:#fff;
 }
-.banner-top-right .notif-btn svg{width:17px;height:17px;}
-.banner-top-right .notif-btn:hover{background:rgba(255,255,255,0.16);}
-.banner-add-btn{
-  background:linear-gradient(135deg, var(--ea-emerald), var(--ea-emerald-soft)) !important;
-  border:none !important;color:#04140F !important;
-}
-.notif-badge{background:var(--ea-rose);color:#fff;}
+.banner-top-right .notif-btn svg{width:19px;height:19px;}
+.banner-top-right .notif-btn:hover{background:rgba(255,255,255,0.36);}
+.banner-add-btn{background:rgba(255,255,255,0.34) !important;}
+.notif-badge{background:#FFFFFF;color:var(--or-2);}
 
-/* ---- Kartu saldo: kaca melayang, teks terang ---- */
+/* ---- Kartu putih melayang "Saldo Total" ---- */
 .saldo-block{
   position:relative;z-index:3;
-  margin-top:18px;
-  background:linear-gradient(165deg, rgba(255,255,255,0.14), rgba(255,255,255,0.05));
-  border:1px solid rgba(255,255,255,0.18);
-  border-radius:28px;
-  padding:24px 22px 22px;
-  box-shadow:0 30px 60px -24px rgba(2,10,20,0.55);
-  backdrop-filter:blur(18px);
-  -webkit-backdrop-filter:blur(18px);
-  color:#F5F8FF;
+  margin-top:20px;
+  background:#FFFFFF;
+  border-radius:32px;
+  padding:26px 24px 12px;
+  box-shadow:0 26px 50px -20px rgba(120,50,0,0.30), 0 2px 10px rgba(0,0,0,0.03);
+  color:var(--or-ink);
 }
-.saldo-label{color:rgba(245,248,255,0.72);font-weight:600;font-size:14px;text-transform:uppercase;letter-spacing:0.08em;}
+.saldo-label{color:var(--or-ink);font-weight:700;font-size:19px;font-family:'Poppins',var(--font-body);}
+
+/* "Lihat >" — pengganti toggle sembunyikan/tampilkan saldo, posisi
+   & gaya teks-tautan abu-abu seperti pada referensi */
 .saldo-toggle{
-  flex-shrink:0;width:auto;height:auto;border-radius:999px;
-  display:flex;align-items:center;gap:4px;padding:5px 10px;
-  background:rgba(255,255,255,0.10);border:1px solid rgba(255,255,255,0.14);
-  color:rgba(245,248,255,0.85);font-size:12px;font-weight:600;
+  flex-shrink:0;
+  width:auto;height:auto;border-radius:0;
+  display:flex;align-items:center;gap:3px;
+  padding:2px;
+  background:none;border:none;
+  color:var(--or-grey);font-size:15px;font-weight:500;
 }
-.saldo-toggle svg{width:13px;height:13px;}
+.saldo-toggle svg{width:14px;height:14px;}
 .saldo-toggle .st-eye{display:none;}
-.saldo-toggle .st-chev{width:11px;height:11px;color:rgba(245,248,255,0.6);}
-.saldo-toggle:hover{background:rgba(255,255,255,0.18);color:#fff;}
+.saldo-toggle .st-chev{width:12px;height:12px;color:var(--or-grey);}
+.saldo-toggle:hover{background:none;color:var(--or-ink);}
 .saldo-toggle .st-text{white-space:nowrap;}
 
-.saldo-row{gap:12px;align-items:flex-end;margin-top:6px;}
+/* Chip IDR/USD kecil, disisipkan di sebelah angka saldo supaya
+   fiturnya tetap ada tanpa mengganggu posisi elemen lain */
+.saldo-row{gap:10px;align-items:flex-end;}
 .currency-toggle{
-  width:62px;height:24px;border-radius:999px;
-  background:rgba(255,255,255,0.10);border-color:rgba(255,255,255,0.18);
+  width:60px;height:22px;
+  background:var(--or-chip);border-color:var(--or-line);
   flex-shrink:0;margin-bottom:6px;
 }
-.currency-toggle .ct-knob{width:28px;height:16px;border-radius:999px;background:linear-gradient(135deg,var(--ea-emerald),var(--ea-violet));}
+.currency-toggle .ct-knob{width:28px;height:14px;background:linear-gradient(140deg,var(--or-1),var(--or-2));}
 .currency-toggle.usd .ct-knob{transform:translateX(28px);}
-.currency-toggle .ct-opt{color:rgba(245,248,255,0.45);font-size:8.5px;}
-.currency-toggle .ct-opt.active{color:#04140F;}
+.currency-toggle .ct-opt{color:var(--or-grey-lt);font-size:8.5px;}
+.currency-toggle .ct-opt.active{color:#fff;}
 .saldo-value{
-  color:#FFFFFF;
+  color:var(--or-ink);
   font-family:'Poppins',var(--font-body);
   font-weight:700;
-  font-size:clamp(30px,8vw,46px);
+  font-size:clamp(30px,8vw,48px);
   letter-spacing:-0.02em;
-  text-shadow:0 4px 24px rgba(0,0,0,0.25);
 }
 
-.saldo-sub{
-  margin-top:20px;padding-top:16px;
-  border-top:1px solid rgba(255,255,255,0.14);
-  justify-content:flex-start;gap:14px;
-}
-.saldo-sub-item{
-  gap:10px;align-items:center;flex:1;
-  background:rgba(255,255,255,0.06);
-  border-radius:16px;padding:10px 12px;
-}
+.saldo-sub{margin-top:22px;justify-content:flex-start;gap:40px;}
+.saldo-sub-item{gap:10px;align-items:flex-start;}
 .saldo-sub-item .ic{
-  width:30px;height:30px;border-radius:10px;flex-shrink:0;
-  display:flex;align-items:center;justify-content:center;
-  margin-top:0;
+  background:none;width:auto;height:auto;border-radius:0;color:var(--or-ink);margin-top:3px;
 }
-.saldo-sub-item .ic svg{width:14px;height:14px;}
-.saldo-sub-item .ic.income{background:rgba(18,217,168,0.22);color:var(--ea-emerald-soft);}
-.saldo-sub-item .ic.expense{background:rgba(255,107,139,0.20);color:var(--ea-rose);}
-.saldo-sub-text .k{color:rgba(245,248,255,0.55);font-weight:500;font-size:11.5px;}
-.saldo-sub-text .v{color:#FFFFFF;font-family:'Poppins',var(--font-body);font-weight:700;font-size:16.5px;margin-top:2px;}
+.saldo-sub-item .ic svg{width:16px;height:16px;}
+.saldo-sub-item .ic.income,
+.saldo-sub-item .ic.expense{color:var(--or-ink);}
+.saldo-sub-text .k{color:var(--or-grey);font-weight:500;font-size:13.5px;}
+.saldo-sub-text .v{color:var(--or-ink);font-family:'Poppins',var(--font-body);font-weight:700;font-size:19px;margin-top:2px;}
 
-.saldo-targets{border-top-color:rgba(255,255,255,0.14);}
-.saldo-target-name{color:rgba(245,248,255,0.6);}
-.saldo-target-pct{color:#FFFFFF;}
-.saldo-target-track{background:rgba(255,255,255,0.14);}
-.saldo-target-nums{color:rgba(245,248,255,0.6);}
-.saldo-target-nums .cur{color:#FFFFFF;}
+.saldo-targets{border-top-color:var(--or-line);}
+.saldo-target-name{color:var(--or-grey);}
+.saldo-target-pct{color:var(--or-ink);}
+.saldo-target-track{background:var(--or-line);}
+.saldo-target-nums{color:var(--or-grey);}
+.saldo-target-nums .cur{color:var(--or-ink);}
 
 @media (max-width:600px){
-  .banner{padding:14px 16px 26px;border-radius:0 0 30px 30px;}
-  .saldo-block{border-radius:24px;padding:20px 18px 18px;}
-  .saldo-sub{gap:10px;}
-  .brand-mark{width:38px;height:38px;border-radius:12px;}
-  .saldo-value{font-size:clamp(27px,9vw,38px);}
+  .banner{padding:16px 16px 20px;border-radius:0 0 24px 24px;}
+  .saldo-block{border-radius:28px;padding:22px 18px 8px;}
+  .saldo-sub{gap:24px;}
+  .brand-mark{width:40px;height:40px;border-radius:13px;}
+  .saldo-value{font-size:clamp(28px,9vw,40px);}
 }
 
-/* ---- Kartu "Ringkasan transaksi kamu": mengambang di bawah kartu
-   saldo dengan jarak aman (dorong ke bawah, bukan menumpuk),
-   aksen garis warna di kiri, ikon chip bulat. ---- */
+/* ---- Kartu "Ringkasan transaksi kamu" (fitur asli: kartu Uang
+   Masuk & Keluar yang nyelip/peek di bawah banner) — dipindah &
+   diselaraskan warnanya + tipografi supaya nempel tepat di bawah
+   kartu putih Saldo Total, sesuai posisi pada referensi gambar. ---- */
 :root{
-  --fc-accent: var(--ea-emerald);
-  --fc-accent-strong: var(--ea-violet);
-  --fc-accent-soft: rgba(18,217,168,0.28);
+  --fc-accent: var(--or-2);
+  --fc-accent-strong: var(--or-3);
+  --fc-accent-soft: rgba(255,122,31,0.30);
 }
-.banner-flow-wrap{margin:-40px 0 18px;}
+.banner-flow-wrap{margin:-32px 0 18px;}
 .fc-peek-handle{
   background:#FFFFFF;
-  border-top:none;border-left:4px solid var(--ea-emerald);
-  border-radius:20px;
-  padding:16px 20px 20px;
-  box-shadow:0 18px 40px -26px rgba(13,21,38,0.35);
+  border-top:none;
+  padding:16px 24px 22px;
+  box-shadow:0 20px 34px -22px rgba(120,50,0,0.20);
 }
 .fc-peek-handle::before{
-  width:40px;height:4px;background:var(--ea-line);top:8px;
+  width:44px;height:4px;background:var(--or-line);top:9px;
 }
 .fc-peek-icon{
-  width:32px;height:32px;border-radius:11px;
-  background:linear-gradient(135deg, var(--ea-emerald), var(--ea-violet));color:#fff;
+  width:30px;height:30px;border-radius:9px;
+  background:var(--or-chip);color:var(--or-ink);
 }
 .fc-peek-icon svg{width:15px;height:15px;}
-.fc-peek-handle-label{color:var(--ea-ink);font-weight:700;font-size:15px;font-family:'Poppins',var(--font-body);}
-.fc-peek-mini{color:var(--ea-grey);font-size:11px;}
+.fc-peek-handle-label{color:var(--or-ink);font-weight:700;font-size:15px;font-family:'Poppins',var(--font-body);}
+.fc-peek-mini{color:var(--or-grey);font-size:11px;}
 .fc-peek-mini .fc-peek-mini-in b{color:#059669;}
 .fc-peek-mini .fc-peek-mini-out b{color:#E11D48;}
-.fc-peek-handle-btn{color:var(--ea-violet);border-color:rgba(139,124,250,0.35);}
-.fc-peek-handle:hover .fc-peek-handle-btn{background:rgba(139,124,250,0.12);}
-.fc-peek-chev{color:var(--ea-grey-lt);}
+.fc-peek-handle-btn{color:var(--or-2);border-color:var(--fc-accent-soft);}
+.fc-peek-handle:hover .fc-peek-handle-btn{background:rgba(255,122,31,0.12);}
+.fc-peek-chev{color:var(--or-grey-lt);}
 @media (max-width:600px){
-  .banner-flow-wrap{margin:-36px 0 16px;}
+  .banner-flow-wrap{margin:-28px 0 16px;}
 }
 </style>
 </head>
