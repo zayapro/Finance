@@ -350,6 +350,16 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
   background:linear-gradient(145deg, var(--brass-light), var(--brass));
   display:flex;align-items:center;justify-content:center;
   color:var(--forest-deep);
+  box-shadow:0 0 0 0 rgba(5,150,105,0.5);
+  animation:brandMarkPulse 2.6s ease-in-out infinite;
+}
+@keyframes brandMarkPulse{
+  0%{box-shadow:0 0 0 0 rgba(5,150,105,0.45);}
+  70%{box-shadow:0 0 0 10px rgba(5,150,105,0);}
+  100%{box-shadow:0 0 0 0 rgba(5,150,105,0);}
+}
+@media (max-width:640px), (prefers-reduced-motion:reduce){
+  .brand-mark{animation:none;box-shadow:none;}
 }
 .brand-name{font-family:'Fraunces',serif;font-weight:600;font-size:19px;letter-spacing:-0.01em;white-space:nowrap;}
 .banner-date-col{display:flex;flex-direction:column;align-items:flex-end;gap:4px;min-width:0;}
@@ -1067,36 +1077,22 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   border-top:2.5px solid var(--brass);
   background:var(--card);
 }
-/* Latar "aurora" berlapis 3 kabut warna (emerald, emas, teal) yang
-   masing-masing melayang perlahan ke arah berbeda dengan durasi &
-   delay sendiri-sendiri, jadi campuran warnanya terasa terus bergerak
-   halus tanpa terlihat berulang secara jelas. */
+/* Latar belakang kartu — rapi & statis: satu gradasi lembut dua warna
+   (emerald ke brass) mengalir diagonal, tanpa kabut/bercak-bercak
+   yang tumpang tindih dan tanpa animasi, supaya latar terlihat bersih
+   & konsisten di semua ukuran layar. */
 .income-shortcut-card::before{
-  content:'';position:absolute;inset:-20%;z-index:0;pointer-events:none;
-  background:
-    radial-gradient(circle at 15% 20%, rgba(5,150,105,0.20), transparent 42%),
-    radial-gradient(circle at 88% 12%, rgba(217,119,6,0.18), transparent 45%),
-    radial-gradient(circle at 70% 88%, rgba(13,148,136,0.14), transparent 46%),
-    radial-gradient(circle at 8% 85%, rgba(5,150,105,0.12), transparent 40%);
-  animation:iscAuroraDrift 14s ease-in-out infinite alternate;
-}
-@keyframes iscAuroraDrift{
-  0%{transform:translate(0,0) rotate(0deg) scale(1);}
-  50%{transform:translate(2%,-3%) rotate(4deg) scale(1.06);}
-  100%{transform:translate(-3%,2%) rotate(-3deg) scale(1.04);}
+  content:'';position:absolute;inset:0;z-index:0;pointer-events:none;
+  background:linear-gradient(135deg,
+    rgba(5,150,105,0.10) 0%,
+    rgba(5,150,105,0.04) 38%,
+    rgba(217,119,6,0.05) 72%,
+    rgba(217,119,6,0.09) 100%);
 }
 .income-shortcut-card::after{
   content:'';position:absolute;top:-42px;right:-34px;width:140px;height:140px;border-radius:50%;
-  background:radial-gradient(circle, rgba(5,150,105,0.18), transparent 72%);
+  background:radial-gradient(circle, rgba(5,150,105,0.12), transparent 72%);
   pointer-events:none;z-index:0;
-  animation:iscGlowFloat 6s ease-in-out infinite;
-}
-@keyframes iscGlowFloat{
-  0%,100%{transform:translate(0,0) scale(1);opacity:1;}
-  50%{transform:translate(-16px,16px) scale(1.18);opacity:.82;}
-}
-@media (max-width:640px), (prefers-reduced-motion:reduce){
-  .income-shortcut-card::before,.income-shortcut-card::after{animation:none;}
 }
 .isc-shortcut-head{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:2px;}
 .isc-shortcut-head h2{font-size:16.5px;background:linear-gradient(100deg,#065F46,#059669 55%,#B45309);-webkit-background-clip:text;background-clip:text;color:transparent;}
@@ -1216,11 +1212,22 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 @media (max-width:640px), (prefers-reduced-motion:reduce){
   .isc-sat{transition:none;}
 }
+/* ---- Mobile: tetap SEJAJAR KE SAMPING (satu baris horizontal),
+   TIDAK dibungkus ke bawah lagi — kartu jadi bisa digeser (scroll)
+   ke samping kalau sumbernya banyak, sama seperti versi desktop. */
 @media (max-width:680px){
-  .isc-shortcut-row{flex-wrap:wrap;justify-content:center;gap:26px 8px;}
+  .isc-shortcut-row{
+    flex-wrap:nowrap;justify-content:flex-start;gap:22px;
+    overflow-x:auto;overflow-y:visible;
+    padding:2px 4px 6px;margin-left:-4px;margin-right:-4px;
+    scroll-snap-type:x proximity;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+  }
+  .isc-shortcut-row::-webkit-scrollbar{display:none;}
   .isc-shortcut-row::before{display:none;}
-  .isc-shortcut-item{flex:0 0 auto;width:74px;}
-  .isc-shortcut-label{white-space:normal;max-width:74px;}
+  .isc-shortcut-item{flex:0 0 auto;width:68px;scroll-snap-align:start;}
+  .isc-shortcut-label{white-space:normal;max-width:68px;}
   .isc-sat{width:22px;height:22px;}
   .isc-shortcut-item:hover .isc-sat{transform:translate(-50%,-50%) rotate(var(--sat-angle,0deg)) translateY(var(--sat-radius-sm,-38px)) rotate(calc(var(--sat-angle,0deg) * -1)) scale(1);}
 }
@@ -1228,6 +1235,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   .isc-shortcut-ic-wrap{width:48px;height:48px;}
   .isc-shortcut-ic{width:48px;height:48px;}
   .isc-shortcut-label{font-size:10.5px;max-width:70px;}
+  .isc-shortcut-item{width:62px;}
 }
 
 /* ============ SUMMARY CARDS ============ */
@@ -3532,12 +3540,70 @@ body.density-compact .income-cards-group{gap:10px;}
   .chart-flex .chart-wrap{flex:0 0 180px;width:180px;height:180px;}
   .chart-legend, .chart-legend-wrap::after{max-height:210px;}
 }
-/* ---- Breakpoint: tumpuk vertikal — donut di atas, legend penuh di bawah ---- */
+/* ---- Breakpoint: tumpuk vertikal — donut di atas, legend penuh di bawah ----
+   Khusus mobile, legend kategori didesain ulang jadi kartu-kartu kecil
+   (bukan cuma teks polos + scroll internal): tiap kategori punya latar
+   & border sendiri layaknya baris terpisah, badge peringkat jadi bulat
+   penuh, dan daftar tidak lagi dibatasi tinggi/di-scroll di dalam kartu
+   — biar mengalir mengikuti scroll halaman seperti konten lain di HP. */
 @media (max-width:680px){
-  .chart-flex{flex-direction:column;gap:18px;}
-  .chart-flex .chart-wrap{width:190px;height:190px;flex:0 0 auto;}
+  .chart-flex{flex-direction:column;gap:16px;}
+  .chart-flex .chart-wrap{width:180px;height:180px;flex:0 0 auto;margin:0 auto;}
   .chart-legend-wrap{width:100%;min-width:0;}
-  .chart-legend{max-height:250px;}
+  .chart-legend-wrap::after{display:none;}
+  .chart-legend{
+    max-height:none;overflow:visible;padding-right:0;gap:8px;
+  }
+  .legend-item{
+    background:var(--paper);border-color:var(--line);
+    padding:11px 12px;border-radius:14px;transform:none !important;
+  }
+  .legend-item.is-active{border-color:color-mix(in srgb, var(--forest-glow) 40%, var(--line));}
+  .legend-rank{border-radius:50%;width:19px;height:19px;font-size:10px;}
+  .legend-left{font-size:13.5px;}
+  .legend-amount{font-size:12.5px;}
+
+  /* ---- Kartu "Profil Bulanan": ringkasan Masuk/Keluar dipindah ke
+     ATAS (tepat di bawah judul), baru grafik batang di bawahnya —
+     supaya angka yang paling dicari muncul duluan tanpa perlu scroll
+     lewat grafik dulu. Pill dibuat lebih besar & mudah disentuh. */
+  .profile-card{display:flex;flex-direction:column;}
+  .profile-card .section-head{order:1;}
+  .profile-card .bar-chart-legend{order:2;margin:2px 0 14px;}
+  .profile-card .bar-chart-wrap{order:3;}
+  .bar-legend-pill{
+    border-radius:14px;padding:10px 12px;gap:7px;
+  }
+  /* ---- Ringkasan Total (chip biru "Rp ...") didesain ulang khusus
+     mobile: dari pil kecil yang berdesakan di sebelah judul, jadi
+     satu kartu ringkasan mini full-width di bawah judul — label
+     konteks di atas (kecil, huruf kapital) lalu ikon + nominal besar
+     di bawahnya, supaya lebih gampang dibaca sekilas di layar sempit. */
+  .charts-grid .chip-total{
+    display:grid;grid-template-columns:auto 1fr;column-gap:8px;row-gap:5px;
+    width:100%;white-space:normal;
+    padding:11px 14px;border-radius:14px;
+    background:linear-gradient(135deg, rgba(37,99,235,0.10), rgba(37,99,235,0.03));
+    border:1px solid rgba(37,99,235,0.16);
+  }
+  .charts-grid .chip-total::before{
+    content:'Total Bulan Ini';
+    grid-column:1 / -1;
+    font-family:var(--font-body);
+    font-size:10px;font-weight:800;letter-spacing:0.05em;text-transform:uppercase;
+    color:var(--ink-faint);
+  }
+  #yearlyNetChip::before{content:'Selisih Masuk & Keluar';}
+  .charts-grid .chip-total svg{
+    grid-row:2;grid-column:1;align-self:center;
+    width:13px;height:13px;padding:6px;box-sizing:content-box;
+    background:rgba(37,99,235,0.14);border-radius:50%;flex-shrink:0;
+  }
+  .charts-grid .chip-total > span{
+    grid-row:2;grid-column:2;align-self:center;
+    font-size:15.5px;font-weight:800;overflow:visible;text-overflow:clip;
+  }
+  .chip-total-net.is-negative svg{background:rgba(225,29,72,0.14);}
 }
 @media (max-width:380px){
   .chart-flex .chart-wrap{width:160px;height:160px;}
@@ -3546,6 +3612,8 @@ body.density-compact .income-cards-group{gap:10px;}
   .legend-left{font-size:12px;}
   .legend-amount{font-size:11px;}
   .legend-pct{font-size:10px;padding:2px 6px;min-width:32px;}
+  .charts-grid .chip-total{padding:10px 12px;}
+  .charts-grid .chip-total > span{font-size:14px;}
 }
 
 /* ==========================================================
@@ -5790,7 +5858,16 @@ body.is-scrolling *{
   display:flex; align-items:center; justify-content:center;
   background:linear-gradient(135deg, var(--forest-glow,#2563EB), #16A34A);
   color:#fff;
-  box-shadow:0 10px 22px -8px rgba(37,99,235,.6);
+  box-shadow:0 10px 22px -8px rgba(37,99,235,.6), 0 0 0 0 rgba(37,99,235,0.5);
+  animation:cloudAuthLogoPulse 2.6s ease-in-out infinite;
+}
+@keyframes cloudAuthLogoPulse{
+  0%{box-shadow:0 10px 22px -8px rgba(37,99,235,.6), 0 0 0 0 rgba(37,99,235,0.45);}
+  70%{box-shadow:0 10px 22px -8px rgba(37,99,235,.6), 0 0 0 10px rgba(37,99,235,0);}
+  100%{box-shadow:0 10px 22px -8px rgba(37,99,235,.6), 0 0 0 0 rgba(37,99,235,0);}
+}
+@media (prefers-reduced-motion:reduce){
+  .cloud-auth-logo{animation:none;}
 }
 .cloud-auth-card h2{
   margin:0 0 4px; font-size:21px; font-weight:700;
