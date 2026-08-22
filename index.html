@@ -110,7 +110,13 @@ html{
   background:var(--primary);
 }
 body{
-  background:var(--paper);
+  /* Sambungan gradasi dari ujung bawah .banner (#FFD9B8) supaya area
+     di PINGGIR kartu "Saldo Total" (yang tidak full-bleed lagi) tetap
+     memudar halus dari peach ke warna dasar halaman, bukan langsung
+     terpotong tegas ke var(--paper) — persis seperti pada gambar
+     referensi, di mana pinggir kartu & body di bawahnya masih
+     kelihatan sedikit hangat sebelum akhirnya jadi putih bersih. */
+  background:linear-gradient(180deg, #FFD9B8 0px, #FFD9B8 170px, #FFEDDD 320px, var(--paper) 480px);
   color:var(--ink);
   font-family:var(--font-body);
   -webkit-font-smoothing:antialiased;
@@ -155,7 +161,7 @@ a{color:inherit;}
 .banner{
   position:relative;
   overflow:hidden;
-  background:linear-gradient(180deg, #FF8A50 0%, #F2672B 58%, #FF9F68 84%, #FFD9B8 100%);
+  background:linear-gradient(180deg, #FF9838 0%, #FF9838 62%, #FFB273 82%, #FFD9B8 100%);
   border-radius:0;
   padding:20px 28px 46px;
   margin:0 -24px 0;
@@ -831,6 +837,20 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   padding:22px 22px 20px;border-radius:0 0 24px 24px;
   transition:transform .6s cubic-bezier(.22,1,.36,1);
   will-change:transform;
+  /* ---- Garis batas dengan Saldo Total dihaluskan ----
+     .stat-card.fc-card (aturan umum di atas) langsung mulai dengan
+     tint oranye di 0%, jadi begitu kartu ini nongol tepat di bawah
+     kartu Saldo Total yang putih polos, sambungannya kelihatan sebagai
+     garis tegas (putih lalu tiba-tiba oranye). Override ini menambah
+     satu titik putih (var(--card)) persis di 0% supaya bagian PALING
+     ATAS kartu ini putih dulu (senada dengan bawah Saldo Total),
+     tint oranyenya baru muncul sebagai blur lembut sedikit di bawahnya
+     — jadi transisinya menyatu, bukan garis batas keras. */
+  background:linear-gradient(160deg,
+    var(--card) 0%,
+    color-mix(in srgb, var(--fc-accent, #EA580C) 13%, var(--card)) 24%,
+    color-mix(in srgb, var(--fc-accent, #EA580C) 6%, var(--card)) 62%,
+    var(--card) 100%) !important;
 }
 .fc-peek-handle{
   position:relative;
