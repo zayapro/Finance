@@ -5885,6 +5885,114 @@ body.is-scrolling *{
 }
 #cloudSyncBadge .dot{ width:7px; height:7px; border-radius:50%; background:#6EE7B7; }
 #cloudSyncBadge.err .dot{ background:#FDA4AF; }
+/* ============================================================
+   REDESIGN ORANGE "ZAYAPRO" — override tampilan header/saldo
+   supaya sesuai referensi gambar (banner oranye + kartu putih
+   melayang berisi Saldo Total). Ditaruh di akhir file supaya
+   menang di atas aturan warna gelap sebelumnya (spesifisitas
+   sama, urutan lebih akhir = menang).
+   ============================================================ */
+:root{
+  --or-1:#FF9A3C;
+  --or-2:#FF7A1F;
+  --or-3:#FF6B2C;
+  --or-ink:#12172A;
+}
+html{background:var(--or-2);}
+.banner{
+  background:linear-gradient(165deg, var(--or-1) 0%, var(--or-2) 55%, var(--or-3) 100%) !important;
+  background-color:var(--or-2) !important;
+  animation:none !important;
+  padding:18px 20px 22px;
+}
+.banner::before{opacity:0 !important;animation:none !important;}
+.flow-line{display:none;}
+.wave-wrap{display:none;}
+
+.brand{padding:4px 6px;margin:-4px -6px;}
+.brand-mark{
+  background:#FFFFFF;
+  color:var(--or-2);
+  box-shadow:0 4px 10px rgba(0,0,0,0.12);
+}
+.brand-name{color:#FFFFFF;font-family:var(--font-body);font-weight:800;font-size:19px;letter-spacing:0.01em;}
+
+.banner-date{color:rgba(255,255,255,0.92);font-weight:600;}
+.banner-fx{display:none;}
+
+.banner-top-right .notif-btn{
+  width:36px;height:36px;border-radius:50%;
+  background:rgba(255,255,255,0.20);
+  border:none;
+  color:#fff;
+}
+.banner-top-right .notif-btn:hover{background:rgba(255,255,255,0.32);}
+.banner-add-btn{background:rgba(255,255,255,0.30) !important;}
+
+/* ---- Kartu putih melayang "Saldo Total" ---- */
+.saldo-block{
+  position:relative;z-index:3;
+  margin-top:18px;
+  background:#FFFFFF;
+  border-radius:26px;
+  padding:24px 22px 14px;
+  box-shadow:0 24px 46px -18px rgba(90,40,0,0.35), 0 2px 8px rgba(0,0,0,0.04);
+  color:var(--or-ink);
+}
+.saldo-label{color:#8A8FA3;font-weight:700;}
+.currency-toggle{background:#F1F2F6;border-color:#E7E8EE;}
+.currency-toggle .ct-opt{color:#9AA0B4;}
+.currency-toggle .ct-opt.active{color:#fff;}
+.currency-toggle .ct-knob{background:linear-gradient(140deg,var(--or-1),var(--or-2));}
+.saldo-value{color:var(--or-ink);font-family:var(--font-body);font-weight:800;font-size:clamp(26px,7vw,46px);}
+.saldo-toggle{background:#F1F2F6;border-color:#E7E8EE;color:#8A8FA3;}
+.saldo-toggle:hover{background:#E7E8EE;color:var(--or-ink);}
+
+.saldo-sub{margin-top:18px;justify-content:flex-start;gap:34px;}
+.saldo-sub-item .ic{
+  background:none;width:auto;height:auto;border-radius:0;color:var(--or-ink);
+}
+.saldo-sub-item .ic.income,
+.saldo-sub-item .ic.expense{color:var(--or-ink);}
+.saldo-sub-text .k{color:#9AA0B4;font-weight:600;}
+.saldo-sub-text .v{color:var(--or-ink);font-family:var(--font-body);font-weight:800;font-size:16px;}
+
+.saldo-targets{border-top-color:#EEF0F5;}
+.saldo-target-name{color:#8A8FA3;}
+.saldo-target-pct{color:var(--or-ink);}
+.saldo-target-track{background:#EEF0F5;}
+.saldo-target-nums{color:#9AA0B4;}
+.saldo-target-nums .cur{color:var(--or-ink);}
+
+/* ---- Baris "Ringkasan transaksi kamu" + handle tarik ---- */
+.saldo-summary-row{
+  position:relative;
+  display:flex;align-items:center;justify-content:space-between;
+  margin:14px -22px -2px;padding:20px 22px 16px;
+  border-top:1px solid #EEF0F5;
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+}
+.saldo-summary-row::before{
+  content:'';position:absolute;top:8px;left:50%;transform:translateX(-50%);
+  width:40px;height:4px;border-radius:999px;background:#E7E8EE;
+}
+.ssr-left{display:flex;align-items:center;gap:10px;min-width:0;}
+.ssr-ic{
+  width:30px;height:30px;border-radius:9px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  background:#F1F2F6;color:var(--or-ink);
+}
+.ssr-label{font-weight:800;font-size:14.5px;color:var(--or-ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ssr-chev{color:#B7BBCC;flex-shrink:0;transition:transform .18s ease;}
+.saldo-summary-row:hover .ssr-chev{transform:translateX(3px);color:var(--or-ink);}
+
+@media (max-width:600px){
+  .banner{padding:16px 16px 18px;border-radius:0 0 22px 22px;}
+  .saldo-block{border-radius:24px;padding:20px 18px 10px;}
+  .saldo-sub{gap:18px;}
+  .saldo-summary-row{margin:12px -18px -2px;padding:18px 18px 14px;}
+}
 </style>
 </head>
 <body>
@@ -6033,6 +6141,23 @@ body.is-scrolling *{
       </div>
 
       <div class="saldo-targets" id="saldoTargets"></div>
+
+      <div class="saldo-summary-row" id="saldoSummaryRow" role="button" tabindex="0" title="Riwayat Transaksi" aria-label="Lihat ringkasan transaksi">
+        <div class="ssr-left">
+          <span class="ssr-ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1"><rect x="2" y="5" width="20" height="14" rx="3"/><path d="M2 10h20"/></svg></span>
+          <span class="ssr-label">Ringkasan transaksi kamu</span>
+        </div>
+        <span class="ssr-chev"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+      </div>
+      <script>
+        (function(){
+          var ssr=document.getElementById('saldoSummaryRow');
+          if(!ssr) return;
+          function go(){ var b=document.getElementById('historyJumpBtn'); if(b) b.click(); }
+          ssr.addEventListener('click', go);
+          ssr.addEventListener('keydown', function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); go(); } });
+        })();
+      </script>
     </div>
 
     <div class="wave-wrap" aria-hidden="true">
