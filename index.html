@@ -791,21 +791,22 @@ tr.fade-up{animation:fadeRow .35s ease both;}
      Karena kartu ini sekarang lebih sempit dari banner (lihat catatan
      lebar di atas), sisi kiri-kanan banner oranye kelihatan mengapit
      kartu putih ini, dan sudut atas yang membulat jadi terlihat seperti
-     "border" tegas. Shadow oranye lembut (baris pertama, offset-y
-     negatif) ditambahkan supaya sudut atas kartu blur/berbaur ke warna
-     banner di belakangnya alih-alih tampak sebagai garis batas keras;
-     shadow gelap (baris kedua) tetap dipakai untuk kedalaman di bawah
-     seperti sebelumnya. */
+     "border" tegas. Shadow oranye lembut (offset-y negatif) ditambahkan
+     supaya sudut atas kartu blur/berbaur ke warna banner di belakangnya
+     alih-alih tampak sebagai garis batas keras.
+     CATATAN: shadow gelap di BAWAH kartu (yang dulu ada di sini) sengaja
+     DIHAPUS — kartu ini dan "Ringkasan transaksi kamu" (.fc-peek-handle)
+     di bawahnya dimaksudkan menyatu jadi SATU kartu panjang tanpa celah,
+     jadi shadow ke bawah malah menimbulkan garis batas/bayangan palsu
+     tepat di sambungannya, alih-alih terlihat menyatu. */
   box-shadow:
-    0 -16px 30px -10px rgba(242,103,43,0.38),
-    0 20px 44px -26px rgba(15,23,42,0.30);
+    0 -16px 30px -10px rgba(242,103,43,0.38);
 }
 @media (max-width:640px){
   .saldo-card{
     margin:-18px 0 22px;padding:24px 22px 6px;border-radius:20px 20px 0 0;
     box-shadow:
-      0 -13px 24px -9px rgba(242,103,43,0.38),
-      0 16px 34px -22px rgba(15,23,42,0.28);
+      0 -13px 24px -9px rgba(242,103,43,0.38);
   }
   .fc-peek-handle{padding:18px 22px 18px 22px;border-radius:0 0 20px 20px;}
 }
