@@ -7,7 +7,7 @@
 <meta name="description" id="appMetaDescription" content="Kelola uang masuk dan keluar, catat transaksi, tagihan, dan hutang dengan mudah bersama ZAYAPRO.">
 <meta name="keywords" id="appMetaKeywords" content="">
 <meta name="robots" content="index, follow">
-<meta name="theme-color" content="#FF7A2E">
+<meta name="theme-color" content="#0B1220">
 <!-- SDK resmi Telegram WebApp: dimuat lebih dulu (sebelum script.js)
      supaya window.Telegram.WebApp sudah tersedia saat initTelegramWebApp()
      dipanggil. Kalau halaman ini dibuka BUKAN dari dalam Telegram
@@ -53,14 +53,6 @@
   --forest-deep:#0B1220;
   --forest-mid:#16213A;
   --forest-glow:#2563EB;
-  /* ============ WARNA BANNER (ORANYE) ============
-     Token khusus untuk gradasi banner utama di paling atas halaman
-     (Saldo Total), dipisah dari --forest-deep/--forest-mid supaya
-     elemen gelap lain di app (tooltip, panel grafik tren, dsb yang
-     masih memakai --forest-deep/--forest-mid) TIDAK ikut berubah --
-     yang berubah cuma banner + area status bar/notch di atasnya. */
-  --sun-core:#FF7A2E;
-  --sun-mid:#FF9A52;
   --brass:#059669;
   --brass-light:#6EE7B7;
   --wine:#E11D48;
@@ -111,24 +103,10 @@ html{
      belakang notch akan sempat kelihatan putih/nyelip sebelum banner
      sempat digambar.
   */
-  background:var(--sun-core);
+  background:var(--forest-deep);
 }
 body{
-  /* Neonan hangat di belakang banner: gradasi oranye (senada .banner)
-     yang meluruh jadi krem lalu berbaur ke --paper di bagian bawah,
-     seperti contoh referensi. Dipasang sebagai lapisan terpisah
-     (bukan mengubah --paper itu sendiri) dengan tinggi tetap di atas
-     halaman, lalu transparent di ujung bawahnya supaya sisa halaman
-     yang lebih panjang tetap polos --paper seperti biasa. */
-  background:
-    linear-gradient(180deg,
-      var(--sun-core) 0%,
-      var(--sun-mid) 16%,
-      #F7C899 34%,
-      #FBE6CB 52%,
-      #FBF3E4 70%,
-      transparent 92%) top/100% 620px no-repeat,
-    var(--paper);
+  background:var(--paper);
   color:var(--ink);
   font-family:var(--font-body);
   -webkit-font-smoothing:antialiased;
@@ -174,10 +152,10 @@ a{color:inherit;}
   position:relative;
   overflow:hidden;
   background:
-    radial-gradient(circle at 15% 20%, rgba(255,214,120,0.40), transparent 45%),
-    radial-gradient(circle at 85% 15%, rgba(255,255,255,0.20), transparent 50%),
-    radial-gradient(circle at 75% 90%, rgba(216,60,20,0.30), transparent 55%),
-    linear-gradient(120deg, var(--sun-core), var(--sun-mid), var(--sun-core));
+    radial-gradient(circle at 15% 20%, rgba(37,99,235,0.38), transparent 45%),
+    radial-gradient(circle at 85% 15%, rgba(5,150,105,0.24), transparent 50%),
+    radial-gradient(circle at 75% 90%, rgba(225,29,72,0.14), transparent 55%),
+    linear-gradient(120deg, var(--forest-deep), var(--forest-mid), var(--forest-deep));
   background-size:240% 240%, 240% 240%, 240% 240%, 280% 280%;
   animation: bannerDrift 18s ease-in-out infinite;
   border-radius:0 0 28px 28px;
@@ -192,7 +170,7 @@ a{color:inherit;}
      tetap tampil sebagai dasarnya. Tanpa ini, area yang belum sempat
      digambar ulang akan menampakkan warna halaman (--paper, terang)
      alih-alih gelap, kelihatan seperti banner "sobek"/pecah sesaat. */
-  background-color:var(--sun-core);
+  background-color:var(--forest-deep);
   /* CATATAN: dulu di sini ada transform:translateZ(0) + will-change +
      backface-visibility + isolation untuk memaksa banner ini punya
      layer kompositing GPU sendiri — perlu waktu itu karena banner
@@ -1084,18 +1062,44 @@ tr.fade-up{animation:fadeRow .35s ease both;}
    pendapatan dari sumber tsb (Google Adsense, Platform Meta, Affiliate,
    Toko Online, Kelas) plus satu ikon "+" untuk menambah sumber manual. */
 .income-shortcut-card{
-  /* Disamakan penuh dengan kartu lain (.section-card): tanpa garis atas
-     berwarna, tanpa radius/hover khusus -- semua properti kotak kartu
-     (background, border, radius, shadow, jarak, animasi masuk & hover)
-     kini murni warisan dari .section-card supaya kartu ini terasa satu
-     keluarga dengan Komposisi Transaksi, Profil Bulanan, Berita, dst. */
+  padding:20px 22px 22px;
   position:relative;overflow:hidden;isolation:isolate;
+  border-top:2.5px solid var(--brass);
+  background:var(--card);
 }
-/* Latar aurora & glow floating dihapus -- kartu lain (Komposisi
-   Transaksi, Profil Bulanan, Berita, dst) tampil polos tanpa dekorasi
-   latar semacam ini, jadi dihilangkan di sini juga supaya kotak kartu
-   benar-benar seragam. */
-.isc-shortcut-head{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+/* Latar "aurora" berlapis 3 kabut warna (emerald, emas, teal) yang
+   masing-masing melayang perlahan ke arah berbeda dengan durasi &
+   delay sendiri-sendiri, jadi campuran warnanya terasa terus bergerak
+   halus tanpa terlihat berulang secara jelas. */
+.income-shortcut-card::before{
+  content:'';position:absolute;inset:-20%;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(circle at 15% 20%, rgba(5,150,105,0.20), transparent 42%),
+    radial-gradient(circle at 88% 12%, rgba(217,119,6,0.18), transparent 45%),
+    radial-gradient(circle at 70% 88%, rgba(13,148,136,0.14), transparent 46%),
+    radial-gradient(circle at 8% 85%, rgba(5,150,105,0.12), transparent 40%);
+  animation:iscAuroraDrift 14s ease-in-out infinite alternate;
+}
+@keyframes iscAuroraDrift{
+  0%{transform:translate(0,0) rotate(0deg) scale(1);}
+  50%{transform:translate(2%,-3%) rotate(4deg) scale(1.06);}
+  100%{transform:translate(-3%,2%) rotate(-3deg) scale(1.04);}
+}
+.income-shortcut-card::after{
+  content:'';position:absolute;top:-42px;right:-34px;width:140px;height:140px;border-radius:50%;
+  background:radial-gradient(circle, rgba(5,150,105,0.18), transparent 72%);
+  pointer-events:none;z-index:0;
+  animation:iscGlowFloat 6s ease-in-out infinite;
+}
+@keyframes iscGlowFloat{
+  0%,100%{transform:translate(0,0) scale(1);opacity:1;}
+  50%{transform:translate(-16px,16px) scale(1.18);opacity:.82;}
+}
+@media (max-width:640px), (prefers-reduced-motion:reduce){
+  .income-shortcut-card::before,.income-shortcut-card::after{animation:none;}
+}
+.isc-shortcut-head{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:2px;}
+.isc-shortcut-head h2{font-size:16.5px;background:linear-gradient(100deg,#065F46,#059669 55%,#B45309);-webkit-background-clip:text;background-clip:text;color:transparent;}
 .isc-shortcut-head .section-subtitle{margin-top:3px;}
 .isc-shortcut-viewall{
   display:inline-flex;align-items:center;gap:4px;flex-shrink:0;
@@ -1212,73 +1216,18 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 @media (max-width:640px), (prefers-reduced-motion:reduce){
   .isc-sat{transition:none;}
 }
-/* ---- Versi mobile: dulu berubah total jadi grid wrap (item melompat
-   ke baris baru, garis penghubung dihilangkan) sehingga tampilannya
-   tidak konsisten dengan versi desktop & gampang terlihat berantakan
-   kalau sumbernya banyak. Sekarang strip TETAP satu baris seperti
-   desktop (ikon + garis penghubung menyambung utuh), cuma barisnya
-   jadi bisa digeser (scroll horizontal) kalau lebar totalnya melebihi
-   lebar kartu -- .isc-shortcut-scroll yang membungkus baris inilah
-   yang jadi area scroll-nya, sementara .isc-shortcut-row sendiri
-   melebar mengikuti isi (width:max-content) supaya setiap ikon tetap
-   berjarak rapi & proporsional, bukan dipaksa muat/menyusut. */
-.isc-shortcut-scroll{
-  position:relative;
-}
 @media (max-width:680px){
-  .isc-shortcut-scroll{
-    overflow-x:auto;overflow-y:hidden;
-    -webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;
-    scrollbar-width:none;-ms-overflow-style:none;
-    /* Bantalan kanan supaya ikon terakhir ("Sumber Lain") tidak
-       mepet/terpotong tepat di tepi kartu saat discroll penuh. */
-    padding-right:6px;
-  }
-  .isc-shortcut-scroll::-webkit-scrollbar{display:none;height:0;}
-  .isc-shortcut-row{
-    flex-wrap:nowrap;justify-content:flex-start;width:max-content;min-width:100%;
-    gap:22px;padding:0 2px;
-  }
-  /* Garis penghubung dihitung dari titik tengah ikon pertama sampai
-     titik tengah ikon terakhir (setengah lebar ikon = 22px, karena
-     ikon diperkecil jadi 44px di breakpoint ini), bukan lagi
-     persentase seperti versi desktop -- karena lebar baris sekarang
-     mengikuti isi (max-content), bukan lebar kartu, jadi hitungannya
-     harus dalam px supaya garis tetap pas nyambung ke tiap ikon walau
-     jumlah sumbernya berubah. */
-  .isc-shortcut-row::before{left:22px;right:22px;top:22px;}
-  .isc-shortcut-item{flex:0 0 auto;width:64px;}
-  .isc-shortcut-ic-wrap{width:44px;height:44px;}
-  .isc-shortcut-ic{width:44px;height:44px;}
-  .isc-shortcut-label{white-space:normal;max-width:64px;font-size:10.5px;}
-  .isc-sat{width:20px;height:20px;}
-  .isc-shortcut-item:hover .isc-sat{transform:translate(-50%,-50%) rotate(var(--sat-angle,0deg)) translateY(var(--sat-radius-sm,-34px)) rotate(calc(var(--sat-angle,0deg) * -1)) scale(1);}
-  /* Animasi mengambang & denyut halo ikon SEBELUMNYA dimatikan total
-     di mobile lewat aturan umum hemat-baterai (lihat
-     `@media (max-width:640px), (prefers-reduced-motion:reduce)` di
-     atas, dipakai bersama utk banyak elemen lain di halaman). Khusus
-     strip "Sumber Pendapatan" ini dihidupkan lagi di sini -- tapi
-     TIDAK ikut menyalakannya kalau perangkat secara eksplisit minta
-     `prefers-reduced-motion: reduce` (aksesibilitas tetap dihormati). */
-}
-@media (max-width:680px){
-  .isc-shortcut-ic-wrap{animation:iscIconFloat 3.6s ease-in-out infinite;}
-  .isc-shortcut-item:hover .isc-shortcut-ic-wrap{animation-play-state:paused;}
-  .isc-shortcut-ic::before{animation:iscIconPulse 2.8s ease-out infinite;opacity:0;}
-}
-/* Taruh PALING TERAKHIR supaya tetap menang & mematikan lagi animasi
-   di atas kalau perangkat eksplisit minta prefers-reduced-motion:
-   reduce, terlepas dari lebar layarnya (aksesibilitas > lebar layar). */
-@media (prefers-reduced-motion:reduce){
-  .isc-shortcut-ic-wrap{animation:none;}
-  .isc-shortcut-ic::before{animation:none;opacity:0;}
+  .isc-shortcut-row{flex-wrap:wrap;justify-content:center;gap:26px 8px;}
+  .isc-shortcut-row::before{display:none;}
+  .isc-shortcut-item{flex:0 0 auto;width:74px;}
+  .isc-shortcut-label{white-space:normal;max-width:74px;}
+  .isc-sat{width:22px;height:22px;}
+  .isc-shortcut-item:hover .isc-sat{transform:translate(-50%,-50%) rotate(var(--sat-angle,0deg)) translateY(var(--sat-radius-sm,-38px)) rotate(calc(var(--sat-angle,0deg) * -1)) scale(1);}
 }
 @media (max-width:380px){
-  .isc-shortcut-row::before{left:22px;right:22px;top:20px;}
-  .isc-shortcut-item{width:56px;}
-  .isc-shortcut-label{font-size:10px;max-width:56px;}
-  .isc-shortcut-ic-wrap{width:40px;height:40px;}
-  .isc-shortcut-ic{width:40px;height:40px;}
+  .isc-shortcut-ic-wrap{width:48px;height:48px;}
+  .isc-shortcut-ic{width:48px;height:48px;}
+  .isc-shortcut-label{font-size:10.5px;max-width:70px;}
 }
 
 /* ============ SUMMARY CARDS ============ */
@@ -3327,7 +3276,7 @@ body.density-compact .income-cards-group{gap:10px;}
 #deviceSocialSection{animation-delay:.30s;}
 .section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;}
 .section-head > div{min-width:0;}
-.section-head h2,.isc-shortcut-head h2{font-size:18px;}
+.section-head h2{font-size:18px;}
 .section-subtitle{display:block;font-size:11px;color:var(--ink-faint);font-weight:600;margin-top:3px;letter-spacing:0.01em;}
 .chip-total{
   display:inline-flex;align-items:center;gap:6px;
@@ -3339,7 +3288,7 @@ body.density-compact .income-cards-group{gap:10px;}
 @media (max-width:600px){
   .section-card{padding:16px 16px;margin-bottom:14px;border-radius:12px;}
   .section-head{margin-bottom:12px;}
-  .section-head h2,.isc-shortcut-head h2{font-size:15.5px;}
+  .section-head h2{font-size:15.5px;}
   .chip-total{font-size:11.5px;padding:5px 11px;}
 }
 @media (max-width:380px){
@@ -3350,7 +3299,7 @@ body.density-compact .income-cards-group{gap:10px;}
 }
 
 /* ============ BERITA EKONOMI TERKINI ============ */
-.section-head h2,.isc-shortcut-head h2{display:flex;align-items:center;gap:9px;flex-wrap:wrap;}
+.section-head h2{display:flex;align-items:center;gap:9px;flex-wrap:wrap;}
 .news-live-badge{
   display:inline-flex;align-items:center;gap:5px;
   font-size:10px;font-weight:800;letter-spacing:0.04em;text-transform:uppercase;
@@ -5692,7 +5641,7 @@ body.is-scrolling *{
   .app-footer{padding:22px 16px 16px;margin:14px -12px 0;}
 
   /* ---- Judul & label ---- */
-  .section-head h2,.isc-shortcut-head h2{font-size:14.5px;}
+  .section-head h2{font-size:14.5px;}
   .section-subtitle{font-size:10px;}
   .eyebrow{font-size:10px;letter-spacing:0.12em;}
   .chip-total{font-size:10.5px;padding:5px 10px;}
@@ -5907,193 +5856,6 @@ body.is-scrolling *{
 }
 #cloudSyncBadge .dot{ width:7px; height:7px; border-radius:50%; background:#6EE7B7; }
 #cloudSyncBadge.err .dot{ background:#FDA4AF; }
-/* ============================================================
-   REDESIGN ORANGE "ZAYAPRO" v2 — disesuaikan sedekat mungkin
-   dengan referensi gambar (warna, ukuran, radius, font).
-   ============================================================ */
-:root{
-  --or-1:#FF9A44;
-  --or-2:#FF7A1F;
-  --or-3:#FF6519;
-  --or-ink:#10162A;
-  --or-paper:#FFF3E8;
-  --or-grey:#8D93A6;
-  --or-grey-lt:#B7BBC9;
-  --or-line:#ECEDF2;
-  --or-chip:#F2F3F7;
-}
-html{background:var(--or-2);}
-body{
-  background-color:var(--or-paper);
-  background-image:linear-gradient(180deg, var(--or-2) 0%, var(--or-1) 34%, rgba(255,243,232,0) 100%);
-  background-repeat:no-repeat;
-  background-size:100% 480px;
-}
-.banner{
-  background:linear-gradient(160deg, #FF9548 0%, var(--or-2) 55%, var(--or-3) 100%) !important;
-  background-color:var(--or-2) !important;
-  animation:none !important;
-  padding:20px 20px 24px;
-}
-.banner::before{opacity:0 !important;animation:none !important;}
-.flow-line{display:none;}
-.wave-wrap{display:none;}
-
-/* ---- Logo "ZAYAPRO" ---- */
-.brand{padding:4px 6px;margin:-4px -6px;}
-.brand-mark{
-  width:46px;height:46px;border-radius:15px;
-  background:#FFFFFF;
-  color:#FF3D2E;
-  box-shadow:0 4px 12px rgba(0,0,0,0.14);
-}
-.brand-mark svg{width:20px;height:20px;}
-.brand-name{color:#FFFFFF;font-family:'Poppins',var(--font-body);font-weight:800;font-size:21px;letter-spacing:0.01em;}
-
-/* ---- Tanggal + baris kurs kecil di bawahnya (mengisi slot yang
-   sama seperti indikator kecil pada referensi) ---- */
-.banner-date{color:#FFFFFF;font-weight:600;font-size:14.5px;}
-.banner-date-col{gap:5px;}
-.banner-fx{display:flex !important;font-size:11px;color:rgba(255,255,255,0.85);}
-.banner-fx .fx-dot{background:#FFFFFF;}
-.banner-fx .fx-dot::after{background:#FFFFFF;}
-.banner-fx .fx-label{color:rgba(255,255,255,0.75);}
-.banner-fx .fx-value{color:#FFFFFF;}
-.banner-fx .fx-value.up,.banner-fx .fx-value.down{color:#FFFFFF;}
-
-/* ---- 3 tombol ikon bulat kanan-atas ---- */
-.banner-top-right{gap:10px;}
-.banner-top-right .notif-btn{
-  width:44px;height:44px;border-radius:50%;
-  background:rgba(255,255,255,0.24);
-  border:none;
-  color:#fff;
-}
-.banner-top-right .notif-btn svg{width:19px;height:19px;}
-.banner-top-right .notif-btn:hover{background:rgba(255,255,255,0.36);}
-.banner-add-btn{background:rgba(255,255,255,0.34) !important;}
-.notif-badge{background:#FFFFFF;color:var(--or-2);}
-
-/* ---- Kartu putih melayang "Saldo Total" ---- */
-.saldo-block{
-  position:relative;z-index:3;
-  margin-top:20px;
-  /* Gradasi lembut putih -> abu kebiruan pudar (bukan putih polos lagi),
-     tanpa border. Sudut BAWAH sengaja dibuat siku (bukan membulat)
-     supaya menyatu rapat dengan kartu "Ringkasan transaksi kamu" di
-     bawahnya (.fc-peek-handle) -- keduanya jadi terlihat SATU kartu
-     utuh, bukan dua kartu terpisah dengan celah oranye di antaranya. */
-  background:linear-gradient(165deg, #FFFFFF 0%, #F8F6F2 45%, #EEF1F6 100%);
-  border-radius:32px 32px 0 0;
-  padding:26px 24px 12px;
-  /* Shadow netral (bukan lagi warna hangat rgba(120,50,0,...)) supaya
-     kartu terlihat putih bersih walau duduk di atas gradasi oranye
-     halaman -- shadow bernada oranye/coklat sebelumnya kelihatan
-     seperti "glow"/border oranye tipis mengelilingi kartu. */
-  box-shadow:0 20px 40px -18px rgba(15,23,42,0.18), 0 2px 10px rgba(15,23,42,0.05);
-  color:var(--or-ink);
-}
-.saldo-label{color:var(--or-ink);font-weight:700;font-size:19px;font-family:'Poppins',var(--font-body);}
-
-/* "Lihat >" — pengganti toggle sembunyikan/tampilkan saldo, posisi
-   & gaya teks-tautan abu-abu seperti pada referensi */
-.saldo-toggle{
-  flex-shrink:0;
-  width:auto;height:auto;border-radius:0;
-  display:flex;align-items:center;gap:3px;
-  padding:2px;
-  background:none;border:none;
-  color:var(--or-grey);font-size:15px;font-weight:500;
-}
-.saldo-toggle svg{width:14px;height:14px;}
-.saldo-toggle .st-eye{display:none;}
-.saldo-toggle .st-chev{width:12px;height:12px;color:var(--or-grey);}
-.saldo-toggle:hover{background:none;color:var(--or-ink);}
-.saldo-toggle .st-text{white-space:nowrap;}
-
-/* Chip IDR/USD kecil, disisipkan di sebelah angka saldo supaya
-   fiturnya tetap ada tanpa mengganggu posisi elemen lain */
-.saldo-row{gap:10px;align-items:flex-end;}
-/* Chip IDR/USD disembunyikan di redesign ini -- tidak ada di gambar
-   referensi (kartu Saldo Total di referensi cuma menampilkan angka
-   Rupiah polos, tanpa saklar mata uang di sampingnya). Elemen &
-   fungsinya tetap ada di HTML/JS (aman kalau suatu saat mau
-   dimunculkan lagi), cuma disembunyikan lewat display:none supaya
-   tampilannya 100% sama seperti referensi. */
-.currency-toggle{display:none !important;}
-.saldo-value{
-  color:var(--or-ink);
-  font-family:'Poppins',var(--font-body);
-  font-weight:700;
-  font-size:clamp(30px,8vw,48px);
-  letter-spacing:-0.02em;
-}
-
-.saldo-sub{margin-top:22px;justify-content:flex-start;gap:40px;}
-.saldo-sub-item{gap:10px;align-items:flex-start;}
-.saldo-sub-item .ic{
-  background:none;width:auto;height:auto;border-radius:0;color:var(--or-ink);margin-top:3px;
-}
-.saldo-sub-item .ic svg{width:16px;height:16px;}
-.saldo-sub-item .ic.income,
-.saldo-sub-item .ic.expense{color:var(--or-ink);}
-.saldo-sub-text .k{color:var(--or-grey);font-weight:500;font-size:13.5px;}
-.saldo-sub-text .v{color:var(--or-ink);font-family:'Poppins',var(--font-body);font-weight:700;font-size:19px;margin-top:2px;}
-
-.saldo-targets{border-top-color:var(--or-line);}
-.saldo-target-name{color:var(--or-grey);}
-.saldo-target-pct{color:var(--or-ink);}
-.saldo-target-track{background:var(--or-line);}
-.saldo-target-nums{color:var(--or-grey);}
-.saldo-target-nums .cur{color:var(--or-ink);}
-
-@media (max-width:600px){
-  .banner{padding:16px 16px 20px;border-radius:0 0 24px 24px;}
-  .saldo-block{border-radius:28px 28px 0 0;padding:22px 18px 8px;}
-  .saldo-sub{gap:24px;}
-  .brand-mark{width:40px;height:40px;border-radius:13px;}
-  .saldo-value{font-size:clamp(28px,9vw,40px);}
-}
-
-/* ---- Kartu "Ringkasan transaksi kamu" (fitur asli: kartu Uang
-   Masuk & Keluar yang nyelip/peek di bawah banner) — dipindah &
-   diselaraskan warnanya + tipografi supaya nempel tepat di bawah
-   kartu putih Saldo Total, sesuai posisi pada referensi gambar. ---- */
-:root{
-  --fc-accent: var(--or-2);
-  --fc-accent-strong: var(--or-3);
-  --fc-accent-soft: rgba(255,122,31,0.30);
-}
-.banner-flow-wrap{margin:-32px 0 18px;}
-.fc-peek-handle{
-  /* Warna nada akhir dari gradasi .saldo-block (#EEF1F6) supaya
-     sambungannya mulus -- bukan putih flat lagi -- dan box-shadow
-     sendiri dimatikan (none) supaya tidak ada garis bayangan yang
-     memisahkan kartu ini dari kartu Saldo Total di atasnya; keduanya
-     jadi terbaca sebagai SATU kartu, bukan dua kartu bercelah. */
-  background:#EEF1F6;
-  border-top:none;
-  padding:16px 24px 22px;
-  box-shadow:none;
-}
-.fc-peek-handle::before{
-  width:44px;height:4px;background:var(--or-line);top:9px;
-}
-.fc-peek-icon{
-  width:30px;height:30px;border-radius:9px;
-  background:var(--or-chip);color:var(--or-ink);
-}
-.fc-peek-icon svg{width:15px;height:15px;}
-.fc-peek-handle-label{color:var(--or-ink);font-weight:700;font-size:15px;font-family:'Poppins',var(--font-body);}
-.fc-peek-mini{color:var(--or-grey);font-size:11px;}
-.fc-peek-mini .fc-peek-mini-in b{color:#059669;}
-.fc-peek-mini .fc-peek-mini-out b{color:#E11D48;}
-.fc-peek-handle-btn{color:var(--or-2);border-color:var(--fc-accent-soft);}
-.fc-peek-handle:hover .fc-peek-handle-btn{background:rgba(255,122,31,0.12);}
-.fc-peek-chev{color:var(--or-grey-lt);}
-@media (max-width:600px){
-  .banner-flow-wrap{margin:-28px 0 16px;}
-}
 </style>
 </head>
 <body>
@@ -6211,18 +5973,16 @@ body{
     <div class="saldo-block">
       <div class="saldo-label-row">
         <div class="saldo-label">Saldo Total</div>
-        <button class="saldo-toggle" id="saldoToggle" type="button" title="Sembunyikan/tampilkan saldo" aria-label="Sembunyikan atau tampilkan saldo">
-          <span class="st-text" id="saldoToggleText">Sembunyikan</span>
-          <svg id="saldoEyeIcon" class="st-eye" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-          <svg class="st-chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
-        </button>
-      </div>
-      <div class="saldo-row">
-        <div class="saldo-value mono" id="saldoValue">Rp 0</div>
         <button class="currency-toggle" id="currencyToggle" type="button" role="switch" aria-checked="false" aria-label="Ganti tampilan mata uang antara Rupiah dan USD" title="Ganti tampilan mata uang">
           <span class="ct-knob"></span>
           <span class="ct-opt ct-idr active">IDR</span>
           <span class="ct-opt ct-usd">USD</span>
+        </button>
+      </div>
+      <div class="saldo-row">
+        <div class="saldo-value mono" id="saldoValue">Rp 0</div>
+        <button class="saldo-toggle" id="saldoToggle" type="button" title="Sembunyikan/tampilkan saldo" aria-label="Sembunyikan atau tampilkan saldo">
+          <svg id="saldoEyeIcon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg>
         </button>
       </div>
 
@@ -6272,7 +6032,6 @@ body{
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>
       </button>
     </div>
-    <div class="isc-shortcut-scroll">
     <div class="isc-shortcut-row" id="incomeShortcutRow">
       <button type="button" class="isc-shortcut-item" data-shortcut-source="Adsense">
         <span class="isc-shortcut-ic-wrap">
@@ -6345,7 +6104,6 @@ body{
         </span>
         <span class="isc-shortcut-label">Sumber Lain</span>
       </button>
-    </div>
     </div>
   </section>
 
@@ -6994,12 +6752,20 @@ body{
         <button class="ws-switch active" type="button" role="switch" aria-checked="true" data-ws-toggle="historySection" aria-label="Aktifkan/nonaktifkan Kartu Riwayat Transaksi"><span class="ws-switch-knob"></span></button>
       </div>
       <div class="ws-row" data-ws-row="incomeSourceStatCard">
-        <span class="ws-row-ic"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2v20M17 6.5c0-1.93-2.24-3.5-5-3.5s-5 1.57-5 3.5S9.24 10 12 10s5 1.57 5 3.5-2.24 3.5-5 3.5-5-1.57-5-3.5"/></svg></span>
+        <span class="ws-row-ic"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
         <span class="ws-row-text">
-          <span class="ws-row-title">Sumber Pendapatan</span>
-          <span class="ws-row-sub">Kartu strip sumber pendapatan</span>
+          <span class="ws-row-title">Ringkasan Sumber Pendapatan</span>
+          <span class="ws-row-sub">Kartu gelembung/daftar sumber pendapatan</span>
         </span>
-        <button class="ws-switch active" type="button" role="switch" aria-checked="true" data-ws-toggle="incomeSourceStatCard" aria-label="Aktifkan/nonaktifkan Kartu Sumber Pendapatan"><span class="ws-switch-knob"></span></button>
+        <button class="ws-switch active" type="button" role="switch" aria-checked="true" data-ws-toggle="incomeSourceStatCard" aria-label="Aktifkan/nonaktifkan Kartu Ringkasan Sumber Pendapatan"><span class="ws-switch-knob"></span></button>
+      </div>
+      <div class="ws-row" data-ws-row="recentActivityStatCard">
+        <span class="ws-row-ic"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg></span>
+        <span class="ws-row-text">
+          <span class="ws-row-title">Aktivitas 7 Hari Terakhir</span>
+          <span class="ws-row-sub">Kartu strip pendapatan mingguan</span>
+        </span>
+        <button class="ws-switch active" type="button" role="switch" aria-checked="true" data-ws-toggle="recentActivityStatCard" aria-label="Aktifkan/nonaktifkan Kartu Aktivitas 7 Hari Terakhir"><span class="ws-switch-knob"></span></button>
       </div>
       <div class="ws-row" data-ws-row="bankWalletStatCard">
         <span class="ws-row-ic"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/></svg></span>

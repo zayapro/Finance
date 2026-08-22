@@ -1371,12 +1371,10 @@ function applySaldoVisibility() {
   const valueEl = document.getElementById('saldoValue');
   const iconEl = document.getElementById('saldoEyeIcon');
   const btn = document.getElementById('saldoToggle');
-  const textEl = document.getElementById('saldoToggleText');
   if (!valueEl || !iconEl) return;
   valueEl.classList.toggle('is-hidden', hidden);
   iconEl.innerHTML = hidden ? EYE_OFF_SVG : EYE_OPEN_SVG;
   if (btn) btn.title = hidden ? 'Tampilkan saldo' : 'Sembunyikan saldo';
-  if (textEl) textEl.textContent = hidden ? 'Lihat' : 'Sembunyikan';
 }
 
 document.getElementById('saldoToggle').addEventListener('click', () => {
@@ -1868,72 +1866,150 @@ function renderSummary() {
     trendBadgeHtml = '';
   }
 
-  // Semua sumber pendapatan tampil sebagai strip kartu-kartu putih yang
-  // bisa digeser ke samping — BENTUKNYA disamakan persis dengan kartu
-  // "Saldo Bank & E-Wallet" (wallet-deal-card di dalam wallet-deals-strip),
-  // supaya kedua kartu terasa satu keluarga desain yang sama. Yang
-  // membedakan cuma warnanya: tema kartu ini tetap hijau (lihat CSS
-  // .isc-source-card) sedangkan kartu Saldo Bank & E-Wallet tetap ambar,
-  // dan tiap kartu sumber tetap mengambil warna --w-color miliknya sendiri
-  // (persis seperti tiap akun bank/e-wallet juga punya warna sendiri).
+  // Semua sumber pendapatan bulan ini tampil sebagai gelembung ikon
+  // bulat tanpa border, tersusun rapi berdampingan di panggung statis
+  // — tidak lagi dibatasi/diringkas jadi "+N Lainnya"; kalau sumbernya
+  // bertambah, semuanya otomatis muncul di sini. Ukuran gelembung tetap
+  // proporsional dengan porsi % dari total, wajah gelembung ikon/foto
+  // penuh tanpa label persen (nama+nominal baru muncul saat hover).
   const topSources = rankedSources;
-  const sourceEmptyHtml = `<div class="wallet-empty-deals">
+  const sourceEmptyHtml = `<div class="isc-float-stage-empty">
         ${iconSources}
         <p>Belum ada pendapatan tercatat.</p>
+        <div class="isc-empty-actions">
+          <button type="button" class="isc-add-source-btn" id="incomeSourceCardAddIncomeBtn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            Tambah Pendapatan
+          </button>
+        </div>
       </div>`;
-  const sourceDealsHtml = topSources.length
-    ? topSources.map((unit) => {
+  // Kartu punya lebar tetap (1/3 grup), jadi kalau sumber pendapatan
+  // banyak, gelembung dikecilkan bertahap DAN panggungnya berubah jadi
+  // "tabung gelembung" — tiap gelembung mengambang naik sendiri-sendiri
+  // dari dasar ke puncak lalu "pecah" di atas & muncul lagi dari bawah
+  // (loop), bukan lagi satu baris yang digeser rapi ke samping —
+  // supaya kartu "Sumber Pendapatan" tetap terasa hidup tanpa terasa
+  // seperti carousel/marquee.
+  const srcCount = topSources.length;
+  const bubbleSize = srcCount > 10 ? 34 : srcCount > 5 ? 40 : 46;
+  const useFloat = srcCount > 5;
+  // Kolom horizontal tempat gelembung "ditembakkan" naik — dibatasi
+  // 3-6 kolom supaya tetap renggang di kartu yang sempit, lalu tiap
+  // sumber diberi giliran kolom (round-robin) & "jalur" (lane) supaya
+  // yang berbagi kolom yang sama tidak naik barengan.
+  const FLOAT_COLS = Math.max(3, Math.min(6, srcCount));
+  const RING_R = 46, RING_CIRC = 2 * Math.PI * RING_R;
+  const sourceDealsHtml = srcCount
+    ? topSources.map((unit, i) => {
         const { label, amount: amt, source, platform } = unit;
         const pct = activeTotal > 0 ? Math.round((amt / activeTotal) * 100) : 0;
         const color = sourceColor(label);
         const iconHtml = platform ? platformIcon(source, platform, getPlatformBuiltinIcon(source, platform)) : sourceIcon(source);
+        const ringOffset = (RING_CIRC * (1 - Math.min(pct, 100) / 100)).toFixed(2);
+        let extraVars = '';
+        let wrapClass = 'isc-bubble-wrap isc-bubble-fade';
+        if (useFloat) {
+          const col = i % FLOAT_COLS;
+          const lane = Math.floor(i / FLOAT_COLS);
+          const floatX = FLOAT_COLS > 1 ? (8 + col * (84 / (FLOAT_COLS - 1))).toFixed(1) : '50';
+          const duration = (7.5 + (col % 3) * 1.1 + (lane % 2) * 0.7).toFixed(2);
+          const delay = (-(lane * duration + col * 0.85)).toFixed(2);
+          extraVars = `;--float-x:${floatX}%;--float-duration:${duration}s;--float-delay:${delay}s`;
+          wrapClass = 'isc-bubble-wrap isc-bubble-float-item';
+        }
         return `
-        <div class="wallet-deal-card fc-plain" data-source="${escapeAttr(source)}" style="--w-color:${color}" role="button" tabindex="0" aria-label="Lihat rincian ${escapeAttr(label)}">
-          <div class="wdc-actions">
-            <button class="edit-btn" data-source="${escapeAttr(source)}" data-platform="${escapeAttr(platform)}" type="button" title="Ganti ikon">${pfdEditIconSvg}</button>
-          </div>
-          <div class="wdc-head">
-            <div class="wdc-logo">${iconHtml}</div>
-            <span class="wdc-cat">${pct}%</span>
-          </div>
-          <div class="wdc-name" title="${escapeAttr(label)}">${escapeHtml(label)}</div>
-          <div class="wdc-balance-wrap">
-            <div class="wdc-balance mono">${fmtRupiah(amt)}</div>
-            <div class="wdc-hint">Pendapatan</div>
-          </div>
-          <button type="button" class="wdc-btn" data-source="${escapeAttr(source)}">Lihat Rincian</button>
+      <div class="${wrapClass}" style="--bubble-size:${bubbleSize}px;--src-color:${color};--fade-delay:${(i % 12) * 55}ms${extraVars}">
+        <div class="isc-bubble">
+          <svg class="isc-bubble-ring" viewBox="0 0 100 100" aria-hidden="true" style="--ring-circ:${RING_CIRC.toFixed(2)};--ring-offset:${ringOffset}">
+            <circle class="isc-ring-track" cx="50" cy="50" r="${RING_R}"/>
+            <circle class="isc-ring-fill" cx="50" cy="50" r="${RING_R}" stroke-dasharray="${RING_CIRC.toFixed(2)}"/>
+          </svg>
+          <button type="button" class="isc-bubble-edit-icon" data-source="${escapeAttr(source)}" data-platform="${escapeAttr(platform)}" title="Ganti ikon" aria-label="Ganti ikon ${escapeAttr(label)}">${pfdEditIconSvg}</button>
+          <button type="button" class="isc-bubble-body" data-source="${escapeAttr(source)}" title="${escapeAttr(label)} — ${pct}%">
+            <span class="isc-bubble-inner">
+              <span class="isc-bubble-face">
+                <span class="ibf-icon">${iconHtml}</span>
+              </span>
+              <span class="isc-bubble-info">
+                <span class="ibi-name">${escapeHtml(label)}</span>
+                <span class="ibi-amount mono">${fmtRupiah(amt)}</span>
+              </span>
+            </span>
+          </button>
         </div>
-      `;
+      </div>`;
+      }).join('')
+    : sourceEmptyHtml;
+  const stageInnerHtml = sourceDealsHtml;
+  const stageClass = useFloat ? 'isc-bubble-stage isc-bubble-float' : 'isc-bubble-stage';
+  const stageStyle = '';
+
+  // Tampilan alternatif "Daftar" — fitur tambahan di samping gelembung:
+  // tiap sumber jadi satu baris (logo bulat + nama + batang persentase
+  // + nominal), diurutkan dari yang terbesar, supaya lebih mudah
+  // dibaca & dibandingkan angka pastinya ketimbang cuma lewat ukuran
+  // gelembung. Baris tetap bisa diklik (buka rincian platform, pakai
+  // class .isc-bubble-body yang sama) & tetap punya tombol "ganti
+  // ikon" sendiri (pakai class .isc-bubble-edit-icon yang sama), jadi
+  // ditangani oleh listener yang sama persis dengan tampilan gelembung
+  // (lihat bindIncomeSourceStripClicks di bawah).
+  const sourceListHtml = topSources.length
+    ? topSources.map((unit, i) => {
+        const { label, amount: amt, source, platform } = unit;
+        const pct = activeTotal > 0 ? Math.round((amt / activeTotal) * 100) : 0;
+        const color = sourceColor(label);
+        const iconHtml = platform ? platformIcon(source, platform, getPlatformBuiltinIcon(source, platform)) : sourceIcon(source);
+        const rankHtml = i < 3 ? `<span class="isl-rank">${i + 1}</span>` : '';
+        return `
+      <div class="isl-row" style="--src-color:${color}">
+        <button type="button" class="isl-row-body isc-bubble-body" data-source="${escapeAttr(source)}" title="${escapeAttr(label)} — ${pct}%">
+          ${rankHtml}
+          <span class="isl-icon">${iconHtml}</span>
+          <span class="isl-info">
+            <span class="isl-top">
+              <span class="isl-name">${escapeHtml(label)}</span>
+              <span class="isl-amount mono">${fmtRupiah(amt)}</span>
+            </span>
+            <span class="isl-bar-track"><span class="isl-bar-fill" style="width:${pct}%"></span></span>
+          </span>
+          <span class="isl-pct mono">${pct}%</span>
+        </button>
+        <button type="button" class="isl-edit-btn isc-bubble-edit-icon" data-source="${escapeAttr(source)}" data-platform="${escapeAttr(platform)}" title="Ganti ikon" aria-label="Ganti ikon ${escapeAttr(label)}">${pfdEditIconSvg}</button>
+      </div>`;
       }).join('')
     : sourceEmptyHtml;
 
   const sourceCardHtml = `
-    <div class="stat-card stat-special isc-source-card fade-up" style="animation-delay:60ms">
+    <div class="stat-card stat-special isc-source-card fc-card fade-up" style="animation-delay:60ms">
       <div class="top-row">
         <span class="label">Sumber Pendapatan</span>
         <div class="wallet-head-right">
           <span class="icon-badge special">${iconSources}</span>
         </div>
       </div>
-      <div class="wallet-total-line">
-        <svg class="wtl-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 6.5c0-1.93-2.24-3.5-5-3.5s-5 1.57-5 3.5S9.24 10 12 10s5 1.57 5 3.5-2.24 3.5-5 3.5-5-1.57-5-3.5"/></svg>
-        <div class="wallet-total-stat" id="incomeSourceTotalStat" role="button" tabindex="0" aria-label="Sentuh untuk lihat semua sumber pendapatan">
+      <div class="wallet-total-line fc-plain isc-total-line-compact">
+        <div class="wallet-total-stat">
           <span class="wts-label">Saldo yang telah di cairkan</span>
           <span class="wallet-total-value mono" id="incomeSourceTotalAmount">${fmtRupiah(0)}</span>
         </div>
-        <div class="wallet-account-pill" title="${rankedSources.length} sumber aktif">
-          <span class="wap-num mono">${rankedSources.length}</span>
-          <span class="wap-label">Sumber</span>
+        ${rankedSources.length ? `<div class="wallet-account-pill" title="${rankedSources.length} sumber aktif"><span class="wap-num mono">${rankedSources.length}</span><span class="wap-label">Sumber</span></div>` : ''}
+        ${trendBadgeHtml}
+      </div>
+      <div class="isc-stage-wrap">
+        <div class="isc-stage-viewport" id="incomeSourceViewport">
+          <div class="${stageClass}" id="incomeSourceStrip"${stageStyle}>${stageInnerHtml}</div>
         </div>
       </div>
-      <div class="wallet-deals-strip" id="incomeSourceDealsStrip">
-        ${sourceDealsHtml}
-        <button type="button" class="wallet-deal-add" id="incomeSourceAddTileBtn">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>
-          <span>Tambah Sumber</span>
+      <div class="isc-card-actions">
+        <button type="button" class="isc-view-all-btn" id="incomeSourceViewAllBtn">
+          Lihat Semua
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+        </button>
+        <button type="button" class="isc-add-source-btn" id="incomeSourceCardAddBtn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          Tambah Sumber
         </button>
       </div>
-      <div class="wallet-manual-note">Total saldo diperbarui otomatis dari catatan pendapatan</div>
     </div>
   `;
 
@@ -1978,12 +2054,7 @@ function renderSummary() {
 
   const walletCardHtml = renderWalletCardHtml(iconWalletCard, 3);
 
-  // Kartu "Sumber Pendapatan" dikembalikan dengan bentuk yang disamakan
-  // persis dengan kartu "Saldo Bank & E-Wallet" (strip wallet-deal-card),
-  // dibedakan cuma lewat warna tema (hijau, lihat CSS .isc-source-card).
-  // Kartu "Aktivitas 7 Hari Terakhir" tetap tidak dirender sesuai
-  // permintaan sebelumnya.
-  const incomeCardHtml = `<div class="income-cards-group">${sourceCardHtml}${walletCardHtml}</div>`;
+  const incomeCardHtml = `<div class="income-cards-group">${sourceCardHtml}${recentCardHtml}${walletCardHtml}</div>`;
 
   const bannerFlowWrap = document.getElementById('bannerFlowWrap');
   if (bannerFlowWrap) bannerFlowWrap.innerHTML = cardsHtml;
@@ -1991,6 +2062,8 @@ function renderSummary() {
   initFlowDealSettle();
   startFlowResetTimer();
   bindIncomeSourceStripClicks();
+  bindIncomeBubbleDrag();
+  // bindIncomeSourceViewToggle(); // dinonaktifkan: tombol switch Gelembung/Daftar sudah dihapus dari kartu
   bindIncomeSourceCardAddBtn();
   animateIncomeSourceTotal(activeTotal);
   bindIncomeCardTilt();
@@ -1999,47 +2072,28 @@ function renderSummary() {
   applyIncomeCardsVisibility();
 }
 
-/* Klik salah satu kartu sumber pendapatan di strip beranda -> buka
-   modal rincian platform (mis. Adsense -> YouTube, Website). Struktur
-   & class-nya kini disamakan persis dengan strip kartu "Saldo Bank &
-   E-Wallet" (.wallet-deal-card di dalam #incomeSourceDealsStrip), jadi
-   listener-nya juga dipola sama seperti bindWalletCardEvents(). */
+/* Klik salah satu gelembung/baris sumber pendapatan di kartu beranda
+   -> buka modal rincian platform (mis. Adsense -> YouTube, Website).
+   Listener yang sama dipasang di KEDUA tampilan (gelembung & daftar)
+   karena keduanya berbagi class .isc-bubble-body / .isc-bubble-edit-icon
+   yang sama persis. Elemennya <button> asli, jadi navigasi keyboard
+   (Tab + Enter/Spasi) sudah bekerja otomatis tanpa listener tambahan. */
 function bindIncomeSourceStripClicks() {
-  const strip = document.getElementById('incomeSourceDealsStrip');
-  if (strip && !strip._incomeSourceBound) {
-    strip._incomeSourceBound = true;
-    strip.addEventListener('click', (e) => {
-      const editBtn = e.target.closest('.edit-btn');
-      if (editBtn) {
-        e.stopPropagation();
-        const platform = editBtn.dataset.platform || '';
-        if (platform) openPlatformIconModal(editBtn.dataset.source, platform, platform);
-        else openSourceIconModal(editBtn.dataset.source);
-        return;
-      }
-      const card = e.target.closest('.wallet-deal-card');
-      if (card) openPlatformDetailModal(card.dataset.source);
-    });
-    strip.addEventListener('keydown', (e) => {
-      const card = e.target.closest('.wallet-deal-card');
-      if (card && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openPlatformDetailModal(card.dataset.source); }
-    });
-  }
-
-  const addTile = document.getElementById('incomeSourceAddTileBtn');
-  if (addTile && !addTile._incomeSourceBound) {
-    addTile._incomeSourceBound = true;
-    addTile.addEventListener('click', () => openCustomSourceModal());
-  }
-
-  const totalStat = document.getElementById('incomeSourceTotalStat');
-  if (totalStat && !totalStat._incomeSourceBound) {
-    totalStat._incomeSourceBound = true;
-    totalStat.addEventListener('click', () => openIncomeSourcePage());
-    totalStat.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openIncomeSourcePage(); }
-    });
-  }
+  const handler = (e) => {
+    const editBtn = e.target.closest('.isc-bubble-edit-icon');
+    if (editBtn) {
+      const platform = editBtn.dataset.platform || '';
+      if (platform) openPlatformIconModal(editBtn.dataset.source, platform, platform);
+      else openSourceIconModal(editBtn.dataset.source);
+      return;
+    }
+    const card = e.target.closest('.isc-bubble-body');
+    if (card) openPlatformDetailModal(card.dataset.source);
+  };
+  const strip = document.getElementById('incomeSourceStrip');
+  if (strip) strip.addEventListener('click', handler);
+  const list = document.getElementById('incomeSourceList');
+  if (list) list.addEventListener('click', handler);
 }
 
 /* Gelembung sumber pendapatan di beranda bisa DITARIK/DIGESER bebas
@@ -2293,13 +2347,23 @@ function bindIncomeSourceViewToggle() {
 }
 
 
-/* Catatan: tombol "Tambah Sumber" (di dalam strip) & area total (buka
-   halaman detail) sekarang dipasang langsung di
-   bindIncomeSourceStripClicks(), mengikuti pola bindWalletCardEvents()
-   supaya kartu "Sumber Pendapatan" berperilaku identik dengan kartu
-   "Saldo Bank & E-Wallet". Fungsi ini sengaja dibiarkan kosong sebagai
-   pemanggilan yang aman (no-op) untuk kompatibilitas titik panggilan lama. */
-function bindIncomeSourceCardAddBtn() {}
+/* Tombol "+ Tambah Sumber" langsung di kartu beranda -> buka
+   modal yang sama dengan yang dipakai di halaman rincian Sumber
+   Pendapatan, supaya user tidak perlu masuk ke halaman detail dulu.
+   "Lihat Semua" & chip "+N sumber lainnya" -> buka halaman detail
+   penuh (grafik komposisi + tabel riwayat), yang sebelumnya tidak
+   punya jalan masuk sama sekali dari UI. Tombol "Tambah Pendapatan"
+   pada empty-state -> langsung buka form catat pendapatan. */
+function bindIncomeSourceCardAddBtn() {
+  const addSourceBtn = document.getElementById('incomeSourceCardAddBtn');
+  if (addSourceBtn) addSourceBtn.addEventListener('click', openCustomSourceModal);
+
+  const addIncomeBtn = document.getElementById('incomeSourceCardAddIncomeBtn');
+  if (addIncomeBtn) addIncomeBtn.addEventListener('click', openIncomeModal);
+
+  const viewAllBtn = document.getElementById('incomeSourceViewAllBtn');
+  if (viewAllBtn) viewAllBtn.addEventListener('click', openIncomeSourcePage);
+}
 
 /* ==========================================================
    MODAL GANTI IKON SUMBER PENDAPATAN
@@ -4271,6 +4335,7 @@ const WIDGET_DEFAULTS = {
   incomeShortcutCard: true,
   historySection: true,
   incomeSourceStatCard: true,
+  recentActivityStatCard: true,
   bankWalletStatCard: true,
   compositionCard: true,
   profileCard: true,
@@ -4336,6 +4401,7 @@ function applyIncomeCardsVisibility(settings) {
   if (!group) return;
   const rows = [
     ['.isc-source-card', s.incomeSourceStatCard],
+    ['.isc-recent-card', s.recentActivityStatCard],
     ['.isc-wallet-card', s.bankWalletStatCard],
   ];
   let visibleCount = 0;
@@ -9162,21 +9228,18 @@ function initTelegramWebApp() {
     if (typeof tg.disableVerticalSwipes === 'function') tg.disableVerticalSwipes();
 
     const rootStyles = getComputedStyle(document.documentElement);
-    // Dibaca dari --sun-core (warna dasar banner oranye), bukan lagi
-    // --forest-deep -- sejak banner diredesain jadi oranye, warna dasar
-    // status bar/nav bar Telegram ikut warna banner yang baru itu.
-    const bannerBase = (rootStyles.getPropertyValue('--sun-core') || '#FF7A2E').trim();
+    const forestDeep = (rootStyles.getPropertyValue('--forest-deep') || '#0B1220').trim();
 
     // setHeaderColor menerima nama warna preset ("bg_color","secondary_bg_color")
     // ATAU hex custom tergantung versi Bot API klien Telegram -- try/catch
     // per pemanggilan supaya versi klien yang lebih lama (belum dukung hex
     // custom di setHeaderColor) tidak bikin sisa fungsi ini ikut gagal.
-    try { tg.setHeaderColor(bannerBase); } catch (e) { /* versi klien lama: abaikan */ }
-    try { tg.setBackgroundColor(bannerBase); } catch (e) { /* abaikan */ }
+    try { tg.setHeaderColor(forestDeep); } catch (e) { /* versi klien lama: abaikan */ }
+    try { tg.setBackgroundColor(forestDeep); } catch (e) { /* abaikan */ }
     // setBottomBarColor cuma ada di Bot API versi baru (bar navigasi bawah
     // khusus iOS) -- dicek dulu supaya tidak error di klien lama.
     if (typeof tg.setBottomBarColor === 'function') {
-      try { tg.setBottomBarColor(bannerBase); } catch (e) { /* abaikan */ }
+      try { tg.setBottomBarColor(forestDeep); } catch (e) { /* abaikan */ }
     }
   } catch (e) {
     console.warn('initTelegramWebApp dilewati:', e);
