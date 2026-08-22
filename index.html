@@ -766,6 +766,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 }
 @media (max-width:640px){
   .saldo-card{margin:-18px -24px 22px;padding:24px 22px 6px;border-radius:20px 20px 0 0;}
+  .fc-peek-handle{padding:18px 22px 18px 22px;border-radius:0 0 20px 20px;}
 }
 /* ---- Efek kartu Uang Masuk & Keluar nyelip di BELAKANG banner ----
    .banner-flow-wrap adalah jendela "overflow:hidden" yang tingginya
@@ -798,7 +799,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 }
 .fc-peek-handle{
   position:relative;
-  margin:0 -46px -20px;padding:20px 20px 16px 22px;
+  margin:0 -46px -20px;padding:22px 28px 22px 28px;
   border-radius:0 0 24px 24px;
   background:var(--card);
   border-top:1px solid transparent;
@@ -1638,7 +1639,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
      kompensasi supaya semua elemen (ikon+label+mini-preview+tombol)
      tetap muat satu baris tanpa kepotong, ikon/gap/tombol
      diperkecil sedikit lagi di bawah. */
-  .fc-peek-handle{margin:0 -34px -20px;padding:14px 16px 12px 16px;}
+  .fc-peek-handle{margin:0 -34px -20px;padding:16px 18px 16px 18px;border-radius:0 0 18px 18px;}
   .fc-peek-row{gap:7px;max-width:none;}
   .fc-peek-icon{width:26px;height:26px;border-radius:9px;}
   .fc-peek-icon svg{width:14px;height:14px;}
@@ -5322,7 +5323,7 @@ tbody tr.date-group-row:first-child td{border-top:none;}
 @media (max-width:600px){
   .app{padding:0 14px;}
   .banner{
-    margin:0 -14px 18px;border-radius:0 0 20px 20px;
+    margin:0 -14px 18px;border-radius:0;
     /* padding-top dasar (16px) + tambahan env(safe-area-inset-top)
        supaya kalau situs ini dibuka fullscreen/PWA (viewport-fit=cover
        di atas bikin konten bisa nembus sampai belakang notch), logo &
@@ -5754,7 +5755,7 @@ body.is-scrolling *{
      -14px dari breakpoint lain di atas — 2px lebih lebar dari padding
      .app (12px) yang menang di sini, membuat banner bocor 2px keluar
      viewport di tiap sisi dan memicu scroll horizontal tipis di HP. */
-  .banner{padding:14px 14px 38px;margin:0 -12px 0;border-radius:0 0 18px 18px;}
+  .banner{padding:14px 14px 38px;margin:0 -12px 0;border-radius:0;}
   .saldo-card{margin:-16px -12px 18px;padding:20px 18px 6px;border-radius:18px 18px 0 0;}
   .brand{gap:7px;padding:5px 6px;margin:-5px -6px;}
   .brand-mark{width:30px;height:30px;border-radius:8px;}
