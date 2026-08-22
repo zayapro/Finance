@@ -350,11 +350,11 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
 .brand:active{transform:scale(0.97);}
 .brand-mark img{width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block;}
 .brand-mark{
-  width:34px;height:34px;border-radius:9px;flex-shrink:0;
-  background:linear-gradient(145deg, var(--primary-light), var(--primary));
+  width:38px;height:38px;border-radius:12px;flex-shrink:0;
+  background:#FFFFFF;
   display:flex;align-items:center;justify-content:center;
-  color:#7C2D12;
-  box-shadow:0 0 0 0 rgba(242,103,43,0.5);
+  color:var(--primary-deep);
+  box-shadow:0 4px 14px -4px rgba(124,45,18,0.35), 0 0 0 0 rgba(242,103,43,0.5);
   animation:brandMarkPulse 2.6s ease-in-out infinite;
 }
 @keyframes brandMarkPulse{
@@ -365,13 +365,13 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
 @media (prefers-reduced-motion:reduce){
   .brand-mark{animation:none;box-shadow:none;}
 }
-.brand-name{font-family:'Fraunces',serif;font-weight:600;font-size:19px;letter-spacing:-0.01em;white-space:nowrap;}
-/* Versi logo brand di dalam banner "Saldo Total" dibuat senada dengan
-   gradasi oranye baru (bukan hijau brass default), tanpa mengubah
-   logo di mini-topbar/footer yang tetap pakai warna aslinya. */
+.brand-name{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:19px;letter-spacing:-0.01em;white-space:nowrap;}
+/* Versi logo brand di dalam banner "Saldo Total": kotak putih solid
+   dengan ikon oranye di dalamnya (senada referensi desain), tanpa
+   mengubah logo di mini-topbar/footer yang tetap pakai warna aslinya. */
 .banner .brand-mark{
-  background:linear-gradient(145deg, #FFD9A8, #FF7A3D);
-  color:#7C2D12;
+  background:#FFFFFF;
+  color:var(--primary-deep);
   animation:bannerBrandMarkPulse 2.6s ease-in-out infinite;
 }
 @keyframes bannerBrandMarkPulse{
@@ -440,15 +440,15 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
 .notif-wrap{position:relative;}
 .notif-btn{
   position:relative;
-  width:34px;height:34px;border-radius:9px;
+  width:36px;height:36px;border-radius:13px;
   display:flex;align-items:center;justify-content:center;
-  background:rgba(244,247,243,0.10);
-  border:1px solid rgba(244,247,243,0.16);
-  color:rgba(244,247,243,0.9);
+  background:rgba(255,255,255,0.16);
+  border:1px solid rgba(255,255,255,0.22);
+  color:rgba(255,255,255,0.95);
   transition:background .15s ease, color .15s ease, transform .12s ease;
   touch-action:manipulation;-webkit-tap-highlight-color:transparent;
 }
-.notif-btn:hover{background:rgba(244,247,243,0.18);color:#fff;}
+.notif-btn:hover{background:rgba(255,255,255,0.26);color:#fff;}
 .notif-btn:active{transform:scale(0.94);}
 .notif-btn.has-alert svg{animation:bellRing 2.4s ease-in-out infinite;transform-origin:top center;}
 @keyframes bellRing{
@@ -893,13 +893,13 @@ tr.fade-up{animation:fadeRow .35s ease both;}
    polos tanpa informasi. ---- */
 .fc-peek-info{display:flex;align-items:center;gap:10px;min-width:0;flex:1;}
 .fc-peek-icon{
-  flex-shrink:0;width:32px;height:32px;border-radius:10px;
+  flex-shrink:0;width:34px;height:34px;border-radius:11px;
   display:flex;align-items:center;justify-content:center;
-  background:color-mix(in srgb, var(--fc-accent, #F97316) 15%, var(--card));
-  color:var(--fc-accent-strong, #C2410C);
+  background:var(--paper);
+  color:var(--ink-soft);
 }
 .fc-peek-text{min-width:0;display:flex;flex-direction:column;gap:2px;}
-.fc-peek-handle-label{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink);font-weight:700;font-size:12.5px;}
+.fc-peek-handle-label{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink);font-weight:800;font-size:13px;}
 .fc-peek-mini{display:flex;align-items:center;gap:6px;font-size:10.5px;color:var(--ink-faint);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .fc-peek-mini b{font-family:'IBM Plex Mono',monospace;font-weight:700;letter-spacing:-0.01em;}
 .fc-peek-mini .fc-peek-mini-in b{color:var(--brass);}
@@ -969,9 +969,9 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 .currency-toggle{
   position:relative;flex-shrink:0;
   display:flex;align-items:center;
-  width:82px;height:28px;border-radius:999px;padding:3px;
-  background:var(--paper);
-  border:1px solid var(--line);
+  width:82px;height:30px;border-radius:999px;padding:3px;
+  background:var(--primary-soft);
+  border:1px solid rgba(242,103,43,0.18);
   cursor:pointer;
   /* FIX "ada bayangan kotak pas diklik di HP": browser mobile secara
      default menggambar highlight sentuh (tap highlight) berbentuk
@@ -1003,9 +1003,9 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 }
 .currency-toggle .ct-knob{
   position:absolute;top:3px;left:3px;
-  width:38px;height:20px;border-radius:999px;
-  background:linear-gradient(140deg,#FFE4BC,#FF9455);
-  box-shadow:0 3px 8px rgba(0,0,0,0.25);
+  width:38px;height:22px;border-radius:999px;
+  background:linear-gradient(140deg,var(--primary-light),var(--primary));
+  box-shadow:0 3px 10px rgba(194,65,12,0.35);
   transition:transform .32s cubic-bezier(.34,1.56,.64,1);
 }
 .currency-toggle.usd .ct-knob{transform:translateX(38px);}
@@ -1021,11 +1021,11 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 }
 .saldo-row{display:flex;align-items:center;gap:10px;margin-top:4px;min-width:0;}
 .saldo-value{
-  font-family:'IBM Plex Mono',monospace;
-  font-size:clamp(22px, 6.4vw, 42px);
-  font-weight:600;
+  font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:clamp(24px, 6.8vw, 44px);
+  font-weight:800;
   color:var(--ink);
-  letter-spacing:-0.01em;
+  letter-spacing:-0.02em;
   transition:filter .15s ease;
   /* flex:0 1 auto (bukan 1 1 auto): SEBELUMNYA nilai ini memaksa
      saldo-value melebar mengisi SELURUH sisa lebar baris, sehingga
@@ -1044,7 +1044,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 }
 .saldo-toggle{
   flex-shrink:0;
-  width:34px;height:34px;border-radius:9px;
+  width:34px;height:34px;border-radius:11px;
   display:flex;align-items:center;justify-content:center;
   background:var(--paper);
   border:1px solid var(--line);
