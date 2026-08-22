@@ -759,13 +759,19 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 .saldo-card{
   position:relative;z-index:2;
   background:var(--card);
-  margin:-22px -24px 22px;
+  /* Lebar & posisi kiri-kanan DISAMAKAN dengan kartu section-card biasa
+     (mis. "Sumber Pendapatan"): margin horizontal 0, jadi kartu ini
+     ikut lebar konten di dalam padding .app, BUKAN full-bleed lagi.
+     margin-top tetap negatif supaya efek "menyelip"/menyatu ke ujung
+     bawah banner oranye tetap dipertahankan (hanya lebarnya yang
+     berubah, posisi vertikal & overlap-nya tidak). */
+  margin:-22px 0 22px;
   padding:28px 28px 8px;
   border-radius:24px 24px 0 0;
   box-shadow:0 20px 44px -26px rgba(15,23,42,0.30);
 }
 @media (max-width:640px){
-  .saldo-card{margin:-18px -24px 22px;padding:24px 22px 6px;border-radius:20px 20px 0 0;}
+  .saldo-card{margin:-18px 0 22px;padding:24px 22px 6px;border-radius:20px 20px 0 0;}
   .fc-peek-handle{padding:18px 22px 18px 22px;border-radius:0 0 20px 20px;}
 }
 /* ---- Efek kartu Uang Masuk & Keluar nyelip di BELAKANG banner ----
@@ -791,16 +797,14 @@ tr.fade-up{animation:fadeRow .35s ease both;}
    "Uang Masuk & Keluar" di dalam wrap ini — baik saat masih tab "peek"
    maupun sudah dibuka penuh — selalu terlihat lebih SEMPIT & seperti
    kartu terpisah yang "mengambang" dengan jarak di kiri-kanannya,
-   bukan menyatu selebar kartu Saldo Total. Margin horizontal di bawah
-   ini meniadakan padding .app (persis pola yang sudah dipakai
-   .saldo-card), supaya wrap ini & isinya ikut full-bleed dan kedua
-   kartu benar-benar sama lebar di semua ukuran layar. Nilai -24px
-   cocok untuk padding .app default (24px); di ≤600px (saat padding
-   .app menyusut ke 12px) ada override -12px, lihat blok
-   @media (max-width:600px) di dekat override .saldo-card. */
+   bukan menyatu selebar kartu Saldo Total. margin horizontal di bawah
+   DISAMAKAN dengan .saldo-card (yang sekarang ikut lebar konten
+   .app, bukan lagi full-bleed — lihat catatan di .saldo-card),
+   supaya wrap ini & isinya tetap sama lebar dengan kartu Saldo Total
+   di semua ukuran layar. */
 .banner-flow-wrap{
   position:relative;z-index:1;
-  margin:-48px -24px 22px;
+  margin:-48px 0 22px;
   overflow:hidden;
   transition:height .6s cubic-bezier(.22,1,.36,1);
 }
@@ -5792,11 +5796,12 @@ body.is-scrolling *{
      .app (12px) yang menang di sini, membuat banner bocor 2px keluar
      viewport di tiap sisi dan memicu scroll horizontal tipis di HP. */
   .banner{padding:14px 14px 38px;margin:0 -12px 0;border-radius:0;}
-  .saldo-card{margin:-16px -12px 18px;padding:20px 18px 6px;border-radius:18px 18px 0 0;}
-  /* Ikut menyusut ke -12px (samakan dengan padding .app 12px di lebar
-     ini) supaya kartu "Uang Masuk & Keluar" tetap full-bleed pas
-     selebar .saldo-card di atas — lihat catatan lengkap di .banner-flow-wrap. */
-  .banner-flow-wrap{margin:-48px -12px 22px;}
+  .saldo-card{margin:-16px 0 18px;padding:20px 18px 6px;border-radius:18px 18px 0 0;}
+  /* Margin horizontal 0 (samakan dengan .saldo-card di atas, yang
+     sekarang ikut lebar konten .app) supaya kartu "Uang Masuk &
+     Keluar" tetap pas selebar .saldo-card — lihat catatan lengkap
+     di .banner-flow-wrap. */
+  .banner-flow-wrap{margin:-48px 0 22px;}
   .brand{gap:7px;padding:5px 6px;margin:-5px -6px;}
   .brand-mark{width:30px;height:30px;border-radius:8px;}
   .brand-name{font-size:16.5px;}
