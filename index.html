@@ -774,12 +774,12 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   position:relative;z-index:2;
   background:var(--card);
   margin:-22px -24px 22px;
-  padding:22px 24px 6px;
+  padding:28px 28px 8px;
   border-radius:24px 24px 0 0;
   box-shadow:0 20px 44px -26px rgba(15,23,42,0.30);
 }
 @media (max-width:640px){
-  .saldo-card{margin:-18px -24px 22px;padding:18px 20px 4px;border-radius:20px 20px 0 0;}
+  .saldo-card{margin:-18px -24px 22px;padding:24px 22px 6px;border-radius:20px 20px 0 0;}
 }
 /* ---- Efek kartu Uang Masuk & Keluar nyelip di BELAKANG banner ----
    .banner-flow-wrap adalah jendela "overflow:hidden" yang tingginya
@@ -812,10 +812,10 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 }
 .fc-peek-handle{
   position:relative;
-  margin:0 -22px -20px;padding:17px 16px 13px 18px;
+  margin:0 -22px -20px;padding:20px 20px 16px 22px;
   border-radius:0 0 20px 20px;
-  background:linear-gradient(180deg, var(--card), var(--paper));
-  border-top:1px solid var(--line);
+  background:var(--card);
+  border-top:1px solid transparent;
   color:var(--ink-soft);font-size:12px;font-weight:600;
   cursor:pointer;
   box-shadow:0 14px 14px -14px rgba(15,23,42,0.28), 0 2px 0 rgba(37,99,235,0.05) inset;
@@ -880,7 +880,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   visibility:hidden;
   pointer-events:none;
 }
-.fc-peek-handle:hover{background:linear-gradient(180deg, var(--card), color-mix(in srgb, var(--fc-accent, #F97316) 6%, var(--paper)));}
+.fc-peek-handle:hover{background:color-mix(in srgb, var(--fc-accent, #F97316) 4%, var(--card));}
 .fc-peek-handle::before{
   content:'';position:absolute;top:7px;left:50%;
   width:36px;height:4px;border-radius:999px;
@@ -5760,7 +5760,7 @@ body.is-scrolling *{
      .app (12px) yang menang di sini, membuat banner bocor 2px keluar
      viewport di tiap sisi dan memicu scroll horizontal tipis di HP. */
   .banner{padding:14px 14px 38px;margin:0 -12px 0;border-radius:0 0 18px 18px;}
-  .saldo-card{margin:-16px -12px 18px;padding:16px 16px 4px;border-radius:18px 18px 0 0;}
+  .saldo-card{margin:-16px -12px 18px;padding:20px 18px 6px;border-radius:18px 18px 0 0;}
   .brand{gap:7px;padding:5px 6px;margin:-5px -6px;}
   .brand-mark{width:30px;height:30px;border-radius:8px;}
   .brand-name{font-size:16.5px;}
