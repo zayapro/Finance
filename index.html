@@ -783,9 +783,24 @@ tr.fade-up{animation:fadeRow .35s ease both;}
    penuh kartu dengan animasi — lihat initFlowDealSettle() di
    script.js. */
 .banner{position:relative;z-index:2;}
+/* ---- FIX "kartu Ringkasan Transaksi lebih kecil dari kartu Saldo
+   Total": dulu wrap ini TIDAK punya margin horizontal, jadi lebarnya
+   cuma selebar area konten .app (mepet ke padding kiri/kanan .app),
+   sementara .saldo-card di atasnya full-bleed (margin negatif
+   meniadakan padding .app, tembus ke tepi layar/kartu). Akibatnya kartu
+   "Uang Masuk & Keluar" di dalam wrap ini — baik saat masih tab "peek"
+   maupun sudah dibuka penuh — selalu terlihat lebih SEMPIT & seperti
+   kartu terpisah yang "mengambang" dengan jarak di kiri-kanannya,
+   bukan menyatu selebar kartu Saldo Total. Margin horizontal di bawah
+   ini meniadakan padding .app (persis pola yang sudah dipakai
+   .saldo-card), supaya wrap ini & isinya ikut full-bleed dan kedua
+   kartu benar-benar sama lebar di semua ukuran layar. Nilai -24px
+   cocok untuk padding .app default (24px); di ≤600px (saat padding
+   .app menyusut ke 12px) ada override -12px, lihat blok
+   @media (max-width:600px) di dekat override .saldo-card. */
 .banner-flow-wrap{
   position:relative;z-index:1;
-  margin:-48px 0 22px;
+  margin:-48px -24px 22px;
   overflow:hidden;
   transition:height .6s cubic-bezier(.22,1,.36,1);
 }
@@ -799,7 +814,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 }
 .fc-peek-handle{
   position:relative;
-  margin:0 -46px -20px;padding:22px 28px 22px 28px;
+  margin:0 -22px -20px;padding:22px 28px 22px 28px;
   border-radius:0 0 24px 24px;
   background:var(--card);
   border-top:1px solid transparent;
@@ -814,14 +829,14 @@ tr.fade-up{animation:fadeRow .35s ease both;}
      secara eksplisit. touch-action:manipulation juga disertakan supaya
      tidak ada jeda 300ms & tap terasa lebih responsif. */
   touch-action:manipulation;-webkit-tap-highlight-color:transparent;
-  /* PENTING: margin kiri/kanan di atas (-46px) SENGAJA lebih besar dari
-     sekadar membatalkan padding .flow-deal-card (22px) — karena
-     .banner-flow-wrap (induknya) TIDAK ikut full-bleed seperti .banner
-     & .saldo-card (yang punya margin -24px meniadakan padding .app),
-     jadi tab ini perlu MENIADAKAN JUGA inset .app itu (24px) supaya
-     benar-benar nempel rata sisi ke sisi selebar kartu Saldo Total di
-     atasnya (dulu ada celah abu-abu di kiri-kanan karena cuma
-     menutupi padding kartunya sendiri, tidak sampai ke tepi layar). */
+  /* Margin kiri/kanan di atas (-22px) meniadakan PERSIS padding
+     horizontal .flow-deal-card (22px) — sekarang .banner-flow-wrap
+     (induknya) SUDAH ikut full-bleed sendiri (lihat catatan di
+     .banner-flow-wrap), jadi tab ini cukup menembus ke tepi wrap-nya
+     saja, tidak perlu lagi meniadakan inset .app juga (dulu nilainya
+     -46px karena memikul dua lapis inset sekaligus — sejak wrap-nya
+     full-bleed, itu jadi kelebihan & bikin sudut lengkung bawah tab
+     ini kepotong tepat di tepi layar alih-alih terlihat bulat). */
 }
 /* ---- Baris konten (ikon+label+tombol) dipisah dari .fc-peek-handle
    supaya bisa dibatasi lebar maksimalnya sendiri. .fc-peek-handle boleh
@@ -1605,7 +1620,11 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   .flow-tier-card{padding:13px 13px 11px;}
   .ftc-chart-wrap{height:68px;}
   .banner-flow-wrap .flow-deal-card{padding:18px 16px 16px;}
-  .fc-peek-handle{margin:0 -28px -20px;}
+  /* Padding horizontal kartu menyusut ke 16px di lebar ini (baris di
+     atas) — margin tab peek yang meniadakannya ikut disesuaikan ke
+     -16px, lihat override .fc-peek-handle di blok @media(max-width:480px)
+     terpisah di bawah (ditaruh SETELAH blok @media(max-width:600px)
+     supaya benar-benar menang di cascade, sama seperti pola blok ≤380px). */
   .flow-deal-title-text h3{font-size:14.5px;}
   .flow-deal-body{gap:16px;}
 }
@@ -1639,7 +1658,11 @@ tr.fade-up{animation:fadeRow .35s ease both;}
      kompensasi supaya semua elemen (ikon+label+mini-preview+tombol)
      tetap muat satu baris tanpa kepotong, ikon/gap/tombol
      diperkecil sedikit lagi di bawah. */
-  .fc-peek-handle{margin:0 -34px -20px;padding:16px 18px 16px 18px;border-radius:0 0 18px 18px;}
+  /* margin horizontal SENGAJA tidak diubah di sini (tetap mewarisi
+     -22px dari rule dasar .fc-peek-handle) — padding .flow-deal-card
+     baru menyusut mulai ≤480px (lihat blok terpisah di bawah), jadi di
+     rentang 481–600px paddingnya masih 22px seperti default. */
+  .fc-peek-handle{padding:16px 18px 16px 18px;border-radius:0 0 18px 18px;}
   .fc-peek-row{gap:7px;max-width:none;}
   .fc-peek-icon{width:26px;height:26px;border-radius:9px;}
   .fc-peek-icon svg{width:14px;height:14px;}
@@ -1698,6 +1721,19 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   /* Tombol "Ciutkan" di pojok kartu */
   .fc-collapse-btn{padding:8px;right:14px;bottom:14px;}
 }
+/* ---- Margin tab peek di ≤480px ----
+   Ditaruh SETELAH blok @media(max-width:600px) di atas (bukan
+   digabung ke blok ≤480px yang lain, yang letaknya sebelum blok
+   600px) supaya nilai margin di sini benar-benar MENANG di cascade
+   pada lebar ≤480px — pola yang sama seperti blok ≤380px di bawah.
+   Nilai -16px meniadakan PERSIS padding horizontal .flow-deal-card
+   di lebar ini (16px, lihat .banner-flow-wrap .flow-deal-card di
+   blok @media(max-width:480px) yang lain), supaya sudut lengkung
+   bawah tab ini tetap pas rata di tepi kartu, tidak kepotong maupun
+   menyisakan celah. */
+@media (max-width:480px){
+  .fc-peek-handle{margin:0 -16px -20px;}
+}
 /* ---- Tab "peek" di layar HP sangat sempit (≤380px) ----
    Ditaruh SETELAH blok @media(max-width:600px) di atas (bukan di
    breakpoint 380px yang lain, yang letaknya sebelum blok 600px)
@@ -1708,7 +1744,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
    rapi (ikon+judul+baris Masuk-Keluar+tombol jadi kurang muat) di HP
    kecil seperti iPhone SE/Android layar 360px. */
 @media (max-width:380px){
-  .fc-peek-handle{margin:0 -26px -20px;padding:12px 14px 10px 14px;}
+  .fc-peek-handle{margin:0 -14px -20px;padding:12px 14px 10px 14px;}
   .fc-peek-row{gap:5px;}
   .fc-peek-info{gap:5px;}
   .fc-peek-icon{width:22px;height:22px;border-radius:7px;}
@@ -5757,6 +5793,10 @@ body.is-scrolling *{
      viewport di tiap sisi dan memicu scroll horizontal tipis di HP. */
   .banner{padding:14px 14px 38px;margin:0 -12px 0;border-radius:0;}
   .saldo-card{margin:-16px -12px 18px;padding:20px 18px 6px;border-radius:18px 18px 0 0;}
+  /* Ikut menyusut ke -12px (samakan dengan padding .app 12px di lebar
+     ini) supaya kartu "Uang Masuk & Keluar" tetap full-bleed pas
+     selebar .saldo-card di atas — lihat catatan lengkap di .banner-flow-wrap. */
+  .banner-flow-wrap{margin:-48px -12px 22px;}
   .brand{gap:7px;padding:5px 6px;margin:-5px -6px;}
   .brand-mark{width:30px;height:30px;border-radius:8px;}
   .brand-name{font-size:16.5px;}
