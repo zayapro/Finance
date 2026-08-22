@@ -768,10 +768,26 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   margin:-22px 0 22px;
   padding:28px 28px 8px;
   border-radius:24px 24px 0 0;
-  box-shadow:0 20px 44px -26px rgba(15,23,42,0.30);
+  /* ---- Transisi ke banner dihaluskan (tanpa garis batas tegas) ----
+     Karena kartu ini sekarang lebih sempit dari banner (lihat catatan
+     lebar di atas), sisi kiri-kanan banner oranye kelihatan mengapit
+     kartu putih ini, dan sudut atas yang membulat jadi terlihat seperti
+     "border" tegas. Shadow oranye lembut (baris pertama, offset-y
+     negatif) ditambahkan supaya sudut atas kartu blur/berbaur ke warna
+     banner di belakangnya alih-alih tampak sebagai garis batas keras;
+     shadow gelap (baris kedua) tetap dipakai untuk kedalaman di bawah
+     seperti sebelumnya. */
+  box-shadow:
+    0 -16px 30px -10px rgba(242,103,43,0.38),
+    0 20px 44px -26px rgba(15,23,42,0.30);
 }
 @media (max-width:640px){
-  .saldo-card{margin:-18px 0 22px;padding:24px 22px 6px;border-radius:20px 20px 0 0;}
+  .saldo-card{
+    margin:-18px 0 22px;padding:24px 22px 6px;border-radius:20px 20px 0 0;
+    box-shadow:
+      0 -13px 24px -9px rgba(242,103,43,0.38),
+      0 16px 34px -22px rgba(15,23,42,0.28);
+  }
   .fc-peek-handle{padding:18px 22px 18px 22px;border-radius:0 0 20px 20px;}
 }
 /* ---- Efek kartu Uang Masuk & Keluar nyelip di BELAKANG banner ----
