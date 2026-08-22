@@ -110,13 +110,21 @@ html{
   background:var(--primary);
 }
 body{
-  /* Sambungan gradasi dari ujung bawah .banner (#FFD9B8) supaya area
-     di PINGGIR kartu "Saldo Total" (yang tidak full-bleed lagi) tetap
-     memudar halus dari peach ke warna dasar halaman, bukan langsung
-     terpotong tegas ke var(--paper) — persis seperti pada gambar
-     referensi, di mana pinggir kartu & body di bawahnya masih
-     kelihatan sedikit hangat sebelum akhirnya jadi putih bersih. */
-  background:linear-gradient(180deg, #FFD9B8 0px, #FFD9B8 170px, #FFEDDD 320px, var(--paper) 480px);
+  /* Titik-titik gradasi di bawah ini DIUKUR LANGSUNG dari sampel
+     piksel foto referensi (bukan tebakan): warna tetap solid oranye
+     (#FF9E36, senada .banner) sampai ±210px dari atas — sesuai tinggi
+     riil .banner — lalu memudar melalui peach/krem dan sudah nyaris
+     putih bersih (#FFFDF7) persis di ±340px, dan tetap flat setelah
+     itu. Ini yang membuat pinggir kartu "Saldo Total" (yang tidak
+     full-bleed) ikut memudar halus dari oranye ke putih seperti pada
+     gambar referensi, alih-alih terpotong tegas ke abu-abu. */
+  background:linear-gradient(180deg,
+    #FF9E36 0px,
+    #FF9E36 210px,
+    #FFD9B8 260px,
+    #FFF3E0 300px,
+    #FFFDF7 340px,
+    #FFFDF7 100%);
   color:var(--ink);
   font-family:var(--font-body);
   -webkit-font-smoothing:antialiased;
@@ -161,7 +169,12 @@ a{color:inherit;}
 .banner{
   position:relative;
   overflow:hidden;
-  background:linear-gradient(180deg, #FF9838 0%, #FF9838 62%, #FFB273 82%, #FFD9B8 100%);
+  /* PERSIS gambar referensi: banner-nya rata/flat oranye tunggal
+     (bukan gradasi bertingkat) — gradasi baru mulai muncul di
+     PINGGIR kartu Saldo Total & body di bawahnya (lihat gradasi
+     di body{} di bawah). Warna diambil langsung dari sampel piksel
+     foto referensi (~#FE9E35 konsisten dari atas sampai dekat kartu). */
+  background:#FF9E36;
   border-radius:0;
   padding:20px 28px 46px;
   margin:0 -24px 0;
@@ -174,7 +187,7 @@ a{color:inherit;}
      tetap tampil sebagai dasarnya. Tanpa ini, area yang belum sempat
      digambar ulang akan menampakkan warna halaman (--paper, terang)
      alih-alih gelap, kelihatan seperti banner "sobek"/pecah sesaat. */
-  background-color:#F2672B;
+  background-color:#FF9E36;
   /* CATATAN: dulu di sini ada transform:translateZ(0) + will-change +
      backface-visibility + isolation untuk memaksa banner ini punya
      layer kompositing GPU sendiri — perlu waktu itu karena banner
