@@ -7,7 +7,7 @@
 <meta name="description" id="appMetaDescription" content="Kelola uang masuk dan keluar, catat transaksi, tagihan, dan hutang dengan mudah bersama ZAYAPRO.">
 <meta name="keywords" id="appMetaKeywords" content="">
 <meta name="robots" content="index, follow">
-<meta name="theme-color" content="#0B1220">
+<meta name="theme-color" content="#FF7A2E">
 <!-- SDK resmi Telegram WebApp: dimuat lebih dulu (sebelum script.js)
      supaya window.Telegram.WebApp sudah tersedia saat initTelegramWebApp()
      dipanggil. Kalau halaman ini dibuka BUKAN dari dalam Telegram
@@ -53,6 +53,14 @@
   --forest-deep:#0B1220;
   --forest-mid:#16213A;
   --forest-glow:#2563EB;
+  /* ============ WARNA BANNER (ORANYE) ============
+     Token khusus untuk gradasi banner utama di paling atas halaman
+     (Saldo Total), dipisah dari --forest-deep/--forest-mid supaya
+     elemen gelap lain di app (tooltip, panel grafik tren, dsb yang
+     masih memakai --forest-deep/--forest-mid) TIDAK ikut berubah --
+     yang berubah cuma banner + area status bar/notch di atasnya. */
+  --sun-core:#FF7A2E;
+  --sun-mid:#FF9A52;
   --brass:#059669;
   --brass-light:#6EE7B7;
   --wine:#E11D48;
@@ -103,7 +111,7 @@ html{
      belakang notch akan sempat kelihatan putih/nyelip sebelum banner
      sempat digambar.
   */
-  background:var(--forest-deep);
+  background:var(--sun-core);
 }
 body{
   background:var(--paper);
@@ -152,10 +160,10 @@ a{color:inherit;}
   position:relative;
   overflow:hidden;
   background:
-    radial-gradient(circle at 15% 20%, rgba(37,99,235,0.38), transparent 45%),
-    radial-gradient(circle at 85% 15%, rgba(5,150,105,0.24), transparent 50%),
-    radial-gradient(circle at 75% 90%, rgba(225,29,72,0.14), transparent 55%),
-    linear-gradient(120deg, var(--forest-deep), var(--forest-mid), var(--forest-deep));
+    radial-gradient(circle at 15% 20%, rgba(255,214,120,0.40), transparent 45%),
+    radial-gradient(circle at 85% 15%, rgba(255,255,255,0.20), transparent 50%),
+    radial-gradient(circle at 75% 90%, rgba(216,60,20,0.30), transparent 55%),
+    linear-gradient(120deg, var(--sun-core), var(--sun-mid), var(--sun-core));
   background-size:240% 240%, 240% 240%, 240% 240%, 280% 280%;
   animation: bannerDrift 18s ease-in-out infinite;
   border-radius:0 0 28px 28px;
@@ -170,7 +178,7 @@ a{color:inherit;}
      tetap tampil sebagai dasarnya. Tanpa ini, area yang belum sempat
      digambar ulang akan menampakkan warna halaman (--paper, terang)
      alih-alih gelap, kelihatan seperti banner "sobek"/pecah sesaat. */
-  background-color:var(--forest-deep);
+  background-color:var(--sun-core);
   /* CATATAN: dulu di sini ada transform:translateZ(0) + will-change +
      backface-visibility + isolation untuk memaksa banner ini punya
      layer kompositing GPU sendiri — perlu waktu itu karena banner

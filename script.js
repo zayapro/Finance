@@ -9162,18 +9162,21 @@ function initTelegramWebApp() {
     if (typeof tg.disableVerticalSwipes === 'function') tg.disableVerticalSwipes();
 
     const rootStyles = getComputedStyle(document.documentElement);
-    const forestDeep = (rootStyles.getPropertyValue('--forest-deep') || '#0B1220').trim();
+    // Dibaca dari --sun-core (warna dasar banner oranye), bukan lagi
+    // --forest-deep -- sejak banner diredesain jadi oranye, warna dasar
+    // status bar/nav bar Telegram ikut warna banner yang baru itu.
+    const bannerBase = (rootStyles.getPropertyValue('--sun-core') || '#FF7A2E').trim();
 
     // setHeaderColor menerima nama warna preset ("bg_color","secondary_bg_color")
     // ATAU hex custom tergantung versi Bot API klien Telegram -- try/catch
     // per pemanggilan supaya versi klien yang lebih lama (belum dukung hex
     // custom di setHeaderColor) tidak bikin sisa fungsi ini ikut gagal.
-    try { tg.setHeaderColor(forestDeep); } catch (e) { /* versi klien lama: abaikan */ }
-    try { tg.setBackgroundColor(forestDeep); } catch (e) { /* abaikan */ }
+    try { tg.setHeaderColor(bannerBase); } catch (e) { /* versi klien lama: abaikan */ }
+    try { tg.setBackgroundColor(bannerBase); } catch (e) { /* abaikan */ }
     // setBottomBarColor cuma ada di Bot API versi baru (bar navigasi bawah
     // khusus iOS) -- dicek dulu supaya tidak error di klien lama.
     if (typeof tg.setBottomBarColor === 'function') {
-      try { tg.setBottomBarColor(forestDeep); } catch (e) { /* abaikan */ }
+      try { tg.setBottomBarColor(bannerBase); } catch (e) { /* abaikan */ }
     }
   } catch (e) {
     console.warn('initTelegramWebApp dilewati:', e);
