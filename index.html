@@ -5118,7 +5118,7 @@ tbody tr.date-group-row:first-child td{border-top:none;}
   background:var(--card-fade-bg);
   margin:-24px auto 0;
   border-radius:28px 28px 0 0;
-  padding-top:52px;
+  padding-top:24px;
   box-shadow:0 -16px 30px -10px rgba(242,103,43,0.38);
 }
 /* ---- Tombol "+ Tambah" dipindah jadi tombol melayang (FAB) bulat
@@ -5130,6 +5130,10 @@ tbody tr.date-group-row:first-child td{border-top:none;}
    tinggi dari nav bawah (600) supaya tombol ini tidak pernah ketutup
    nav. ---- */
 .bd-fab-add{
+  /* Default TERSEMBUNYI -- baru dimunculkan lewat aturan
+     "#bdAllOverlay.open + .bd-fab-add" di bawah, saat halaman
+     "Tagihan & Hutang" (#bdAllOverlay) sedang dalam status terbuka. */
+  display:none;
   position:fixed;
   /* Di layar lebar (desktop/tablet besar), konten halaman ini dibatasi
      max-width:1180px dan diletakkan di TENGAH (lihat .detail-page),
@@ -5145,13 +5149,18 @@ tbody tr.date-group-row:first-child td{border-top:none;}
   bottom:calc(24px + env(safe-area-inset-bottom, 0px));
   z-index:650;
   width:56px;height:56px;border-radius:50%;
-  display:flex;align-items:center;justify-content:center;
+  align-items:center;justify-content:center;
   color:#FFF8F1;border:none;font-family:inherit;cursor:pointer;
   background:linear-gradient(145deg, #FFA945, var(--nav-orange));
   box-shadow:0 12px 26px -8px rgba(250,139,30,0.55), 0 4px 12px rgba(15,23,42,0.16);
   transition:transform .18s ease, box-shadow .18s ease, filter .15s ease;
   touch-action:manipulation;-webkit-tap-highlight-color:transparent;
 }
+/* Baru benar-benar ditampilkan (jadi flex, supaya ikon "+" di dalamnya
+   tetap center) selagi #bdAllOverlay (halaman "Tagihan & Hutang")
+   berstatus "open". Tombol ini adalah SAUDARA (sibling) tepat setelah
+   #bdAllOverlay di HTML, bukan anak di dalamnya -- lihat catatan di HTML. */
+#bdAllOverlay.open + .bd-fab-add{display:flex;}
 .bd-fab-add:hover{transform:translateY(-2px) scale(1.05);box-shadow:0 16px 32px -8px rgba(250,139,30,0.6);}
 .bd-fab-add:active{transform:scale(0.92);}
 @media (max-width:640px){
@@ -5192,7 +5201,7 @@ tbody tr.date-group-row:first-child td{border-top:none;}
      supaya tidak ada gang kosong lebar di kiri-kanan konten, dan
      jaraknya konsisten dengan halaman lain. */
   .detail-page-overlay .detail-page{
-    padding-left:14px;padding-right:14px;padding-top:36px;
+    padding-left:14px;padding-right:14px;padding-top:14px;
   }
 }
 .bd-summary-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
@@ -7442,11 +7451,23 @@ body.is-scrolling *{
 
     <div class="bd-list" id="bdAllList"></div>
   </div>
-
-  <button class="bd-fab-add" id="bdAllAddBtn" type="button" aria-label="Tambah tagihan atau hutang" title="Tambah tagihan atau hutang">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-  </button>
 </div>
+
+<!-- Tombol "+ Tambah" SENGAJA diletakkan DI LUAR #bdAllOverlay (bukan di
+     dalamnya seperti sebelumnya). #bdAllOverlay punya CSS transform untuk
+     animasi buka/tutup + overflow-y:auto untuk scroll internalnya -- kombinasi
+     keduanya membuat elemen "position:fixed" DI DALAMNYA jadi bukan benar-benar
+     fixed ke layar lagi, melainkan ikut jadi bagian konten yang discroll
+     (karena transform pada elemen leluhur mengubah elemen "fixed" jadi
+     berpatokan ke elemen itu, dan overflow:auto membuatnya ikut ter-scroll).
+     Itu sebabnya tombol ini dulu ikut bergerak naik saat daftar discroll.
+     Sekarang ditaruh sebagai saudara (sibling) SETELAH overlay-nya, supaya
+     tidak lagi berada di dalam konteks transform/scroll manapun -- benar-benar
+     fixed ke viewport. Tampil/sembunyinya cukup diatur lewat CSS berdasarkan
+     class "open" di #bdAllOverlay (lihat aturan .bd-fab-add di CSS). -->
+<button class="bd-fab-add" id="bdAllAddBtn" type="button" aria-label="Tambah tagihan atau hutang" title="Tambah tagihan atau hutang">
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+</button>
 
 <!-- ===== HALAMAN PENGATURAN WIDGET ===== -->
 <div class="detail-page-overlay" id="widgetSettingsOverlay">
