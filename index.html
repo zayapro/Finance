@@ -5119,23 +5119,51 @@ tbody tr.date-group-row:first-child td{border-top:none;}
   padding-top:24px;
   box-shadow:0 -16px 30px -10px rgba(242,103,43,0.38);
 }
-/* ---- Tombol "+ Tambah" dipindah ke kartu putih (bukan lagi di
-   atas banner oren), warna biru senada ikon lain di app — BUKAN
-   oranye — supaya kontras jelas dari warna banner. ---- */
-.bd-page-toprow{display:flex;justify-content:flex-end;margin-bottom:14px;}
-.bd-add-btn-blue{
-  display:inline-flex;align-items:center;gap:6px;
-  padding:10px 18px 10px 15px;font-size:13.5px;font-weight:700;white-space:nowrap;
-  background:linear-gradient(145deg, var(--forest-glow), #1D4ED8);
-  color:#fff;border:none;border-radius:12px;
-  box-shadow:0 6px 14px -4px rgba(37,99,235,0.42);
+/* ---- Tombol "+ Tambah" dipindah jadi tombol melayang (FAB) di pojok
+   kanan bawah, supaya selalu terjangkau tanpa perlu scroll ke atas
+   dulu. Warna disamakan dengan warna tema oranye utama app (banner
+   besar & aksen nav bawah, var(--nav-orange) #FA8B1E) — bukan biru —
+   supaya menyatu dengan identitas warna app, bukan sekadar tombol
+   generik. z-index dibuat lebih tinggi dari nav bawah (600) supaya
+   tombol ini tidak pernah ketutup nav. ---- */
+.bd-fab-add{
+  position:fixed;right:24px;bottom:calc(24px + env(safe-area-inset-bottom, 0px));
+  z-index:650;
+  display:inline-flex;align-items:center;gap:7px;
+  padding:14px 22px 14px 18px;font-size:14px;font-weight:800;white-space:nowrap;
+  color:#FFF8F1;border:none;border-radius:999px;font-family:inherit;cursor:pointer;
+  background:linear-gradient(145deg, #FFA945, var(--nav-orange));
+  box-shadow:0 12px 26px -8px rgba(250,139,30,0.55), 0 4px 12px rgba(15,23,42,0.16);
+  transition:transform .18s ease, box-shadow .18s ease, filter .15s ease;
+  touch-action:manipulation;-webkit-tap-highlight-color:transparent;
 }
-.bd-add-btn-blue:hover{filter:brightness(1.06);}
+.bd-fab-add:hover{transform:translateY(-2px) scale(1.03);box-shadow:0 16px 32px -8px rgba(250,139,30,0.6);}
+.bd-fab-add:active{transform:scale(0.94);}
 @media (max-width:640px){
   .bd-page-banner-simple{padding:16px 20px 36px;}
   .bd-page-banner-title{font-size:17px;}
   .bd-page-body{margin-top:-20px;border-radius:22px 22px 0 0;box-shadow:0 -13px 24px -9px rgba(242,103,43,0.38);}
-  .bd-add-btn-blue{padding:9px 15px 9px 12px;font-size:12.5px;}
+  /* Di HP, tombol digeser naik supaya duduk RAPI di atas nav bawah
+     (tinggi nav ±78px, lihat body{padding-bottom:78px} di bagian
+     NAVIGASI BAWAH) alih-alih tertutup nav seperti sebelumnya. */
+  .bd-fab-add{right:16px;bottom:calc(78px + 14px + env(safe-area-inset-bottom, 0px));padding:12px 18px 12px 15px;font-size:13px;}
+}
+/* Semua halaman overlay (detail-page-overlay) dibuka di ATAS nav bawah
+   yang fixed dan ber-z-index lebih tinggi (600 vs var(--z-page):120),
+   jadi konten paling bawah (mis. item terakhir daftar tagihan/hutang)
+   bisa tertutup nav. Tambahkan padding bawah ekstra khusus mobile,
+   sebesar tinggi nav bawah + sedikit jarak aman, supaya semua konten
+   bisa discroll sampai terlihat penuh di atas nav. */
+@media (max-width:640px){
+  .detail-page-overlay .detail-page{
+    padding-bottom:calc(78px + 24px + env(safe-area-inset-bottom));
+  }
+  /* Halaman Tagihan & Hutang punya tombol FAB "+ Tambah" tambahan yang
+     melayang di atas nav bawah, jadi butuh jarak bawah ekstra lagi
+     supaya item terakhir daftar tidak ketutup tombol itu juga. */
+  #bdAllOverlay .detail-page{
+    padding-bottom:calc(78px + 14px + 52px + 16px + env(safe-area-inset-bottom));
+  }
 }
 .bd-summary-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
 @media (max-width:760px){.bd-summary-row{grid-template-columns:repeat(2,1fr);}}
@@ -7273,13 +7301,6 @@ body.is-scrolling *{
   </div>
 
   <div class="detail-page bd-page-body">
-    <div class="bd-page-toprow">
-      <button class="btn detail-add-btn bd-add-btn-blue" id="bdAllAddBtn" type="button">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-        <span>Tambah</span>
-      </button>
-    </div>
-
     <div class="bd-summary-row" id="bdAllSummary"></div>
 
     <div class="bd-toolbar">
@@ -7301,6 +7322,11 @@ body.is-scrolling *{
 
     <div class="bd-list" id="bdAllList"></div>
   </div>
+
+  <button class="bd-fab-add" id="bdAllAddBtn" type="button" aria-label="Tambah tagihan atau hutang">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+    <span>Tambah</span>
+  </button>
 </div>
 
 <!-- ===== HALAMAN PENGATURAN WIDGET ===== -->
