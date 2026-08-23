@@ -4310,16 +4310,34 @@ tbody tr:last-child td{border-bottom:none;}
 .empty-state svg{margin-bottom:10px;opacity:.6;}
 .empty-state p{font-size:14px;}
 
-/* ============ HEADER "RIWAYAT TRANSAKSI" (versi pro) ============ */
+/* ============ HEADER "RIWAYAT TRANSAKSI" (versi pro) ============
+   Redesain: judul & ikon disamakan gayanya dengan kartu "Saldo Bank
+   & E-Wallet" (dan kartu ringkasan lain di beranda) -- bukan lagi
+   font serif Fraunces besar seperti judul section lain, tapi sans-
+   serif tebal (Plus Jakarta Sans, sama seperti .brand-name & label
+   kartu ringkasan) supaya terasa senada dgn area saldo. Ikonnya juga
+   diganti dari kotak gelap datar + ikon garis 3 (generik, bukan
+   simbol "riwayat") jadi pil gradien warna (persis pola .icon-badge
+   pada kartu ringkasan/stat-card) dengan ikon jam+panah putar balik
+   yang lebih pas melambangkan "riwayat". Warna biru dipilih supaya
+   senada dgn kartu "Transaksi Terakhir" (.isc-recent-card) yang
+   sama-sama bertema riwayat transaksi. ---- */
 .history-head{align-items:flex-start;margin-bottom:18px;}
 .history-head-text{display:flex;flex-direction:column;gap:4px;}
-.history-head-text h2{gap:10px;}
-.hh-icon{
-  width:30px;height:30px;border-radius:9px;flex-shrink:0;
-  background:linear-gradient(150deg, var(--forest-deep), var(--forest-mid));
-  color:#fff;display:flex;align-items:center;justify-content:center;
-  box-shadow:0 4px 12px rgba(11,18,32,0.22);
+.history-head-text h2{
+  gap:10px;
+  font-family:'Plus Jakarta Sans', sans-serif;
+  font-weight:800;
+  letter-spacing:-0.01em;
 }
+.hh-icon{
+  width:42px;height:42px;border-radius:13px;flex-shrink:0;
+  background:linear-gradient(140deg,#5B93F5,#1D4ED8);
+  color:#fff;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 8px 16px -4px rgba(37,99,235,0.42);
+  transition:transform .25s cubic-bezier(.22,.9,.3,1);
+}
+.history-head:hover .hh-icon{transform:scale(1.08) rotate(-4deg);}
 .add-btn-desktop{display:none;}
 
 
@@ -6543,7 +6561,7 @@ body.is-scrolling *{
   <section class="section-card pro-history" id="historySection">
     <div class="section-head history-head">
       <div class="history-head-text">
-        <h2><span class="hh-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M4 6h16M4 12h16M4 18h10"/></svg></span>Riwayat Transaksi</h2>
+        <h2><span class="hh-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/></svg></span>Riwayat Transaksi</h2>
         <span class="section-subtitle">Kelola dan pantau seluruh arus kas Anda</span>
       </div>
       <button class="btn btn-primary add-btn-desktop" id="btnAddDesktop">
