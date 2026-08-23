@@ -6396,6 +6396,17 @@ body.is-scrolling *{
       <div class="banner-top-right">
         <div class="banner-date-col">
           <div class="banner-date" id="bannerDate"></div>
+          <script>
+            /* Diisi SEGERA di sini (bukan menunggu script.js) karena
+               tanggal hari ini tidak butuh data user apa pun -- kalau
+               menunggu script.js (yang baru dimuat SETELAH proses
+               login & tarik data cloud selesai, lihat cloud-sync.js),
+               tanggal ini akan kosong/kelihatan "hilang" selama proses
+               itu berlangsung. renderBannerDate() di script.js tetap
+               jalan setelahnya sebagai penyegaran, hasilnya identik. */
+            document.getElementById('bannerDate').textContent =
+              new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+          </script>
           <div class="banner-fx" id="bannerFx" title="Kurs indikatif, bisa berbeda dari kurs bank/money changer">
             <span class="fx-dot"></span>
             <span class="fx-label">USD/IDR</span>
@@ -6463,7 +6474,39 @@ body.is-scrolling *{
     </div>
   </div>
 
-  <div class="banner-flow-wrap" id="bannerFlowWrap"></div>
+  <div class="banner-flow-wrap" id="bannerFlowWrap">
+    <!-- Skeleton statis: header kartu ini (ikon+judul+subtitle "Ringkasan
+         transaksi kamu"+kotak timer) ditulis langsung di sini supaya
+         tampil SEKETIKA saat halaman dibuka, tidak menunggu script.js
+         (yang baru jalan SETELAH proses login & tarik data cloud
+         selesai -- lihat cloud-sync.js). Tanpa ini, seluruh kartu
+         kosong total sampai proses itu tuntas, jadi kelihatan
+         "tertinggal"/baru muncul belakangan dibanding bagian lain
+         halaman yang statis. Begitu script.js selesai, renderOverview()
+         menimpa SELURUH innerHTML wrap ini (termasuk skeleton ini)
+         dengan versi lengkap berisi angka transaksi asli & timer yang
+         benar-benar berjalan -- jadi ini murni tampilan sementara,
+         tidak ada id yang bentrok dengan markup asli. -->
+    <div class="stat-card fc-card flow-deal-card">
+      <div class="flow-deal-top">
+        <div class="flow-deal-title">
+          <span class="icon-badge"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3v12"/><path d="m21 11-4 4-4-4"/><path d="M7 21V9"/><path d="m3 13 4-4 4 4"/></svg></span>
+          <div class="flow-deal-title-text">
+            <h3>Uang Masuk &amp; Keluar</h3>
+            <span class="flow-deal-sub">Ringkasan transaksi kamu</span>
+          </div>
+        </div>
+        <div class="flow-deal-timer">
+          <span class="fdt-caption">Reset ringkasan<br>hari ini dalam</span>
+          <div class="fdt-boxes">
+            <div class="flow-timer-unit"><span class="wcc-box mono">00</span><span class="wcc-label">JAM</span></div>
+            <div class="flow-timer-unit"><span class="wcc-box mono">00</span><span class="wcc-label">MNT</span></div>
+            <div class="flow-timer-unit"><span class="wcc-box mono">00</span><span class="wcc-label">DTK</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- ===== KARTU JALAN PINTAS SUMBER PENDAPATAN ===== -->
   <section class="section-card income-shortcut-card" id="incomeShortcutCard">
