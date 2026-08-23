@@ -780,14 +780,20 @@ tr.fade-up{animation:fadeRow .35s ease both;}
    bukan dua kartu terpisah dengan celah. */
 .saldo-card{
   position:relative;z-index:2;
-  /* Gradient krem/persik SEWARNA TEMA (diturunkan dari --primary/
-     --primary-light/--primary-soft, bukan lagi condong ke pink) —
-     supaya transisi dari banner oranye ke kartu putih ini terasa
-     nyambung, bukan malah kontras. Kartu Saldo Total & "Ringkasan
-     transaksi kamu" di bawahnya (.fc-peek-handle/.flow-deal-card)
-     memakai gradasi yang sama persis supaya keduanya tetap terasa
-     menyatu jadi satu kartu panjang. */
-  background:linear-gradient(135deg, #FFFDF9 0%, #FFF1E7 26%, #FFE3CC 52%, #FFD3AE 78%, #FFF3E7 100%);
+  /* Latar DIDOMINASI PUTIH + aksen krem tipis hanya di sudut jauh —
+     versi sebelumnya (gradasi krem/persik dari 0-100%) di kartu yang
+     SANGAT LEBAR (desktop) membentang jadi blok oranye besar yang
+     kelihatan kotor/tidak rapi di tengah kartu, karena sudut 135deg
+     pada kartu ultra-wide membuat warna tengah gradasi mendominasi
+     seluruh lebar. Sekarang putih solid dipertahankan sampai ~45%
+     lebar, transisi ke krem lembut baru mulai di paruh kedua, dan
+     puncak warnanya (krem persik, BUKAN oranye pekat) cuma di 100% —
+     hasilnya kartu terlihat bersih/putih di sebagian besar area,
+     dengan sentuhan warna tema cuma di ujung. Kartu Saldo Total &
+     "Ringkasan transaksi kamu" di bawahnya (.fc-peek-handle/
+     .flow-deal-card) memakai gradasi persis sama supaya tetap
+     menyatu. */
+  background:linear-gradient(120deg, #FFFFFF 0%, #FFFFFF 45%, #FFF9F2 70%, #FFEFDF 100%);
   /* Lebar & posisi kiri-kanan DISAMAKAN dengan kartu section-card biasa
      (mis. "Sumber Pendapatan"): margin horizontal 0, jadi kartu ini
      ikut lebar konten di dalam padding .app, BUKAN full-bleed lagi.
@@ -876,7 +882,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
      .saldo-card (bukan lagi var(--card) putih polos) supaya seluruh
      kartu panjang ini (Saldo Total + Ringkasan) tetap terasa satu
      kesatuan warna dengan banner oranye di atasnya. */
-  background:linear-gradient(135deg, #FFFDF9 0%, #FFF1E7 26%, #FFE3CC 52%, #FFD3AE 78%, #FFF3E7 100%) !important;
+  background:linear-gradient(120deg, #FFFFFF 0%, #FFFFFF 45%, #FFF9F2 70%, #FFEFDF 100%) !important;
   border:none !important;
   border-top:none !important;
   box-shadow:none !important;
@@ -886,7 +892,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   position:relative;
   margin:0 -22px -20px;padding:22px 28px 22px 28px;
   border-radius:0 0 30px 30px;
-  background:linear-gradient(135deg, #FFFDF9 0%, #FFF1E7 26%, #FFE3CC 52%, #FFD3AE 78%, #FFF3E7 100%);
+  background:linear-gradient(120deg, #FFFFFF 0%, #FFFFFF 45%, #FFF9F2 70%, #FFEFDF 100%);
   border-top:1px solid transparent;
   color:var(--ink-soft);font-size:12px;font-weight:600;
   cursor:pointer;
@@ -1166,6 +1172,19 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   .saldo-sub{gap:10px;justify-content:space-between;flex-wrap:nowrap;}
   .saldo-sub-item{flex:1 1 0;min-width:0;align-items:flex-start;}
   .saldo-sub-text{min-width:0;flex:1;}
+  /* FIX: item kanan (Pengeluaran) sebelumnya ikonnya "kejauhan" dari
+     labelnya sendiri — karena .saldo-sub-text di atas dibuat flex:1
+     (melebar mengisi SISA lebar item) sementara ikonnya tetap ukuran
+     asli di kiri, text-align:right pada kotak yang sudah melebar itu
+     cuma menggeser TULISANNYA ke ujung kanan, bukan menggeser
+     ikon+tulisan sebagai SATU kelompok — hasilnya ada jarak kosong
+     lebar di antara ikon panah & labelnya (lihat screenshot laporan).
+     Fix: khusus item terakhir, teks TIDAK ikut melebar (flex:0 1 auto,
+     cuma selebar isinya sendiri) + justify-content:flex-end pada
+     itemnya supaya ikon & teks bergerak BERSAMA menempel di ujung
+     kanan, tetap berdekatan seperti item Pemasukan di kiri. */
+  .saldo-sub-item:last-child{justify-content:flex-end;}
+  .saldo-sub-item:last-child .saldo-sub-text{flex:0 1 auto;min-width:0;}
   /* Angka Pemasukan/Pengeluaran: SEBELUMNYA font-size tetap 13px +
      white-space:nowrap + text-overflow:ellipsis di baris dasar (lihat
      .saldo-sub-text .v di bawah) — di HP sempit dengan jumlah uang
