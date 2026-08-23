@@ -7986,7 +7986,17 @@ document.getElementById('notifListMore').addEventListener('click', () => {
 let bdAllTab = 'semua';     // 'semua' | 'tagihan' | 'hutang'
 let bdAllStatus = 'semua';  // 'semua' | 'belum' | 'lunas'
 let bdAllSearch = '';
+let bdAllDateFrom = '';    // 'YYYY-MM-DD' atau '' (tidak difilter)
+let bdAllDateTo = '';      // 'YYYY-MM-DD' atau '' (tidak difilter)
 let bdAllFilteredCache = []; // hasil filter/sort terakhir, dipakai juga oleh tombol unduh CSV
+
+/* Tanggal acuan sebuah item untuk keperluan filter pertanggal:
+   item yang masih aktif dipatok ke tanggal jatuh temponya, item yang
+   sudah lunas dipatok ke tanggal ia dibayar (fallback ke jatuh tempo
+   kalau entah kenapa belum tercatat). */
+function bdAllRefDate(item) {
+  return item.status === 'lunas' ? (item.paidAt || item.dueDate) : item.dueDate;
+}
 
 function bdAllCombinedData() {
   return [
@@ -8039,6 +8049,8 @@ function renderBdAllPage() {
   if (bdAllStatus !== 'semua') filtered = filtered.filter(x => x.status === bdAllStatus);
   const q = bdAllSearch.trim().toLowerCase();
   if (q) filtered = filtered.filter(x => x.name.toLowerCase().includes(q));
+  if (bdAllDateFrom) filtered = filtered.filter(x => bdAllRefDate(x) >= bdAllDateFrom);
+  if (bdAllDateTo) filtered = filtered.filter(x => bdAllRefDate(x) <= bdAllDateTo);
 
   filtered = filtered.sort((a, b) => {
     // Item aktif ditampilkan dulu (urut jatuh tempo terdekat),
@@ -8108,9 +8120,15 @@ function openBdAllPage(initialTab) {
   bdAllTab = (initialTab === 'tagihan' || initialTab === 'hutang') ? initialTab : 'semua';
   bdAllStatus = 'semua';
   bdAllSearch = '';
+  bdAllDateFrom = '';
+  bdAllDateTo = '';
   document.getElementById('bdAllSearchInput').value = '';
   document.getElementById('bdSearchWrap').classList.remove('open');
   document.getElementById('bdSearchToggleBtn').classList.remove('active');
+  document.getElementById('bdDateFromInput').value = '';
+  document.getElementById('bdDateToInput').value = '';
+  document.getElementById('bdDateWrap').classList.remove('open');
+  document.getElementById('bdDateToggleBtn').classList.remove('active');
 
   document.getElementById('bdAllOverlay').classList.add('open');
   document.body.style.overflow = 'hidden';
@@ -8184,6 +8202,43 @@ document.getElementById('bdSearchToggleBtn').addEventListener('click', () => {
     bdAllSearch = '';
     renderBdAllPage();
   }
+});
+
+/* ---------- Tombol ikon "Filter tanggal" di toolbar ----------
+   Buka/tutup panel berisi 2 input tanggal (dari/sampai) tepat di
+   bawah toolbar, dengan pola collapse yang sama seperti kolom
+   pencarian. Menutup panel TIDAK otomatis mengosongkan filter yang
+   sudah diisi (beda dari kolom pencarian) -- supaya user bisa
+   menyembunyikan panelnya tapi filter tetap aktif; ikonnya tetap
+   menyala oranye selagi filter tanggal masih aktif. */
+document.getElementById('bdDateToggleBtn').addEventListener('click', () => {
+  const wrap = document.getElementById('bdDateWrap');
+  const isOpen = wrap.classList.toggle('open');
+  if (isOpen) {
+    setTimeout(() => document.getElementById('bdDateFromInput').focus(), 180);
+  }
+});
+function bdSyncDateToggleBtn() {
+  const hasFilter = !!(bdAllDateFrom || bdAllDateTo);
+  document.getElementById('bdDateToggleBtn').classList.toggle('active', hasFilter);
+}
+document.getElementById('bdDateFromInput').addEventListener('change', (e) => {
+  bdAllDateFrom = e.target.value;
+  bdSyncDateToggleBtn();
+  renderBdAllPage();
+});
+document.getElementById('bdDateToInput').addEventListener('change', (e) => {
+  bdAllDateTo = e.target.value;
+  bdSyncDateToggleBtn();
+  renderBdAllPage();
+});
+document.getElementById('bdDateResetBtn').addEventListener('click', () => {
+  bdAllDateFrom = '';
+  bdAllDateTo = '';
+  document.getElementById('bdDateFromInput').value = '';
+  document.getElementById('bdDateToInput').value = '';
+  bdSyncDateToggleBtn();
+  renderBdAllPage();
 });
 
 /* ---------- Tombol ikon "Unduh" di toolbar ----------

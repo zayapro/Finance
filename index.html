@@ -4082,6 +4082,7 @@ body.density-compact .income-cards-group{gap:10px;}
   touch-action:manipulation;-webkit-tap-highlight-color:transparent;
 }
 .tab-btn.active{background:transparent;color:var(--primary);}
+#bdAllTabs .tab-btn{padding:6px 16px;}
 
 /* ---- Tab filter (Semua/Mingguan/Bulanan/Tahunan) dibuat sticky saat
    discroll: menempel tepat di bawah mini-topbar (HP) atau di paling
@@ -4183,6 +4184,7 @@ input[type="number"].year-input{width:110px;font-family:'IBM Plex Mono',monospac
     border-radius:999px;
   }
   #bdAllTabs{grid-template-columns:repeat(3, 1fr);}
+  #bdAllTabs .tab-btn{padding:6px 12px;}
 }
 @media (max-width:600px){
   .tab-btn{
@@ -5240,6 +5242,37 @@ tbody tr.date-group-row:first-child td{border-top:none;}
 @media (max-width:640px){
   .bd-icon-btn{width:34px;height:34px;border-radius:10px;}
   .bd-search-wrap.open{margin-bottom:10px;}
+}
+/* ---- Panel filter tanggal: sama pola collapse-nya seperti kolom
+   pencarian di atas, dibuka/ditutup lewat ikon kalender di toolbar.
+   Berisi 2 input tanggal (dari/sampai) + tombol reset. ---- */
+.bd-date-wrap{
+  overflow:hidden;max-height:0;opacity:0;margin-bottom:0;
+  transition:max-height .22s ease, opacity .18s ease, margin-bottom .22s ease;
+}
+.bd-date-wrap.open{max-height:110px;opacity:1;margin-bottom:14px;}
+.bd-date-row{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px;}
+.bd-date-field{display:flex;flex-direction:column;gap:5px;flex:1;min-width:130px;}
+.bd-date-field span{font-size:10.5px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em;}
+.bd-date-field input[type="date"]{
+  border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:13px;
+  font-family:inherit;color:var(--ink);background:var(--paper);width:100%;
+}
+.bd-date-field input[type="date"]:focus{border-color:var(--forest-glow);outline:none;}
+.bd-date-reset{
+  border:1px solid var(--line);background:var(--paper);color:var(--ink-soft);
+  border-radius:10px;padding:9px 14px;font-size:12.5px;font-weight:700;cursor:pointer;flex-shrink:0;
+  transition:background .15s ease,color .15s ease,border-color .15s ease;
+  touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+}
+.bd-date-reset:hover{background:#fff;color:var(--ink);border-color:rgba(15,23,42,0.16);}
+.bd-date-hint{font-size:10.5px;color:var(--ink-faint);margin-top:7px;line-height:1.4;}
+@media (max-width:640px){
+  .bd-date-wrap.open{margin-bottom:10px;max-height:130px;}
+  .bd-date-row{gap:8px;}
+  .bd-date-field{min-width:110px;}
+  .bd-date-field input[type="date"]{padding:7px 9px;font-size:12.5px;}
+  .bd-date-hint{display:none;}
 }
 .bd-list{display:grid;grid-template-columns:repeat(2,1fr);gap:11px;}
 @media (max-width:760px){.bd-list{grid-template-columns:1fr;}}
@@ -7361,6 +7394,9 @@ body.is-scrolling *{
         <button type="button" class="bd-icon-btn" id="bdSearchToggleBtn" aria-label="Cari tagihan/hutang" title="Cari">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
         </button>
+        <button type="button" class="bd-icon-btn" id="bdDateToggleBtn" aria-label="Filter berdasarkan tanggal" title="Filter tanggal">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3.5" y="4.5" width="17" height="16" rx="2.2"/><path d="M8 3v3.5M16 3v3.5M3.5 9.5h17"/></svg>
+        </button>
         <button type="button" class="bd-icon-btn" id="bdDownloadBtn" aria-label="Unduh data tagihan/hutang" title="Unduh sebagai CSV">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0-4.5-4.5M12 15l4.5-4.5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
         </button>
@@ -7370,6 +7406,21 @@ body.is-scrolling *{
     <div class="field-inline bd-search-wrap" id="bdSearchWrap">
       <span class="search-ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span>
       <input type="search" id="bdAllSearchInput" placeholder="Cari nama tagihan / hutang...">
+    </div>
+
+    <div class="bd-date-wrap" id="bdDateWrap">
+      <div class="bd-date-row">
+        <label class="bd-date-field">
+          <span>Dari tanggal</span>
+          <input type="date" id="bdDateFromInput">
+        </label>
+        <label class="bd-date-field">
+          <span>Sampai tanggal</span>
+          <input type="date" id="bdDateToInput">
+        </label>
+        <button type="button" class="bd-date-reset" id="bdDateResetBtn">Reset</button>
+      </div>
+      <p class="bd-date-hint">Menyaring berdasarkan tanggal jatuh tempo (item aktif) atau tanggal lunas (item yang sudah dibayar).</p>
     </div>
 
     <div class="bd-list" id="bdAllList"></div>
