@@ -1307,13 +1307,13 @@ function setDisplayCurrency(next) {
   btn.querySelector('.ct-usd').classList.toggle('active', next === 'USD');
 
   // FIX: refreshAll() di bawah ini SUDAH memanggil renderTransactionList(),
-  // renderChart(), renderYearlyBarChart(), dan renderOverviewStats() di
-  // dalamnya — sebelumnya keempatnya dipanggil LAGI secara manual persis
-  // setelah refreshAll(), jadi tiap toggle IDR/USD, grafik & daftar
-  // transaksi digambar ulang dua kali sia-sia (buang kerja render &
-  // berpotensi bikin chart kelihatan kedip). Sekarang cukup panggil
-  // refreshAll() sekali, ditambah renderDevices()/renderNotifPanel() yang
-  // memang tidak termasuk di refreshAll().
+  // renderChart(), dan renderYearlyBarChart() di dalamnya — sebelumnya
+  // ketiganya dipanggil LAGI secara manual persis setelah refreshAll(),
+  // jadi tiap toggle IDR/USD, grafik & daftar transaksi digambar ulang
+  // dua kali sia-sia (buang kerja render & berpotensi bikin chart
+  // kelihatan kedip). Sekarang cukup panggil refreshAll() sekali,
+  // ditambah renderDevices()/renderNotifPanel() yang memang tidak
+  // termasuk di refreshAll().
   refreshAll();
   renderDevices();
   if (typeof renderNotifPanel === 'function') renderNotifPanel();
@@ -3517,313 +3517,16 @@ function groupTransactionsByMonth(list) {
    terpengaruh pencarian/filter list), bisa dilihat per tanggal,
    per bulan, atau per tahun.
 ========================================================== */
-let overviewMode = 'harian'; // harian | mingguan | bulanan | tahunan
 
-function iconCalendar(size = 15) {
-  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>`;
-}
 
-function iconEquals(size = 15) {
-  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="9" x2="18" y2="9"/><line x1="6" y1="15" x2="18" y2="15"/></svg>`;
-}
+/* ---------- Kartu "Ringkasan Total" (overview-card) SUDAH DIHAPUS
+   permanen dari HTML (dulu di #historySection, sebelum tab filter
+   Semua/Mingguan/Bulanan/Tahunan). Fungsi renderOverviewPicker(),
+   renderOverviewStats(), renderOverview(), dan listener toggle
+   mode-nya ikut dihapus di sini -- kalau dibiarkan, baris-baris itu
+   akan crash saat load karena getElementById('overviewPickerWrap')
+   dkk sekarang mengembalikan null. ---------- */
 
-function iconChevron(dir, size = 15) {
-  const d = dir === 'left' ? 'M15 18l-6-6 6-6' : 'M9 18l6-6-6-6';
-  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="${d}"/></svg>`;
-}
-
-/* ==========================================================
-   POPUP KALENDER (mode klik) — dipakai oleh picker Ringkasan
-   Total supaya tanggal/minggu/bulan/tahun dipilih lewat grid
-   kalender, bukan input tanggal bawaan browser.
-========================================================== */
-const CAL_MONTH_NAMES = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
-const CAL_DAY_NAMES = ['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
-let calPopupEl = null;
-let calPopupState = null;
-
-function closeCalendarPopup() {
-  if (calPopupEl) { calPopupEl.remove(); calPopupEl = null; }
-  document.removeEventListener('mousedown', handleCalOutsideClick, true);
-  window.removeEventListener('scroll', closeCalendarPopup, true);
-  window.removeEventListener('resize', closeCalendarPopup);
-  document.removeEventListener('keydown', handleCalEscape, true);
-  calPopupState = null;
-}
-function handleCalOutsideClick(e) {
-  if (calPopupEl && !calPopupEl.contains(e.target) && !calPopupState?.anchor.contains(e.target)) closeCalendarPopup();
-}
-function handleCalEscape(e) {
-  if (e.key === 'Escape') closeCalendarPopup();
-}
-
-function positionCalPopup(anchor) {
-  const r = anchor.getBoundingClientRect();
-  const popW = 280;
-  let left = Math.min(r.left, window.innerWidth - popW - 10);
-  left = Math.max(10, left);
-  let top = r.bottom + 8;
-  if (top + 340 > window.innerHeight && r.top > 340) top = r.top - 340 - 8;
-  calPopupEl.style.left = left + 'px';
-  calPopupEl.style.top = Math.max(10, top) + 'px';
-}
-
-function openCalendarPopup(anchor, mode, currentValue, onSelect) {
-  if (calPopupEl && calPopupState?.anchor === anchor) { closeCalendarPopup(); return; }
-  closeCalendarPopup();
-
-  const now = new Date();
-  let viewYear = now.getFullYear(), viewMonth = now.getMonth();
-  if (mode === 'date' || mode === 'week') {
-    const base = currentValue && mode === 'date' ? new Date(currentValue + 'T00:00:00')
-      : (mode === 'week' && getISOWeekRange(currentValue) ? new Date(getISOWeekRange(currentValue).start + 'T00:00:00') : now);
-    viewYear = base.getFullYear(); viewMonth = base.getMonth();
-  } else if (mode === 'month' && currentValue) {
-    const [y, m] = currentValue.split('-'); viewYear = Number(y); viewMonth = Number(m) - 1;
-  }
-  const blockStart = mode === 'year' ? Math.floor((Number(currentValue) || now.getFullYear()) / 12) * 12 : null;
-
-  calPopupState = { mode, viewYear, viewMonth, blockStart, currentValue, onSelect, anchor };
-  calPopupEl = document.createElement('div');
-  calPopupEl.className = 'cal-popup';
-  document.body.appendChild(calPopupEl);
-  renderCalPopup();
-  positionCalPopup(anchor);
-
-  setTimeout(() => {
-    document.addEventListener('mousedown', handleCalOutsideClick, true);
-    window.addEventListener('scroll', closeCalendarPopup, true);
-    window.addEventListener('resize', closeCalendarPopup);
-    document.addEventListener('keydown', handleCalEscape, true);
-  }, 0);
-}
-
-function renderCalPopup() {
-  const { mode } = calPopupState;
-  if (mode === 'date' || mode === 'week') renderCalPopupDayGrid();
-  else if (mode === 'month') renderCalPopupMonthGrid();
-  else renderCalPopupYearGrid();
-}
-
-function renderCalPopupDayGrid() {
-  const { viewYear, viewMonth, mode, currentValue } = calPopupState;
-  const first = new Date(viewYear, viewMonth, 1);
-  const startOffset = first.getDay();
-  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
-  const daysInPrevMonth = new Date(viewYear, viewMonth, 0).getDate();
-  const weekRange = mode === 'week' ? getISOWeekRange(currentValue) : null;
-  const today = todayStr();
-
-  let cells = '';
-  for (let i = 0; i < startOffset; i++) cells += `<button type="button" class="cal-day outside" disabled>${daysInPrevMonth - startOffset + i + 1}</button>`;
-  for (let d = 1; d <= daysInMonth; d++) {
-    const dateStr = `${viewYear}-${String(viewMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-    let cls = 'cal-day';
-    if (dateStr === today) cls += ' today';
-    if (mode === 'date' && dateStr === currentValue) cls += ' selected';
-    if (mode === 'week' && weekRange && dateStr >= weekRange.start && dateStr <= weekRange.end) {
-      cls += ' in-week';
-      if (dateStr === weekRange.start) cls += ' week-start';
-      if (dateStr === weekRange.end) cls += ' week-end';
-    }
-    cells += `<button type="button" class="${cls}" data-date="${dateStr}">${d}</button>`;
-  }
-  const trailing = (7 - ((startOffset + daysInMonth) % 7)) % 7;
-  for (let i = 1; i <= trailing; i++) cells += `<button type="button" class="cal-day outside" disabled>${i}</button>`;
-
-  calPopupEl.innerHTML = `
-    <div class="cal-head">
-      <button type="button" class="cal-nav" data-navdir="-1">${iconChevron('left')}</button>
-      <span class="cal-title">${CAL_MONTH_NAMES[viewMonth]} ${viewYear}</span>
-      <button type="button" class="cal-nav" data-navdir="1">${iconChevron('right')}</button>
-    </div>
-    <div class="cal-weekdays">${CAL_DAY_NAMES.map(n => `<span>${n}</span>`).join('')}</div>
-    <div class="cal-grid">${cells}</div>
-    ${mode === 'date' || mode === 'week' ? `<button type="button" class="cal-today-btn" id="calTodayBtn">${mode === 'week' ? 'Minggu Ini' : 'Hari Ini'}</button>` : ''}
-  `;
-  calPopupEl.querySelector('[data-navdir="-1"]').addEventListener('click', () => shiftCalMonth(-1));
-  calPopupEl.querySelector('[data-navdir="1"]').addEventListener('click', () => shiftCalMonth(1));
-  calPopupEl.querySelectorAll('.cal-day[data-date]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const val = btn.dataset.date;
-      calPopupState.onSelect(mode === 'week' ? getISOWeekString(new Date(val + 'T00:00:00')) : val);
-      closeCalendarPopup();
-    });
-  });
-  const todayBtn = calPopupEl.querySelector('#calTodayBtn');
-  if (todayBtn) todayBtn.addEventListener('click', () => {
-    calPopupState.onSelect(mode === 'week' ? getISOWeekString() : todayStr());
-    closeCalendarPopup();
-  });
-}
-
-function shiftCalMonth(dir) {
-  let { viewYear, viewMonth } = calPopupState;
-  viewMonth += dir;
-  if (viewMonth < 0) { viewMonth = 11; viewYear--; }
-  if (viewMonth > 11) { viewMonth = 0; viewYear++; }
-  calPopupState.viewYear = viewYear;
-  calPopupState.viewMonth = viewMonth;
-  renderCalPopupDayGrid();
-}
-
-function renderCalPopupMonthGrid() {
-  const { viewYear, currentValue } = calPopupState;
-  const now = new Date();
-  let cells = '';
-  for (let m = 0; m < 12; m++) {
-    const val = `${viewYear}-${String(m + 1).padStart(2, '0')}`;
-    let cls = 'cal-month-cell';
-    if (val === currentValue) cls += ' selected';
-    if (viewYear === now.getFullYear() && m === now.getMonth()) cls += ' today';
-    cells += `<button type="button" class="${cls}" data-month="${val}">${CAL_MONTH_NAMES[m].slice(0, 3)}</button>`;
-  }
-  calPopupEl.innerHTML = `
-    <div class="cal-head">
-      <button type="button" class="cal-nav" data-yeardir="-1">${iconChevron('left')}</button>
-      <span class="cal-title">${viewYear}</span>
-      <button type="button" class="cal-nav" data-yeardir="1">${iconChevron('right')}</button>
-    </div>
-    <div class="cal-month-grid">${cells}</div>
-    <button type="button" class="cal-today-btn" id="calTodayBtn">Bulan Ini</button>
-  `;
-  calPopupEl.querySelector('[data-yeardir="-1"]').addEventListener('click', () => { calPopupState.viewYear--; renderCalPopupMonthGrid(); });
-  calPopupEl.querySelector('[data-yeardir="1"]').addEventListener('click', () => { calPopupState.viewYear++; renderCalPopupMonthGrid(); });
-  calPopupEl.querySelectorAll('.cal-month-cell').forEach(btn => {
-    btn.addEventListener('click', () => { calPopupState.onSelect(btn.dataset.month); closeCalendarPopup(); });
-  });
-  calPopupEl.querySelector('#calTodayBtn').addEventListener('click', () => { calPopupState.onSelect(thisMonthStr()); closeCalendarPopup(); });
-}
-
-function renderCalPopupYearGrid() {
-  const { blockStart, currentValue } = calPopupState;
-  const thisYear = new Date().getFullYear();
-  let cells = '';
-  for (let i = 0; i < 12; i++) {
-    const y = blockStart + i;
-    let cls = 'cal-month-cell';
-    if (String(y) === String(currentValue)) cls += ' selected';
-    if (y === thisYear) cls += ' today';
-    cells += `<button type="button" class="${cls}" data-year="${y}">${y}</button>`;
-  }
-  calPopupEl.innerHTML = `
-    <div class="cal-head">
-      <button type="button" class="cal-nav" data-blockdir="-1">${iconChevron('left')}</button>
-      <span class="cal-title">${blockStart} – ${blockStart + 11}</span>
-      <button type="button" class="cal-nav" data-blockdir="1">${iconChevron('right')}</button>
-    </div>
-    <div class="cal-month-grid">${cells}</div>
-    <button type="button" class="cal-today-btn" id="calTodayBtn">Tahun Ini</button>
-  `;
-  calPopupEl.querySelector('[data-blockdir="-1"]').addEventListener('click', () => { calPopupState.blockStart -= 12; renderCalPopupYearGrid(); });
-  calPopupEl.querySelector('[data-blockdir="1"]').addEventListener('click', () => { calPopupState.blockStart += 12; renderCalPopupYearGrid(); });
-  calPopupEl.querySelectorAll('.cal-month-cell').forEach(btn => {
-    btn.addEventListener('click', () => { calPopupState.onSelect(btn.dataset.year); closeCalendarPopup(); });
-  });
-  calPopupEl.querySelector('#calTodayBtn').addEventListener('click', () => { calPopupState.onSelect(thisYearStr()); closeCalendarPopup(); });
-}
-
-/* ---------- Format teks nilai terpilih untuk ditampilkan di kartu picker ---------- */
-function formatOverviewPickerValue(mode, val) {
-  if (!val) return '-';
-  if (mode === 'harian') {
-    const [y, m, d] = val.split('-');
-    return `${d}/${m}/${y}`;
-  }
-  if (mode === 'mingguan') {
-    const range = getISOWeekRange(val);
-    if (!range) return val;
-    const fmt = (s) => { const [y, m, d] = s.split('-'); return `${Number(d)} ${MONTH_LABELS_SHORT[Number(m) - 1]}`; };
-    return `${fmt(range.start)} – ${fmt(range.end)} ${range.end.slice(0, 4)}`;
-  }
-  if (mode === 'bulanan') {
-    const [y, m] = val.split('-');
-    return `${CAL_MONTH_NAMES[Number(m) - 1]} ${y}`;
-  }
-  return String(val);
-}
-
-function renderOverviewPicker() {
-  const wrap = document.getElementById('overviewPickerWrap');
-  let rawValue, label, calMode;
-  if (overviewMode === 'harian') { rawValue = todayStr(); label = 'Tanggal'; calMode = 'date'; }
-  else if (overviewMode === 'mingguan') { rawValue = getISOWeekString(); label = 'Minggu'; calMode = 'week'; }
-  else if (overviewMode === 'bulanan') { rawValue = thisMonthStr(); label = 'Bulan'; calMode = 'month'; }
-  else { rawValue = thisYearStr(); label = 'Tahun'; calMode = 'year'; }
-
-  wrap.innerHTML = `
-    <div class="ov-picker-box cal-trigger" id="overviewPickerBox" role="button" tabindex="0" aria-haspopup="dialog">
-      <span class="ov-picker-ic">${iconCalendar()}</span>
-      <div class="ov-picker-field">
-        <span class="ov-picker-label">${label}</span>
-        <span class="ov-picker-value" id="overviewPickerValue">${formatOverviewPickerValue(overviewMode, rawValue)}</span>
-      </div>
-      <input type="hidden" id="overviewPickerInput" value="${rawValue}">
-    </div>`;
-
-  const box = document.getElementById('overviewPickerBox');
-  const openThisPopup = () => {
-    const curVal = document.getElementById('overviewPickerInput').value;
-    openCalendarPopup(box, calMode, curVal, (newVal) => {
-      document.getElementById('overviewPickerInput').value = newVal;
-      document.getElementById('overviewPickerValue').textContent = formatOverviewPickerValue(overviewMode, newVal);
-      renderOverviewStats();
-    });
-  };
-  box.addEventListener('click', openThisPopup);
-  box.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openThisPopup(); }
-  });
-}
-
-function getOverviewFilteredTransactions() {
-  const val = document.getElementById('overviewPickerInput')?.value;
-  if (!val) return [];
-  if (overviewMode === 'harian') return transactions.filter(t => t.date === val);
-  if (overviewMode === 'mingguan') {
-    const range = getISOWeekRange(val);
-    if (!range) return [];
-    return transactions.filter(t => t.date && t.date >= range.start && t.date <= range.end);
-  }
-  if (overviewMode === 'bulanan') return transactions.filter(t => t.date && t.date.slice(0, 7) === val);
-  return transactions.filter(t => t.date && t.date.slice(0, 4) === String(val));
-}
-
-function renderOverviewStats() {
-  const list = getOverviewFilteredTransactions();
-  const totalIn = list.filter(t => t.type === 'masuk').reduce((s, t) => s + Number(t.amount || 0), 0);
-  const totalOut = list.filter(t => t.type === 'keluar').reduce((s, t) => s + Number(t.amount || 0), 0);
-  const net = totalIn - totalOut;
-
-  document.getElementById('overviewStats').innerHTML = `
-    <div class="ov-stat in">
-      <div class="k">${iconArrow('down')} Total Masuk</div>
-      <div class="v">${fmtRupiah(totalIn)}</div>
-    </div>
-    <div class="ov-stat out">
-      <div class="k">${iconArrow('up')} Total Keluar</div>
-      <div class="v">${fmtRupiah(totalOut)}</div>
-    </div>
-    <div class="ov-stat net">
-      <div class="k">${iconEquals()} Selisih</div>
-      <div class="v" style="color:${net >= 0 ? '#047857' : 'var(--wine)'}">${net >= 0 ? '+' : '-'} ${fmtRupiah(Math.abs(net))}</div>
-    </div>`;
-}
-
-function renderOverview() {
-  renderOverviewPicker();
-  renderOverviewStats();
-}
-
-document.getElementById('overviewModeToggle').addEventListener('click', (e) => {
-  const btn = e.target.closest('.ov-mode-btn');
-  if (!btn) return;
-  closeCalendarPopup();
-  document.querySelectorAll('.ov-mode-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  overviewMode = btn.dataset.ovmode;
-  renderOverview();
-});
 
 /* ---------- Satu baris riwayat transaksi (tr tabel) ---------- */
 function renderHistoryRow(t, delay) {
@@ -8453,7 +8156,6 @@ function refreshAll() {
   renderTransactionList();
   renderChart();
   renderYearlyBarChart();
-  renderOverviewStats();
 }
 
 document.addEventListener('keydown', (e) => {
@@ -9285,7 +8987,6 @@ function init() {
   applySaldoVisibility();
   setSelectedType('masuk');
   renderRangePicker();
-  renderOverview();
   refreshAll();
   updateNotifBadge();
   renderDevices();
