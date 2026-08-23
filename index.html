@@ -825,6 +825,13 @@ tr.fade-up{animation:fadeRow .35s ease both;}
       0 -13px 24px -9px rgba(242,103,43,0.38);
   }
   .fc-peek-handle{padding:18px 22px 18px 22px;border-radius:0 0 26px 26px;}
+  /* Lengkungan bawah kartu "Uang Masuk & Keluar" SAAT DIBUKA PENUH
+     (bukan cuma tab .fc-peek-handle saat diciutkan) disamakan dengan
+     lengkungan atas kartu Saldo Total (26px) di lebar ini — sebelumnya
+     .flow-deal-card tidak ikut mengecil dari 30px, jadi begitu kartu
+     dibuka di HP, sudutnya jadi tidak nyambung lagi dengan sudut Saldo
+     Total di atasnya. */
+  .banner-flow-wrap .flow-deal-card{border-radius:0 0 26px 26px;}
 }
 /* ---- Efek kartu Uang Masuk & Keluar nyelip di BELAKANG banner ----
    .banner-flow-wrap adalah jendela "overflow:hidden" yang tingginya
@@ -859,6 +866,16 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   margin:-48px 0 22px;
   overflow:hidden;
   transition:height .6s cubic-bezier(.22,1,.36,1);
+  /* FIX seam warna tidak menyatu: wrap ini kosong di HTML awal dan baru
+     diisi (flow-deal-card) lewat JS (bannerFlowWrap.innerHTML = ...).
+     Sebelum konten itu masuk, atau kalau tingginya sempat 0 sesaat,
+     latar body (gradasi oranye->putih VERTIKAL, beda arah & beda titik
+     warna) bisa mengintip tepat di bawah kartu Saldo Total, membuat
+     pita warna yang tidak nyambung. Kasih fallback gradasi identik
+     (arah & titik warna sama persis dengan .saldo-card/.flow-deal-card/
+     .fc-peek-handle) langsung di wrapper-nya sendiri, supaya area ini
+     SELALU senada dengan kartu di atasnya, isi kosong atau tidak. */
+  background:linear-gradient(to right, #FFFFFF 0%, #FFFFFF 45%, #FFF9F2 70%, #FFEFDF 100%);
 }
 .banner-flow-wrap .flow-deal-card{
   /* Sudut bawah disamakan (20px) dengan radius kartu "Saldo Bank &
@@ -1879,6 +1896,11 @@ tr.fade-up{animation:fadeRow .35s ease both;}
      baru menyusut mulai ≤480px (lihat blok terpisah di bawah), jadi di
      rentang 481–600px paddingnya masih 22px seperti default. */
   .fc-peek-handle{padding:16px 18px 16px 18px;border-radius:0 0 18px 18px;}
+  /* Sama seperti breakpoint 640px di atas: lengkungan bawah kartu saat
+     dibuka penuh ikut mengecil ke 18px, menyamakan dengan lengkungan
+     atas Saldo Total (.saldo-card{border-radius:18px 18px 0 0}) di
+     lebar ≤600px. */
+  .banner-flow-wrap .flow-deal-card{border-radius:0 0 18px 18px;}
   .fc-peek-row{gap:7px;max-width:none;}
   .fc-peek-icon{width:26px;height:26px;border-radius:9px;}
   .fc-peek-icon svg{width:14px;height:14px;}
