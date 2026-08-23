@@ -1739,9 +1739,10 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 .flow-timer-unit{display:flex;flex-direction:column;align-items:center;gap:3px;}
 .flow-timer-unit .wcc-box{
   min-width:32px;height:30px;padding:0 6px;border-radius:9px;
-  background:none;color:#fff;font-family:'IBM Plex Mono',monospace;
+  background:var(--card);color:var(--ink);font-family:'IBM Plex Mono',monospace;
+  border:1px solid var(--line);
   font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:center;
-  box-shadow:0 4px 10px -3px rgba(124,45,18,0.4);
+  box-shadow:none;
 }
 .flow-timer-unit .wcc-label{font-size:7.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-faint);}
 
