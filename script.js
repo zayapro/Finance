@@ -8032,7 +8032,6 @@ function renderBdAllPage() {
   renderBdAllSummary(all);
 
   document.querySelectorAll('#bdAllTabs .tab-btn').forEach(b => b.classList.toggle('active', b.dataset.bdtab === bdAllTab));
-  document.querySelectorAll('#bdAllStatusFilter button').forEach(b => b.classList.toggle('active', b.dataset.bdstatus === bdAllStatus));
 
   let filtered = all;
   if (bdAllTab !== 'semua') filtered = filtered.filter(x => x.kind === bdAllTab);
@@ -8152,12 +8151,6 @@ document.getElementById('bdAllTabs').addEventListener('click', (e) => {
   const btn = e.target.closest('[data-bdtab]');
   if (!btn) return;
   bdAllTab = btn.dataset.bdtab;
-  renderBdAllPage();
-});
-document.getElementById('bdAllStatusFilter').addEventListener('click', (e) => {
-  const btn = e.target.closest('[data-bdstatus]');
-  if (!btn) return;
-  bdAllStatus = btn.dataset.bdstatus;
   renderBdAllPage();
 });
 document.getElementById('bdAllSearchInput').addEventListener('input', (e) => {

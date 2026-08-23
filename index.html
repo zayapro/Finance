@@ -5119,34 +5119,35 @@ tbody tr.date-group-row:first-child td{border-top:none;}
   padding-top:24px;
   box-shadow:0 -16px 30px -10px rgba(242,103,43,0.38);
 }
-/* ---- Tombol "+ Tambah" dipindah jadi tombol melayang (FAB) di pojok
-   kanan bawah, supaya selalu terjangkau tanpa perlu scroll ke atas
-   dulu. Warna disamakan dengan warna tema oranye utama app (banner
-   besar & aksen nav bawah, var(--nav-orange) #FA8B1E) — bukan biru —
-   supaya menyatu dengan identitas warna app, bukan sekadar tombol
-   generik. z-index dibuat lebih tinggi dari nav bawah (600) supaya
-   tombol ini tidak pernah ketutup nav. ---- */
+/* ---- Tombol "+ Tambah" dipindah jadi tombol melayang (FAB) bulat
+   kecil di pojok kanan bawah — cukup ikon "+" saja (tanpa teks) biar
+   ringkas — dan posisinya BENAR-BENAR diam di tempat walau daftar di
+   belakangnya discroll (position:fixed + z-index tinggi, tidak ikut
+   scroll container manapun). Warna disamakan dengan warna tema
+   oranye utama app (var(--nav-orange) #FA8B1E). z-index dibuat lebih
+   tinggi dari nav bawah (600) supaya tombol ini tidak pernah ketutup
+   nav. ---- */
 .bd-fab-add{
   position:fixed;right:24px;bottom:calc(24px + env(safe-area-inset-bottom, 0px));
   z-index:650;
-  display:inline-flex;align-items:center;gap:7px;
-  padding:14px 22px 14px 18px;font-size:14px;font-weight:800;white-space:nowrap;
-  color:#FFF8F1;border:none;border-radius:999px;font-family:inherit;cursor:pointer;
+  width:56px;height:56px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  color:#FFF8F1;border:none;font-family:inherit;cursor:pointer;
   background:linear-gradient(145deg, #FFA945, var(--nav-orange));
   box-shadow:0 12px 26px -8px rgba(250,139,30,0.55), 0 4px 12px rgba(15,23,42,0.16);
   transition:transform .18s ease, box-shadow .18s ease, filter .15s ease;
   touch-action:manipulation;-webkit-tap-highlight-color:transparent;
 }
-.bd-fab-add:hover{transform:translateY(-2px) scale(1.03);box-shadow:0 16px 32px -8px rgba(250,139,30,0.6);}
-.bd-fab-add:active{transform:scale(0.94);}
+.bd-fab-add:hover{transform:translateY(-2px) scale(1.05);box-shadow:0 16px 32px -8px rgba(250,139,30,0.6);}
+.bd-fab-add:active{transform:scale(0.92);}
 @media (max-width:640px){
-  .bd-page-banner-simple{padding:16px 20px 36px;}
+  .bd-page-banner-simple{padding:14px 14px 34px;}
   .bd-page-banner-title{font-size:17px;}
   .bd-page-body{margin-top:-20px;border-radius:22px 22px 0 0;box-shadow:0 -13px 24px -9px rgba(242,103,43,0.38);}
   /* Di HP, tombol digeser naik supaya duduk RAPI di atas nav bawah
      (tinggi nav ±78px, lihat body{padding-bottom:78px} di bagian
      NAVIGASI BAWAH) alih-alih tertutup nav seperti sebelumnya. */
-  .bd-fab-add{right:16px;bottom:calc(78px + 14px + env(safe-area-inset-bottom, 0px));padding:12px 18px 12px 15px;font-size:13px;}
+  .bd-fab-add{right:16px;bottom:calc(78px + 14px + env(safe-area-inset-bottom, 0px));width:50px;height:50px;}
 }
 /* Semua halaman overlay (detail-page-overlay) dibuka di ATAS nav bawah
    yang fixed dan ber-z-index lebih tinggi (600 vs var(--z-page):120),
@@ -5164,13 +5165,27 @@ tbody tr.date-group-row:first-child td{border-top:none;}
   #bdAllOverlay .detail-page{
     padding-bottom:calc(78px + 14px + 52px + 16px + env(safe-area-inset-bottom));
   }
+  /* Rapatkan semua halaman overlay ke pinggir layar di HP -- padding
+     kiri/kanan/atas bawaan (24px/22px) dibuat sama sempit dengan
+     kontainer halaman utama (.app, 12-14px di breakpoint yang sama)
+     supaya tidak ada gang kosong lebar di kiri-kanan konten, dan
+     jaraknya konsisten dengan halaman lain. */
+  .detail-page-overlay .detail-page{
+    padding-left:14px;padding-right:14px;padding-top:14px;
+  }
 }
 .bd-summary-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
 @media (max-width:760px){.bd-summary-row{grid-template-columns:repeat(2,1fr);}}
+@media (max-width:640px){
+  .bd-summary-row{gap:9px;margin-bottom:14px;}
+}
 .bd-summary-card{
   background:linear-gradient(180deg, rgba(217,119,6,0.08), rgba(217,119,6,0.015));
   border:1px solid rgba(217,119,6,0.20);border-radius:16px;
   padding:15px 16px;position:relative;overflow:hidden;
+}
+@media (max-width:640px){
+  .bd-summary-card{padding:12px 13px;border-radius:14px;}
 }
 .bd-summary-card::after{
   content:"";position:absolute;right:-10px;bottom:-14px;width:60px;height:60px;border-radius:50%;
@@ -5189,19 +5204,18 @@ tbody tr.date-group-row:first-child td{border-top:none;}
 .bd-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:16px;}
 .bd-toolbar .tabs{flex-shrink:0;}
 .bd-toolbar .field-inline{flex:1;min-width:180px;}
-.bd-status-filter{display:flex;gap:4px;background:var(--paper);padding:4px;border-radius:11px;flex-shrink:0;}
-.bd-status-filter button{
-  border:none;background:none;padding:8px 13px;border-radius:8px;font-size:12.5px;font-weight:700;
-  color:var(--ink-soft);transition:background .15s ease,color .15s ease;white-space:nowrap;
+@media (max-width:640px){
+  .bd-toolbar{gap:8px;margin-bottom:12px;}
 }
-.bd-status-filter button.active{background:#fff;color:var(--ink);box-shadow:0 2px 6px rgba(15,23,42,0.14);}
 .bd-list{display:grid;grid-template-columns:repeat(2,1fr);gap:11px;}
 @media (max-width:760px){.bd-list{grid-template-columns:1fr;}}
+@media (max-width:640px){.bd-list{gap:8px;}}
 .bd-item{
   display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);
   border-radius:16px;padding:13px 14px;box-shadow:var(--shadow-sm);
   transition:border-color .15s ease, transform .15s ease, box-shadow .15s ease, background .15s ease;
 }
+@media (max-width:640px){.bd-item{padding:11px 12px;border-radius:14px;gap:10px;}}
 .bd-item:hover{transform:translateY(-1px);border-color:rgba(37,99,235,0.25);box-shadow:0 8px 20px -10px rgba(15,23,42,0.2);}
 .bd-item.overdue{border-color:rgba(225,29,72,0.32);background:rgba(225,29,72,0.045);}
 .bd-item.overdue:hover{border-color:rgba(225,29,72,0.5);}
@@ -7309,11 +7323,6 @@ body.is-scrolling *{
         <button class="tab-btn" data-bdtab="tagihan">Tagihan</button>
         <button class="tab-btn" data-bdtab="hutang">Hutang</button>
       </div>
-      <div class="bd-status-filter" id="bdAllStatusFilter">
-        <button type="button" class="active" data-bdstatus="semua">Semua Status</button>
-        <button type="button" data-bdstatus="belum">Aktif</button>
-        <button type="button" data-bdstatus="lunas">Lunas</button>
-      </div>
       <div class="field-inline">
         <span class="search-ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span>
         <input type="search" id="bdAllSearchInput" placeholder="Cari nama tagihan / hutang...">
@@ -7323,9 +7332,8 @@ body.is-scrolling *{
     <div class="bd-list" id="bdAllList"></div>
   </div>
 
-  <button class="bd-fab-add" id="bdAllAddBtn" type="button" aria-label="Tambah tagihan atau hutang">
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-    <span>Tambah</span>
+  <button class="bd-fab-add" id="bdAllAddBtn" type="button" aria-label="Tambah tagihan atau hutang" title="Tambah tagihan atau hutang">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
   </button>
 </div>
 
