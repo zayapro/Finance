@@ -5743,17 +5743,26 @@ tbody tr.date-group-row:first-child td{border-top:none;}
   /* Ikon dibungkus PIL (kapsul melebar), bukan lingkaran penuh --
      meniru referensi (Chat/Panggilan/dsb): default transparan tanpa
      latar, dan HANYA tab aktif dapat latar kapsul lembut memakai
-     warna oranye template (bukan hijau seperti referensi). */
+     warna oranye template (bukan hijau seperti referensi).
+     PENTING: ukuran pil (width/height/padding) DITULIS TETAP (bukan
+     min-width) dan SAMA PERSIS antara state biasa & .active — hanya
+     background+color yang berubah saat pindah tab, supaya pil tidak
+     pernah terlihat "membesar/mengecil" saat berpindah aktif. */
   .bn-item .bn-ic-wrap{
     position:relative;
-    min-width:54px;height:26px;padding:0 17px;border-radius:13px;
-    display:flex;align-items:center;justify-content:center;
-    color:#4B5563;background:transparent;
-    transition:background .2s ease,color .2s ease,transform .15s ease;
+    width:54px;height:26px;border-radius:13px;
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+    color:#4B5563;background:transparent;transform:scale(1);
+    transition:background .2s ease,color .2s ease,transform .2s ease;
   }
-  .bn-item:active .bn-ic-wrap{transform:scale(0.9);}
+  /* Efek tekan (native :active) HANYA mengubah skala sesaat saat jari
+     menyentuh, lalu balik lagi persis ke ukuran semula saat dilepas --
+     durasinya disamakan dengan transisi warna di atas (.2s) supaya
+     tidak terasa "patah-patah" saat pindah tab. */
+  .bn-item:active .bn-ic-wrap{transform:scale(0.92);}
   .bn-item.active{color:#111827;}
   .bn-item.active .bn-ic-wrap{
+    width:54px;height:26px;border-radius:13px;
     background:color-mix(in srgb, var(--nav-orange) 15%, transparent);
     color:var(--nav-orange);
   }
