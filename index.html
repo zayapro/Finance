@@ -5141,9 +5141,14 @@ tbody tr.date-group-row:first-child td{border-top:none;}
 .bd-fab-add:hover{transform:translateY(-2px) scale(1.05);box-shadow:0 16px 32px -8px rgba(250,139,30,0.6);}
 .bd-fab-add:active{transform:scale(0.92);}
 @media (max-width:640px){
-  .bd-page-banner-simple{padding:14px 14px 34px;}
+  /* Reveal oranye di atas kartu putih dipertipis (dari ±14px jadi
+     ±6px) supaya total jarak "atas" (aksen oranye + padding kartu)
+     senada dengan jarak "samping" (cuma padding kartu, 14px) --
+     sebelumnya reveal oranye yang lebih tebal bikin sisi atas
+     terasa jauh lebih longgar dibanding kiri/kanan. */
+  .bd-page-banner-simple{padding:14px 14px 20px;}
   .bd-page-banner-title{font-size:17px;}
-  .bd-page-body{margin-top:-20px;border-radius:22px 22px 0 0;box-shadow:0 -13px 24px -9px rgba(242,103,43,0.38);}
+  .bd-page-body{margin-top:-14px;border-radius:22px 22px 0 0;box-shadow:0 -13px 24px -9px rgba(242,103,43,0.38);}
   /* Di HP, tombol digeser naik supaya duduk RAPI di atas nav bawah
      (tinggi nav ±78px, lihat body{padding-bottom:78px} di bagian
      NAVIGASI BAWAH) alih-alih tertutup nav seperti sebelumnya. */
@@ -5201,11 +5206,40 @@ tbody tr.date-group-row:first-child td{border-top:none;}
 .bd-summary-card .v{position:relative;z-index:1;font-family:'IBM Plex Mono',monospace;font-size:19px;font-weight:800;margin-top:5px;letter-spacing:-0.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink);}
 .bd-summary-card.overdue .v{color:var(--wine);}
 .bd-summary-card .sub{position:relative;z-index:1;font-size:10.5px;color:var(--ink-faint);font-weight:600;margin-top:3px;}
-.bd-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:16px;}
+.bd-toolbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;}
 .bd-toolbar .tabs{flex-shrink:0;}
-.bd-toolbar .field-inline{flex:1;min-width:180px;}
 @media (max-width:640px){
-  .bd-toolbar{gap:8px;margin-bottom:12px;}
+  .bd-toolbar{gap:8px;margin-bottom:10px;}
+}
+/* ---- Aksi toolbar (cari & unduh) dipindah jadi 2 tombol ikon bulat
+   kecil di sebelah pil tab Semua/Tagihan/Hutang, menggantikan kotak
+   pencarian panjang yang tadinya makan satu baris penuh sendiri.
+   Klik ikon kaca pembesar membuka/menutup kolom pencarian tepat di
+   bawah toolbar; ikon panah-ke-bawah mengunduh data yang sedang
+   tampil (mengikuti tab & pencarian aktif) sebagai file CSV. ---- */
+.bd-toolbar-actions{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.bd-icon-btn{
+  width:36px;height:36px;border-radius:11px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--paper);border:1px solid var(--line);color:var(--ink-soft);
+  cursor:pointer;transition:background .15s ease,color .15s ease,border-color .15s ease,transform .15s ease;
+  touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+}
+.bd-icon-btn:hover{background:#fff;color:var(--ink);border-color:rgba(15,23,42,0.16);}
+.bd-icon-btn:active{transform:scale(0.92);}
+.bd-icon-btn.active{background:var(--nav-orange);border-color:var(--nav-orange);color:#fff;}
+/* Kolom pencarian: tersembunyi (collapsed) secara default, baru
+   muncul dengan animasi turun-halus saat ikon cari diklik. Struktur
+   internal (ikon absolut + input) memakai pola .field-inline yang
+   sudah ada di file ini -- di sini cuma menambah lapisan collapse. */
+.bd-search-wrap{
+  overflow:hidden;max-height:0;opacity:0;margin-bottom:0;
+  transition:max-height .22s ease, opacity .18s ease, margin-bottom .22s ease;
+}
+.bd-search-wrap.open{max-height:64px;opacity:1;margin-bottom:14px;}
+@media (max-width:640px){
+  .bd-icon-btn{width:34px;height:34px;border-radius:10px;}
+  .bd-search-wrap.open{margin-bottom:10px;}
 }
 .bd-list{display:grid;grid-template-columns:repeat(2,1fr);gap:11px;}
 @media (max-width:760px){.bd-list{grid-template-columns:1fr;}}
@@ -7323,10 +7357,19 @@ body.is-scrolling *{
         <button class="tab-btn" data-bdtab="tagihan">Tagihan</button>
         <button class="tab-btn" data-bdtab="hutang">Hutang</button>
       </div>
-      <div class="field-inline">
-        <span class="search-ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span>
-        <input type="search" id="bdAllSearchInput" placeholder="Cari nama tagihan / hutang...">
+      <div class="bd-toolbar-actions">
+        <button type="button" class="bd-icon-btn" id="bdSearchToggleBtn" aria-label="Cari tagihan/hutang" title="Cari">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        </button>
+        <button type="button" class="bd-icon-btn" id="bdDownloadBtn" aria-label="Unduh data tagihan/hutang" title="Unduh sebagai CSV">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0-4.5-4.5M12 15l4.5-4.5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+        </button>
       </div>
+    </div>
+
+    <div class="field-inline bd-search-wrap" id="bdSearchWrap">
+      <span class="search-ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span>
+      <input type="search" id="bdAllSearchInput" placeholder="Cari nama tagihan / hutang...">
     </div>
 
     <div class="bd-list" id="bdAllList"></div>

@@ -7986,6 +7986,7 @@ document.getElementById('notifListMore').addEventListener('click', () => {
 let bdAllTab = 'semua';     // 'semua' | 'tagihan' | 'hutang'
 let bdAllStatus = 'semua';  // 'semua' | 'belum' | 'lunas'
 let bdAllSearch = '';
+let bdAllFilteredCache = []; // hasil filter/sort terakhir, dipakai juga oleh tombol unduh CSV
 
 function bdAllCombinedData() {
   return [
@@ -8047,6 +8048,8 @@ function renderBdAllPage() {
     return (b.paidAt || '').localeCompare(a.paidAt || '');
   });
 
+  bdAllFilteredCache = filtered;
+
   const listEl = document.getElementById('bdAllList');
 
   if (filtered.length === 0) {
@@ -8106,6 +8109,8 @@ function openBdAllPage(initialTab) {
   bdAllStatus = 'semua';
   bdAllSearch = '';
   document.getElementById('bdAllSearchInput').value = '';
+  document.getElementById('bdSearchWrap').classList.remove('open');
+  document.getElementById('bdSearchToggleBtn').classList.remove('active');
 
   document.getElementById('bdAllOverlay').classList.add('open');
   document.body.style.overflow = 'hidden';
@@ -8157,6 +8162,78 @@ document.getElementById('bdAllSearchInput').addEventListener('input', (e) => {
   bdAllSearch = e.target.value;
   renderBdAllPage();
 });
+
+/* ---------- Tombol ikon "Cari" di toolbar ----------
+   Menggantikan kotak pencarian panjang yang sebelumnya selalu
+   tampil -- sekarang cuma ikon kaca pembesar di sebelah pil tab,
+   kolom pencariannya baru muncul (dengan animasi turun) saat ikon
+   ini diklik, dan otomatis fokus ke input supaya bisa langsung
+   mengetik. Klik lagi ikonnya untuk menutup; kalau lagi ada teks
+   pencarian yang diketik, pencarian ikut dikosongkan supaya daftar
+   kembali ke kondisi awal (tidak nyangkut difilter tanpa disadari). */
+document.getElementById('bdSearchToggleBtn').addEventListener('click', () => {
+  const wrap = document.getElementById('bdSearchWrap');
+  const btn = document.getElementById('bdSearchToggleBtn');
+  const input = document.getElementById('bdAllSearchInput');
+  const isOpen = wrap.classList.toggle('open');
+  btn.classList.toggle('active', isOpen);
+  if (isOpen) {
+    setTimeout(() => input.focus(), 180);
+  } else if (input.value) {
+    input.value = '';
+    bdAllSearch = '';
+    renderBdAllPage();
+  }
+});
+
+/* ---------- Tombol ikon "Unduh" di toolbar ----------
+   Mengekspor daftar yang SEDANG tampil (mengikuti tab Semua/Tagihan/
+   Hutang & kata kunci pencarian yang aktif saat itu) jadi file CSV
+   yang bisa dibuka di Excel/Google Sheets, langsung diunduh ke
+   perangkat lewat link sementara (tanpa perlu server). */
+document.getElementById('bdDownloadBtn').addEventListener('click', () => {
+  downloadBdAllCsv();
+});
+
+function downloadBdAllCsv() {
+  const rows = bdAllFilteredCache;
+  if (!rows || rows.length === 0) {
+    showToast('Tidak ada data untuk diunduh', 'err');
+    return;
+  }
+  const header = ['Nama', 'Jenis', 'Jumlah (Rp)', 'Status', 'Jatuh Tempo', 'Tanggal Lunas', 'Berulang'];
+  const csvEscape = (val) => {
+    const s = String(val ?? '');
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const lines = [header.map(csvEscape).join(',')];
+  rows.forEach((item) => {
+    lines.push([
+      item.name,
+      item.kind === 'tagihan' ? 'Tagihan' : 'Hutang',
+      Number(item.amount || 0),
+      item.status === 'lunas' ? 'Lunas' : 'Aktif',
+      item.dueDate || '',
+      item.paidAt || '',
+      item.recurring ? 'Ya' : 'Tidak',
+    ].map(csvEscape).join(','));
+  });
+  // Tambahkan BOM (\ufeff) di awal supaya karakter/format tetap rapi
+  // saat file CSV ini dibuka langsung di Excel.
+  const csvContent = '\ufeff' + lines.join('\r\n');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const today = new Date().toISOString().slice(0, 10);
+  a.href = url;
+  a.download = `tagihan-hutang-${today}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  showToast('File CSV berhasil diunduh');
+}
+
 document.getElementById('bdAllAddBtn').addEventListener('click', () => {
   openBillModal(bdAllTab === 'hutang' ? 'hutang' : 'tagihan');
 });
