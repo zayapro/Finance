@@ -4311,24 +4311,42 @@ tbody tr:last-child td{border-bottom:none;}
 .empty-state p{font-size:14px;}
 
 /* ============ HEADER "RIWAYAT TRANSAKSI" (versi pro) ============
-   Redesain: judul & ikon disamakan gayanya dengan kartu "Saldo Bank
-   & E-Wallet" (dan kartu ringkasan lain di beranda) -- bukan lagi
-   font serif Fraunces besar seperti judul section lain, tapi sans-
-   serif tebal (Plus Jakarta Sans, sama seperti .brand-name & label
-   kartu ringkasan) supaya terasa senada dgn area saldo. Ikonnya juga
-   diganti dari kotak gelap datar + ikon garis 3 (generik, bukan
-   simbol "riwayat") jadi pil gradien warna (persis pola .icon-badge
-   pada kartu ringkasan/stat-card) dengan ikon jam+panah putar balik
-   yang lebih pas melambangkan "riwayat". Warna biru dipilih supaya
-   senada dgn kartu "Transaksi Terakhir" (.isc-recent-card) yang
-   sama-sama bertema riwayat transaksi. ---- */
+   Redesain: judul memakai FONT YANG SAMA PERSIS dengan label kartu
+   "Saldo Bank & E-Wallet" (lihat .stat-card .label di atas: Plus
+   Jakarta Sans, weight 700, UPPERCASE, letter-spacing 0.05em) --
+   bukan lagi font serif Fraunces besar seperti judul section lain.
+   Ukurannya tetap dibesarkan sedikit dari label kartu (yang aslinya
+   cuma 11.5px) supaya tetap terbaca sebagai judul section, bukan
+   label kecil biasa, tapi karakter fontnya (jenis huruf/tebal/huruf
+   besar semua/kerapatan huruf) sama persis.
+
+   Layoutnya juga disamakan dgn top-row kartu Saldo Bank & E-Wallet:
+   teks di KIRI, ikon-badge di ujung KANAN dalam satu baris (dulu
+   ikon nempel di depan teks) -- lihat .hh-title-row. Subtitle di
+   bawahnya (section-subtitle) diberi ukuran & jarak khusus supaya
+   tetap rapi mengikuti judul barunya yang lebih ringkas/rapat.
+
+   Ikonnya sendiri diganti dari kotak gelap datar + ikon garis 3
+   (generik, bukan simbol "riwayat") jadi pil gradien warna (persis
+   pola .icon-badge pada kartu ringkasan/stat-card) dengan ikon
+   jam+panah putar balik yang lebih pas melambangkan "riwayat". Warna
+   biru dipilih supaya senada dgn kartu "Transaksi Terakhir"
+   (.isc-recent-card) yang sama-sama bertema riwayat transaksi. ---- */
 .history-head{align-items:flex-start;margin-bottom:18px;}
-.history-head-text{display:flex;flex-direction:column;gap:4px;}
+.history-head-text{display:flex;flex-direction:column;gap:5px;min-width:0;}
+.hh-title-row{display:flex;align-items:center;justify-content:space-between;gap:12px;}
 .history-head-text h2{
-  gap:10px;
   font-family:'Plus Jakarta Sans', sans-serif;
-  font-weight:800;
-  letter-spacing:-0.01em;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:0.05em;
+  font-size:15px;
+  color:var(--ink);
+}
+.history-head-text .section-subtitle{
+  font-size:11.5px;
+  margin-top:0;
+  line-height:1.4;
 }
 .hh-icon{
   width:42px;height:42px;border-radius:13px;flex-shrink:0;
@@ -4339,6 +4357,7 @@ tbody tr:last-child td{border-bottom:none;}
 }
 .history-head:hover .hh-icon{transform:scale(1.08) rotate(-4deg);}
 .add-btn-desktop{display:none;}
+
 
 
 /* ============ RIWAYAT TRANSAKSI (tabel) ============ */
@@ -6561,7 +6580,10 @@ body.is-scrolling *{
   <section class="section-card pro-history" id="historySection">
     <div class="section-head history-head">
       <div class="history-head-text">
-        <h2><span class="hh-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/></svg></span>Riwayat Transaksi</h2>
+        <div class="hh-title-row">
+          <h2>Riwayat Transaksi</h2>
+          <span class="hh-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/></svg></span>
+        </div>
         <span class="section-subtitle">Kelola dan pantau seluruh arus kas Anda</span>
       </div>
       <button class="btn btn-primary add-btn-desktop" id="btnAddDesktop">
