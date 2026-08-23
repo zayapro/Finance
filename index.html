@@ -4080,23 +4080,34 @@ body.density-compact .income-cards-group{gap:10px;}
 }
 .tab-btn.active{background:transparent;color:var(--primary);}
 
-/* ---- Tab filter (Semua/Mingguan/Bulanan/Tahunan) jadi sticky saat
-   discroll: menempel di bawah mini-topbar (HP) atau di paling atas
-   viewport (desktop/tablet, karena mini-topbar disembunyikan di
-   sana). Diberi background solid + z-index supaya konten di
-   belakangnya tidak tembus kelihatan saat menempel. ---- */
+/* ---- Tab filter (Semua/Mingguan/Bulanan/Tahunan) dibuat sticky saat
+   discroll: menempel tepat di bawah mini-topbar (HP) atau di paling
+   atas viewport (desktop/tablet, karena mini-topbar disembunyikan di
+   sana -- lihat var(--mini-topbar-h) yg jadi 0 otomatis di sana).
+
+   Supaya terasa MENYATU jadi satu kesatuan sticky-header yang rapi
+   (bukan pil melayang sendirian dgn warna beda & jarak ganjil):
+   - Latarnya disamakan PERSIS dgn var(--card) (putih) -- warna yang
+     sama dipakai mini-topbar & .section-card pembungkusnya -- supaya
+     tidak ada "sambungan" warna yang kelihatan beda saat keduanya
+     menempel bersebelahan.
+   - Diberi border-bottom + shadow tipis yang gaya & kekuatannya SAMA
+     dgn shadow mini-topbar (lihat .mini-topbar di bawah), jadi kalau
+     dua-duanya lagi sama-sama nempel di HP, dia kebaca sebagai
+     lanjutan/"rak kedua" dari header yang sama -- bukan dua kotak
+     terpisah yang numpuk sembarangan.
+   - z-index SATU LEVEL DI BAWAH mini-topbar (bukan sama persis) supaya
+     saat mini-topbar animasi keluar/masuk (translateY), dia konsisten
+     selalu di lapisan paling atas -- tab ini tidak pernah "nyempil"
+     menutupi mini-topbar. ---- */
 .tabs-sticky-wrap{
   position:sticky;
   top:var(--mini-topbar-h, 0px);
-  z-index:var(--z-mini-topbar);
-  /* Body pakai gradient oranye->putih di ~252px pertama (lihat body{}),
-     tapi tab ini letaknya jauh di bawah situ (dalam #historySection)
-     jadi sudah pasti berada di zona flat-nya -- aman pakai warna solid
-     ini sebagai latar saat menempel, supaya konten di belakangnya
-     (baris/tabel transaksi) tidak tembus kelihatan. */
-  background:#FEFFF9;
+  z-index:calc(var(--z-mini-topbar) - 1);
+  background:var(--card);
   padding:10px 0;
-  margin:0 0 -10px;
+  border-bottom:1px solid var(--line);
+  box-shadow:0 8px 14px -10px rgba(15,23,42,0.14);
 }
 
 .controls-row{
