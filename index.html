@@ -1042,7 +1042,12 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 .currency-toggle{
   position:relative;flex-shrink:0;
   display:flex;align-items:center;
-  width:82px;height:30px;border-radius:999px;padding:3px;
+  /* Sebelumnya 82x30px dengan knob 38px — slot tiap opsi (38px) jauh
+     lebih lebar dari teks "IDR"/"USD" (10px bold, ~24px), jadi
+     kelihatan longgar/tidak pas. Diperkecil & disesuaikan supaya
+     pill-nya membungkus teks lebih rapat/rapi, tanpa jadi terlalu
+     sempit buat disentuh di HP. */
+  width:74px;height:28px;border-radius:999px;padding:3px;
   background:var(--primary-soft);
   border:1px solid rgba(242,103,43,0.18);
   cursor:pointer;
@@ -1076,15 +1081,21 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 }
 .currency-toggle .ct-knob{
   position:absolute;top:3px;left:3px;
-  width:38px;height:22px;border-radius:999px;
+  /* Lebar knob disamakan PERSIS dengan lebar slot 1 opsi (lihat
+     perhitungan .ct-opt di bawah: (74-6)/2 = 34px) supaya pill oranye
+     ini pas menutupi label aktifnya, tidak lebih lebar/sempit. Tinggi
+     dikurangi 1px (22px->21px) mengikuti track yang juga menyusut
+     (30px->28px), dan shadow-nya dihaluskan sedikit biar terasa lebih
+     "solid"/premium, bukan cuma bayangan tipis mengambang. */
+  width:34px;height:21px;border-radius:999px;
   background:linear-gradient(140deg,var(--primary-light),var(--primary));
-  box-shadow:0 3px 10px rgba(194,65,12,0.35);
+  box-shadow:0 2px 7px rgba(194,65,12,0.38);
   transition:transform .32s cubic-bezier(.34,1.56,.64,1);
 }
-.currency-toggle.usd .ct-knob{transform:translateX(38px);}
+.currency-toggle.usd .ct-knob{transform:translateX(34px);}
 .currency-toggle .ct-opt{
   position:relative;z-index:1;flex:1;text-align:center;
-  font-size:10px;font-weight:800;letter-spacing:0.03em;
+  font-size:10.5px;font-weight:800;letter-spacing:0.02em;
   color:var(--ink-faint);
   transition:color .28s ease;
 }
@@ -1138,9 +1149,23 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 .saldo-sub-item{display:flex;align-items:center;gap:10px;min-width:0;}
 @media (max-width:600px){
   .saldo-sub{gap:10px;justify-content:space-between;flex-wrap:nowrap;}
-  .saldo-sub-item{flex:1 1 0;min-width:0;}
+  .saldo-sub-item{flex:1 1 0;min-width:0;align-items:flex-start;}
   .saldo-sub-text{min-width:0;flex:1;}
-  .saldo-sub-text .v{font-size:13px;}
+  /* Angka Pemasukan/Pengeluaran: SEBELUMNYA font-size tetap 13px +
+     white-space:nowrap + text-overflow:ellipsis di baris dasar (lihat
+     .saldo-sub-text .v di bawah) — di HP sempit dengan jumlah uang
+     besar (banyak digit), ini memotong sebagian angka jadi "...",
+     menyembunyikan nominal aslinya. clamp(vw) di sini menyusutkan
+     font mengikuti lebar layar dulu supaya tetap muat 1 baris di
+     kondisi normal; white-space:normal (override dasar) jadi jaring
+     pengaman terakhir — kalau angkanya tetap terlalu panjang meski
+     sudah menyusut, teks turun ke baris ke-2 alih-alih terpotong,
+     jadi jumlah uangnya SELALU terlihat utuh. */
+  .saldo-sub-text .v{
+    font-size:clamp(11.5px, 3.6vw, 14px);
+    white-space:normal;overflow:visible;text-overflow:clip;
+    overflow-wrap:break-word;line-height:1.25;
+  }
 }
 
 .saldo-sub-item .ic{
