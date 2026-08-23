@@ -1713,7 +1713,7 @@ function renderSummary() {
   // Ini) — tiap kartu tier menampilkan pemasukan sebagai angka besar
   // dan pengeluaran sebagai baris tercoret di bawahnya, jumlah
   // transaksi, dan tombol "Lihat Semua" bergaya "Ingatkan Saya".
-  const iconStopwatch = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 13v-4M9 3h6M18.5 6.5l1 1"/></svg>`;
+  const iconStopwatch = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3v12"/><path d="m21 11-4 4-4-4"/><path d="M7 21V9"/><path d="m3 13 4-4 4 4"/></svg>`;
   // Ikon dompet kecil dipakai pada handle "Lihat Ringkasan" (lihat
   // redesign di bawah, dekat cardsHtml) supaya tab peek tidak cuma
   // teks polos, ada penanda visual yang konsisten dengan tema kartu.

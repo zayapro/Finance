@@ -1130,7 +1130,6 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   -webkit-user-select:none;user-select:none;
   transition:background .18s ease, border-color .18s ease, transform .16s cubic-bezier(.22,.9,.3,1), box-shadow .18s ease;
 }
-.currency-toggle:hover{background:var(--line);border-color:var(--line);}
 /* Sentuhan "smooth" saat ditekan: sedikit mengecil lalu balik pas
    dilepas (transition di atas yang menganimasikannya), jadi ada umpan
    balik taktil yang halus tanpa perlu kotak/outline bawaan browser. */
@@ -1199,6 +1198,8 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   border:1px solid var(--line);
   color:var(--ink-soft);
   transition:background .15s ease, color .15s ease;
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
 }
 .saldo-toggle:hover{background:var(--line);color:var(--ink);}
 /* Baris Pemasukan/Pengeluaran bulan ini: SENGAJA justify-content:flex-start
@@ -1669,7 +1670,18 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   --fc-accent:#F97316;--fc-accent-strong:#C2410C;--fc-accent-soft:rgba(249,115,22,0.35);
 }
 .flow-deal-card::before{background:linear-gradient(160deg, rgba(249,115,22,0.09), transparent 58%);}
-.flow-deal-card::after{background:radial-gradient(circle, rgba(249,115,22,0.17), transparent 72%);}
+/* FIX bercak oranye permanen di pojok kanan-atas: .stat-card::after
+   (dasarnya, dipakai bareng kartu lain seperti stat-in/stat-out)
+   TIDAK punya opacity:0 seperti .stat-card::before — jadi walau
+   warnanya cuma didefinisikan di kartu ber-status (.stat-in/.stat-out/
+   .stat-special), begitu kartu ini kita kasih warna sendiri di sini,
+   glow-nya langsung SELALU TAMPIL, bukan cuma pas hover. Padahal
+   bagian "Efek hover pada kartu ini DIHAPUS" di bawah sudah bermaksud
+   mematikan SEMUA efek dekoratif ini (glow membesar dsb), ::after ini
+   ke-lewat/tidak ikut dimatikan. opacity:0 + transition disamakan
+   dengan pola ::before supaya kartu ini benar-benar polos/menyatu
+   dengan gradasi background kartu, tidak ada bercak oranye nempel. */
+.flow-deal-card::after{background:radial-gradient(circle, rgba(249,115,22,0.17), transparent 72%);opacity:0;transition:opacity .25s ease;}
 
 .flow-deal-card{
   cursor:default;
@@ -1691,6 +1703,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 }
 .banner-flow-wrap .flow-deal-card:hover::after{
   transform:none;
+  opacity:0;
 }
 .banner-flow-wrap .flow-deal-card:hover .icon-badge{
   transform:none;
@@ -1717,7 +1730,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 .flow-deal-title{display:flex;align-items:center;gap:12px;min-width:0;flex:1 1 auto;overflow:hidden;}
 .flow-deal-title .icon-badge{background:linear-gradient(140deg,#FDBA74,#C2410C);box-shadow:0 8px 16px -4px rgba(249,115,22,0.42);flex-shrink:0;}
 .flow-deal-title-text{min-width:0;}
-.flow-deal-title-text h3{font-size:16px;font-weight:800;color:var(--ink);letter-spacing:-0.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.flow-deal-title-text h3{font-size:11.5px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:0.05em;line-height:1.45;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .flow-deal-sub{font-size:11.5px;font-weight:600;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
 .flow-deal-timer{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;}
@@ -1726,7 +1739,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 .flow-timer-unit{display:flex;flex-direction:column;align-items:center;gap:3px;}
 .flow-timer-unit .wcc-box{
   min-width:32px;height:30px;padding:0 6px;border-radius:9px;
-  background:#7C2D12;color:#fff;font-family:'IBM Plex Mono',monospace;
+  background:none;color:#fff;font-family:'IBM Plex Mono',monospace;
   font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:center;
   box-shadow:0 4px 10px -3px rgba(124,45,18,0.4);
 }
