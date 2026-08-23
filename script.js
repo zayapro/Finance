@@ -8148,7 +8148,6 @@ document.querySelector('#bottomNav .bn-item[data-page="beranda"]').addEventListe
   }
 });
 
-document.getElementById('bdAllBackBtn').addEventListener('click', closeBdAllPage);
 document.getElementById('bdAllTabs').addEventListener('click', (e) => {
   const btn = e.target.closest('[data-bdtab]');
   if (!btn) return;
