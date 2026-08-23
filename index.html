@@ -4077,6 +4077,9 @@ body.density-compact .income-cards-group{gap:10px;}
   border:none;background:transparent;padding:8px 16px;border-radius:999px;
   font-size:13.5px;font-weight:700;color:var(--ink-soft);
   transition:all .15s ease;white-space:nowrap;
+  /* Hilangkan kotak highlight abu-abu bawaan browser (terutama Android/
+     Chrome) yang muncul sesaat saat tombol tab ini disentuh di HP. */
+  touch-action:manipulation;-webkit-tap-highlight-color:transparent;
 }
 .tab-btn.active{background:transparent;color:var(--primary);}
 
@@ -4343,7 +4346,12 @@ tbody tr:last-child td{border-bottom:none;}
   border:1px solid rgba(37,99,235,0.18);
 }
 .overview-mode-toggle{display:flex;gap:3px;background:var(--paper);padding:3px;border-radius:10px;border:1px solid var(--line);}
-.ov-mode-btn{border:none;background:transparent;padding:7px 15px;border-radius:8px;font-size:12.5px;font-weight:700;color:var(--ink-soft);transition:all .18s ease;white-space:nowrap;}
+.ov-mode-btn{
+  border:none;background:transparent;padding:7px 15px;border-radius:8px;
+  font-size:12.5px;font-weight:700;color:var(--ink-soft);
+  transition:all .18s ease;white-space:nowrap;
+  touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+}
 .ov-mode-btn:hover:not(.active){color:var(--ink);}
 .ov-mode-btn.active{background:var(--forest-deep);color:#fff;box-shadow:0 3px 10px rgba(11,18,32,0.28);}
 .overview-body{display:flex;flex-wrap:wrap;gap:16px;align-items:stretch;}
@@ -4464,7 +4472,30 @@ tbody tr:last-child td{border-bottom:none;}
   .overview-picker .ov-picker-box{width:100%;}
   .overview-head{gap:10px;}
   .overview-mode-toggle{width:100%;}
-  .overview-mode-toggle .ov-mode-btn{flex:1;text-align:center;}
+  /* ---- Sebelumnya pakai flex + flex:1: kalau ruang mepet di HP
+     sempit, tombol bisa gagal menyusut rata (tiap flex item punya
+     "min-content" dari teksnya sendiri) sehingga baris ini patah jadi
+     2 baris / tombol terakhir "Tahunan" turun sendiri. Diganti CSS
+     grid 4 kolom sama rata (persis pola yang sudah dipakai di
+     .tabs/#tabs) -- lebar tiap tombol DIPAKSA sama & muat dalam 1
+     baris berapa pun sempitnya layar, teks tinggal mengecil mengikuti
+     clamp() di bawah, bukan bikin baris baru. ---- */
+  .overview-mode-toggle{
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:3px;
+  }
+  .overview-mode-toggle .ov-mode-btn{
+    flex:none;text-align:center;
+    padding:7px 4px;
+    /* clamp: teks otomatis mengecil bertahap dari 12.5px turun sampai
+       minimum 10px pas layar makin sempit (bukan lompatan tiba-tiba
+       lewat media query terpisah seperti sebelumnya di 380px),
+       supaya "Mingguan"/"Bulanan"/"Tahunan" tetap muat 1 baris utuh
+       tanpa terpotong "..." di HP paling sempit sekalipun. */
+    font-size:clamp(10px, 3.1vw, 12.5px);
+    overflow:hidden;text-overflow:ellipsis;
+  }
   /* Redesign kartu Total Masuk/Total Keluar/Selisih khusus mobile:
      sebelumnya 2 kolom berdampingan bikin label ("TOTAL MASUK") dan
      nominal ("Rp 1.125.000") kepotong "..." karena kartunya terlalu
@@ -4475,9 +4506,6 @@ tbody tr:last-child td{border-bottom:none;}
   .ov-stat{grid-column:auto !important;padding:12px 14px 12px 16px;}
   .ov-stat .k{font-size:10.5px;}
   .ov-stat .v{font-size:17px;margin-top:5px;}
-}
-@media (max-width:380px){
-  .overview-mode-toggle .ov-mode-btn{padding:7px 6px;font-size:11.5px;}
 }
 
 /* ============ RIWAYAT TRANSAKSI (tabel) ============ */
