@@ -5173,11 +5173,11 @@ tbody tr.date-group-row:first-child td{border-top:none;}
   .bd-page-banner-title{font-size:15px;}
   .bd-page-body{margin-top:-14px;border-radius:22px 22px 0 0;box-shadow:0 -13px 24px -9px rgba(242,103,43,0.38);}
   /* Di HP, tombol digeser naik supaya duduk RAPI di atas nav bawah
-     (tinggi nav ±78px, lihat body{padding-bottom:78px} di bagian
+     (tinggi nav ±64px, lihat body{padding-bottom:64px} di bagian
      NAVIGASI BAWAH) alih-alih tertutup nav seperti sebelumnya. Jarak
      kanannya juga dibalik ke 16px flat (bukan rumus lebar-layar di
      atas) karena di HP kontennya sudah penuh selebar layar. */
-  .bd-fab-add{right:16px;bottom:calc(78px + 14px + env(safe-area-inset-bottom, 0px));width:50px;height:50px;}
+  .bd-fab-add{right:16px;bottom:calc(64px + 14px + env(safe-area-inset-bottom, 0px));width:50px;height:50px;}
 }
 /* Semua halaman overlay (detail-page-overlay) dibuka di ATAS nav bawah
    yang fixed dan ber-z-index lebih tinggi (600 vs var(--z-page):120),
@@ -5187,13 +5187,13 @@ tbody tr.date-group-row:first-child td{border-top:none;}
    bisa discroll sampai terlihat penuh di atas nav. */
 @media (max-width:640px){
   .detail-page-overlay .detail-page{
-    padding-bottom:calc(78px + 24px + env(safe-area-inset-bottom));
+    padding-bottom:calc(64px + 24px + env(safe-area-inset-bottom));
   }
   /* Halaman Tagihan & Hutang punya tombol FAB "+ Tambah" tambahan yang
      melayang di atas nav bawah, jadi butuh jarak bawah ekstra lagi
      supaya item terakhir daftar tidak ketutup tombol itu juga. */
   #bdAllOverlay .detail-page{
-    padding-bottom:calc(78px + 14px + 52px + 16px + env(safe-area-inset-bottom));
+    padding-bottom:calc(64px + 14px + 52px + 16px + env(safe-area-inset-bottom));
   }
   /* Rapatkan semua halaman overlay ke pinggir layar di HP -- padding
      kiri/kanan/atas bawaan (24px/22px) dibuat sama sempit dengan
@@ -5720,19 +5720,23 @@ tbody tr.date-group-row:first-child td{border-top:none;}
 
 /* --- Mode nav+halaman: HANYA aktif di layar HP (<=640px) --- */
 @media (max-width:640px){
-  body{padding-bottom:78px;}
+  /* Tinggi nav bar disamakan dengan standar umum aplikasi mobile
+     (mis. Android Material Design / iOS tab bar): area konten ±56px
+     + safe-area-inset-bottom perangkat (notch/home-indicator).
+     Sebelumnya area konten ±63px (sedikit lebih tinggi dari standar). */
+  body{padding-bottom:64px;}
   .bottom-nav{
     position:fixed;left:0;right:0;bottom:0;z-index:600;
     display:flex;align-items:stretch;justify-content:space-around;
     background:#fff;
     border-top:1px solid rgba(15,23,42,0.07);
     box-shadow:0 -6px 18px -8px rgba(15,23,42,0.14);
-    padding:7px 4px calc(7px + env(safe-area-inset-bottom));
+    padding:5px 4px calc(5px + env(safe-area-inset-bottom));
   }
   .bn-item{
-    flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
-    background:none;border:none;padding:2px 2px 4px;margin:0;cursor:pointer;
-    font-family:inherit;font-size:11px;font-weight:700;color:#374151;
+    flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+    background:none;border:none;padding:2px 2px 3px;margin:0;cursor:pointer;
+    font-family:inherit;font-size:10.5px;font-weight:700;color:#374151;
     letter-spacing:0.01em;line-height:1;
     -webkit-tap-highlight-color:transparent;
   }
@@ -5742,7 +5746,7 @@ tbody tr.date-group-row:first-child td{border-top:none;}
      warna oranye template (bukan hijau seperti referensi). */
   .bn-item .bn-ic-wrap{
     position:relative;
-    min-width:54px;height:34px;padding:0 15px;border-radius:17px;
+    min-width:54px;height:26px;padding:0 17px;border-radius:13px;
     display:flex;align-items:center;justify-content:center;
     color:#4B5563;background:transparent;
     transition:background .2s ease,color .2s ease,transform .15s ease;
