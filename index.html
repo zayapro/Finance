@@ -4083,6 +4083,12 @@ body.density-compact .income-cards-group{gap:10px;}
 }
 .tab-btn.active{background:transparent;color:var(--primary);}
 #bdAllTabs .tab-btn{padding:6px 16px;}
+/* Khusus halaman Tagihan & Hutang: sekarang ada 4 pil (Semua/Tagihan/
+   Hutang/Catatan), jadi di HP padding horizontalnya dikecilkan sedikit
+   lagi supaya tetap muat rapi 1 baris tanpa harus turun ke baris ke-2. */
+@media (max-width:640px){
+  #bdAllTabs .tab-btn{padding:6px 12px;font-size:12.5px;}
+}
 
 /* ---- Tab filter (Semua/Mingguan/Bulanan/Tahunan) dibuat sticky saat
    discroll: menempel tepat di bawah mini-topbar (HP) atau di paling
@@ -5139,7 +5145,20 @@ tbody tr.date-group-row:first-child td{border-top:none;}
      terlihat), tapi margin-atas negatif/radius/shadow-nya
      dinetralkan (sudah "dipakai" oleh .bd-sticky-head di atasnya)
      supaya tidak terjadi tumpukan efek kartu dua kali. ================================================================ */
-.bd-sticky-head{position:sticky;top:0;z-index:6;}
+.bd-sticky-head{
+  position:sticky;top:0;z-index:6;
+  /* PENTING (fix "putus"/patah pas discroll): sebelumnya blok ini
+     TIDAK punya box-shadow sama sekali, padahal padding bawahnya
+     sengaja dinolkan (lihat #bdAllOverlay .bd-page-body-head di
+     bawah) supaya toolbar (tombol Cari/Tanggal/Unduh) mepet ke tepi
+     bawah header sticky. Akibatnya begitu daftar tagihan/hutang
+     discroll naik, tepinya langsung "menabrak" persis di batas
+     tombol ikon tanpa peralihan apa pun -- kelihatan seperti
+     terpotong tiba-tiba. Bayangan lembut di sini (sama polanya dgn
+     .mini-topbar) memberi kesan "melayang di atas" konten yang
+     lewat di baliknya, jadi transisinya mulus, bukan putus. */
+  box-shadow:0 10px 18px -10px rgba(15,23,42,0.16);
+}
 .bd-page-body.bd-page-body-rest{margin-top:0;border-radius:0;box-shadow:none;padding-top:14px;}
 @media (max-width:640px){
   .bd-page-body.bd-page-body-rest{margin-top:0;border-radius:0;box-shadow:none;}
@@ -5196,11 +5215,11 @@ tbody tr.date-group-row:first-child td{border-top:none;}
   .bd-page-banner-title{font-size:15px;}
   .bd-page-body{margin-top:-14px;border-radius:22px 22px 0 0;box-shadow:0 -13px 24px -9px rgba(242,103,43,0.38);}
   /* Di HP, tombol digeser naik supaya duduk RAPI di atas nav bawah
-     (tinggi nav ±64px, lihat body{padding-bottom:64px} di bagian
+     (tinggi nav ±72px, lihat body{padding-bottom:72px} di bagian
      NAVIGASI BAWAH) alih-alih tertutup nav seperti sebelumnya. Jarak
      kanannya juga dibalik ke 16px flat (bukan rumus lebar-layar di
      atas) karena di HP kontennya sudah penuh selebar layar. */
-  .bd-fab-add{right:16px;bottom:calc(64px + 14px + env(safe-area-inset-bottom, 0px));width:50px;height:50px;}
+  .bd-fab-add{right:16px;bottom:calc(72px + 14px + env(safe-area-inset-bottom, 0px));width:50px;height:50px;}
 }
 /* Semua halaman overlay (detail-page-overlay) dibuka di ATAS nav bawah
    yang fixed dan ber-z-index lebih tinggi (600 vs var(--z-page):120),
@@ -5210,7 +5229,7 @@ tbody tr.date-group-row:first-child td{border-top:none;}
    bisa discroll sampai terlihat penuh di atas nav. */
 @media (max-width:640px){
   .detail-page-overlay .detail-page{
-    padding-bottom:calc(64px + 24px + env(safe-area-inset-bottom));
+    padding-bottom:calc(72px + 24px + env(safe-area-inset-bottom));
   }
   /* Halaman Tagihan & Hutang punya tombol FAB "+ Tambah" tambahan yang
      melayang di atas nav bawah, jadi butuh jarak bawah ekstra lagi
@@ -5220,10 +5239,10 @@ tbody tr.date-group-row:first-child td{border-top:none;}
      dalam .bd-sticky-head) sengaja di-nol-kan supaya tidak ikut
      kebawa jadi jarak kosong raksasa di dalam header yang menempel. */
   #bdAllOverlay .bd-page-body-rest{
-    padding-bottom:calc(64px + 14px + 52px + 16px + env(safe-area-inset-bottom));
+    padding-bottom:calc(72px + 14px + 52px + 16px + env(safe-area-inset-bottom));
   }
   #bdAllOverlay .bd-page-body-head{
-    padding-bottom:0;
+    padding-bottom:14px;
   }
   /* Rapatkan semua halaman overlay ke pinggir layar di HP -- padding
      kiri/kanan/atas bawaan (24px/22px) dibuat sama sempit dengan
@@ -5264,6 +5283,47 @@ tbody tr.date-group-row:first-child td{border-top:none;}
 .bd-summary-card .v{position:relative;z-index:1;font-family:'IBM Plex Mono',monospace;font-size:17.5px;font-weight:800;margin-top:3px;letter-spacing:-0.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink);}
 .bd-summary-card.overdue .v{color:var(--wine);}
 .bd-summary-card .sub{position:relative;z-index:1;font-size:11px;color:var(--ink-faint);font-weight:600;margin-top:2px;}
+
+/* ================================================================
+   CATATAN (tagihan/hutang yang punya isian "Catatan") -- baris kartu
+   yang di-scroll ke SAMPING (horizontal), bukan ditumpuk/dibungkus ke
+   bawah kayak .bd-summary-row, supaya tetap ringkas & tidak menambah
+   tinggi header sticky walau catatannya banyak. scroll-snap dipakai
+   supaya berhenti "pas" di tiap kartu waktu digeser, dan scrollbar-nya
+   disembunyikan (tetap bisa discroll pakai jari/trackpad/drag mouse)
+   biar tidak mengganggu tampilan. Baris ini otomatis disembunyikan
+   lewat JS kalau tidak ada satupun item yang punya catatan. ---- */
+.bd-notes-row{
+  display:flex;gap:10px;overflow-x:auto;margin-bottom:16px;padding-bottom:2px;
+  scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;
+  scrollbar-width:none;
+}
+.bd-notes-row::-webkit-scrollbar{display:none;}
+.bd-notes-row.empty{display:none;}
+@media (max-width:640px){
+  .bd-notes-row{gap:8px;margin-bottom:12px;}
+}
+.bd-note-card{
+  flex:0 0 auto;scroll-snap-align:start;width:192px;
+  display:flex;gap:9px;align-items:flex-start;
+  background:var(--card);border:1px solid var(--line);border-radius:14px;
+  padding:10px 12px;
+}
+.bd-note-card .bd-note-ic{
+  flex-shrink:0;width:26px;height:26px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(217,119,6,0.12);color:#D97706;
+}
+.bd-note-card.type-hutang .bd-note-ic{background:rgba(124,58,237,0.13);color:#7C3AED;}
+.bd-note-card .bd-note-body{min-width:0;flex:1;}
+.bd-note-card .nm{font-size:12px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.bd-note-card .tx{
+  font-size:11.5px;color:var(--ink-soft);margin-top:2px;line-height:1.35;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+}
+@media (max-width:640px){
+  .bd-note-card{width:168px;padding:9px 10px;border-radius:12px;}
+}
 /* Toolbar (tab Semua/Tagihan/Hutang + tombol cari/tanggal/unduh) DIBUAT
    "menempel" (sticky) di bagian atas saat halaman Tagihan & Hutang
    discroll -- supaya cuma daftar kartu di bawahnya yang bergeser/naik,
@@ -5760,23 +5820,22 @@ tbody tr.date-group-row:first-child td{border-top:none;}
 
 /* --- Mode nav+halaman: HANYA aktif di layar HP (<=640px) --- */
 @media (max-width:640px){
-  /* Tinggi nav bar disamakan dengan standar umum aplikasi mobile
-     (mis. Android Material Design / iOS tab bar): area konten ±56px
-     + safe-area-inset-bottom perangkat (notch/home-indicator).
-     Sebelumnya area konten ±63px (sedikit lebih tinggi dari standar). */
-  body{padding-bottom:64px;}
+  /* Tinggi nav bar sedikit ditambah dari standar minimum (±56px) agar
+     area sentuh & jarak ikon-label lebih lega dan tidak terasa sempit,
+     plus safe-area-inset-bottom perangkat (notch/home-indicator). */
+  body{padding-bottom:72px;}
   .bottom-nav{
     position:fixed;left:0;right:0;bottom:0;z-index:600;
     display:flex;align-items:stretch;justify-content:space-around;
     background:#fff;
     border-top:1px solid rgba(15,23,42,0.07);
     box-shadow:0 -6px 18px -8px rgba(15,23,42,0.14);
-    padding:5px 4px calc(5px + env(safe-area-inset-bottom));
+    padding:8px 4px calc(8px + env(safe-area-inset-bottom));
   }
   .bn-item{
-    flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+    flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
     background:none;border:none;padding:2px 2px 3px;margin:0;cursor:pointer;
-    font-family:inherit;font-size:10.5px;font-weight:700;color:#374151;
+    font-family:inherit;font-size:11px;font-weight:700;color:#374151;
     letter-spacing:0.01em;line-height:1;
     -webkit-tap-highlight-color:transparent;
   }
@@ -5790,7 +5849,7 @@ tbody tr.date-group-row:first-child td{border-top:none;}
      pernah terlihat "membesar/mengecil" saat berpindah aktif. */
   .bn-item .bn-ic-wrap{
     position:relative;
-    width:54px;height:26px;border-radius:13px;
+    width:56px;height:30px;border-radius:15px;
     display:flex;align-items:center;justify-content:center;flex-shrink:0;
     color:#4B5563;background:transparent;transform:scale(1);
     transition:background .2s ease,color .2s ease,transform .2s ease;
@@ -5802,12 +5861,24 @@ tbody tr.date-group-row:first-child td{border-top:none;}
   .bn-item:active .bn-ic-wrap{transform:scale(0.92);}
   .bn-item.active{color:#111827;}
   .bn-item.active .bn-ic-wrap{
-    width:54px;height:26px;border-radius:13px;
+    width:56px;height:30px;border-radius:15px;
     background:color-mix(in srgb, var(--nav-orange) 15%, transparent);
     color:var(--nav-orange);
   }
   .bn-label-swap{display:inline-block;transition:opacity .18s ease;}
   .bn-label-swap.is-swapping{opacity:0;}
+
+  /* Pengaman ekstra khusus HP paling sempit (mis. iPhone SE gen-1,
+     lebar layar 320px): pada lebar normal (360px ke atas, hampir
+     semua HP saat ini) 5 label nav sudah muat tanpa masalah, TAPI
+     label terpanjang ("Pengaturan") mepet/berpotensi turun baris
+     kalau layar hanya 320px. Turunkan sedikit font & jarak huruf,
+     dan jangan izinkan teks turun baris (nowrap) supaya nav tetap
+     rapi 1 baris di semua ukuran HP. */
+  @media (max-width:340px){
+    .bn-item{font-size:9.5px;letter-spacing:0;}
+    .bn-item span:not(.bn-ic-wrap){white-space:nowrap;}
+  }
 
   /* Lencana notifikasi kecil di pojok ikon (mis. jumlah/penanda baru) */
   .bn-badge{
@@ -6541,7 +6612,13 @@ body.is-scrolling *{
     <span>Beranda</span>
   </button>
   <button type="button" class="bn-item" data-page="tagihan" id="bnTagihanBtn">
-    <span class="bn-ic-wrap"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0-6 6c0 4.5-2 6-2 6h16s-2-1.5-2-6a6 6 0 0 0-6-6Z"/><path d="M9.5 19a2.5 2.5 0 0 0 5 0"/></svg></span>
+    <span class="bn-ic-wrap">
+      <!-- Ikon kwitansi/invoice -- STATIS, tidak ikut berganti walau
+           labelnya bergantian antara "Tagihan"/"Hutang", karena satu
+           ikon ini sudah cukup mewakili kedua hal (sama-sama soal
+           tagihan/kewajiban bayar). -->
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2.5h12v19l-2.5-1.6L13 21.5l-1.9-1.6-1.6 1.6-1.5-1.6L6 21.5v-19Z"/><path d="M8.5 8h7M8.5 12h7M8.5 16h4"/></svg>
+    </span>
     <span class="bn-label-swap" id="bnTagihanLabel">Tagihan</span>
   </button>
   <button type="button" class="bn-item" data-page="laporan">
@@ -6553,7 +6630,7 @@ body.is-scrolling *{
     <span>Dompet</span>
   </button>
   <button type="button" class="bn-item" data-page="saya">
-    <span class="bn-ic-wrap"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2.5 12h3M18.5 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg></span>
+    <span class="bn-ic-wrap"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
     <span>Pengaturan</span>
   </button>
 </nav>
@@ -7470,11 +7547,23 @@ body.is-scrolling *{
     <div class="detail-page bd-page-body bd-page-body-head">
       <div class="bd-summary-row" id="bdAllSummary"></div>
 
+      <!-- ===== CATATAN (tagihan/hutang yang punya isian "Catatan") =====
+           Sengaja diletakkan DI DALAM .bd-sticky-head (bareng ringkasan &
+           toolbar di atas) supaya ikut "mengikuti"/menempel saat halaman
+           ini discroll -- bukan bagian dari daftar kartu di bawah yang
+           scroll normal. Kartunya digeser ke SAMPING (scroll horizontal),
+           bukan ditumpuk ke bawah, supaya tidak menambah tinggi header
+           sticky walau catatannya banyak. Disembunyikan otomatis lewat
+           JS (renderBdAllNotes di script.js) kalau tidak ada item yang
+           punya catatan sama sekali. -->
+      <div class="bd-notes-row" id="bdAllNotes"></div>
+
       <div class="bd-toolbar">
         <div class="tabs" id="bdAllTabs">
           <button class="tab-btn active" data-bdtab="semua">Semua</button>
           <button class="tab-btn" data-bdtab="tagihan">Tagihan</button>
           <button class="tab-btn" data-bdtab="hutang">Hutang</button>
+          <button class="tab-btn" data-bdtab="catatan">Catatan</button>
         </div>
         <div class="bd-toolbar-actions">
           <button type="button" class="bd-icon-btn" id="bdSearchToggleBtn" aria-label="Cari tagihan/hutang" title="Cari">
@@ -8719,6 +8808,8 @@ body.is-scrolling *{
   // Label tombol "Tagihan" berganti-ganti sendiri antara "Tagihan"
   // dan "Hutang" (dua hal yang sama-sama ditampilkan lewat tombol
   // ini), supaya keduanya sama-sama kelihatan tanpa perlu 2 tombol.
+  // Ikonnya sengaja TETAP/statis (tidak ikut berganti) -- cukup satu
+  // ikon kwitansi yang mewakili keduanya.
   var tagihanLabel = document.getElementById('bnTagihanLabel');
   if (tagihanLabel) {
     var tagihanWords = ['Tagihan', 'Hutang'];

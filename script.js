@@ -7983,7 +7983,7 @@ document.getElementById('notifListMore').addEventListener('click', () => {
    pencarian, filter jenis & status — dipisah dari popup
    notifikasi supaya popup tetap ringkas.
 ========================================================== */
-let bdAllTab = 'semua';     // 'semua' | 'tagihan' | 'hutang'
+let bdAllTab = 'semua';     // 'semua' | 'tagihan' | 'hutang' | 'catatan'
 let bdAllStatus = 'semua';  // 'semua' | 'belum' | 'lunas'
 let bdAllSearch = '';
 let bdAllDateFrom = '';    // 'YYYY-MM-DD' atau '' (tidak difilter)
@@ -8036,16 +8036,52 @@ function renderBdAllSummary(all) {
     </div>`;
 }
 
+function renderBdAllNotes(all) {
+  const notesEl = document.getElementById('bdAllNotes');
+  if (!notesEl) return;
+  // Hanya item yang kolom "Catatan"-nya diisi -- item aktif ditampilkan
+  // lebih dulu (urut jatuh tempo terdekat), baru item yang sudah lunas,
+  // meniru urutan yang sama dipakai daftar utama di bawahnya.
+  const withNotes = all
+    .filter(x => (x.note || '').trim())
+    .sort((a, b) => {
+      if (a.status !== b.status) return a.status === 'belum' ? -1 : 1;
+      if (a.status === 'belum') return a.dueDate.localeCompare(b.dueDate);
+      return (b.paidAt || '').localeCompare(a.paidAt || '');
+    });
+
+  notesEl.classList.toggle('empty', withNotes.length === 0);
+  if (withNotes.length === 0) { notesEl.innerHTML = ''; return; }
+
+  notesEl.innerHTML = withNotes.map(item => `
+    <div class="bd-note-card type-${item.kind}">
+      <span class="bd-note-ic">
+        ${item.kind === 'tagihan'
+          ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>'
+          : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="9"/><path d="M9.5 15.5c0 1.1 1 2 2.5 2s2.5-.9 2.5-2-1-1.7-2.5-2.1S9.5 12.6 9.5 11.5s1-2 2.5-2 2.5.9 2.5 2"/></svg>'}
+      </span>
+      <span class="bd-note-body">
+        <span class="nm" title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</span>
+        <span class="tx" title="${escapeHtml(item.note)}">${escapeHtml(item.note)}</span>
+      </span>
+    </div>`).join('');
+}
+
 function renderBdAllPage() {
   if (!document.getElementById('bdAllOverlay').classList.contains('open')) return;
 
   const all = bdAllCombinedData();
   renderBdAllSummary(all);
+  renderBdAllNotes(all);
 
   document.querySelectorAll('#bdAllTabs .tab-btn').forEach(b => b.classList.toggle('active', b.dataset.bdtab === bdAllTab));
 
   let filtered = all;
-  if (bdAllTab !== 'semua') filtered = filtered.filter(x => x.kind === bdAllTab);
+  // Pil "Catatan" bukan jenis item (kind-nya tetap tagihan/hutang seperti
+  // biasa) -- pil ini cuma nyaring item yang kolom "Catatan"-nya diisi,
+  // beda logikanya dari pil "Tagihan"/"Hutang" yang nyaring lewat kind.
+  if (bdAllTab === 'catatan') filtered = filtered.filter(x => (x.note || '').trim());
+  else if (bdAllTab !== 'semua') filtered = filtered.filter(x => x.kind === bdAllTab);
   if (bdAllStatus !== 'semua') filtered = filtered.filter(x => x.status === bdAllStatus);
   const q = bdAllSearch.trim().toLowerCase();
   if (q) filtered = filtered.filter(x => x.name.toLowerCase().includes(q));
