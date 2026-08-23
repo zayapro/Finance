@@ -832,6 +832,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
      dibuka di HP, sudutnya jadi tidak nyambung lagi dengan sudut Saldo
      Total di atasnya. */
   .banner-flow-wrap .flow-deal-card{border-radius:0 0 26px 26px;}
+  .banner-flow-wrap{border-radius:0 0 26px 26px;}
 }
 /* ---- Efek kartu Uang Masuk & Keluar nyelip di BELAKANG banner ----
    .banner-flow-wrap adalah jendela "overflow:hidden" yang tingginya
@@ -866,6 +867,17 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   margin:-48px 0 22px;
   overflow:hidden;
   transition:height .6s cubic-bezier(.22,1,.36,1);
+  /* FIX lengkungan bawah kelihatan kotak/lurus: wrap ini yang punya
+     overflow:hidden (bukan kartu di dalamnya) yang menentukan bentuk
+     area potongannya. Tanpa border-radius di sini, area potong itu
+     berbentuk KOTAK TEGAS, jadi walau kartu di dalamnya (.flow-deal-card
+     / .fc-peek-handle) sudah diberi radius melengkung, sudut bawahnya
+     tetap kepotong rata oleh wrap ini. Radius di sini WAJIB disamakan
+     persis dengan radius atas .saldo-card di breakpoint yang sama
+     (lihat override 26px/18px di media query masing-masing di bawah)
+     supaya lengkungan bawah & atas benar-benar senada di semua ukuran
+     layar, bukan cuma pas kartu dalamnya sudah dibuka/settled. */
+  border-radius:0 0 30px 30px;
   /* FIX seam warna tidak menyatu: wrap ini kosong di HTML awal dan baru
      diisi (flow-deal-card) lewat JS (bannerFlowWrap.innerHTML = ...).
      Sebelum konten itu masuk, atau kalau tingginya sempat 0 sesaat,
@@ -913,7 +925,16 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   border-top:1px solid transparent;
   color:var(--ink-soft);font-size:12px;font-weight:600;
   cursor:pointer;
-  box-shadow:0 18px 30px -20px rgba(15,23,42,0.20);
+  /* FIX bayangan bawah tidak menyatu: sebelumnya shadow di sini pakai
+     warna navy gelap (rgba(15,23,42,...)), berlawanan arah dengan
+     shadow oranye lembut di ATAS kartu Saldo Total (yang meniru warna
+     banner supaya blur-nya blend). Akibatnya sudut bawah-kanan kartu
+     (yang gradasinya berakhir di krem persik #FFEFDF) jatuh tepat ke
+     latar halaman yang polos putih — kontrasnya kelihatan sebagai
+     "pinggiran" tegas, bukan menyatu. Warna shadow diganti krem/oranye
+     lembut (senada ujung gradasi kartu) supaya pijaran bawahnya
+     melebur halus ke latar halaman, sama seperti pola di atas. */
+  box-shadow:0 18px 30px -20px rgba(242,103,43,0.22);
   clip-path:inset(0 0 -40px 0 round 0 0 30px 30px);
   transition:box-shadow .18s ease, transform .35s cubic-bezier(.22,1,.36,1), opacity .3s ease, background .18s ease;
   /* FIX "bayangan kotak" saat tab ini diketuk di HP: browser mobile
@@ -1901,6 +1922,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
      atas Saldo Total (.saldo-card{border-radius:18px 18px 0 0}) di
      lebar ≤600px. */
   .banner-flow-wrap .flow-deal-card{border-radius:0 0 18px 18px;}
+  .banner-flow-wrap{border-radius:0 0 18px 18px;}
   .fc-peek-row{gap:7px;max-width:none;}
   .fc-peek-icon{width:26px;height:26px;border-radius:9px;}
   .fc-peek-icon svg{width:14px;height:14px;}
