@@ -1718,17 +1718,10 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 .flow-deal-top{
   display:flex;align-items:center;justify-content:space-between;gap:14px;
   margin-bottom:20px;position:relative;z-index:1;flex-wrap:nowrap;
-  /* Pengaman eksplisit: baris header (ikon+judul+timer) ini sendiri
-     TIDAK punya background sebelumnya (transparan, ikut warna induk
-     .flow-deal-card) — sudah seharusnya putih otomatis. Ditulis di
-     sini juga secara eksplisit sebagai jaring pengaman kedua, supaya
-     kotak atas (header) & kotak bawah (Hari Ini/Bulan Ini) 100% pasti
-     satu warna putih yang sama, tidak bergantung pada satu aturan
-     background saja. */
-  background:var(--card);
+  background:transparent;
 }
 .flow-deal-title{display:flex;align-items:center;gap:12px;min-width:0;flex:1 1 auto;overflow:hidden;}
-.flow-deal-title .icon-badge{background:linear-gradient(140deg,#FDBA74,#C2410C);box-shadow:0 8px 16px -4px rgba(249,115,22,0.42);flex-shrink:0;}
+.flow-deal-title .icon-badge{background:linear-gradient(140deg,#FDBA74,#C2410C);box-shadow:none;flex-shrink:0;}
 .flow-deal-title-text{min-width:0;}
 .flow-deal-title-text h3{font-size:11.5px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:0.05em;line-height:1.45;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .flow-deal-sub{font-size:11.5px;font-weight:600;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -1739,8 +1732,8 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 .flow-timer-unit{display:flex;flex-direction:column;align-items:center;gap:3px;}
 .flow-timer-unit .wcc-box{
   min-width:32px;height:30px;padding:0 6px;border-radius:9px;
-  background:var(--card);color:var(--ink);font-family:'IBM Plex Mono',monospace;
-  border:1px solid var(--line);
+  background:transparent;color:var(--ink);font-family:'IBM Plex Mono',monospace;
+  border:none;
   font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:center;
   box-shadow:none;
 }
@@ -1903,7 +1896,6 @@ tr.fade-up{animation:fadeRow .35s ease both;}
      -16px, lihat override .fc-peek-handle di blok @media(max-width:480px)
      terpisah di bawah (ditaruh SETELAH blok @media(max-width:600px)
      supaya benar-benar menang di cascade, sama seperti pola blok ≤380px). */
-  .flow-deal-title-text h3{font-size:14.5px;}
   .flow-deal-body{gap:16px;}
 }
 @media (max-width:380px){
@@ -1975,7 +1967,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   .flow-deal-title{gap:9px;}
   .flow-deal-title .icon-badge{width:32px;height:32px;border-radius:10px;}
   .flow-deal-title .icon-badge svg{width:16px;height:16px;}
-  .flow-deal-title-text h3{font-size:13.5px;}
+  .flow-deal-title-text h3{font-size:9.5px;}
   .flow-deal-sub{font-size:10px;}
   .flow-deal-timer .fdt-caption{font-size:9px;}
   .flow-deal-timer .fdt-boxes{gap:4px;}
