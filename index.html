@@ -1553,7 +1553,18 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 
 .flow-tier-card{
   flex:1 1 0;min-width:198px;
-  background:var(--paper);border-radius:16px;padding:15px 15px 13px;
+  /* Sebelumnya var(--paper) — abu-abu kebiruan yang beda dari putih
+     kartu Saldo Total & badan kartu ini sendiri, jadi biarpun kartu
+     luarnya sudah disatukan (lihat catatan di
+     .banner-flow-wrap .flow-deal-card), kotak "Hari Ini"/"Bulan Ini"
+     di dalamnya masih terlihat sebagai blok warna terpisah. Diganti
+     var(--card) (putih, sama persis) supaya keseluruhan kartu — dari
+     ujung atas Saldo Total sampai ujung bawah kartu ini — benar-benar
+     satu warna solid; border tipisnya dipertahankan sebagai satu-
+     satunya penanda pemisah kolom, bukan blok warna berbeda.
+     background:var(--paper); */
+  background:var(--card);
+  border-radius:16px;padding:15px 15px 13px;
   border:1px solid var(--line);
   box-shadow:none;
   scroll-snap-align:start;
