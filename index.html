@@ -5121,6 +5121,29 @@ tbody tr.date-group-row:first-child td{border-top:none;}
   padding-top:24px;
   box-shadow:0 -16px 30px -10px rgba(242,103,43,0.38);
 }
+/* ================================================================
+   Halaman Tagihan & Hutang (#bdAllOverlay) dipecah jadi 2 blok:
+   - .bd-sticky-head (banner + kartu ringkasan + tab Semua/Tagihan/
+     Hutang) -- MENEMPEL (sticky) bersama-sama di atas layar saat
+     discroll, lewat position:sticky pada wrapper-nya. Karena semua
+     tiga bagian ini berada DALAM SATU wrapper sticky, posisi
+     relatifnya (banner di atas, kartu+tab menumpuk di bawahnya
+     dengan efek "kartu putih menumpuk banner" yang sudah ada) tetap
+     terjaga persis seperti sebelumnya -- cuma sekarang unit ini
+     tidak ikut hilang ke atas saat discroll, melainkan berhenti di
+     puncak layar.
+   - .bd-page-body-rest (pencarian, filter tanggal, daftar kartu
+     tagihan/hutang) -- blok TERPISAH tepat di bawahnya yang scroll
+     normal seperti biasa. Dibuat dari class .bd-page-body yang sama
+     (supaya warna latar gradasinya menyambung rata, tanpa sambungan
+     terlihat), tapi margin-atas negatif/radius/shadow-nya
+     dinetralkan (sudah "dipakai" oleh .bd-sticky-head di atasnya)
+     supaya tidak terjadi tumpukan efek kartu dua kali. ================================================================ */
+.bd-sticky-head{position:sticky;top:0;z-index:6;}
+.bd-page-body.bd-page-body-rest{margin-top:0;border-radius:0;box-shadow:none;padding-top:14px;}
+@media (max-width:640px){
+  .bd-page-body.bd-page-body-rest{margin-top:0;border-radius:0;box-shadow:none;}
+}
 /* ---- Tombol "+ Tambah" dipindah jadi tombol melayang (FAB) bulat
    kecil di pojok kanan bawah — cukup ikon "+" saja (tanpa teks) biar
    ringkas — dan posisinya BENAR-BENAR diam di tempat walau daftar di
@@ -5191,9 +5214,16 @@ tbody tr.date-group-row:first-child td{border-top:none;}
   }
   /* Halaman Tagihan & Hutang punya tombol FAB "+ Tambah" tambahan yang
      melayang di atas nav bawah, jadi butuh jarak bawah ekstra lagi
-     supaya item terakhir daftar tidak ketutup tombol itu juga. */
-  #bdAllOverlay .detail-page{
+     supaya item terakhir daftar tidak ketutup tombol itu juga.
+     Padding ini HANYA untuk blok bawah (.bd-page-body-rest, berisi
+     pencarian/filter/daftar) -- blok atas (.bd-page-body-head, di
+     dalam .bd-sticky-head) sengaja di-nol-kan supaya tidak ikut
+     kebawa jadi jarak kosong raksasa di dalam header yang menempel. */
+  #bdAllOverlay .bd-page-body-rest{
     padding-bottom:calc(64px + 14px + 52px + 16px + env(safe-area-inset-bottom));
+  }
+  #bdAllOverlay .bd-page-body-head{
+    padding-bottom:0;
   }
   /* Rapatkan semua halaman overlay ke pinggir layar di HP -- padding
      kiri/kanan/atas bawaan (24px/22px) dibuat sama sempit dengan
@@ -5234,7 +5264,17 @@ tbody tr.date-group-row:first-child td{border-top:none;}
 .bd-summary-card .v{position:relative;z-index:1;font-family:'IBM Plex Mono',monospace;font-size:17.5px;font-weight:800;margin-top:3px;letter-spacing:-0.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink);}
 .bd-summary-card.overdue .v{color:var(--wine);}
 .bd-summary-card .sub{position:relative;z-index:1;font-size:11px;color:var(--ink-faint);font-weight:600;margin-top:2px;}
-.bd-toolbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;}
+/* Toolbar (tab Semua/Tagihan/Hutang + tombol cari/tanggal/unduh) DIBUAT
+   "menempel" (sticky) di bagian atas saat halaman Tagihan & Hutang
+   discroll -- supaya cuma daftar kartu di bawahnya yang bergeser/naik,
+   sementara toolbar ini tetap diam kelihatan di layar. Sticky dihitung
+   relatif terhadap #bdAllOverlay (elemen yang scroll-nya, lihat
+   overflow-y:auto di .detail-page-overlay), dan diberi latar solid +
+   sedikit bayangan supaya kartu yang lewat di baliknya tidak tembus
+   pandang / kelihatan tumpang tindih. */
+.bd-toolbar{
+  display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;
+}
 .bd-toolbar .tabs{flex-shrink:0;}
 @media (max-width:640px){
   .bd-toolbar{gap:8px;margin-bottom:10px;}
@@ -7416,32 +7456,42 @@ body.is-scrolling *{
 
 <!-- ===== HALAMAN SEMUA TAGIHAN & HUTANG ===== -->
 <div class="detail-page-overlay" id="bdAllOverlay">
-  <div class="bd-page-banner bd-page-banner-simple">
-    <h2 class="bd-page-banner-title bd-page-banner-title-center">Tagihan &amp; Hutang</h2>
-  </div>
-
-  <div class="detail-page bd-page-body">
-    <div class="bd-summary-row" id="bdAllSummary"></div>
-
-    <div class="bd-toolbar">
-      <div class="tabs" id="bdAllTabs">
-        <button class="tab-btn active" data-bdtab="semua">Semua</button>
-        <button class="tab-btn" data-bdtab="tagihan">Tagihan</button>
-        <button class="tab-btn" data-bdtab="hutang">Hutang</button>
-      </div>
-      <div class="bd-toolbar-actions">
-        <button type="button" class="bd-icon-btn" id="bdSearchToggleBtn" aria-label="Cari tagihan/hutang" title="Cari">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-        </button>
-        <button type="button" class="bd-icon-btn" id="bdDateToggleBtn" aria-label="Filter berdasarkan tanggal" title="Filter tanggal">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3.5" y="4.5" width="17" height="16" rx="2.2"/><path d="M8 3v3.5M16 3v3.5M3.5 9.5h17"/></svg>
-        </button>
-        <button type="button" class="bd-icon-btn" id="bdDownloadBtn" aria-label="Unduh data tagihan/hutang" title="Unduh sebagai CSV">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0-4.5-4.5M12 15l4.5-4.5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
-        </button>
-      </div>
+  <!-- Banner + kartu ringkasan + tab Semua/Tagihan/Hutang dibungkus jadi SATU
+       blok "bd-sticky-head" yang menempel bersama-sama di atas saat halaman
+       ini discroll (lihat position:sticky di CSS). Hanya bagian PENCARIAN,
+       FILTER TANGGAL, dan DAFTAR kartu tagihan/hutang di bawahnya yang scroll
+       normal. Struktur & id elemen di dalam TIDAK berubah, jadi semua kode JS
+       yang mengambil elemen lewat getElementById tetap jalan seperti biasa. -->
+  <div class="bd-sticky-head">
+    <div class="bd-page-banner bd-page-banner-simple">
+      <h2 class="bd-page-banner-title bd-page-banner-title-center">Tagihan &amp; Hutang</h2>
     </div>
 
+    <div class="detail-page bd-page-body bd-page-body-head">
+      <div class="bd-summary-row" id="bdAllSummary"></div>
+
+      <div class="bd-toolbar">
+        <div class="tabs" id="bdAllTabs">
+          <button class="tab-btn active" data-bdtab="semua">Semua</button>
+          <button class="tab-btn" data-bdtab="tagihan">Tagihan</button>
+          <button class="tab-btn" data-bdtab="hutang">Hutang</button>
+        </div>
+        <div class="bd-toolbar-actions">
+          <button type="button" class="bd-icon-btn" id="bdSearchToggleBtn" aria-label="Cari tagihan/hutang" title="Cari">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          </button>
+          <button type="button" class="bd-icon-btn" id="bdDateToggleBtn" aria-label="Filter berdasarkan tanggal" title="Filter tanggal">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3.5" y="4.5" width="17" height="16" rx="2.2"/><path d="M8 3v3.5M16 3v3.5M3.5 9.5h17"/></svg>
+          </button>
+          <button type="button" class="bd-icon-btn" id="bdDownloadBtn" aria-label="Unduh data tagihan/hutang" title="Unduh sebagai CSV">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0-4.5-4.5M12 15l4.5-4.5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="detail-page bd-page-body bd-page-body-rest">
     <div class="field-inline bd-search-wrap" id="bdSearchWrap">
       <span class="search-ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span>
       <input type="search" id="bdAllSearchInput" placeholder="Cari nama tagihan / hutang...">
