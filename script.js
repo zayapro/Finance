@@ -9176,6 +9176,8 @@ function initMiniTopbar() {
       if (!mq.matches) {
         bar.classList.remove('mtb-active');
         mtbFirstCheck = false;
+        const rootStyles = getComputedStyle(document.documentElement);
+        syncMobileChromeColor((rootStyles.getPropertyValue('--forest-deep') || '#0B1220').trim());
         return;
       }
       // Banner dianggap "sudah lewat" begitu sisi PALING BAWAHnya
@@ -9183,6 +9185,15 @@ function initMiniTopbar() {
       // seluruh banner, termasuk ringkasan Pemasukan/Pengeluaran di
       // dalamnya, sudah tidak kelihatan sama sekali lagi.
       const bannerFullyPassed = bannerEl.getBoundingClientRect().bottom <= 0;
+      // Status bar HP (theme-color + header Telegram) ikut disamakan
+      // dengan warna mini-topbar yang sedang tampil: gelap (forest-deep)
+      // selama banner besar masih kelihatan, putih (--card) begitu
+      // mini-topbar putih sudah menempel menggantikannya -- supaya
+      // keduanya selalu senada, tidak "belang".
+      const rootStyles = getComputedStyle(document.documentElement);
+      const forestDeep = (rootStyles.getPropertyValue('--forest-deep') || '#0B1220').trim();
+      const cardColor = (rootStyles.getPropertyValue('--card') || '#FFFFFF').trim();
+      syncMobileChromeColor(bannerFullyPassed ? cardColor : forestDeep);
       if (mtbFirstCheck) {
         mtbFirstCheck = false;
         bar.style.transition = 'none';
@@ -9219,6 +9230,33 @@ function initMiniTopbar() {
 // persis dengan warna dasar banner (--forest-deep) begitu app dibuka,
 // dan otomatis tidak melakukan apa-apa (aman) kalau halaman ini dibuka
 // BUKAN dari dalam Telegram (window.Telegram.WebApp tidak akan ada).
+// Warna status bar HP (theme-color biasa) & header/background Telegram
+// WebApp, dipakai BERSAMA oleh initTelegramWebApp() (saat halaman
+// pertama dibuka) DAN updateMiniTopbarVisibility() di initMiniTopbar()
+// (setiap kali status scroll berubah) -- supaya keduanya selalu sinkron
+// dengan warna banner/mini-topbar yang sedang tampil: gelap (forest-deep)
+// saat banner besar masih kelihatan di atas, putih (--card) begitu
+// mini-topbar putih sudah menempel menggantikannya. Tanpa ini, status
+// bar HP akan tetap gelap terus walau mini-topbar di bawahnya sudah
+// berubah putih -- kelihatan "belang"/tidak menyatu.
+let mobileChromeColorCache = null;
+function syncMobileChromeColor(hex) {
+  if (mobileChromeColorCache === hex) return;
+  mobileChromeColorCache = hex;
+  const metaTheme = document.querySelector('meta[name="theme-color"]');
+  if (metaTheme) metaTheme.setAttribute('content', hex);
+  try {
+    const tg = window.Telegram && window.Telegram.WebApp;
+    if (tg) {
+      try { tg.setHeaderColor(hex); } catch (e) { /* versi klien lama: abaikan */ }
+      try { tg.setBackgroundColor(hex); } catch (e) { /* abaikan */ }
+      if (typeof tg.setBottomBarColor === 'function') {
+        try { tg.setBottomBarColor(hex); } catch (e) { /* abaikan */ }
+      }
+    }
+  } catch (e) { /* abaikan */ }
+}
+
 function initTelegramWebApp() {
   try {
     const tg = window.Telegram && window.Telegram.WebApp;
@@ -9233,18 +9271,7 @@ function initTelegramWebApp() {
 
     const rootStyles = getComputedStyle(document.documentElement);
     const forestDeep = (rootStyles.getPropertyValue('--forest-deep') || '#0B1220').trim();
-
-    // setHeaderColor menerima nama warna preset ("bg_color","secondary_bg_color")
-    // ATAU hex custom tergantung versi Bot API klien Telegram -- try/catch
-    // per pemanggilan supaya versi klien yang lebih lama (belum dukung hex
-    // custom di setHeaderColor) tidak bikin sisa fungsi ini ikut gagal.
-    try { tg.setHeaderColor(forestDeep); } catch (e) { /* versi klien lama: abaikan */ }
-    try { tg.setBackgroundColor(forestDeep); } catch (e) { /* abaikan */ }
-    // setBottomBarColor cuma ada di Bot API versi baru (bar navigasi bawah
-    // khusus iOS) -- dicek dulu supaya tidak error di klien lama.
-    if (typeof tg.setBottomBarColor === 'function') {
-      try { tg.setBottomBarColor(forestDeep); } catch (e) { /* abaikan */ }
-    }
+    syncMobileChromeColor(forestDeep);
   } catch (e) {
     console.warn('initTelegramWebApp dilewati:', e);
   }
