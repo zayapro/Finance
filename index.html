@@ -114,15 +114,17 @@ body{
      (pill divider 36x4px di atas "Ringkasan transaksi kamu") sebagai
      patokan skala piksel->px, supaya titik transisi di bawah ini jauh
      lebih presisi dibanding perkiraan sebelumnya: solid oranye
-     (#FF9E36) bertahan sampai ±155px, lalu memudar mengikuti kurva
-     warna asli (peach hangat -> krem -> nyaris putih) dan sudah
-     putih bersih (#FEFFF9) di ±252px, tetap flat setelah itu. */
+     (#FA8B1E, dipekatkan dari #FF9E36 semula) bertahan sampai ±155px,
+     lalu memudar mengikuti kurva warna asli (peach hangat -> krem ->
+     nyaris putih, tone-nya ikut disesuaikan lebih dalam/pekat supaya
+     perpaduannya tetap senada dengan oranye barunya) dan sudah putih
+     bersih (#FEFFF9) di ±252px, tetap flat setelah itu. */
   background:linear-gradient(180deg,
-    #FF9E36 0px,
-    #FF9E36 155px,
-    #FDB468 180px,
-    #FDCC92 205px,
-    #FCE4C2 228px,
+    #FA8B1E 0px,
+    #FA8B1E 155px,
+    #F9A855 180px,
+    #FBC488 205px,
+    #FCDDB8 228px,
     #FEFFF9 252px,
     #FEFFF9 100%);
   color:var(--ink);
@@ -172,9 +174,10 @@ a{color:inherit;}
   /* PERSIS gambar referensi: banner-nya rata/flat oranye tunggal
      (bukan gradasi bertingkat) — gradasi baru mulai muncul di
      PINGGIR kartu Saldo Total & body di bawahnya (lihat gradasi
-     di body{} di bawah). Warna diambil langsung dari sampel piksel
-     foto referensi (~#FE9E35 konsisten dari atas sampai dekat kartu). */
-  background:#FF9E36;
+     di body{} di bawah). Warna dipekatkan sedikit dari sampel awal
+     (#FF9E36 -> #FA8B1E) supaya oranyenya terasa lebih dalam/pekat,
+     senada dengan tone gradasi body di bawah yang juga disesuaikan. */
+  background:#FA8B1E;
   border-radius:0;
   padding:20px 28px 46px;
   margin:0 -24px 0;
@@ -187,7 +190,7 @@ a{color:inherit;}
      tetap tampil sebagai dasarnya. Tanpa ini, area yang belum sempat
      digambar ulang akan menampakkan warna halaman (--paper, terang)
      alih-alih gelap, kelihatan seperti banner "sobek"/pecah sesaat. */
-  background-color:#FF9E36;
+  background-color:#FA8B1E;
   /* CATATAN: dulu di sini ada transform:translateZ(0) + will-change +
      backface-visibility + isolation untuk memaksa banner ini punya
      layer kompositing GPU sendiri — perlu waktu itu karena banner
