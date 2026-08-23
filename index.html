@@ -854,21 +854,23 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   padding:22px 22px 20px;border-radius:0 0 24px 24px;
   transition:transform .6s cubic-bezier(.22,1,.36,1);
   will-change:transform;
-  /* ---- Garis batas dengan Saldo Total dihaluskan ----
-     .stat-card.fc-card (aturan umum di atas) langsung mulai dengan
-     tint oranye di 0%, jadi begitu kartu ini nongol tepat di bawah
-     kartu Saldo Total yang putih polos, sambungannya kelihatan sebagai
-     garis tegas (putih lalu tiba-tiba oranye). Override ini menambah
-     satu titik putih (var(--card)) persis di 0% supaya bagian PALING
-     ATAS kartu ini putih dulu (senada dengan bawah Saldo Total),
-     tint oranyenya baru muncul sebagai blur lembut sedikit di bawahnya
-     — jadi transisinya menyatu, bukan garis batas keras. */
-  background:linear-gradient(160deg,
-    var(--card) 0%,
-    color-mix(in srgb, var(--fc-accent, #EA580C) 13%, var(--card)) 24%,
-    color-mix(in srgb, var(--fc-accent, #EA580C) 6%, var(--card)) 62%,
-    var(--card) 100%) !important;
+  /* ---- Kartu ini DISATUKAN sepenuhnya dengan kartu Saldo Total ----
+     Sebelumnya latar kartu ini pakai gradasi tint oranye (24%-62%),
+     jadi begitu dibuka penuh, sebagian besar badan kartu berwarna
+     krem/cokelat muda — kontras tegas dengan putih polos kartu Saldo
+     Total tepat di atasnya, membuatnya kelihatan seperti kartu
+     terpisah, bukan satu kesatuan. Sekarang latarnya SOLID putih
+     (var(--card)) persis sama dengan kartu Saldo Total, jadi tidak
+     ada lagi garis/sambungan warna yang kelihatan di antara keduanya.
+     Border & shadow bawaan .stat-card (border 1px + border-top 2.5px
+     aksen oranye + box-shadow) juga DIHAPUS di sini untuk alasan yang
+     sama — supaya benar-benar menyatu tanpa garis batas apa pun. */
+  background:var(--card) !important;
+  border:none !important;
+  border-top:none !important;
+  box-shadow:none !important;
 }
+
 .fc-peek-handle{
   position:relative;
   margin:0 -22px -20px;padding:22px 28px 22px 28px;
