@@ -1764,7 +1764,7 @@ function renderSummary() {
           <span class="icon-badge">${iconStopwatch}</span>
           <div class="flow-deal-title-text">
             <h3>Uang Masuk &amp; Keluar</h3>
-            <span class="flow-deal-sub">Ringkasan transaksi kamu</span>
+            <span class="flow-deal-sub">Ringkasan transaksi</span>
           </div>
         </div>
         <div class="flow-deal-timer">
@@ -1791,7 +1791,7 @@ function renderSummary() {
           <div class="fc-peek-info">
             <span class="fc-peek-icon">${iconMiniWallet}</span>
             <div class="fc-peek-text">
-              <span class="fc-peek-handle-label">Ringkasan transaksi kamu</span>
+              <span class="fc-peek-handle-label">Ringkasan transaksi</span>
               <span class="fc-peek-mini">
                 <span class="fc-peek-mini-in">Masuk <b>${fmtRupiahShort(t.todayIn)}</b></span>
                 <span class="fc-peek-mini-dot">•</span>
