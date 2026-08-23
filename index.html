@@ -5747,25 +5747,14 @@ body.is-scrolling *{
     top:0;left:0;right:0;
     z-index:var(--z-mini-topbar);
     padding:calc(9px + env(safe-area-inset-top, 0px)) 14px 10px;
-    /* Disamakan dengan warna banner besar (radial highlight biru/hijau
-       di atas gradasi forest-deep -> forest-mid), tapi TANPA animasi
-       bergerak (background-position statis) supaya mini-topbar yang
-       fixed & sering digambar ulang ini tetap ringan dan tidak
-       menambah risiko kedip — cuma warnanya saja yang dibuat senada
-       dengan banner, bukan animasinya. */
-    background:
-      radial-gradient(circle at 15% 20%, rgba(37,99,235,0.38), transparent 45%),
-      radial-gradient(circle at 85% 15%, rgba(5,150,105,0.24), transparent 50%),
-      radial-gradient(circle at 75% 90%, rgba(225,29,72,0.14), transparent 55%),
-      linear-gradient(120deg, var(--forest-deep), var(--forest-mid), var(--forest-deep));
-    background-color:var(--forest-deep);
-    /* Ujung bawah dibuat melengkung (20px) senada dengan kelengkungan
-       kartu "Saldo Bank & E-Wallet" (.stat-card border-radius:20px),
-       supaya kartu ringkasan mengambang ini terasa satu bahasa desain
-       dengan kartu-kartu lain di halaman, bukan kotak lurus/kaku. */
+    /* Warna diubah jadi putih (menyatu dengan warna kartu/--card)
+       saat mini-topbar ini muncul menempel di scroll -- sebelumnya
+       gradasi gelap forest-deep meniru banner besar. */
+    background:var(--card);
+    border-bottom:1px solid var(--line);
     border-radius:0 0 20px 20px;
-    box-shadow:0 8px 18px -6px rgba(11,18,32,0.45);
-    color:#F4F7FB;
+    box-shadow:0 8px 18px -8px rgba(15,23,42,0.12);
+    color:var(--ink);
     /* PENTING (fix "dobel" dgn banner besar): dulu mini-topbar ini
        LANGSUNG tampil dari awal halaman dimuat, jadi begitu buka
        app, dia numpuk keliatan dobel sama ringkasan Pemasukan/
@@ -5818,12 +5807,13 @@ body.is-scrolling *{
     border-radius:9px;color:inherit;cursor:pointer;
     transition:background .15s ease, transform .15s ease;
   }
-  .mtb-brand:hover{background:rgba(244,247,243,0.10);}
+  .mtb-brand:hover{background:var(--line);}
   .mtb-brand:active{transform:scale(0.97);}
   .mtb-brand .brand-mark{width:28px;height:28px;border-radius:8px;flex-shrink:0;}
   .mtb-brand .brand-name{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .mtb-actions{display:flex;align-items:center;gap:6px;flex-shrink:0;}
-  .mtb-actions .notif-btn{width:28px;height:28px;}
+  .mtb-actions .notif-btn{width:28px;height:28px;background:var(--paper);border-color:var(--line);color:var(--ink-soft);}
+  .mtb-actions .notif-btn:hover{background:var(--line);color:var(--ink);}
   .mtb-summary-row{display:flex;align-items:center;justify-content:space-between;gap:6px;}
   /* Item kiri (Pemasukan) rata KIRI, item kanan (Pengeluaran) rata KANAN,
      supaya keduanya menyesuaikan ukuran & tetap dalam 1 baris ke samping
@@ -5835,14 +5825,14 @@ body.is-scrolling *{
   .mtb-item .ic{
     width:21px;height:21px;border-radius:6px;flex-shrink:0;
     display:flex;align-items:center;justify-content:center;
-    background:rgba(244,247,243,0.12);
+    background:var(--paper);
   }
   .mtb-item .ic svg{width:10px;height:10px;}
-  .mtb-item .ic.income{color:var(--brass-light);}
-  .mtb-item .ic.expense{color:var(--wine-light);}
+  .mtb-item .ic.income{color:var(--brass);}
+  .mtb-item .ic.expense{color:var(--wine);}
   .mtb-text{min-width:0;}
-  .mtb-text .k{font-size:9px;color:rgba(244,247,243,0.65);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .mtb-text .v{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .mtb-text .k{font-size:9px;color:var(--ink-faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .mtb-text .v{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   @media (max-width:380px){
     .mtb-brand .brand-name{font-size:13px;}
     .mtb-item .ic{width:19px;height:19px;}
