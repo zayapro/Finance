@@ -5850,6 +5850,19 @@ body.is-scrolling *{
      viewport di tiap sisi dan memicu scroll horizontal tipis di HP. */
   .banner{padding:14px 14px 38px;margin:0 -12px 0;border-radius:0;}
   .saldo-card{margin:-16px 0 18px;padding:20px 18px 6px;border-radius:18px 18px 0 0;}
+  /* ---- Angka "Saldo Total" di HP: SEBELUMNYA cuma pakai clamp umum
+     (clamp(24px, 6.8vw, 44px)) yang sama untuk semua ukuran layar —
+     di HP sempit itu jadi kelihatan kecil/kurang menonjol dibanding
+     labelnya, dan tombol mata di sebelahnya (34px, ukuran desktop)
+     jadi terasa kebesaran & mepet ke angkanya. Di sini font di-skala
+     naik sedikit (persentase vw lebih besar) supaya jumlah uang tetap
+     terasa "pas"/proporsional sebagai info utama kartu, sementara
+     tombol matanya dikecilkan sedikit (30px) biar seimbang & tidak
+     memakan lebar yang harusnya buat angka. white-space:nowrap +
+     ellipsis di .saldo-value (aturan dasar) tetap dipertahankan
+     sebagai jaring pengaman kalau saldo-nya sangat besar. */
+  .saldo-value{font-size:clamp(26px, 8.6vw, 36px);}
+  .saldo-toggle{width:30px;height:30px;border-radius:10px;}
   /* Margin horizontal 0 (samakan dengan .saldo-card di atas, yang
      sekarang ikut lebar konten .app) supaya kartu "Uang Masuk &
      Keluar" tetap pas selebar .saldo-card — lihat catatan lengkap
