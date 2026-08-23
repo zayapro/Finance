@@ -4598,6 +4598,24 @@ tbody tr.date-group-row:first-child td{border-top:none;}
   transition:opacity .2s ease, transform .2s ease;
   overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
 }
+/* ---- Halaman Tagihan & Hutang (#bdAllOverlay): latar oranye di
+   belakang banner & kartu putih dibuat PENUH/full, bukan lagi
+   var(--paper) abu-abu polos seperti halaman overlay lain. Gradasinya
+   SAMA PERSIS dengan gradasi banner di beranda (lihat body{} paling
+   atas file ini) -- solid #FA8B1E sampai 155px lalu meluruh ke putih
+   -- supaya warna oranye halaman ini konsisten mengikuti warna banner
+   beranda, bukan cuma sepotong strip banner yang oranye lalu langsung
+   berbatasan warna abu-abu di sekitarnya. */
+#bdAllOverlay{
+  background:linear-gradient(180deg,
+    #FA8B1E 0px,
+    #FA8B1E 155px,
+    #F9A855 180px,
+    #FBC488 205px,
+    #FCDDB8 228px,
+    #FEFFF9 252px,
+    #FEFFF9 100%);
+}
 .detail-page-overlay.open{opacity:1;pointer-events:auto;transform:translateY(0);}
 .detail-page{max-width:1180px;margin:0 auto;padding:22px 24px 40px;}
 .detail-page-head{display:flex;align-items:center;gap:14px;margin-bottom:20px;}
