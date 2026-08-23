@@ -1512,7 +1512,26 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   cursor:default;
   border-top:2.5px solid var(--fc-accent-strong);
 }
-.flow-deal-card:hover{box-shadow:0 16px 34px rgba(249,115,22,0.17);border-color:rgba(249,115,22,0.30);}
+/* ---- Efek hover pada kartu ini DIHAPUS ----
+   Kartu ini ikut memakai class umum .stat-card, yang punya beberapa
+   efek hover (kartu naik/lift, glow oranye di pojok membesar, ikon
+   berputar sedikit, shadow membesar). Override di bawah menetralkan
+   SEMUA efek itu khusus untuk kartu ini saja (pakai selector 2-level
+   .banner-flow-wrap .flow-deal-card supaya tidak mempengaruhi kartu
+   lain yang juga memakai .stat-card), jadi kartu ini sekarang diam
+   total saat kursor lewat di atasnya. */
+.banner-flow-wrap .flow-deal-card:hover{
+  transform:none;
+}
+.banner-flow-wrap .flow-deal-card:hover::before{
+  opacity:0;
+}
+.banner-flow-wrap .flow-deal-card:hover::after{
+  transform:none;
+}
+.banner-flow-wrap .flow-deal-card:hover .icon-badge{
+  transform:none;
+}
 
 /* flex-wrap:nowrap (bukan wrap) supaya kotak timer JAM/MNT/DTK di
    kanan TIDAK PERNAH turun ke bawah judul di layar sempit — judul
@@ -1523,6 +1542,14 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 .flow-deal-top{
   display:flex;align-items:center;justify-content:space-between;gap:14px;
   margin-bottom:20px;position:relative;z-index:1;flex-wrap:nowrap;
+  /* Pengaman eksplisit: baris header (ikon+judul+timer) ini sendiri
+     TIDAK punya background sebelumnya (transparan, ikut warna induk
+     .flow-deal-card) — sudah seharusnya putih otomatis. Ditulis di
+     sini juga secara eksplisit sebagai jaring pengaman kedua, supaya
+     kotak atas (header) & kotak bawah (Hari Ini/Bulan Ini) 100% pasti
+     satu warna putih yang sama, tidak bergantung pada satu aturan
+     background saja. */
+  background:var(--card);
 }
 .flow-deal-title{display:flex;align-items:center;gap:12px;min-width:0;flex:1 1 auto;overflow:hidden;}
 .flow-deal-title .icon-badge{background:linear-gradient(140deg,#FDBA74,#C2410C);box-shadow:0 8px 16px -4px rgba(249,115,22,0.42);flex-shrink:0;}
