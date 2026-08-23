@@ -5118,7 +5118,7 @@ tbody tr.date-group-row:first-child td{border-top:none;}
   background:var(--card-fade-bg);
   margin:-24px auto 0;
   border-radius:28px 28px 0 0;
-  padding-top:24px;
+  padding-top:52px;
   box-shadow:0 -16px 30px -10px rgba(242,103,43,0.38);
 }
 /* ---- Tombol "+ Tambah" dipindah jadi tombol melayang (FAB) bulat
@@ -5130,7 +5130,19 @@ tbody tr.date-group-row:first-child td{border-top:none;}
    tinggi dari nav bawah (600) supaya tombol ini tidak pernah ketutup
    nav. ---- */
 .bd-fab-add{
-  position:fixed;right:24px;bottom:calc(24px + env(safe-area-inset-bottom, 0px));
+  position:fixed;
+  /* Di layar lebar (desktop/tablet besar), konten halaman ini dibatasi
+     max-width:1180px dan diletakkan di TENGAH (lihat .detail-page),
+     jadi ada ruang kosong kiri-kanan yang cukup lebar. Sebelumnya FAB
+     ini selalu ditempel pas di pojok kanan JENDELA BROWSER (right:24px
+     fixed), sehingga di layar lebar posisinya jauh terpisah dari kartu
+     konten -- terasa "melayang sendirian" dan tidak wajar. Sekarang
+     posisinya mengikuti tepi kanan kartu konten: dihitung dari jarak
+     kosong di kanan ((100vw - 1180px)/2) ditambah padding kartu 24px,
+     dengan batas minimum 24px supaya di layar sempit (di bawah lebar
+     konten) perilakunya tetap seperti semula (nempel 24px dari tepi). */
+  right:max(24px, calc((100vw - 1180px) / 2 + 24px));
+  bottom:calc(24px + env(safe-area-inset-bottom, 0px));
   z-index:650;
   width:56px;height:56px;border-radius:50%;
   display:flex;align-items:center;justify-content:center;
@@ -5153,7 +5165,9 @@ tbody tr.date-group-row:first-child td{border-top:none;}
   .bd-page-body{margin-top:-14px;border-radius:22px 22px 0 0;box-shadow:0 -13px 24px -9px rgba(242,103,43,0.38);}
   /* Di HP, tombol digeser naik supaya duduk RAPI di atas nav bawah
      (tinggi nav ±78px, lihat body{padding-bottom:78px} di bagian
-     NAVIGASI BAWAH) alih-alih tertutup nav seperti sebelumnya. */
+     NAVIGASI BAWAH) alih-alih tertutup nav seperti sebelumnya. Jarak
+     kanannya juga dibalik ke 16px flat (bukan rumus lebar-layar di
+     atas) karena di HP kontennya sudah penuh selebar layar. */
   .bd-fab-add{right:16px;bottom:calc(78px + 14px + env(safe-area-inset-bottom, 0px));width:50px;height:50px;}
 }
 /* Semua halaman overlay (detail-page-overlay) dibuka di ATAS nav bawah
@@ -5178,7 +5192,7 @@ tbody tr.date-group-row:first-child td{border-top:none;}
      supaya tidak ada gang kosong lebar di kiri-kanan konten, dan
      jaraknya konsisten dengan halaman lain. */
   .detail-page-overlay .detail-page{
-    padding-left:14px;padding-right:14px;padding-top:14px;
+    padding-left:14px;padding-right:14px;padding-top:36px;
   }
 }
 .bd-summary-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
@@ -5193,6 +5207,9 @@ tbody tr.date-group-row:first-child td{border-top:none;}
 }
 @media (max-width:640px){
   .bd-summary-card{padding:7px 13px;border-radius:14px;}
+  .bd-summary-card .k{font-size:10px;}
+  .bd-summary-card .v{font-size:16px;}
+  .bd-summary-card .sub{font-size:10px;}
 }
 .bd-summary-card::after{
   content:"";position:absolute;right:-10px;bottom:-14px;width:60px;height:60px;border-radius:50%;
@@ -5204,10 +5221,10 @@ tbody tr.date-group-row:first-child td{border-top:none;}
 .bd-summary-card.overdue::after{background:rgba(225,29,72,0.12);}
 .bd-summary-card.paid{background:linear-gradient(180deg, rgba(5,150,105,0.08), rgba(5,150,105,0.015));border-color:rgba(5,150,105,0.20);}
 .bd-summary-card.paid::after{background:rgba(5,150,105,0.10);}
-.bd-summary-card .k{position:relative;z-index:1;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.bd-summary-card .v{position:relative;z-index:1;font-family:'IBM Plex Mono',monospace;font-size:19px;font-weight:800;margin-top:2px;letter-spacing:-0.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink);}
+.bd-summary-card .k{position:relative;z-index:1;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.bd-summary-card .v{position:relative;z-index:1;font-family:'IBM Plex Mono',monospace;font-size:17.5px;font-weight:800;margin-top:3px;letter-spacing:-0.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink);}
 .bd-summary-card.overdue .v{color:var(--wine);}
-.bd-summary-card .sub{position:relative;z-index:1;font-size:10.5px;color:var(--ink-faint);font-weight:600;margin-top:1px;}
+.bd-summary-card .sub{position:relative;z-index:1;font-size:11px;color:var(--ink-faint);font-weight:600;margin-top:2px;}
 .bd-toolbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;}
 .bd-toolbar .tabs{flex-shrink:0;}
 @media (max-width:640px){
