@@ -5525,63 +5525,91 @@ tbody tr.date-group-row:first-child td{border-top:none;}
 /* ================================================================
    NAVIGASI BAWAH (Beranda / Catat / Laporan / Dompet / Saya)
    + template halaman (banner oranye + kartu putih di bawahnya).
+   KHUSUS TAMPILAN MOBILE (<=640px, breakpoint "HP" yang sudah dipakai
+   di seluruh file ini) — di layar lebih lebar (tablet/desktop) semua
+   konten tetap tampil berurutan sebagai satu halaman panjang seperti
+   semula, tanpa nav bawah/banner halaman tambahan.
    Warna oranye dipakai PERSIS sama dengan warna banner utama
    (#FA8B1E, lihat .banner{} di atas) supaya senada satu app.
    ================================================================ */
 :root{
   --nav-orange:#FA8B1E;
 }
-body{padding-bottom:78px;}
-.bottom-nav{
-  position:fixed;left:0;right:0;bottom:0;z-index:600;
-  display:flex;align-items:stretch;justify-content:space-around;
-  background:#fff;
-  border-top:1px solid rgba(15,23,42,0.07);
-  box-shadow:0 -6px 18px -8px rgba(15,23,42,0.14);
-  padding:6px 4px calc(6px + env(safe-area-inset-bottom));
-}
-.bn-item{
-  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
-  background:none;border:none;padding:6px 2px 4px;margin:0;cursor:pointer;
-  font-family:inherit;font-size:11.5px;font-weight:600;color:#9AA3B2;
-  -webkit-tap-highlight-color:transparent;
-}
-.bn-item .bn-ic-wrap{
-  width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-  color:#9AA3B2;transition:background .18s ease,color .18s ease,transform .18s ease;
-}
-.bn-item:active .bn-ic-wrap{transform:scale(0.9);}
-.bn-item.active{color:var(--nav-orange);}
-.bn-item.active .bn-ic-wrap{
-  background:var(--nav-orange);color:#fff;
-  box-shadow:0 8px 16px -5px rgba(250,139,30,0.55);
-}
 
-/* Halaman per-tab: default tersembunyi, hanya .active yang tampil */
-.app-page{display:none;}
-.app-page.active{display:block;}
+/* --- Default (tablet/desktop, >640px): tampilan ASLI --- */
+.bottom-nav{display:none;}
+.app-page{display:block;}
+.page-banner{display:none;}
+.page-body{margin:0;padding:0;border-radius:0;background:transparent;}
 
-/* Template banner oranye kecil untuk halaman selain Beranda (Laporan/
-   Dompet/Saya) — banner utama (.banner) yang besar dengan saldo cuma
-   dipakai di halaman Beranda, jadi halaman lain butuh banner sendiri
-   yang sederhana (judul saja) memakai warna oranye yang sama persis. */
-.page-banner{
-  background:var(--nav-orange);
-  color:#FFF8F1;
-  margin:0 -24px 0;
-  padding:20px 28px 46px;
-}
-.page-banner h1{margin:0;font-size:19px;font-weight:800;letter-spacing:.2px;}
-.page-banner p{margin:4px 0 0;font-size:12.5px;color:rgba(255,248,241,0.85);}
-.page-body{
-  position:relative;z-index:1;
-  background:var(--card,#fff);
-  margin:-26px 0 0;
-  border-radius:20px 20px 0 0;
-  padding:18px 0 4px;
-}
-@media (max-width:600px){
-  .page-banner{margin:0 -14px 0;padding:18px 18px 40px;}
+/* --- Mode nav+halaman: HANYA aktif di layar HP (<=640px) --- */
+@media (max-width:640px){
+  body{padding-bottom:78px;}
+  .bottom-nav{
+    position:fixed;left:0;right:0;bottom:0;z-index:600;
+    display:flex;align-items:stretch;justify-content:space-around;
+    background:#fff;
+    border-top:1px solid rgba(15,23,42,0.07);
+    box-shadow:0 -6px 18px -8px rgba(15,23,42,0.14);
+    padding:6px 4px calc(6px + env(safe-area-inset-bottom));
+  }
+  .bn-item{
+    flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
+    background:none;border:none;padding:6px 2px 4px;margin:0;cursor:pointer;
+    font-family:inherit;font-size:11.5px;font-weight:800;color:#1F2937;
+    -webkit-tap-highlight-color:transparent;
+  }
+  /* Ikon dibungkus PIL (kapsul melebar), bukan lingkaran penuh --
+     meniru referensi (Chat/Panggilan/dsb): default transparan tanpa
+     latar, dan HANYA tab aktif dapat latar kapsul lembut memakai
+     warna oranye template (bukan hijau seperti referensi). */
+  .bn-item .bn-ic-wrap{
+    min-width:52px;height:32px;padding:0 14px;border-radius:16px;
+    display:flex;align-items:center;justify-content:center;
+    color:#1F2937;background:transparent;
+    transition:background .18s ease,color .18s ease,transform .18s ease;
+  }
+  .bn-item:active .bn-ic-wrap{transform:scale(0.92);}
+  .bn-item.active .bn-ic-wrap{
+    background:color-mix(in srgb, var(--nav-orange) 16%, transparent);
+    color:var(--nav-orange);
+  }
+  .bn-label-swap{display:inline-block;transition:opacity .18s ease;}
+  .bn-label-swap.is-swapping{opacity:0;}
+
+  /* Lencana notifikasi kecil di pojok ikon (mis. jumlah/penanda baru) */
+  .bn-badge{
+    position:absolute;top:-2px;right:-2px;min-width:16px;height:16px;padding:0 3px;
+    border-radius:999px;background:var(--nav-orange);color:#fff;
+    font-size:9.5px;font-weight:800;line-height:16px;text-align:center;
+    box-shadow:0 0 0 2px #fff;
+  }
+  .bn-item .bn-ic-wrap{position:relative;}
+
+  /* Halaman per-tab: default tersembunyi, hanya .active yang tampil */
+  .app-page{display:none;}
+  .app-page.active{display:block;}
+
+  /* Template banner oranye kecil untuk halaman selain Beranda (Laporan/
+     Dompet/Saya) — banner utama (.banner) yang besar dengan saldo cuma
+     dipakai di halaman Beranda, jadi halaman lain butuh banner sendiri
+     yang sederhana (judul saja) memakai warna oranye yang sama persis. */
+  .page-banner{
+    display:block;
+    background:var(--nav-orange);
+    color:#FFF8F1;
+    margin:0 -14px 0;
+    padding:18px 18px 40px;
+  }
+  .page-banner h1{margin:0;font-size:19px;font-weight:800;letter-spacing:.2px;}
+  .page-banner p{margin:4px 0 0;font-size:12.5px;color:rgba(255,248,241,0.85);}
+  .page-body{
+    position:relative;z-index:1;
+    background:var(--card,#fff);
+    margin:-26px 0 0;
+    border-radius:20px 20px 0 0;
+    padding:18px 0 4px;
+  }
 }
 /* ---- Rapikan header banner di HP ----
    Sebelumnya kolom tanggal+kurs (banner-date-col) ikut di-center
@@ -6281,12 +6309,12 @@ body.is-scrolling *{
     <span class="bn-ic-wrap"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 20l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/><path d="m9 11 3 3 3-3"/></svg></span>
     <span>Beranda</span>
   </button>
-  <button type="button" class="bn-item" data-page="catat">
-    <span class="bn-ic-wrap"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M8 12h8"/></svg></span>
-    <span>Catat</span>
+  <button type="button" class="bn-item" data-page="tagihan" id="bnTagihanBtn">
+    <span class="bn-ic-wrap"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>
+    <span class="bn-label-swap" id="bnTagihanLabel">Tagihan</span>
   </button>
   <button type="button" class="bn-item" data-page="laporan">
-    <span class="bn-ic-wrap"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
+    <span class="bn-ic-wrap"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10"/><path d="M12 20V4"/><path d="M20 20v-7"/></svg></span>
     <span>Laporan</span>
   </button>
   <button type="button" class="bn-item" data-page="dompet">
@@ -6294,8 +6322,8 @@ body.is-scrolling *{
     <span>Dompet</span>
   </button>
   <button type="button" class="bn-item" data-page="saya">
-    <span class="bn-ic-wrap"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-3.9 3.6-7 8-7s8 3.1 8 7"/></svg></span>
-    <span>Saya</span>
+    <span class="bn-ic-wrap"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
+    <span>Pengaturan</span>
   </button>
 </nav>
 
@@ -6820,7 +6848,7 @@ body.is-scrolling *{
   <!-- ===== HALAMAN: SAYA ===== -->
   <div class="app-page" id="page-saya" data-page="saya">
     <div class="page-banner">
-      <h1 id="sayaAppName">Saya</h1>
+      <h1 id="sayaAppName">Pengaturan</h1>
       <p>Akun &amp; pengaturan aplikasi</p>
     </div>
     <div class="page-body">
@@ -8411,18 +8439,35 @@ body.is-scrolling *{
   navBtns.forEach(function(btn){
     btn.addEventListener('click', function(){
       var name = btn.dataset.page;
-      // "Catat" sengaja tidak berpindah halaman -- langsung membuka
-      // modal Tambah Transaksi yang sudah ada (openAddModal), supaya
-      // tidak perlu duplikat form transaksi di halaman terpisah.
-      if (name === 'catat') {
-        if (typeof window.openAddModal === 'function') {
-          window.openAddModal();
+      // "Tagihan" sengaja tidak berpindah halaman -- langsung membuka
+      // panel Tagihan & Hutang yang sudah ada (openNotifPanel), supaya
+      // tidak perlu duplikat kontennya di halaman terpisah.
+      if (name === 'tagihan') {
+        if (typeof window.openNotifPanel === 'function') {
+          window.openNotifPanel();
         }
         return;
       }
       showPage(name);
     });
   });
+
+  // Label tombol "Tagihan" berganti-ganti sendiri antara "Tagihan"
+  // dan "Hutang" (dua hal yang sama-sama ditampilkan lewat tombol
+  // ini), supaya keduanya sama-sama kelihatan tanpa perlu 2 tombol.
+  var tagihanLabel = document.getElementById('bnTagihanLabel');
+  if (tagihanLabel) {
+    var tagihanWords = ['Tagihan', 'Hutang'];
+    var tagihanIdx = 0;
+    setInterval(function(){
+      tagihanIdx = (tagihanIdx + 1) % tagihanWords.length;
+      tagihanLabel.classList.add('is-swapping');
+      setTimeout(function(){
+        tagihanLabel.textContent = tagihanWords[tagihanIdx];
+        tagihanLabel.classList.remove('is-swapping');
+      }, 180);
+    }, 1800);
+  }
 
   // Tombol-tombol di halaman "Saya" memakai fungsi/elemen yang sudah
   // ada di script.js (dipasang belakangan oleh cloud-sync.js setelah
