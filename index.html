@@ -4068,13 +4068,36 @@ body.density-compact .income-cards-group{gap:10px;}
 }
 
 /* ============ TABS & CONTROLS ============ */
-.tabs{display:flex;gap:4px;background:var(--paper);padding:4px;border-radius:999px;width:fit-content;flex-wrap:wrap;max-width:100%;}
+.tabs{
+  display:flex;gap:4px;background:var(--card);padding:4px;border-radius:999px;
+  width:fit-content;flex-wrap:wrap;max-width:100%;
+  border:1px solid var(--line);
+}
 .tab-btn{
   border:none;background:transparent;padding:8px 16px;border-radius:999px;
   font-size:13.5px;font-weight:700;color:var(--ink-soft);
   transition:all .15s ease;white-space:nowrap;
 }
-.tab-btn.active{background:var(--forest-deep);color:#fff;}
+.tab-btn.active{background:transparent;color:var(--primary);}
+
+/* ---- Tab filter (Semua/Mingguan/Bulanan/Tahunan) jadi sticky saat
+   discroll: menempel di bawah mini-topbar (HP) atau di paling atas
+   viewport (desktop/tablet, karena mini-topbar disembunyikan di
+   sana). Diberi background solid + z-index supaya konten di
+   belakangnya tidak tembus kelihatan saat menempel. ---- */
+.tabs-sticky-wrap{
+  position:sticky;
+  top:var(--mini-topbar-h, 0px);
+  z-index:var(--z-mini-topbar);
+  /* Body pakai gradient oranye->putih di ~252px pertama (lihat body{}),
+     tapi tab ini letaknya jauh di bawah situ (dalam #historySection)
+     jadi sudah pasti berada di zona flat-nya -- aman pakai warna solid
+     ini sebagai latar saat menempel, supaya konten di belakangnya
+     (baris/tabel transaksi) tidak tembus kelihatan. */
+  background:#FEFFF9;
+  padding:10px 0;
+  margin:0 0 -10px;
+}
 
 .controls-row{
   display:flex;align-items:center;gap:10px;flex-wrap:wrap;
@@ -6697,11 +6720,13 @@ body.is-scrolling *{
       </div>
     </div>
 
-    <div class="tabs" id="tabs">
-      <button class="tab-btn active" data-tab="semua">Semua</button>
-      <button class="tab-btn" data-tab="mingguan">Mingguan</button>
-      <button class="tab-btn" data-tab="bulanan">Bulanan</button>
-      <button class="tab-btn" data-tab="tahunan">Tahunan</button>
+    <div class="tabs-sticky-wrap">
+      <div class="tabs" id="tabs">
+        <button class="tab-btn active" data-tab="semua">Semua</button>
+        <button class="tab-btn" data-tab="mingguan">Mingguan</button>
+        <button class="tab-btn" data-tab="bulanan">Bulanan</button>
+        <button class="tab-btn" data-tab="tahunan">Tahunan</button>
+      </div>
     </div>
 
     <div class="controls-row" id="controlsRow">
