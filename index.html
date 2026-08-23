@@ -65,6 +65,16 @@
   --violet-light:#C4B5FD;
   --paper:#F4F6F9;
   --card:#FFFFFF;
+  /* ---- Gradient background BERSAMA untuk "kartu panjang" Saldo Total
+     + Uang Masuk & Keluar (yang dibuat menyatu jadi satu kartu visual).
+     SEBELUMNYA nilai gradient ini di-copy manual ke 4 tempat berbeda
+     (.saldo-card, .banner-flow-wrap, .banner-flow-wrap .flow-deal-card,
+     .fc-peek-handle) — sudah sama persis, tapi rawan "lupa update" satu
+     tempat kalau warnanya diubah suatu saat nanti. Disatukan jadi satu
+     variabel di sini supaya ke-4 elemen itu DIJAMIN selalu senada,
+     termasuk saat kartu "Uang Masuk & Keluar" aktif/terbuka lalu
+     diciutkan kembali ke bentuk tab ringkasan. */
+  --card-fade-bg: linear-gradient(to right, #FFFFFF 0%, #FFFFFF 45%, #FFF9F2 70%, #FFEFDF 100%);
   --ink:#131A2A;
   --ink-soft:#5B6472;
   --ink-faint:#8A93A3;
@@ -793,7 +803,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
      "Ringkasan transaksi kamu" di bawahnya (.fc-peek-handle/
      .flow-deal-card) memakai gradasi persis sama supaya tetap
      menyatu. */
-  background:linear-gradient(to right, #FFFFFF 0%, #FFFFFF 45%, #FFF9F2 70%, #FFEFDF 100%);
+  background:var(--card-fade-bg);
   /* Lebar & posisi kiri-kanan DISAMAKAN dengan kartu section-card biasa
      (mis. "Sumber Pendapatan"): margin horizontal 0, jadi kartu ini
      ikut lebar konten di dalam padding .app, BUKAN full-bleed lagi.
@@ -887,7 +897,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
      (arah & titik warna sama persis dengan .saldo-card/.flow-deal-card/
      .fc-peek-handle) langsung di wrapper-nya sendiri, supaya area ini
      SELALU senada dengan kartu di atasnya, isi kosong atau tidak. */
-  background:linear-gradient(to right, #FFFFFF 0%, #FFFFFF 45%, #FFF9F2 70%, #FFEFDF 100%);
+  background:var(--card-fade-bg);
 }
 .banner-flow-wrap .flow-deal-card{
   /* Sudut bawah disamakan (20px) dengan radius kartu "Saldo Bank &
@@ -911,7 +921,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
      .saldo-card (bukan lagi var(--card) putih polos) supaya seluruh
      kartu panjang ini (Saldo Total + Ringkasan) tetap terasa satu
      kesatuan warna dengan banner oranye di atasnya. */
-  background:linear-gradient(to right, #FFFFFF 0%, #FFFFFF 45%, #FFF9F2 70%, #FFEFDF 100%) !important;
+  background:var(--card-fade-bg) !important;
   border:none !important;
   border-top:none !important;
   box-shadow:none !important;
@@ -921,7 +931,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   position:relative;
   margin:0 -22px -20px;padding:22px 28px 22px 28px;
   border-radius:0 0 30px 30px;
-  background:linear-gradient(to right, #FFFFFF 0%, #FFFFFF 45%, #FFF9F2 70%, #FFEFDF 100%);
+  background:var(--card-fade-bg);
   border-top:1px solid transparent;
   color:var(--ink-soft);font-size:12px;font-weight:600;
   cursor:pointer;
