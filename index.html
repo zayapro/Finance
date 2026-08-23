@@ -1162,7 +1162,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
    pojok). Di HP (≤600px) tetap dikembalikan ke space-between lewat
    media query di bawah, karena di lebar sempit itu justru bikin kedua
    item mengisi rata lebar layar dengan rapi. */
-.saldo-sub{display:flex;gap:26px;margin-top:20px;flex-wrap:wrap;justify-content:flex-start;position:relative;z-index:3;}
+.saldo-sub{display:flex;gap:26px;margin-top:20px;padding-top:18px;border-top:1px solid var(--line);flex-wrap:wrap;justify-content:flex-start;position:relative;z-index:3;}
 .saldo-sub-item{display:flex;align-items:center;gap:10px;min-width:0;}
 /* Item kanan (Pengeluaran) rata KANAN teksnya begitu baris ini melebar
    penuh (mis. mode 2-kolom di HP lewat media query di bawah), biar
@@ -1213,18 +1213,38 @@ tr.fade-up{animation:fadeRow .35s ease both;}
    punya ruang cukup untuk 1 baris yang rapi tanpa perlu terpecah atau
    menyusut drastis. */
 @media (max-width:480px){
-  .saldo-sub{flex-direction:column;gap:16px;flex-wrap:wrap;}
-  .saldo-sub-item{width:100%;}
+  .saldo-sub{flex-direction:column;gap:10px;flex-wrap:wrap;padding-top:16px;}
+  /* Tiap item dibungkus jadi "chip" berlatar lembut (var(--paper)) +
+     sudut membulat, supaya Pemasukan & Pengeluaran terlihat sebagai
+     dua blok info yang jelas & rapi ketika ditumpuk vertikal, bukan
+     cuma teks polos mengambang di kartu putih. */
+  .saldo-sub-item{width:100%;background:var(--paper);border-radius:14px;padding:11px 14px;}
+  /* Item terakhir (Pengeluaran) DIKEMBALIKAN rata kiri (menimpa aturan
+     rata-kanan dari breakpoint 600px di atas): di dalam chip berlatar
+     sendiri-sendiri begini, konten rata kiri konsisten justru terlihat
+     lebih rapi & mudah dipindai dibanding teks nempel ke sisi kanan. */
+  .saldo-sub-item:last-child{justify-content:flex-start;}
+  .saldo-sub-item:last-child .saldo-sub-text{text-align:left;}
   .saldo-sub-text .k{white-space:nowrap;}
   .saldo-sub-text .v{font-size:15px;white-space:normal;overflow-wrap:break-word;}
 }
 
+/* ---- Badge ikon Pemasukan/Pengeluaran ----
+   Sebelumnya ikon panah cuma glyph polos abu-abu (color:var(--ink-soft);
+   background:none), jadi kelihatan "nyempil"/kurang jelas dan baris
+   Pemasukan-Pengeluaran terasa datar tanpa penanda visual yang cepat
+   dikenali. Sekarang tiap ikon dibungkus badge lingkaran dengan tint
+   warna semantik yang SAMA dengan yang sudah dipakai di tempat lain
+   pada aplikasi ini (fc-peek-mini-in/out, fx-value.up/down): hijau
+   (--brass) untuk pemasukan, merah (--wine) untuk pengeluaran — supaya
+   sekilas mata langsung bisa membedakan arah uang tanpa perlu membaca
+   labelnya dulu. */
 .saldo-sub-item .ic{
-  width:20px;height:20px;flex-shrink:0;
+  width:30px;height:30px;flex-shrink:0;border-radius:10px;
   display:flex;align-items:center;justify-content:center;
 }
-.saldo-sub-item .ic.income{color:var(--ink-soft);background:none;}
-.saldo-sub-item .ic.expense{color:var(--ink-soft);background:none;}
+.saldo-sub-item .ic.income{color:var(--brass);background:rgba(5,150,105,0.12);}
+.saldo-sub-item .ic.expense{color:var(--wine);background:rgba(225,29,72,0.12);}
 .saldo-sub-text{min-width:0;}
 .saldo-sub-text .k{font-size:12px;color:var(--ink-faint);font-weight:600;}
 .saldo-sub-text .v{font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;font-weight:800;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
