@@ -8112,11 +8112,41 @@ function openBdAllPage(initialTab) {
   document.body.style.overflow = 'hidden';
   window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
   renderBdAllPage();
+  setBottomNavActive('tagihan');
 }
 function closeBdAllPage() {
   document.getElementById('bdAllOverlay').classList.remove('open');
   document.body.style.overflow = '';
+  setBottomNavActive('beranda');
 }
+
+/* ---------- Sinkronkan tombol aktif di navigasi bawah ----------
+   Dipanggil tiap kali halaman "Semua Tagihan & Hutang" dibuka/ditutup,
+   supaya tombol "Tagihan" di nav bawah ikut menyala saat halamannya
+   terbuka, dan kembali ke "Beranda" saat ditutup. */
+function setBottomNavActive(pageKey) {
+  document.querySelectorAll('#bottomNav .bn-item').forEach((btn) => {
+    btn.classList.toggle('active', btn.dataset.page === pageKey);
+  });
+}
+
+/* ---------- Tombol "Tagihan" di navigasi bawah ----------
+   Membuka langsung halaman "Semua Tagihan & Hutang" (sama seperti
+   tombol "Lihat Semua" di panel notifikasi lonceng). */
+document.getElementById('bnTagihanBtn').addEventListener('click', () => {
+  openBdAllPage('semua');
+});
+
+/* ---------- Tombol "Beranda" di navigasi bawah ----------
+   Menutup halaman "Semua Tagihan & Hutang" (kalau sedang terbuka)
+   supaya user bisa kembali ke beranda langsung dari nav bawah,
+   bukan cuma lewat tombol panah kembali di pojok kiri atas. */
+document.querySelector('#bottomNav .bn-item[data-page="beranda"]').addEventListener('click', () => {
+  if (document.getElementById('bdAllOverlay').classList.contains('open')) {
+    closeBdAllPage();
+    window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
+  }
+});
 
 document.getElementById('bdAllBackBtn').addEventListener('click', closeBdAllPage);
 document.getElementById('bdAllTabs').addEventListener('click', (e) => {
