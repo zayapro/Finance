@@ -4189,7 +4189,7 @@ input[type="number"].year-input{width:110px;font-family:'IBM Plex Mono',monospac
     padding:10px 6px;
     border-radius:999px;
   }
-  #bdAllTabs{grid-template-columns:repeat(3, 1fr);}
+  #bdAllTabs{grid-template-columns:repeat(4, 1fr);}
   #bdAllTabs .tab-btn{padding:6px 12px;}
 }
 @media (max-width:600px){
@@ -5253,18 +5253,32 @@ tbody tr.date-group-row:first-child td{border-top:none;}
     padding-left:14px;padding-right:14px;padding-top:14px;
   }
 }
-.bd-summary-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
-@media (max-width:760px){.bd-summary-row{grid-template-columns:repeat(2,1fr);}}
-@media (max-width:640px){
-  .bd-summary-row{gap:9px;margin-bottom:14px;}
-}
+/* ---- Baris 5 kartu ringkasan (Tagihan/Hutang/Terlambat/Lunas/Catatan).
+   Desktop/tablet (>760px): tetap grid rata 5 kolom seperti versi lama,
+   ruang layar cukup lebar jadi kelimanya muat tanpa perlu discroll.
+   Mobile (<=760px): dibuat scroll SAMPING (horizontal) alih-alih
+   dibungkus ke grid 2 kolom seperti sebelumnya -- supaya di HP kelima
+   kartu tetap sejajar 1 baris penuh & bisa digeser jari, bukan malah
+   ditumpuk jadi 3 baris. scroll-snap dipakai supaya berhenti "pas" di
+   tiap kartu waktu digeser, scrollbar-nya disembunyikan biar rapi. ---- */
+.bd-summary-row{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px;}
 .bd-summary-card{
   background:linear-gradient(180deg, rgba(217,119,6,0.08), rgba(217,119,6,0.015));
   border:1px solid rgba(217,119,6,0.20);border-radius:16px;
   padding:9px 16px;position:relative;overflow:hidden;
 }
-@media (max-width:640px){
-  .bd-summary-card{padding:7px 13px;border-radius:14px;}
+@media (max-width:760px){
+  .bd-summary-row{
+    display:flex;gap:9px;margin-bottom:14px;
+    overflow-x:auto;scroll-snap-type:x proximity;
+    -webkit-overflow-scrolling:touch;scrollbar-width:none;
+    padding-bottom:2px;/* ruang aman utk shadow kartu supaya tidak kepotong */
+  }
+  .bd-summary-row::-webkit-scrollbar{display:none;}
+  .bd-summary-card{
+    flex:0 0 auto;width:132px;scroll-snap-align:start;
+    padding:7px 13px;border-radius:14px;
+  }
   .bd-summary-card .k{font-size:10px;}
   .bd-summary-card .v{font-size:16px;}
   .bd-summary-card .sub{font-size:10px;}
@@ -5279,10 +5293,12 @@ tbody tr.date-group-row:first-child td{border-top:none;}
 .bd-summary-card.overdue::after{background:rgba(225,29,72,0.12);}
 .bd-summary-card.paid{background:linear-gradient(180deg, rgba(5,150,105,0.08), rgba(5,150,105,0.015));border-color:rgba(5,150,105,0.20);}
 .bd-summary-card.paid::after{background:rgba(5,150,105,0.10);}
+.bd-summary-card.notes{background:linear-gradient(180deg, rgba(37,99,235,0.08), rgba(37,99,235,0.015));border-color:rgba(37,99,235,0.20);}
+.bd-summary-card.notes::after{background:rgba(37,99,235,0.10);}
 .bd-summary-card .k{position:relative;z-index:1;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .bd-summary-card .v{position:relative;z-index:1;font-family:'IBM Plex Mono',monospace;font-size:17.5px;font-weight:800;margin-top:3px;letter-spacing:-0.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink);}
 .bd-summary-card.overdue .v{color:var(--wine);}
-.bd-summary-card .sub{position:relative;z-index:1;font-size:11px;color:var(--ink-faint);font-weight:600;margin-top:2px;}
+.bd-summary-card .sub{position:relative;z-index:1;font-size:11px;color:var(--ink-faint);font-weight:600;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
 /* ================================================================
    CATATAN (tagihan/hutang yang punya isian "Catatan") -- baris kartu

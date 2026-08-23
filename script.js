@@ -8012,6 +8012,7 @@ function renderBdAllSummary(all) {
   const overdueAll = all.filter(x => x.status === 'belum' && daysUntil(x.dueDate) < 0);
   const totalBills = unpaidBills.reduce((s, b) => s + Number(b.amount || 0), 0);
   const totalDebts = unpaidDebts.reduce((s, d) => s + Number(d.amount || 0), 0);
+  const notesCount = all.filter(x => (x.note || '').trim()).length;
 
   document.getElementById('bdAllSummary').innerHTML = `
     <div class="bd-summary-card">
@@ -8033,6 +8034,11 @@ function renderBdAllSummary(all) {
       <div class="k">Sudah Lunas</div>
       <div class="v">${paidAll.length}</div>
       <div class="sub">total riwayat</div>
+    </div>
+    <div class="bd-summary-card notes">
+      <div class="k">Catatan</div>
+      <div class="v">${notesCount}</div>
+      <div class="sub">item ada catatan</div>
     </div>`;
 }
 
