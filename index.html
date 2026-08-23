@@ -1167,6 +1167,23 @@ tr.fade-up{animation:fadeRow .35s ease both;}
     overflow-wrap:break-word;line-height:1.25;
   }
 }
+/* ---- HP sempit (≤480px): Pemasukan & Pengeluaran DITUMPUK VERTIKAL ----
+   Di lebar 480-600px, dua item ini masih berdampingan (masing-masing
+   cuma dapat ~separuh lebar kartu). Untuk label 2 kata ("Pemasukan
+   bulan ini") itu kadang PAS-PASAN, jadi labelnya sendiri ikut
+   terpecah jadi 2 baris dengan potongan kata yang aneh (mis. "Pemasukan
+   bulan" lalu "ini" sendirian di baris ke-2) — di layar yang lebih
+   sempit lagi, situasinya makin parah karena angkanya juga ikut
+   terjepit. Di ≤480px kedua item disusun vertikal (satu di atas satu),
+   masing-masing dapat LEBAR PENUH kartu, jadi label & angka selalu
+   punya ruang cukup untuk 1 baris yang rapi tanpa perlu terpecah atau
+   menyusut drastis. */
+@media (max-width:480px){
+  .saldo-sub{flex-direction:column;gap:16px;flex-wrap:wrap;}
+  .saldo-sub-item{width:100%;}
+  .saldo-sub-text .k{white-space:nowrap;}
+  .saldo-sub-text .v{font-size:15px;white-space:normal;overflow-wrap:break-word;}
+}
 
 .saldo-sub-item .ic{
   width:20px;height:20px;flex-shrink:0;
