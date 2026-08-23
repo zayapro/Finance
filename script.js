@@ -4541,9 +4541,13 @@ function fmtRupiahShort(n) {
   }
   const sign = amount < 0 ? '-' : '';
   const abs = Math.abs(amount);
-  // Hanya disingkat ke "M" (miliar) kalau nilainya sudah >= Rp1 miliar.
-  // Di bawah itu (termasuk ribuan & jutaan) selalu tampil angka penuh.
+  // Disingkat ke "M" (miliar) kalau nilainya sudah >= Rp1 miliar, dan ke
+  // "jt" (juta) kalau sudah >= Rp100 juta (mis. Rp100.278.500 -> "100jt")
+  // supaya tetap muat 1 baris di ruang sempit (mini topbar/kartu saldo)
+  // tanpa terpotong "...". Di bawah Rp100 juta angka penuh masih muat,
+  // jadi tetap tampil apa adanya lewat fmtRupiah().
   if (abs >= 1e9) return `${sign}Rp${(abs / 1e9).toFixed(abs % 1e9 === 0 ? 0 : 1).replace('.', ',')} M`;
+  if (abs >= 1e8) return `${sign}Rp${Math.round(abs / 1e6)}jt`;
   return fmtRupiah(amount);
 }
 

@@ -780,7 +780,14 @@ tr.fade-up{animation:fadeRow .35s ease both;}
    bukan dua kartu terpisah dengan celah. */
 .saldo-card{
   position:relative;z-index:2;
-  background:var(--card);
+  /* Gradient krem/persik SEWARNA TEMA (diturunkan dari --primary/
+     --primary-light/--primary-soft, bukan lagi condong ke pink) —
+     supaya transisi dari banner oranye ke kartu putih ini terasa
+     nyambung, bukan malah kontras. Kartu Saldo Total & "Ringkasan
+     transaksi kamu" di bawahnya (.fc-peek-handle/.flow-deal-card)
+     memakai gradasi yang sama persis supaya keduanya tetap terasa
+     menyatu jadi satu kartu panjang. */
+  background:linear-gradient(135deg, #FFFDF9 0%, #FFF1E7 26%, #FFE3CC 52%, #FFD3AE 78%, #FFF3E7 100%);
   /* Lebar & posisi kiri-kanan DISAMAKAN dengan kartu section-card biasa
      (mis. "Sumber Pendapatan"): margin horizontal 0, jadi kartu ini
      ikut lebar konten di dalam padding .app, BUKAN full-bleed lagi.
@@ -789,7 +796,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
      berubah, posisi vertikal & overlap-nya tidak). */
   margin:-22px 0 22px;
   padding:28px 28px 8px;
-  border-radius:24px 24px 0 0;
+  border-radius:30px 30px 0 0;
   /* ---- Transisi ke banner dihaluskan (tanpa garis batas tegas) ----
      Karena kartu ini sekarang lebih sempit dari banner (lihat catatan
      lebar di atas), sisi kiri-kanan banner oranye kelihatan mengapit
@@ -807,11 +814,11 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 }
 @media (max-width:640px){
   .saldo-card{
-    margin:-18px 0 22px;padding:24px 22px 6px;border-radius:20px 20px 0 0;
+    margin:-18px 0 22px;padding:24px 22px 6px;border-radius:26px 26px 0 0;
     box-shadow:
       0 -13px 24px -9px rgba(242,103,43,0.38);
   }
-  .fc-peek-handle{padding:18px 22px 18px 22px;border-radius:0 0 20px 20px;}
+  .fc-peek-handle{padding:18px 22px 18px 22px;border-radius:0 0 26px 26px;}
 }
 /* ---- Efek kartu Uang Masuk & Keluar nyelip di BELAKANG banner ----
    .banner-flow-wrap adalah jendela "overflow:hidden" yang tingginya
@@ -851,7 +858,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   /* Sudut bawah disamakan (20px) dengan radius kartu "Saldo Bank &
      E-Wallet" (.stat-card{border-radius:20px}), bukan 22px seperti
      sebelumnya, supaya bentuk lengkung kedua kartu terasa identik. */
-  padding:22px 22px 20px;border-radius:0 0 24px 24px;
+  padding:22px 22px 20px;border-radius:0 0 30px 30px;
   transition:transform .6s cubic-bezier(.22,1,.36,1);
   will-change:transform;
   /* ---- Kartu ini DISATUKAN sepenuhnya dengan kartu Saldo Total ----
@@ -864,8 +871,12 @@ tr.fade-up{animation:fadeRow .35s ease both;}
      ada lagi garis/sambungan warna yang kelihatan di antara keduanya.
      Border & shadow bawaan .stat-card (border 1px + border-top 2.5px
      aksen oranye + box-shadow) juga DIHAPUS di sini untuk alasan yang
-     sama — supaya benar-benar menyatu tanpa garis batas apa pun. */
-  background:var(--card) !important;
+     sama — supaya benar-benar menyatu tanpa garis batas apa pun.
+     Latarnya memakai gradasi krem/persik SEWARNA TEMA yang sama dengan
+     .saldo-card (bukan lagi var(--card) putih polos) supaya seluruh
+     kartu panjang ini (Saldo Total + Ringkasan) tetap terasa satu
+     kesatuan warna dengan banner oranye di atasnya. */
+  background:linear-gradient(135deg, #FFFDF9 0%, #FFF1E7 26%, #FFE3CC 52%, #FFD3AE 78%, #FFF3E7 100%) !important;
   border:none !important;
   border-top:none !important;
   box-shadow:none !important;
@@ -874,13 +885,13 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 .fc-peek-handle{
   position:relative;
   margin:0 -22px -20px;padding:22px 28px 22px 28px;
-  border-radius:0 0 24px 24px;
-  background:var(--card);
+  border-radius:0 0 30px 30px;
+  background:linear-gradient(135deg, #FFFDF9 0%, #FFF1E7 26%, #FFE3CC 52%, #FFD3AE 78%, #FFF3E7 100%);
   border-top:1px solid transparent;
   color:var(--ink-soft);font-size:12px;font-weight:600;
   cursor:pointer;
   box-shadow:0 18px 30px -20px rgba(15,23,42,0.20);
-  clip-path:inset(0 0 -40px 0 round 0 0 24px 24px);
+  clip-path:inset(0 0 -40px 0 round 0 0 30px 30px);
   transition:box-shadow .18s ease, transform .35s cubic-bezier(.22,1,.36,1), opacity .3s ease, background .18s ease;
   /* FIX "bayangan kotak" saat tab ini diketuk di HP: browser mobile
      (terutama Safari/Chrome Android) menambahkan highlight kotak abu-
@@ -1147,6 +1158,10 @@ tr.fade-up{animation:fadeRow .35s ease both;}
    item mengisi rata lebar layar dengan rapi. */
 .saldo-sub{display:flex;gap:26px;margin-top:20px;flex-wrap:wrap;justify-content:flex-start;position:relative;z-index:3;}
 .saldo-sub-item{display:flex;align-items:center;gap:10px;min-width:0;}
+/* Item kanan (Pengeluaran) rata KANAN teksnya begitu baris ini melebar
+   penuh (mis. mode 2-kolom di HP lewat media query di bawah), biar
+   senada dengan pola kiri-kanan di mini topbar. */
+.saldo-sub-item:last-child .saldo-sub-text{text-align:right;}
 @media (max-width:600px){
   .saldo-sub{gap:10px;justify-content:space-between;flex-wrap:nowrap;}
   .saldo-sub-item{flex:1 1 0;min-width:0;align-items:flex-start;}
@@ -5692,7 +5707,13 @@ body.is-scrolling *{
   .mtb-actions{display:flex;align-items:center;gap:6px;flex-shrink:0;}
   .mtb-actions .notif-btn{width:28px;height:28px;}
   .mtb-summary-row{display:flex;align-items:center;justify-content:space-between;gap:6px;}
+  /* Item kiri (Pemasukan) rata KIRI, item kanan (Pengeluaran) rata KANAN,
+     supaya keduanya menyesuaikan ukuran & tetap dalam 1 baris ke samping
+     (bukan malah numpuk/kepotong "..." di tengah), sama seperti pola
+     kiri-kanan pada .saldo-sub-item lain di kartu saldo. */
   .mtb-item{display:flex;align-items:center;gap:6px;min-width:0;flex:1 1 0;}
+  .mtb-item:first-child{justify-content:flex-start;text-align:left;}
+  .mtb-item:last-child{justify-content:flex-end;text-align:right;}
   .mtb-item .ic{
     width:21px;height:21px;border-radius:6px;flex-shrink:0;
     display:flex;align-items:center;justify-content:center;
