@@ -5969,7 +5969,13 @@ tbody tr.date-group-row:first-child td{border-top:none;}
 .footer-copy{font-size:12px;color:rgba(244,247,251,0.55);margin:0;white-space:nowrap;}
 .footer-heart{display:inline-block;color:var(--wine-light);animation:footerHeart 1.4s ease-in-out infinite;}
 @keyframes footerHeart{0%,100%{transform:scale(1);}50%{transform:scale(1.28);}}
-@media (max-width:600px){
+/* Breakpoint disamakan jadi 640px (bukan 600px) supaya SINKRON persis
+   dengan breakpoint nav bawah (@media max-width:640px di bawah) --
+   sebelumnya beda breakpoint (600 vs 640) bikin footer masih pakai
+   margin/radius desktop di rentang lebar 601-640px padahal nav bawah
+   sudah tampil mode HP, sehingga footer terlihat tidak menempel rapi
+   ke tepi layar (bug responsive). */
+@media (max-width:640px){
   .app-footer{border-radius:20px 20px 0 0;padding:26px 18px 18px;margin:16px -14px 0;}
   .footer-wave{margin:18px -18px 4px;}
   .footer-bottom{flex-direction:column;align-items:flex-start;}
@@ -6181,7 +6187,18 @@ tbody tr.date-group-row:first-child td{border-top:none;}
   .banner-top-right{flex-wrap:wrap;justify-content:flex-end;row-gap:8px;}
   .banner-date-col{order:3;flex-basis:100%;margin-top:0;}
 }
-@media (max-width:600px){
+/* Breakpoint disamakan jadi 640px (bukan 600px) -- supaya SINKRON
+   dengan breakpoint nav bawah (@media max-width:640px, lihat blok
+   "NAVIGASI BAWAH" di atas). Ini akar bug utamanya: banner "page-
+   banner" di dalam sistem nav memakai margin:-14px yang mengasumsikan
+   .app SUDAH berpadding 14px (mode HP) -- tapi sebelumnya .app baru
+   turun ke padding 14px di ≤600px, sedangkan nav bawah sudah aktif
+   dari ≤640px. Di rentang 601-640px, .app masih berpadding 24px
+   (desktop) sehingga margin -14px banner kurang kompensasi ~10px,
+   bikin banner oranye (& page-banner di halaman Laporan/Dompet/Saya)
+   tidak menempel pas ke tepi layar walau nav bawah sudah tampil mode
+   HP -- sekarang keduanya berpindah bareng di titik yang sama. */
+@media (max-width:640px){
   .app{padding:0 14px;}
   .banner{
     margin:0 -14px 18px;border-radius:0;
