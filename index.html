@@ -5368,6 +5368,7 @@ tbody tr.date-group-row:first-child td{border-top:none;}
    pandang / kelihatan tumpang tindih. */
 .bd-toolbar{
   display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;
+  position:relative;/* anchor untuk .bd-search-wrap versi mengambang di HP */
 }
 .bd-toolbar .tabs{flex-shrink:0;}
 @media (max-width:640px){
@@ -5379,7 +5380,16 @@ tbody tr.date-group-row:first-child td{border-top:none;}
    Klik ikon kaca pembesar membuka/menutup kolom pencarian tepat di
    bawah toolbar; ikon panah-ke-bawah mengunduh data yang sedang
    tampil (mengikuti tab & pencarian aktif) sebagai file CSV. ---- */
-.bd-toolbar-actions{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.bd-toolbar-actions{display:flex;align-items:center;gap:8px;flex-shrink:0;position:relative;}
+@media (max-width:760px){
+  /* Di HP, tab (Semua/Tagihan/Hutang/Catatan) + 3 ikon (Cari/Tanggal/
+     Unduh) sering tidak muat 1 baris, jadi baris ikon ini turun sendiri
+     ke baris baru (toolbar-nya flex-wrap). Tanpa margin-left:auto di
+     sini, baris barunya nempel ke KIRI (ikut tabnya) -- margin-left:auto
+     memaksa baris ikon ini geser ke KANAN walau lagi sendirian di
+     barisnya, konsisten dengan posisinya di desktop. */
+  .bd-toolbar-actions{margin-left:auto;}
+}
 .bd-icon-btn{
   width:36px;height:36px;border-radius:11px;flex-shrink:0;
   display:flex;align-items:center;justify-content:center;
@@ -5390,28 +5400,45 @@ tbody tr.date-group-row:first-child td{border-top:none;}
 .bd-icon-btn:hover{background:#fff;color:var(--ink);border-color:rgba(15,23,42,0.16);}
 .bd-icon-btn:active{transform:scale(0.92);}
 .bd-icon-btn.active{background:var(--nav-orange);border-color:var(--nav-orange);color:#fff;}
-/* Kolom pencarian: tersembunyi (collapsed) secara default, baru
-   muncul dengan animasi turun-halus saat ikon cari diklik. Struktur
-   internal (ikon absolut + input) memakai pola .field-inline yang
-   sudah ada di file ini -- di sini cuma menambah lapisan collapse. */
-.bd-search-wrap{
-  overflow:hidden;max-height:0;opacity:0;margin-bottom:0;
-  transition:max-height .22s ease, opacity .18s ease, margin-bottom .22s ease;
-}
-.bd-search-wrap.open{max-height:64px;opacity:1;margin-bottom:14px;}
 @media (max-width:640px){
   .bd-icon-btn{width:34px;height:34px;border-radius:10px;}
-  .bd-search-wrap.open{margin-bottom:10px;}
 }
-/* ---- Panel filter tanggal: sama pola collapse-nya seperti kolom
-   pencarian di atas, dibuka/ditutup lewat ikon kalender di toolbar.
-   Berisi 2 input tanggal (dari/sampai) + tombol reset. ---- */
+/* ================================================================
+   Panel Cari & panel Filter Tanggal: DULU masing-masing punya
+   perilaku beda-beda (kolom cari nge-push konten turun di bawah
+   toolbar, panel tanggal malah ada jauh di blok terpisah). Sekarang
+   KEDUANYA jadi panel MENGAMBANG (position:absolute) yang menempel
+   PERSIS di bawah kelompok tombol ikonnya sendiri (.bd-toolbar-actions
+   yang sudah diberi position:relative sebagai jangkar) -- jadi begitu
+   tombol Cari atau Tanggal diklik, panelnya konsisten muncul tepat di
+   sebelah/bawah tombol itu, bukan lagi "lepas" di tempat lain terutama
+   saat toolbar wrap ke baris ke-2 di layar sempit. Dibuka/ditutup
+   lewat opacity+scale (BUKAN animasi tinggi/max-height) supaya tidak
+   ada sisa garis border yang kelihatan pas kondisi tertutup. ================================================================ */
+.bd-search-wrap,.bd-date-wrap{
+  position:absolute;top:calc(100% + 8px);right:0;z-index:6;
+  background:var(--card);border:1px solid var(--line);border-radius:14px;
+  box-shadow:0 14px 28px -10px rgba(15,23,42,0.22);
+  opacity:0;transform:translateY(-6px) scale(0.98);
+  pointer-events:none;transform-origin:top right;
+  transition:opacity .16s ease, transform .16s ease;
+}
+.bd-search-wrap.open,.bd-date-wrap.open{
+  opacity:1;transform:translateY(0) scale(1);pointer-events:auto;
+}
+.bd-search-wrap{
+  width:min(320px, calc(100vw - 32px));padding:0;
+}
+.bd-search-wrap input[type="search"]{width:100%;height:44px;border:none;border-radius:14px;background:transparent;}
+.bd-search-wrap input[type="search"]:focus{outline:none;}
+.bd-search-wrap .search-ic{left:14px;}
+.bd-search-wrap input[type="search"]{padding-left:38px;}
 .bd-date-wrap{
-  overflow:hidden;max-height:0;opacity:0;margin-bottom:0;
-  transition:max-height .22s ease, opacity .18s ease, margin-bottom .22s ease;
+  width:min(340px, calc(100vw - 32px));padding:14px;
 }
-.bd-date-wrap.open{max-height:110px;opacity:1;margin-bottom:14px;}
-.bd-date-row{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px;}
+@media (max-width:640px){
+  .bd-search-wrap,.bd-date-wrap{width:min(300px, calc(100vw - 24px));}
+}
 .bd-date-field{display:flex;flex-direction:column;gap:5px;flex:1;min-width:130px;}
 .bd-date-field span{font-size:10.5px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em;}
 .bd-date-field input[type="date"]{
@@ -5428,7 +5455,6 @@ tbody tr.date-group-row:first-child td{border-top:none;}
 .bd-date-reset:hover{background:#fff;color:var(--ink);border-color:rgba(15,23,42,0.16);}
 .bd-date-hint{font-size:10.5px;color:var(--ink-faint);margin-top:7px;line-height:1.4;}
 @media (max-width:640px){
-  .bd-date-wrap.open{margin-bottom:10px;max-height:130px;}
   .bd-date-row{gap:8px;}
   .bd-date-field{min-width:110px;}
   .bd-date-field input[type="date"]{padding:7px 9px;font-size:12.5px;}
@@ -6694,7 +6720,7 @@ body.is-scrolling *{
       </button>
       <div class="notif-wrap">
         <button class="notif-btn" id="miniNotifBtn" type="button" title="Tagihan &amp; Hutang" aria-label="Lihat tagihan dan hutang">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="11" height="9" rx="1.4"/><path d="M5 3v3.5M10 3v3.5M2 8.3h11"/><path d="M10 6.3a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v14.7l-1.6-1.1l-1.6 1.1l-1.6-1.1l-1.6 1.1l-1.6-1.1l-1.6 1.1z"/><path d="M13.3 16.3h4"/><text x="14" y="12.6" font-size="6.6" font-weight="700" fill="currentColor" stroke="none" font-family="Arial, Helvetica, sans-serif">$</text></svg>
           <span class="notif-badge" id="miniNotifBadge" style="display:none;">0</span>
         </button>
       </div>
@@ -6783,7 +6809,7 @@ body.is-scrolling *{
         </button>
         <div class="notif-wrap">
           <button class="notif-btn" id="notifBtn" type="button" title="Tagihan &amp; Hutang" aria-label="Lihat tagihan dan hutang">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="11" height="9" rx="1.4"/><path d="M5 3v3.5M10 3v3.5M2 8.3h11"/><path d="M10 6.3a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v14.7l-1.6-1.1l-1.6 1.1l-1.6-1.1l-1.6 1.1l-1.6-1.1l-1.6 1.1z"/><path d="M13.3 16.3h4"/><text x="14" y="12.6" font-size="6.6" font-weight="700" fill="currentColor" stroke="none" font-family="Arial, Helvetica, sans-serif">$</text></svg>
             <span class="notif-badge" id="notifBadge" style="display:none;">0</span>
           </button>
         </div>
@@ -7592,49 +7618,60 @@ body.is-scrolling *{
            punya catatan sama sekali. -->
       <div class="bd-notes-row" id="bdAllNotes"></div>
 
-      <div class="bd-toolbar">
+      <div class="bd-toolbar" id="bdToolbar">
         <div class="tabs" id="bdAllTabs">
           <button class="tab-btn active" data-bdtab="semua">Semua</button>
           <button class="tab-btn" data-bdtab="tagihan">Tagihan</button>
           <button class="tab-btn" data-bdtab="hutang">Hutang</button>
           <button class="tab-btn" data-bdtab="catatan">Catatan</button>
         </div>
-        <div class="bd-toolbar-actions">
-          <button type="button" class="bd-icon-btn" id="bdSearchToggleBtn" aria-label="Cari tagihan/hutang" title="Cari">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-          </button>
+        <div class="bd-toolbar-actions" id="bdToolbarActions">
           <button type="button" class="bd-icon-btn" id="bdDateToggleBtn" aria-label="Filter berdasarkan tanggal" title="Filter tanggal">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3.5" y="4.5" width="17" height="16" rx="2.2"/><path d="M8 3v3.5M16 3v3.5M3.5 9.5h17"/></svg>
           </button>
           <button type="button" class="bd-icon-btn" id="bdDownloadBtn" aria-label="Unduh data tagihan/hutang" title="Unduh sebagai CSV">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0-4.5-4.5M12 15l4.5-4.5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
           </button>
+          <button type="button" class="bd-icon-btn" id="bdSearchToggleBtn" aria-label="Cari tagihan/hutang" title="Cari">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          </button>
+
+          <!-- ---- Panel Cari & panel Filter Tanggal SEKARANG jadi anak
+               LANGSUNG dari .bd-toolbar-actions (dulu: kolom cari ada di
+               .bd-toolbar tapi turun ke baris baru; panel tanggal malah ada
+               jauh di .bd-page-body-rest) -- supaya keduanya bisa
+               diposisikan "position:absolute" MENEMPEL PERSIS DI BAWAH
+               kelompok tombolnya sendiri (.bd-toolbar-actions diberi
+               position:relative sebagai jangkar). Hasilnya: begitu tombol
+               Cari/Tanggal diklik, panelnya selalu muncul tepat di sebelah/
+               bawah tombol itu sendiri, bukan lagi di tempat lain (dulu
+               posisinya "lepas" dari tombol pas toolbar wrap ke 2 baris
+               di HP). Lihat CSS .bd-search-wrap & .bd-date-wrap. ---- -->
+          <div class="field-inline bd-search-wrap" id="bdSearchWrap">
+            <span class="search-ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span>
+            <input type="search" id="bdAllSearchInput" placeholder="Cari nama tagihan / hutang...">
+          </div>
+
+          <div class="bd-date-wrap" id="bdDateWrap">
+            <div class="bd-date-row">
+              <label class="bd-date-field">
+                <span>Dari tanggal</span>
+                <input type="date" id="bdDateFromInput">
+              </label>
+              <label class="bd-date-field">
+                <span>Sampai tanggal</span>
+                <input type="date" id="bdDateToInput">
+              </label>
+              <button type="button" class="bd-date-reset" id="bdDateResetBtn">Reset</button>
+            </div>
+            <p class="bd-date-hint">Menyaring berdasarkan tanggal jatuh tempo (item aktif) atau tanggal lunas (item yang sudah dibayar).</p>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
   <div class="detail-page bd-page-body bd-page-body-rest">
-    <div class="field-inline bd-search-wrap" id="bdSearchWrap">
-      <span class="search-ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span>
-      <input type="search" id="bdAllSearchInput" placeholder="Cari nama tagihan / hutang...">
-    </div>
-
-    <div class="bd-date-wrap" id="bdDateWrap">
-      <div class="bd-date-row">
-        <label class="bd-date-field">
-          <span>Dari tanggal</span>
-          <input type="date" id="bdDateFromInput">
-        </label>
-        <label class="bd-date-field">
-          <span>Sampai tanggal</span>
-          <input type="date" id="bdDateToInput">
-        </label>
-        <button type="button" class="bd-date-reset" id="bdDateResetBtn">Reset</button>
-      </div>
-      <p class="bd-date-hint">Menyaring berdasarkan tanggal jatuh tempo (item aktif) atau tanggal lunas (item yang sudah dibayar).</p>
-    </div>
-
     <div class="bd-list" id="bdAllList"></div>
   </div>
 </div>
