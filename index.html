@@ -5299,22 +5299,24 @@ tbody tr.date-group-row:first-child td{border-top:none;}
   }
   /* Halaman Tagihan & Hutang punya tombol FAB "+ Tambah" tambahan yang
      melayang di atas nav bawah, jadi butuh jarak bawah ekstra lagi
-     supaya item terakhir daftar tidak ketutup tombol itu juga.
-     Padding ini HANYA untuk blok bawah (.bd-page-body-rest, berisi
-     pencarian/filter/daftar) -- blok atas (.bd-page-body-head, di
-     dalam .bd-sticky-head) sengaja di-nol-kan supaya tidak ikut
-     kebawa jadi jarak kosong raksasa di dalam header yang menempel. */
+     supaya item terakhir daftar tidak ketutup tombol itu juga. */
   #bdAllOverlay .bd-page-body-rest{
     padding-bottom:calc(72px + 14px + 52px + 16px + env(safe-area-inset-bottom));
   }
-  #bdAllOverlay .bd-page-body-head{
-    padding-bottom:14px;
-  }
-  /* Rapatkan semua halaman overlay ke pinggir layar di HP -- padding
-     kiri/kanan/atas bawaan (24px/22px) dibuat sama sempit dengan
-     kontainer halaman utama (.app, 12-14px di breakpoint yang sama)
-     supaya tidak ada gang kosong lebar di kiri-kanan konten, dan
-     jaraknya konsisten dengan halaman lain. */
+  /* CATATAN PERBAIKAN: dulu di sini ADA JUGA baris
+     "#bdAllOverlay .bd-page-body-head{padding-bottom:14px;}" untuk kasih
+     jarak ekstra ke tab (Semua/Tagihan/Hutang/Catatan) yang sticky di
+     puncak layar pas discroll. Tapi karena aturan itu ditulis di dalam
+     @media sedangkan ADA aturan lain dengan selector sama persis tanpa
+     @media di bawah file ini (lihat "#bdAllOverlay .bd-page-body-head"
+     dekat .bd-list) yang urutannya lebih akhir, browser selalu memenangkan
+     aturan yang belakangan itu (spesifisitas sama -- soal urutan, BUKAN
+     soal @media) -- jadi 14px itu tidak pernah benar-benar kepakai di HP,
+     bikin jarak antara tab yang menempel & kartu pertama di bawahnya
+     kelihatan mepet/nyaris tidak ada begitu daftar discroll. Baris itu
+     dihapus dari sini (dead code) dan jaraknya sekarang diatur di SATU
+     tempat saja lewat padding-top pada .bd-page-body-rest (lihat dekat
+     .bd-list) supaya tidak tabrakan lagi & nilainya konsisten. */
   .detail-page-overlay .detail-page{
     padding-left:14px;padding-right:14px;padding-top:14px;
   }
@@ -5553,14 +5555,15 @@ tbody tr.date-group-row:first-child td{border-top:none;}
   .bd-date-row{gap:6px;}
 }
 /* ---- Jarak antara pil tab (Semua/Tagihan/Hutang/Catatan) dan kotak
-   kartu data di bawahnya dirapikan supaya pas -- dulu jaraknya kebesaran
-   (gabungan margin-bottom toolbar + padding-bottom besar bawaan
-   .detail-page + padding-top .bd-page-body-rest) karena dulu ada baris
-   tombol ikon Tanggal/Cari/Unduh yang mengisi ruang itu; sekarang
-   tombolnya sudah dihapus jadi jaraknya disatukan ke satu nilai kecil
-   & konsisten di semua ukuran layar. ---- */
+   kartu data di bawahnya. SATU-SATUNYA tempat yang mengatur jarak ini
+   (lihat catatan "PERBAIKAN" di blok @media(max-width:640px) di atas,
+   dekat .bd-fab-add) -- supaya tidak ada aturan lain dengan selector
+   sama yang diam-diam menimpa nilainya lagi. Nilainya sedikit ditambah
+   (16px -> 22px) supaya waktu daftar discroll dan tab-nya menempel
+   (sticky) di puncak layar, kartu pertama tidak kelihatan mepet/nyaris
+   menempel ke tab di atasnya. ---- */
 #bdAllOverlay .bd-page-body-head{padding-bottom:0;}
-#bdAllOverlay .bd-page-body-rest{padding-top:16px;}
+#bdAllOverlay .bd-page-body-rest{padding-top:22px;}
 .bd-list{display:grid;grid-template-columns:repeat(2,1fr);gap:11px;}
 @media (max-width:760px){.bd-list{grid-template-columns:1fr;}}
 @media (max-width:640px){.bd-list{gap:8px;}}
@@ -6130,7 +6133,19 @@ tbody tr.date-group-row:first-child td{border-top:none;}
     margin:0 -14px 0;
     padding:18px 18px 40px;
   }
-  .page-banner h1{margin:0;font-size:19px;font-weight:800;letter-spacing:.2px;}
+  /* PERBAIKAN: font judul ("Laporan"/"Dompet"/"Pengaturan") di sini
+     SEHARUSNYA sama persis dengan judul "Tagihan & Hutang" (ukuran,
+     tebal, jarak huruf -- lihat .bd-page-banner-title), dan sudah
+     ditulis sama nilainya di aturan .page-banner-title-center di bawah.
+     TAPI sebelumnya baris ini (".page-banner h1", selector gabungan
+     class+tag = lebih spesifik dari ".page-banner-title-center" yang
+     cuma 1 class) diam-diam SELALU menang dan menimpanya, jadi judul
+     3 halaman ini malah tampil lebih besar & lebih tebal (19px/800)
+     drpd "Tagihan & Hutang" (15px/700) walau HTML-nya sudah sama-sama
+     pakai class .page-banner-title-center. Sekarang cuma margin yang
+     diatur di sini -- ukuran/tebal/jarak huruf SEPENUHNYA diserahkan ke
+     .page-banner-title-center supaya keduanya dijamin selalu senada. */
+  .page-banner h1{margin:0;}
   .page-banner p{margin:4px 0 0;font-size:12.5px;color:rgba(255,248,241,0.85);}
   .page-body{
     position:relative;z-index:1;
@@ -6140,23 +6155,30 @@ tbody tr.date-group-row:first-child td{border-top:none;}
     padding:18px 0 4px;
   }
 
-  /* ---- Override khusus halaman Laporan (#page-laporan): dibuat KOSONG
-     TOTAL (mengikuti referensi gambar) dengan ukuran & perilaku banner
-     oranye + kartu putih yang disamakan PERSIS dengan halaman "Tagihan &
-     Hutang" (#bdAllOverlay / .bd-page-banner-simple / .bd-page-body),
-     bukan pakai ukuran template kecil default (.page-banner biasa) yang
-     masih dipakai Dompet/Saya. Konten asli (grafik/berita/riwayat) TIDAK
-     dihapus, cuma disembunyikan lewat #laporanHiddenContent supaya skrip
-     yang masih mengambil elemen di dalamnya tetap jalan tanpa error.
+  /* ---- Override khusus halaman Laporan/Dompet/Pengaturan (#page-laporan,
+     #page-dompet, #page-saya): dibuat KOSONG TOTAL (mengikuti referensi
+     gambar) dengan ukuran & perilaku banner oranye + kartu putih yang
+     disamakan PERSIS dengan halaman "Tagihan & Hutang" (#bdAllOverlay /
+     .bd-page-banner-simple / .bd-page-body) -- BUKAN lagi ukuran template
+     kecil default (.page-banner biasa yang punya judul+subjudul). Konten
+     asli tiap halaman (grafik/berita/riwayat utk Laporan, perangkat &
+     sosial media utk Dompet, akun utk Pengaturan) TIDAK dihapus, cuma
+     disembunyikan lewat #laporanHiddenContent / #dompetHiddenContent /
+     #sayaHiddenContent supaya skrip yang masih mengambil elemen di
+     dalamnya tetap jalan tanpa error. Ketiganya SENGAJA ditulis jadi satu
+     kelompok selector (bukan diulang 3x terpisah) supaya perilaku &
+     ukurannya tidak pernah "kegeser"/berbeda satu sama lain di kemudian
+     hari -- ini akar penyebab bug perpindahan menu yang terasa tidak
+     rapi/tidak konsisten antar halaman di versi sebelumnya.
 
-     CATATAN PERBAIKAN: pendekatan sebelumnya (flex:1 pada #page-laporan +
+     CATATAN PERBAIKAN: pendekatan sebelumnya (flex:1 pada halaman +
      :has() pada .app-main) TIDAK benar-benar mengisi layar -- kartu putih
      berhenti di tinggi kontennya sendiri lalu footer (logo ZAYAPRO, tombol
      Dashboard/Leaderboard/Widget, dst.) ikut kelihatan menyambung tepat di
      bawahnya, jadi halaman tidak terasa "kosong total" seperti halaman
      Tagihan & Hutang. #bdAllOverlay penuh 1 layar karena position:fixed
      inset:0 (lepas dari alur dokumen, otomatis 100% lebar+tinggi viewport)
-     -- jadi #page-laporan.active sekarang dibuat position:fixed inset:0
+     -- jadi ketiga halaman ini sekarang dibuat position:fixed inset:0
      dengan cara PERSIS SAMA (pakai var(--z-page) yang sama seperti overlay
      lain, MASIH di bawah nav bawah yang z-index:600 supaya nav tetap bisa
      dipakai untuk pindah tab lain). Dengan ini kartu putihnya otomatis
@@ -6168,30 +6190,39 @@ tbody tr.date-group-row:first-child td{border-top:none;}
   }
   .page-banner-title-center{
     margin:0;width:100%;text-align:center;
+    font-family:var(--font-body);color:#FFF8F1;
     font-size:15px;font-weight:700;letter-spacing:-0.005em;line-height:1.25;
   }
-  #page-laporan.active{
+  #page-laporan.active,
+  #page-dompet.active,
+  #page-saya.active{
     position:fixed;inset:0;z-index:var(--z-page);
     display:flex;flex-direction:column;
     background:#FFFFFF;
     margin:0;
     overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
   }
-  /* Banner Laporan sengaja TIDAK ikut memakai margin:0 -14px 0 dari
-     .page-banner biasa (yang gunanya menetralkan padding 14px kiri/kanan
-     .app) -- sebab #page-laporan.active sekarang position:fixed di luar
-     alur .app sepenuhnya, jadi sudah otomatis selebar layar; kalau margin
-     -14px itu masih ikut terpakai di sini malah membuat banner meleset
-     14px melewati tiap tepi layar. */
-  #page-laporan.active .page-banner{margin-left:0;margin-right:0;}
-  #page-laporan .page-body{
+  /* Banner sengaja TIDAK ikut memakai margin:0 -14px 0 dari .page-banner
+     biasa (yang gunanya menetralkan padding 14px kiri/kanan .app) --
+     sebab ketiga halaman ini sekarang position:fixed di luar alur .app
+     sepenuhnya, jadi sudah otomatis selebar layar; kalau margin -14px itu
+     masih ikut terpakai di sini malah membuat banner meleset 14px
+     melewati tiap tepi layar. */
+  #page-laporan.active .page-banner,
+  #page-dompet.active .page-banner,
+  #page-saya.active .page-banner{margin-left:0;margin-right:0;}
+  #page-laporan .page-body,
+  #page-dompet .page-body,
+  #page-saya .page-body{
     margin:-14px 0 0;
     padding-top:24px;
     border-radius:22px 22px 0 0;
     box-shadow:0 -13px 24px -9px rgba(242,103,43,0.38);
     flex:1;display:flex;flex-direction:column;
   }
-  #laporanHiddenContent{display:none;}
+  #laporanHiddenContent,
+  #dompetHiddenContent,
+  #sayaHiddenContent{display:none;}
 }
 /* ---- Rapikan header banner di HP ----
    Sebelumnya kolom tanggal+kurs (banner-date-col) ikut di-center
@@ -7401,11 +7432,17 @@ body.is-scrolling *{
 
   <!-- ===== HALAMAN: DOMPET ===== -->
   <div class="app-page" id="page-dompet" data-page="dompet">
-    <div class="page-banner">
-      <h1>Dompet</h1>
-      <p>Perangkat dan akun sosial media kamu</p>
+    <div class="page-banner page-banner-simple">
+      <h1 class="page-banner-title-center">Dompet</h1>
     </div>
     <div class="page-body">
+    <!-- ---- Sama seperti #laporanHiddenContent di halaman Laporan: konten
+         asli (Perangkat & Sosial Media) TIDAK dihapus, cuma disembunyikan
+         (display:none lewat #dompetHiddenContent, KHUSUS mode HP) supaya
+         semua fungsi JS yang masih mengambil elemen di dalamnya tetap
+         jalan tanpa error. Di tablet/desktop (>640px) konten ini tetap
+         tampil normal seperti biasa. ---- -->
+    <div id="dompetHiddenContent">
 
   <!-- ===== PERANGKAT & SOSIAL MEDIA ===== -->
   <section class="section-card" id="deviceSocialSection">
@@ -7448,16 +7485,23 @@ body.is-scrolling *{
   </section>
 
     </div>
+    </div>
   </div>
   <!-- ===== /HALAMAN: DOMPET ===== -->
 
   <!-- ===== HALAMAN: SAYA ===== -->
   <div class="app-page" id="page-saya" data-page="saya">
-    <div class="page-banner">
-      <h1 id="sayaAppName">Pengaturan</h1>
-      <p>Akun &amp; pengaturan aplikasi</p>
+    <div class="page-banner page-banner-simple">
+      <h1 class="page-banner-title-center" id="sayaAppName">Pengaturan</h1>
     </div>
     <div class="page-body">
+    <!-- ---- Sama seperti #laporanHiddenContent di halaman Laporan: konten
+         asli (Akun/Pengaturan) TIDAK dihapus, cuma disembunyikan
+         (display:none lewat #sayaHiddenContent, KHUSUS mode HP) supaya
+         semua fungsi JS yang masih mengambil elemen di dalamnya tetap
+         jalan tanpa error. Di tablet/desktop (>640px) konten ini tetap
+         tampil normal seperti biasa. ---- -->
+    <div id="sayaHiddenContent">
       <section class="section-card" id="sayaSection" style="margin-top:14px;">
         <div class="section-head">
           <h2>Akun</h2>
@@ -7474,6 +7518,7 @@ body.is-scrolling *{
           Keluar dari Akun
         </button>
       </section>
+    </div>
     </div>
   </div>
   <!-- ===== /HALAMAN: SAYA ===== -->
@@ -9103,6 +9148,26 @@ body.is-scrolling *{
   // langsung terasa responsif saat disentuh).
   var pageTransitioning = false;
 
+  // Halaman yang di mode HP (<=640px) dibuat "kosong total" posisinya
+  // position:fixed inset:0 (lihat CSS #page-laporan.active/#page-dompet.
+  // active/#page-saya.active) -- artinya elemen .app-page ITU SENDIRI
+  // yang jadi area scroll (overflow-y:auto), bukan cuma discroll lewat
+  // body/window seperti halaman lain (Beranda). Kalau tidak direset,
+  // begitu balik lagi ke tab yang sama, posisi scroll internalnya masih
+  // "nyangkut" di tempat terakhir kali ditinggalkan (mis. Pengaturan
+  // sempat discroll ke bawah lalu pindah ke Dompet lalu balik lagi ke
+  // Pengaturan -- halamannya muncul sudah dalam keadaan scroll ke bawah,
+  // BUKAN dari atas) -- inilah bug perpindahan menu-ke-menu yang terasa
+  // "patah"/tidak konsisten di semua ukuran perangkat. Direset ke 0
+  // setiap kali sebuah halaman BERHENTI aktif (bukan cuma yang baru
+  // dibuka) supaya baik halaman yang ditinggalkan maupun yang dituju
+  // sama-sama selalu mulai bersih dari atas.
+  var flatPages = ['laporan', 'dompet', 'saya'];
+  function resetFlatScroll(p){
+    if (flatPages.indexOf(p.dataset.page) === -1) return;
+    p.scrollTop = 0;
+  }
+
   function showPage(name){
     var target = pages.filter(function(p){ return p.dataset.page === name; })[0];
     if (!target) return;
@@ -9122,6 +9187,7 @@ body.is-scrolling *{
       // tanpa tab switching) ini scroll ke section halaman yang benar,
       // bukan selalu balik ke paling atas (Beranda).
       target.scrollIntoView({ behavior: 'auto', block: 'start' });
+      resetFlatScroll(target);
       return;
     }
 
@@ -9134,14 +9200,26 @@ body.is-scrolling *{
     //    transisinya aktif.
     pages.forEach(function(p){
       var isTarget = p.dataset.page === name;
+      var wasActive = p.classList.contains('active');
       p.classList.toggle('active', isTarget);
       if (isTarget) p.classList.add('page-enter');
+      // Reset scroll internal halaman yang BARU SAJA ditinggalkan (bukan
+      // cuma yang baru dibuka di bawah) supaya lain kali dibuka lagi
+      // selalu mulai dari atas -- lihat catatan panjang di resetFlatScroll.
+      if (wasActive && !isTarget) resetFlatScroll(p);
     });
     // scrollIntoView, bukan scrollTo(0,0) -- lihat catatan di atas:
     // di mode tab HP hasilnya sama saja (halaman baru = satu-satunya
     // yang tampil, jadi scroll ke atasnya = scroll ke atas layar),
     // tapi di desktop ini scroll ke section yang benar.
     target.scrollIntoView({ behavior: 'auto', block: 'start' });
+    // Halaman TUJUAN juga direset -- scrollIntoView di atas cuma
+    // menggeser scroll body/window (jendela browser), TIDAK menyentuh
+    // scroll internal .app-page yang position:fixed (area scroll-nya
+    // sendiri terpisah dari body). Tanpa baris ini, halaman tujuan bisa
+    // muncul sudah dalam posisi scroll turun kalau sebelumnya (mis. saat
+    // masih di layar lebar/desktop) sempat ikut scroll.
+    resetFlatScroll(target);
 
     // 2) Dua requestAnimationFrame (bukan satu) supaya browser benar-benar
     //    sudah selesai melukis frame dengan opacity:0 dulu, baru class
