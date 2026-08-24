@@ -4075,7 +4075,11 @@ body.density-compact .income-cards-group{gap:10px;}
 .tabs{
   display:flex;gap:4px;background:var(--card);padding:4px;border-radius:999px;
   width:fit-content;flex-wrap:wrap;max-width:100%;
-  border:1px solid var(--line);
+  /* Border pakai tint oranye tipis (bukan abu-abu netral var(--line))
+     supaya kotak tab ikut terasa "bertema" -- pola rgba(242,103,43,x)
+     ini yang sama dipakai border themed lain di app (mis. .bd-icon-btn,
+     .isc-shortcut-viewall). */
+  border:1px solid rgba(242,103,43,0.20);
   /* position:relative supaya .tab-indicator (kotak putih yang meluncur
      di belakang pil aktif) bisa diposisikan absolute relatif ke sini. */
   position:relative;
@@ -4091,7 +4095,7 @@ body.density-compact .income-cards-group{gap:10px;}
 .tab-indicator{
   position:absolute;top:4px;bottom:4px;left:0;width:0;
   background:var(--paper);border-radius:999px;
-  box-shadow:0 2px 6px rgba(15,23,42,0.08), inset 0 0 0 1px var(--line);
+  box-shadow:0 2px 6px rgba(15,23,42,0.08), inset 0 0 0 1px rgba(242,103,43,0.20);
   transition:transform .32s cubic-bezier(.34,1.15,.34,1), width .32s cubic-bezier(.34,1.15,.34,1), opacity .15s ease;
   opacity:0;pointer-events:none;z-index:0;
 }

@@ -7737,7 +7737,7 @@ function dueLabel(dateStr) {
   const diff = daysUntil(dateStr);
   const formatted = new Date(dateStr + 'T00:00:00').toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
   if (diff < 0) return { text: `Terlambat ${Math.abs(diff)} hari · ${formatted}`, overdue: true, soon: false };
-  if (diff === 0) return { text: `Jatuh tempo hari ini · ${formatted}`, overdue: true, soon: false };
+  if (diff === 0) return { text: `Hari ini · ${formatted}`, overdue: true, soon: false };
   if (diff <= 3) return { text: `${diff} hari lagi · ${formatted}`, overdue: false, soon: true };
   return { text: formatted, overdue: false, soon: false };
 }
