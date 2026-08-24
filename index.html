@@ -5502,6 +5502,25 @@ tbody tr.date-group-row:first-child td{border-top:none;}
   transition:border-color .15s ease, transform .15s ease, box-shadow .15s ease, background .15s ease;
 }
 @media (max-width:640px){.bd-item{padding:11px 12px;border-radius:14px;gap:10px;}}
+/* Badge "Jatuh tempo ..." di kartu tagihan/hutang: di HP dipaksa tetap
+   SATU BARIS (tidak boleh membungkus jadi 2 baris di dalam pil merah/
+   kuningnya) -- font & padding pil dikecilkan secukupnya, dan titik
+   penanda bulatnya (::before) ikut dikecilkan supaya proporsional,
+   supaya teks selengkap "Jatuh tempo hari ini · 24 Agu 2026" tetap
+   pas dalam satu baris walau ruang kartu di HP sempit. */
+@media (max-width:640px){
+  .bd-item-body .due{font-size:9.5px;gap:3px;}
+  .bd-item-body .due::before{width:4px;height:4px;}
+  .bd-item-body .due.due-pill,.bd-item-body .due.due-soon{padding:2px 7px 2px 5px;}
+  /* Tombol aksi & ikon kategori ikut dikecilkan sedikit di HP supaya
+     lebih banyak ruang tersisa buat teks badge "Jatuh tempo ..." di
+     sampingnya, sehingga tetap muat satu baris tanpa membungkus. */
+  .bd-item-ic{width:34px;height:34px;border-radius:11px;}
+  .bd-item-ic svg{width:13px;height:13px;}
+  .bd-item-actions{gap:4px;}
+  .bd-item-actions button{width:25px;height:25px;border-radius:8px;}
+  .bd-item-actions button svg{width:12px;height:12px;}
+}
 .bd-item:hover{transform:translateY(-1px);border-color:rgba(37,99,235,0.25);box-shadow:0 8px 20px -10px rgba(15,23,42,0.2);}
 .bd-item.overdue{border-color:rgba(225,29,72,0.32);background:var(--card);}
 .bd-item.overdue:hover{border-color:rgba(225,29,72,0.5);}
@@ -5520,7 +5539,7 @@ tbody tr.date-group-row:first-child td{border-top:none;}
 .bd-item-body .nm .nm-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
 .bd-item-body .meta{display:flex;align-items:center;gap:7px;margin-top:4px;flex-wrap:wrap;}
 .bd-item-body .amt{font-family:'IBM Plex Mono',monospace;font-size:12.5px;font-weight:700;color:var(--ink-soft);}
-.bd-item-body .due{font-size:10.5px;color:var(--ink-faint);font-weight:700;display:inline-flex;align-items:center;gap:4px;}
+.bd-item-body .due{font-size:10.5px;color:var(--ink-faint);font-weight:700;display:inline-flex;align-items:center;gap:4px;white-space:nowrap;}
 .bd-item-body .due::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--ink-faint);flex-shrink:0;}
 .bd-item-body .due.due-pill{color:#fff;background:var(--wine);padding:2.5px 8px 2.5px 6px;border-radius:999px;}
 .bd-item-body .due.due-pill::before{background:#fff;}
