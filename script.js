@@ -7481,11 +7481,47 @@ document.getElementById('detailTargetForm').addEventListener('submit', (e) => {
 /* ==========================================================
    TABS & FILTER LISTENERS
 ========================================================== */
+/* ---- Animasi kotak putih yang "meluncur" (slide) ke pil tab yang
+   sedang aktif setiap kali salah satu pil (Semua/Tagihan/Hutang/
+   Catatan, atau Semua/Mingguan/Bulanan/Tahunan) diklik. Dipakai umum
+   untuk SEMUA wadah ".tabs" di halaman ini (id="tabs" & id="bdAllTabs")
+   -- cukup dikasih elemen container-nya, fungsi ini otomatis mencari
+   ".tab-indicator" & ".tab-btn.active" di dalamnya lalu memposisikan
+   ulang lewat transform/width (dianimasikan pakai transisi CSS di
+   index.html, bukan lewat JS, supaya tetap mulus 60fps). ---- */
+function updateTabIndicator(container) {
+  if (!container) return;
+  const indicator = container.querySelector('.tab-indicator');
+  const active = container.querySelector('.tab-btn.active');
+  if (!indicator || !active) return;
+  // Elemen tersembunyi (mis. halaman Tagihan & Hutang belum dibuka)
+  // punya offsetWidth 0 -- lewati dulu, nanti diukur ulang saat
+  // halamannya benar-benar tampil (lihat pemanggilan di openBdAllPage).
+  if (active.offsetWidth === 0) return;
+  const cRect = container.getBoundingClientRect();
+  const aRect = active.getBoundingClientRect();
+  indicator.style.width = aRect.width + 'px';
+  indicator.style.transform = `translateX(${aRect.left - cRect.left}px)`;
+  container.classList.add('tab-indicator-ready');
+}
+function updateAllTabIndicators() {
+  document.querySelectorAll('.tabs').forEach(updateTabIndicator);
+}
+// Reposisi ulang tiap window di-resize (mis. rotasi HP / lebar berubah)
+// -- didebounce ringan lewat requestAnimationFrame supaya tidak
+// dipanggil berlebihan saat resize sedang berlangsung.
+let _tabIndicatorRaf = null;
+window.addEventListener('resize', () => {
+  if (_tabIndicatorRaf) cancelAnimationFrame(_tabIndicatorRaf);
+  _tabIndicatorRaf = requestAnimationFrame(updateAllTabIndicators);
+});
+
 document.getElementById('tabs').addEventListener('click', (e) => {
   const btn = e.target.closest('.tab-btn');
   if (!btn) return;
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
+  updateTabIndicator(document.getElementById('tabs'));
   activeTab = btn.dataset.tab;
   resetHistoryPagination();
   renderRangePicker();
@@ -8179,6 +8215,7 @@ function openBdAllPage(initialTab) {
   document.body.style.overflow = 'hidden';
   window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
   renderBdAllPage();
+  updateTabIndicator(document.getElementById('bdAllTabs'));
   setBottomNavActive('tagihan');
 }
 function closeBdAllPage() {
@@ -8220,6 +8257,7 @@ document.getElementById('bdAllTabs').addEventListener('click', (e) => {
   if (!btn) return;
   bdAllTab = btn.dataset.bdtab;
   renderBdAllPage();
+  updateTabIndicator(document.getElementById('bdAllTabs'));
 });
 
 /* ---------- Tombol Cari / Cek data pertanggal / Download di toolbar ----------
@@ -8292,11 +8330,7 @@ bdDateToInput.addEventListener('change', () => {
   bdAllDateTo = bdDateToInput.value;
   renderBdAllPage();
 });
-bdDateResetBtn.addEventListener('click', () => {
-  bdAllDateFrom = ''; bdAllDateTo = '';
-  bdDateFromInput.value = ''; bdDateToInput.value = '';
-  renderBdAllPage();
-});
+bdDateResetBtn.addEventListener('click', closeBdDateRow);
 
 /* Unduh data tagihan/hutang yang SEDANG TAMPIL (mengikuti pil tab &
    filter cari/tanggal yang aktif saat tombol ini diklik) sebagai file
@@ -9191,6 +9225,12 @@ function init() {
   initAiChat();
   initBannerScrollFreeze();
   initMiniTopbar();
+  // Posisikan kotak indikator pil tab (Semua/Mingguan/dst) ke tombol
+  // aktif pertama kalinya. requestAnimationFrame dipakai supaya
+  // dijalankan setelah browser selesai satu siklus layout, jadi lebar
+  // tombol yang diukur sudah pasti akurat (bukan 0 karena belum sempat
+  // di-layout sama sekali).
+  requestAnimationFrame(updateAllTabIndicators);
 }
 
 init();

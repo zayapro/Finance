@@ -626,22 +626,26 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
 .notif-item-body{flex:1;min-width:0;}
 .notif-item-body .nm{font-size:13px;font-weight:700;color:var(--ink);display:flex;align-items:center;gap:6px;min-width:0;}
 .notif-item-body .nm .nm-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
-.notif-item-body .meta{display:flex;align-items:center;gap:7px;margin-top:4px;flex-wrap:wrap;}
+/* Sama seperti .bd-item-body .meta: kolom (Rp di atas, pil di bawah)
+   supaya pil "X hari lagi" & "Jatuh tempo hari ini" selalu di posisi
+   yang sama, dan pil dibatasi max-width:100% + boleh membungkus
+   supaya tidak pernah mendorong lebar popup di HP. */
+.notif-item-body .meta{display:flex;flex-direction:column;align-items:flex-start;gap:4px;margin-top:4px;min-width:0;}
 .notif-item-body .amt{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;color:var(--ink-soft);}
-.notif-item-body .due{font-size:10.5px;color:var(--ink-faint);font-weight:700;display:inline-flex;align-items:center;gap:4px;}
+.notif-item-body .due{font-size:10.5px;color:var(--ink-faint);font-weight:700;display:inline-flex;align-items:center;gap:4px;max-width:100%;box-sizing:border-box;white-space:nowrap;}
 .notif-item-body .due::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--ink-faint);flex-shrink:0;}
 .bill-recurring-row{
   display:flex;align-items:center;gap:9px;font-size:12.5px;font-weight:600;color:var(--ink-soft);
   background:var(--paper);border:1px solid var(--line);border-radius:11px;padding:11px 13px;margin:2px 0 16px;cursor:pointer;
 }
 .bill-recurring-row input{width:16px;height:16px;accent-color:var(--forest-glow);cursor:pointer;}
-.notif-item-body .due.due-soon{background:rgba(217,119,6,0.16);color:#B45309;padding:2.5px 8px 2.5px 6px;border-radius:999px;}
-.notif-item-body .due.due-soon::before{background:#D97706;}
+.notif-item-body .due.due-soon,.notif-item-body .due.due-pill{max-width:100%;box-sizing:border-box;white-space:normal;word-break:break-word;padding:2.5px 8px 2.5px 6px;border-radius:999px;}
+.notif-item-body .due.due-soon{background:rgba(217,119,6,0.16);color:#B45309;}
+.notif-item-body .due.due-soon::before{background:#D97706;flex-shrink:0;}
 .notif-item-body .due.due-pill{
   color:#fff;background:var(--wine);
-  padding:2.5px 8px 2.5px 6px;border-radius:999px;
 }
-.notif-item-body .due.due-pill::before{background:#fff;}
+.notif-item-body .due.due-pill::before{background:#fff;flex-shrink:0;}
 .notif-item-actions{display:flex;flex-direction:column;gap:5px;flex-shrink:0;}
 .notif-item-actions button{
   width:28px;height:28px;border-radius:9px;border:1px solid transparent;background:var(--paper);
@@ -4072,14 +4076,39 @@ body.density-compact .income-cards-group{gap:10px;}
   display:flex;gap:4px;background:var(--card);padding:4px;border-radius:999px;
   width:fit-content;flex-wrap:wrap;max-width:100%;
   border:1px solid var(--line);
+  /* position:relative supaya .tab-indicator (kotak putih yang meluncur
+     di belakang pil aktif) bisa diposisikan absolute relatif ke sini. */
+  position:relative;
+}
+/* ---- Kotak putih yang meluncur (slide) ke pil yang sedang aktif tiap
+   kali salah satu pil tab diklik -- posisi & lebarnya dihitung & di-
+   animasikan lewat JS (lihat updateTabIndicator() di script.js) dengan
+   transisi CSS transform/width, jadi perpindahannya terasa halus
+   (bukan cuma warna teks yang langsung "loncat" tanpa animasi seperti
+   sebelumnya). Disembunyikan (opacity:0) sampai JS sempat mengukur
+   posisi tombol aktif yang pertama supaya tidak kelihatan "menempel"
+   di pojok kiri sebelum posisinya benar. ---- */
+.tab-indicator{
+  position:absolute;top:4px;bottom:4px;left:0;width:0;
+  background:var(--paper);border-radius:999px;
+  box-shadow:0 2px 6px rgba(15,23,42,0.08), inset 0 0 0 1px var(--line);
+  transition:transform .32s cubic-bezier(.34,1.15,.34,1), width .32s cubic-bezier(.34,1.15,.34,1), opacity .15s ease;
+  opacity:0;pointer-events:none;z-index:0;
+}
+.tabs.tab-indicator-ready .tab-indicator{opacity:1;}
+@media (prefers-reduced-motion:reduce){
+  .tab-indicator{transition:opacity .15s ease;}
 }
 .tab-btn{
   border:none;background:transparent;padding:8px 16px;border-radius:999px;
   font-size:13.5px;font-weight:700;color:var(--ink-soft);
-  transition:all .15s ease;white-space:nowrap;
+  transition:color .15s ease;white-space:nowrap;
   /* Hilangkan kotak highlight abu-abu bawaan browser (terutama Android/
      Chrome) yang muncul sesaat saat tombol tab ini disentuh di HP. */
   touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+  /* Teks tombol harus tampil DI ATAS .tab-indicator yang meluncur di
+     belakangnya. */
+  position:relative;z-index:1;
 }
 .tab-btn.active{background:transparent;color:var(--primary);}
 #bdAllTabs .tab-btn{padding:6px 16px;}
@@ -5418,16 +5447,23 @@ tbody tr.date-group-row:first-child td{border-top:none;}
    dia bakal KALAH lawan display:flex-nya dan elemennya tetap kelihatan
    walau ada "hidden" -- ini pernah jadi bug: dua baris muncul
    bersamaan tumpang tindih walau baru satu tombol yang diklik). */
+/* ---- Kotak popup pencarian & popup kalender (tanggal) DISAMAKAN
+   persis ukuran/gaya luarnya: satu-satunya "kotak" yang kelihatan
+   adalah bungkus terluar (.bd-search-row / .bd-date-row) -- sama
+   background, border, radius, padding & tinggi minimalnya. Sebelumnya
+   popup kalender malah punya 2 kotak kecil terpisah (masing-masing
+   field tanggal punya border/background sendiri) sehingga tampak beda
+   & lebih "penuh" dibanding popup pencarian yang cuma 1 kotak. Sekarang
+   field tanggal dilebur jadi konten polos di dalam SATU kotak yang
+   sama, dipisah garis vertikal tipis saja (bukan kotak sendiri-sendiri). */
 .bd-search-row,.bd-date-row{
   display:flex;align-items:center;gap:8px;margin-top:10px;
   animation:bdRowIn .18s ease;
+  background:var(--paper);border:1px solid var(--line);border-radius:12px;
+  padding:8px 10px;position:relative;min-height:40px;
 }
 .bd-search-row[hidden],.bd-date-row[hidden]{display:none;}
 @keyframes bdRowIn{from{opacity:0;transform:translateY(-4px);}to{opacity:1;transform:translateY(0);}}
-.bd-search-row{
-  background:var(--paper);border:1px solid var(--line);border-radius:12px;
-  padding:8px 10px;position:relative;
-}
 .bd-search-row .search-ic{color:var(--ink-faint);flex-shrink:0;display:flex;}
 .bd-search-row input[type="search"]{
   flex:1;min-width:0;border:none;background:transparent;padding:2px 0;
@@ -5438,12 +5474,15 @@ tbody tr.date-group-row:first-child td{border-top:none;}
 }
 .bd-search-row input[type="search"]:focus{outline:none;}
 .bd-search-row input[type="search"]::-webkit-search-cancel-button{display:none;}
-.bd-date-row{flex-wrap:wrap;}
+.bd-date-row{flex-wrap:nowrap;}
 .bd-date-field{
-  flex:1;min-width:120px;display:flex;flex-direction:column;gap:3px;
-  background:var(--paper);border:1px solid var(--line);border-radius:12px;
-  padding:6px 10px;
+  flex:1;min-width:0;display:flex;flex-direction:column;gap:1px;
+  background:transparent;border:none;border-radius:0;padding:0;
 }
+/* Garis pemisah tipis antara field "Dari" & "Sampai" -- pengganti
+   kotak terpisah yang dulu dipakai tiap field, supaya kotak luarnya
+   tetap satu (sama seperti popup pencarian). */
+.bd-date-field + .bd-date-field{padding-left:10px;border-left:1px solid var(--line);}
 .bd-date-field span{font-size:10.5px;font-weight:700;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.02em;}
 .bd-date-field input[type="date"]{
   border:none;background:transparent;padding:0;color:var(--ink);width:100%;
@@ -5482,7 +5521,6 @@ tbody tr.date-group-row:first-child td{border-top:none;}
   }
   .bd-search-row,.bd-date-row{margin-top:8px;}
   .bd-date-row{gap:6px;}
-  .bd-date-field{min-width:0;padding:5px 8px;}
 }
 /* ---- Jarak antara pil tab (Semua/Tagihan/Hutang/Catatan) dan kotak
    kartu data di bawahnya dirapikan supaya pas -- dulu jaraknya kebesaran
@@ -5502,19 +5540,20 @@ tbody tr.date-group-row:first-child td{border-top:none;}
   transition:border-color .15s ease, transform .15s ease, box-shadow .15s ease, background .15s ease;
 }
 @media (max-width:640px){.bd-item{padding:11px 12px;border-radius:14px;gap:10px;}}
-/* Badge "Jatuh tempo ..." di kartu tagihan/hutang: di HP dipaksa tetap
-   SATU BARIS (tidak boleh membungkus jadi 2 baris di dalam pil merah/
-   kuningnya) -- font & padding pil dikecilkan secukupnya, dan titik
-   penanda bulatnya (::before) ikut dikecilkan supaya proporsional,
-   supaya teks selengkap "Jatuh tempo hari ini · 24 Agu 2026" tetap
-   pas dalam satu baris walau ruang kartu di HP sempit. */
+/* Badge "Jatuh tempo ..." di kartu tagihan/hutang: di HP font & padding
+   pil dikecilkan secukupnya, dan titik penanda bulatnya (::before) ikut
+   dikecilkan supaya proporsional. Pil ini SUDAH BOLEH membungkus jadi
+   2 baris kalau teksnya kepanjangan untuk layar sempit (lihat aturan
+   .bd-item-body .due.due-pill/.due-soon di atas) -- ini disengaja,
+   supaya pil tidak pernah mendorong lebar kartu/halaman melebihi layar
+   (yang sebelumnya bikin halaman "tidak responsive" di HP). */
 @media (max-width:640px){
   .bd-item-body .due{font-size:9.5px;gap:3px;}
   .bd-item-body .due::before{width:4px;height:4px;}
   .bd-item-body .due.due-pill,.bd-item-body .due.due-soon{padding:2px 7px 2px 5px;}
   /* Tombol aksi & ikon kategori ikut dikecilkan sedikit di HP supaya
      lebih banyak ruang tersisa buat teks badge "Jatuh tempo ..." di
-     sampingnya, sehingga tetap muat satu baris tanpa membungkus. */
+     bawahnya, mengurangi kemungkinan pil perlu membungkus 2 baris. */
   .bd-item-ic{width:34px;height:34px;border-radius:11px;}
   .bd-item-ic svg{width:13px;height:13px;}
   .bd-item-actions{gap:4px;}
@@ -5537,14 +5576,28 @@ tbody tr.date-group-row:first-child td{border-top:none;}
 .bd-item-body{flex:1;min-width:0;}
 .bd-item-body .nm{font-size:13.5px;font-weight:700;color:var(--ink);display:flex;align-items:center;gap:6px;min-width:0;}
 .bd-item-body .nm .nm-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
-.bd-item-body .meta{display:flex;align-items:center;gap:7px;margin-top:4px;flex-wrap:wrap;}
+/* ---- FIX responsive: dulu .meta pakai display:flex row + flex-wrap,
+   dan pil "Jatuh tempo ..."/"X hari lagi ..." dipaksa white-space:nowrap
+   tanpa batas lebar. Akibatnya di HP kalau teksnya panjang (mis. "Jatuh
+   tempo hari ini · 24 Agu 2026"), lebar pil itu melebihi lebar kartu dan
+   flex item tidak mau menyusut (min-width:auto bawaan flex), sehingga
+   mendorong seluruh halaman melebar horizontal (halaman jadi "tidak
+   responsive" / muncul scroll ke samping di HP).
+   Sekarang .meta jadi kolom (Rp di atas, pil di bawahnya) supaya:
+   1) pil "X hari lagi" posisinya selalu SAMA seperti pil
+      "Jatuh tempo hari ini" (di baris baru, di bawah nominal Rp).
+   2) pil dibatasi max-width:100% & boleh membungkus antar-baris
+      (bukan lagi dipaksa satu baris tanpa batas), jadi tidak akan
+      pernah mendorong lebar kartu/halaman di layar sempit lagi. ---- */
+.bd-item-body .meta{display:flex;flex-direction:column;align-items:flex-start;gap:4px;margin-top:4px;min-width:0;}
 .bd-item-body .amt{font-family:'IBM Plex Mono',monospace;font-size:12.5px;font-weight:700;color:var(--ink-soft);}
-.bd-item-body .due{font-size:10.5px;color:var(--ink-faint);font-weight:700;display:inline-flex;align-items:center;gap:4px;white-space:nowrap;}
+.bd-item-body .due{font-size:10.5px;color:var(--ink-faint);font-weight:700;display:inline-flex;align-items:center;gap:4px;white-space:nowrap;max-width:100%;box-sizing:border-box;}
 .bd-item-body .due::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--ink-faint);flex-shrink:0;}
-.bd-item-body .due.due-pill{color:#fff;background:var(--wine);padding:2.5px 8px 2.5px 6px;border-radius:999px;}
-.bd-item-body .due.due-pill::before{background:#fff;}
-.bd-item-body .due.due-soon{background:rgba(217,119,6,0.16);color:#B45309;padding:2.5px 8px 2.5px 6px;border-radius:999px;}
-.bd-item-body .due.due-soon::before{background:#D97706;}
+.bd-item-body .due.due-pill,.bd-item-body .due.due-soon{max-width:100%;box-sizing:border-box;white-space:normal;word-break:break-word;padding:2.5px 8px 2.5px 6px;border-radius:999px;}
+.bd-item-body .due.due-pill{color:#fff;background:var(--wine);}
+.bd-item-body .due.due-pill::before{background:#fff;flex-shrink:0;}
+.bd-item-body .due.due-soon{background:rgba(217,119,6,0.16);color:#B45309;}
+.bd-item-body .due.due-soon::before{background:#D97706;flex-shrink:0;}
 .bd-item-body .status-pill{font-size:10px;font-weight:800;padding:2.5px 9px;border-radius:999px;background:rgba(5,150,105,0.14);color:#047857;display:inline-flex;align-items:center;gap:4px;}
 .bd-item-body .status-pill::before{content:"✓";font-size:9px;}
 .bd-item-actions{display:flex;gap:6px;flex-shrink:0;}
@@ -7142,6 +7195,7 @@ body.is-scrolling *{
 
     <div class="tabs-sticky-wrap">
       <div class="tabs" id="tabs">
+        <span class="tab-indicator" aria-hidden="true"></span>
         <button class="tab-btn active" data-tab="semua">Semua</button>
         <button class="tab-btn" data-tab="mingguan">Mingguan</button>
         <button class="tab-btn" data-tab="bulanan">Bulanan</button>
@@ -7672,6 +7726,7 @@ body.is-scrolling *{
 
       <div class="bd-toolbar" id="bdToolbar">
         <div class="tabs" id="bdAllTabs">
+          <span class="tab-indicator" aria-hidden="true"></span>
           <button class="tab-btn active" data-bdtab="semua">Semua</button>
           <button class="tab-btn" data-bdtab="tagihan">Tagihan</button>
           <button class="tab-btn" data-bdtab="hutang">Hutang</button>
@@ -7720,7 +7775,7 @@ body.is-scrolling *{
           <span>Sampai</span>
           <input type="date" id="bdDateToInput">
         </label>
-        <button class="bd-row-close" id="bdDateResetBtn" type="button" title="Reset filter tanggal" aria-label="Reset filter tanggal">
+        <button class="bd-row-close" id="bdDateResetBtn" type="button" title="Tutup filter tanggal" aria-label="Tutup filter tanggal">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8"><path d="M6 6l12 12M18 6 6 18"/></svg>
         </button>
       </div>
