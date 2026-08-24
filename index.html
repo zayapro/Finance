@@ -6021,6 +6021,10 @@ tbody tr.date-group-row:first-child td{border-top:none;}
     font-family:inherit;font-size:11px;font-weight:700;color:#374151;
     letter-spacing:0.01em;line-height:1;
     -webkit-tap-highlight-color:transparent;
+    /* Hilangkan delay ±300ms yang biasa dipakai browser mobile untuk
+       menunggu kemungkinan double-tap (zoom) sebelum memproses tap
+       sebagai klik -- supaya nav terasa "instan" saat disentuh. */
+    touch-action:manipulation;
   }
   /* Ikon dibungkus PIL (kapsul melebar), bukan lingkaran penuh --
      meniru referensi (Chat/Panggilan/dsb): default transparan tanpa
@@ -6071,9 +6075,26 @@ tbody tr.date-group-row:first-child td{border-top:none;}
     box-shadow:0 0 0 2px #fff;
   }
 
-  /* Halaman per-tab: default tersembunyi, hanya .active yang tampil */
+  /* Halaman per-tab: default tersembunyi, hanya .active yang tampil.
+     Ditambah transisi fade+geser halus (bukan langsung "meloncat")
+     supaya perpindahan antar tab (Beranda/Laporan/Dompet/Saya) terasa
+     lancar. Class ".page-enter" dipasang SESAAT oleh JS (showPage)
+     sebelum halaman baru ditampilkan (opacity:0, sedikit turun),
+     lalu dilepas 1 frame kemudian supaya transisi opacity/transform
+     di bawah ini benar-benar "tertangkap" browser dan animasi jalan. */
   .app-page{display:none;}
-  .app-page.active{display:block;}
+  .app-page.active{
+    display:block;
+    opacity:1;transform:translateY(0);
+    transition:opacity .22s cubic-bezier(.22,.9,.3,1), transform .22s cubic-bezier(.22,.9,.3,1);
+  }
+  .app-page.active.page-enter{
+    opacity:0;transform:translateY(10px);
+    transition:none;
+  }
+  @media (prefers-reduced-motion:reduce){
+    .app-page.active{transition:none;}
+  }
 
   /* Template banner oranye kecil untuk halaman selain Beranda (Laporan/
      Dompet/Saya) — banner utama (.banner) yang besar dengan saldo cuma
@@ -9026,10 +9047,51 @@ body.is-scrolling *{
   var pages = Array.prototype.slice.call(document.querySelectorAll('.app-page'));
   var navBtns = Array.prototype.slice.call(document.querySelectorAll('#bottomNav .bn-item'));
 
+  // Cegah nav "nge-lag"/patah kalau user tap tab beberapa kali dengan
+  // cepat sebelum animasi perpindahan sebelumnya selesai -- ditandai
+  // lewat flag ini, bukan dengan mengunci tombol (supaya tombol tetap
+  // langsung terasa responsif saat disentuh).
+  var pageTransitioning = false;
+
   function showPage(name){
-    pages.forEach(function(p){ p.classList.toggle('active', p.dataset.page === name); });
+    var target = pages.filter(function(p){ return p.dataset.page === name; })[0];
+    if (!target) return;
+    var alreadyActive = target.classList.contains('active');
+
     navBtns.forEach(function(b){ b.classList.toggle('active', b.dataset.page === name); });
+
+    if (alreadyActive && !pageTransitioning) {
+      // Sudah di halaman ini (mis. tombol "Riwayat Transaksi" di Saya
+      // menuju Laporan yang mungkin sudah aktif) -- cukup scroll ke atas.
+      window.scrollTo({ top: 0, behavior: 'auto' });
+      return;
+    }
+
+    pageTransitioning = true;
+
+    // 1) Halaman lama langsung disembunyikan, halaman baru langsung
+    //    ditampilkan (display:block) TAPI dengan class "page-enter"
+    //    terpasang dulu (opacity:0, sedikit turun, transisi dimatikan)
+    //    supaya browser tidak sempat "meloncat" ke opacity:1 sebelum
+    //    transisinya aktif.
+    pages.forEach(function(p){
+      var isTarget = p.dataset.page === name;
+      p.classList.toggle('active', isTarget);
+      if (isTarget) p.classList.add('page-enter');
+    });
     window.scrollTo({ top: 0, behavior: 'auto' });
+
+    // 2) Dua requestAnimationFrame (bukan satu) supaya browser benar-benar
+    //    sudah selesai melukis frame dengan opacity:0 dulu, baru class
+    //    "page-enter" dilepas di frame berikutnya -- ini yang membuat
+    //    transisi opacity/transform di CSS benar-benar "tertangkap" dan
+    //    animasinya jalan mulus, bukan langsung final tanpa animasi.
+    requestAnimationFrame(function(){
+      requestAnimationFrame(function(){
+        target.classList.remove('page-enter');
+        setTimeout(function(){ pageTransitioning = false; }, 220);
+      });
+    });
   }
 
   navBtns.forEach(function(btn){
