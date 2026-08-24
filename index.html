@@ -1149,18 +1149,18 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 }
 .currency-toggle .ct-knob{
   position:absolute;top:3px;left:3px;
-  /* Lebar knob disamakan PERSIS dengan lebar slot 1 opsi (lihat
-     perhitungan .ct-opt di bawah: (74-6)/2 = 34px) supaya pill oranye
-     ini pas menutupi label aktifnya, tidak lebih lebar/sempit. Tinggi
-     dikurangi 1px (22px->21px) mengikuti track yang juga menyusut
-     (30px->28px), dan shadow-nya dihaluskan sedikit biar terasa lebih
-     "solid"/premium, bukan cuma bayangan tipis mengambang. */
-  width:34px;height:21px;border-radius:999px;
+  /* Lebar & tinggi knob dihitung dari ruang yang BENAR-BENAR tersisa
+     di dalam track (74x28 border-box, dikurangi border 1px keliling
+     & padding 3px keliling) supaya jarak knob ke tepi kapsul (border)
+     sama rata di keempat sisinya, bukan cuma pas di kiri/atas tapi
+     mepet di kanan/bawah. Lebar: (74 - 2*1border - 2*3padding)/2opsi
+     = 33px. Tinggi: 28 - 2*1border - 2*3padding = 20px. */
+  width:33px;height:20px;border-radius:999px;
   background:linear-gradient(140deg,var(--primary-light),var(--primary));
   box-shadow:0 2px 7px rgba(194,65,12,0.38);
   transition:transform .32s cubic-bezier(.34,1.56,.64,1);
 }
-.currency-toggle.usd .ct-knob{transform:translateX(34px);}
+.currency-toggle.usd .ct-knob{transform:translateX(33px);}
 .currency-toggle .ct-opt{
   position:relative;z-index:1;flex:1;text-align:center;
   font-size:10.5px;font-weight:800;letter-spacing:0.02em;
@@ -4100,18 +4100,13 @@ body.density-compact .income-cards-group{gap:10px;}
      juga oranye (var(--primary)) -- jadi pil aktif kelihatan jelas
      "menyala" tanpa perlu garis tepi di dalam. */
   background:rgba(242,103,43,0.14);border-radius:999px;
-  /* Border tipis solid (bukan cuma shadow blur) supaya tepi pil oranye
-     kelihatan rapi & tegas keliling penuh, termasuk saat pil aktifnya
-     ada di ujung kapsul (mis. tab "Catatan" paling kanan). Shadow-nya
-     dikecilkan blur-nya jadi cuma pemanis tipis di bawah, bukan sumber
-     utama "border" yang gampang kelihatan buram/berantakan. */
-  border:1px solid rgba(242,103,43,0.4);
+  /* Border oranye DIHAPUS -- tint background di atas sudah cukup buat
+     nunjukin pil aktif, tanpa garis tepi yang bisa kelihatan
+     buram/berantakan di sudut kapsul (mis. tab "Catatan" paling kanan). */
+  border:none;
   box-shadow:0 1px 3px rgba(242,103,43,0.12);
   transition:transform .32s cubic-bezier(.34,1.15,.34,1), width .32s cubic-bezier(.34,1.15,.34,1), opacity .15s ease;
   opacity:0;pointer-events:none;z-index:0;
-  /* Kompensasi lebar +2px karena border 1px di kiri+kanan supaya lebar
-     visualnya tetap presisi menutupi tombol aktif (width dihitung dari
-     offsetWidth tombol di JS, bukan termasuk border indikator ini). */
   box-sizing:border-box;
 }
 .tabs.tab-indicator-ready .tab-indicator{opacity:1;}
@@ -5533,6 +5528,10 @@ tbody tr.date-group-row:first-child td{border-top:none;}
     flex:1 1 auto;width:auto;min-width:0;
     overflow-x:hidden;gap:2px;padding:2px;
   }
+  /* Jarak pil aktif (.tab-indicator) ke tepi kapsul disamakan dgn
+     padding kapsul di lebar ini (2px, bukan 4px bawaan) -- supaya
+     pil tidak kelihatan "menjorok" tidak rata dari border pinggir. */
+  #bdAllTabs .tab-indicator{top:2px;bottom:2px;}
   #bdAllTabs .tab-btn{
     flex:1 1 0;width:auto;min-width:0;
     padding:5px 2px;font-size:10.5px;
