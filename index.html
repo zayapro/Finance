@@ -5360,22 +5360,36 @@ tbody tr.date-group-row:first-child td{border-top:none;}
    dan diberi latar solid + sedikit bayangan supaya kartu yang lewat di
    baliknya tidak tembus pandang / kelihatan tumpang tindih.
 
-   Di layar lebar (>900px) pil tab masih sebesar isinya (fit-content),
-   jadi grup tombol aksi (Cari/kaca pembesar, Cek data pertanggal/
-   kalender, Unduh) cukup ditaruh di kanan lewat margin-left:auto,
-   sebaris persis dengan pil tab.
-   Di layar <=900px, pil tab (#bdAllTabs) SUDAH dibuat grid lebar-penuh
-   (width:100%, lihat media query ".tabs{display:grid...}" di atas)
-   supaya ke-4 pilnya rata & mudah disentuh -- otomatis memenuhi satu
-   baris penuh. Karena itu .bd-toolbar dibuat BOLEH wrap (flex-wrap:wrap)
-   supaya grup tombol aksi jatuh rapi ke baris ke-2 TANPA memerlukan
-   scroll (cukup wrap vertikal biasa, bukan scroll samping) -- dan
-   margin-left:auto pada .bd-toolbar-actions membuatnya tetap nempel
-   RATA KANAN di baris keduanya itu, persis di bawah ujung kanan pil. */
+   SELALU satu baris (flex-wrap:nowrap) di SEMUA ukuran layar, supaya
+   3 tombol aksi (Cari, Cek data pertanggal, Download) betul-betul
+   "sejajar di samping pil", bukan turun ke baris sendiri. Supaya ini
+   muat di HP:
+   - Pil tab (#bdAllTabs) di-override supaya TIDAK ikut jadi grid
+     lebar-penuh (menimpa aturan umum ".tabs{display:grid...}" khusus
+     di bawah lebar 900px) -- balik ke bentuk pil compact aslinya
+     (lebar secukupnya isinya), lalu dikasih overflow-x:auto (dengan
+     scrollbar disembunyikan) supaya KALAU layarnya benar-benar sempit
+     sekali, yang geser cuma pil-nya sendiri secara halus, bukan
+     mendorong tombol aksi sampai terpotong/hilang dari layar.
+   - Grup tombol aksi (.bd-toolbar-actions) dikunci flex-shrink:0 +
+     margin-left:auto, jadi ukurannya tetap & selalu nempel penuh di
+     ujung kanan, menyesuaikan sisa ruang yang ada di samping pil. */
 .bd-toolbar{
-  display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 10px;margin-bottom:0;
+  display:flex;flex-wrap:nowrap;align-items:center;justify-content:space-between;gap:8px;margin-bottom:0;
   position:relative;
 }
+/* Override khusus #bdAllTabs (ID selector, jadi otomatis menang atas
+   aturan ".tabs{display:grid}" & "#bdAllTabs{grid-template-columns:...}"
+   di media query 900px meski ditulis lebih dulu di file -- lihat
+   catatan spesifisitas CSS). Baliknya jadi pil compact yang bisa
+   scroll SAMPING kalau ruang benar-benar tidak cukup. */
+#bdAllTabs{
+  display:flex;grid-template-columns:none;width:auto;flex:0 1 auto;
+  min-width:0;overflow-x:auto;-webkit-overflow-scrolling:touch;
+  scrollbar-width:none;-ms-overflow-style:none;
+}
+#bdAllTabs::-webkit-scrollbar{display:none;}
+#bdAllTabs .tab-btn{width:auto;flex-shrink:0;text-align:center;}
 .bd-toolbar-actions{
   display:flex;align-items:center;gap:6px;flex-shrink:0;margin-left:auto;
 }
@@ -5395,11 +5409,20 @@ tbody tr.date-group-row:first-child td{border-top:none;}
    ikon terkait diklik -- dengan sedikit animasi fade+slide (bdRowIn)
    supaya kemunculannya halus. Diletakkan di dalam .bd-page-body-head
    (ikut sticky bareng toolbar) supaya selalu kelihatan pas dibuka,
-   tidak perlu scroll turun dulu buat menemukannya. */
+   tidak perlu scroll turun dulu buat menemukannya.
+   PENTING: aturan "[hidden]{display:none}" di bawah WAJIB ada dan
+   ditulis SETELAH aturan display:flex ini -- kalau tidak, atribut
+   HTML "hidden" jadi tidak bertaring (keduanya sama-sama sengaja
+   ditulis pakai class selector sehingga spesifisitasnya SAMA persis
+   dengan aturan display:flex, jadi kalau tidak ditulis lebih akhir
+   dia bakal KALAH lawan display:flex-nya dan elemennya tetap kelihatan
+   walau ada "hidden" -- ini pernah jadi bug: dua baris muncul
+   bersamaan tumpang tindih walau baru satu tombol yang diklik). */
 .bd-search-row,.bd-date-row{
   display:flex;align-items:center;gap:8px;margin-top:10px;
   animation:bdRowIn .18s ease;
 }
+.bd-search-row[hidden],.bd-date-row[hidden]{display:none;}
 @keyframes bdRowIn{from{opacity:0;transform:translateY(-4px);}to{opacity:1;transform:translateY(0);}}
 .bd-search-row{
   background:var(--paper);border:1px solid var(--line);border-radius:12px;
@@ -5437,10 +5460,16 @@ tbody tr.date-group-row:first-child td{border-top:none;}
 }
 .bd-row-close:hover{color:var(--wine);border-color:rgba(225,29,72,0.35);background:rgba(225,29,72,0.06);}
 @media (max-width:640px){
-  .bd-toolbar{gap:6px;margin-bottom:0;}
+  .bd-toolbar{gap:5px;margin-bottom:0;}
   .bd-toolbar-actions{gap:4px;}
-  .bd-icon-btn{width:29px;height:29px;}
-  .bd-icon-btn svg{width:13px;height:13px;}
+  .bd-icon-btn{width:28px;height:28px;}
+  .bd-icon-btn svg{width:12.5px;height:12.5px;}
+  /* Di layar sangat sempit, pil dirapatkan lagi (padding & gap
+     dikecilkan sedikit lebih dari nilai umum #bdAllTabs .tab-btn di
+     media query 900px) supaya makin lapang buat 3 tombol aksi di
+     sampingnya sebelum pil-nya perlu discroll sendiri. */
+  #bdAllTabs{gap:3px;padding:3px;}
+  #bdAllTabs .tab-btn{padding:6px 10px;font-size:12px;}
   .bd-search-row,.bd-date-row{margin-top:8px;}
   .bd-date-row{gap:6px;}
   .bd-date-field{min-width:0;padding:5px 8px;}
