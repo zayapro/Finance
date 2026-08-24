@@ -6154,6 +6154,7 @@ tbody tr.date-group-row:first-child td{border-top:none;}
   }
   #page-laporan .page-body{
     margin-top:-14px;
+    padding-top:24px;
     border-radius:22px 22px 0 0;
     box-shadow:0 -13px 24px -9px rgba(242,103,43,0.38);
     flex:1;display:flex;flex-direction:column;
@@ -9077,10 +9078,18 @@ body.is-scrolling *{
 
     navBtns.forEach(function(b){ b.classList.toggle('active', b.dataset.page === name); });
 
-    if (alreadyActive && !pageTransitioning) {
-      // Sudah di halaman ini (mis. tombol "Riwayat Transaksi" di Saya
-      // menuju Laporan yang mungkin sudah aktif) -- cukup scroll ke atas.
-      window.scrollTo({ top: 0, behavior: 'auto' });
+    if (alreadyActive) {
+      // Sudah di halaman ini -- termasuk kalau animasi masuknya masih
+      // berjalan (pageTransitioning true): CUKUP di-skip, jangan
+      // diproses ulang. Sebelumnya syaratnya "alreadyActive &&
+      // !pageTransitioning", jadi tap cepat 2x pada tab yang sama
+      // SELAGI animasi sebelumnya masih jalan malah memicu ulang
+      // "page-enter" dari awal (opacity balik ke 0) -- flicker.
+      // scrollIntoView (bukan scrollTo window top) supaya di desktop
+      // (>640px, semua halaman tampil sekaligus jadi 1 halaman panjang,
+      // tanpa tab switching) ini scroll ke section halaman yang benar,
+      // bukan selalu balik ke paling atas (Beranda).
+      target.scrollIntoView({ behavior: 'auto', block: 'start' });
       return;
     }
 
@@ -9096,7 +9105,11 @@ body.is-scrolling *{
       p.classList.toggle('active', isTarget);
       if (isTarget) p.classList.add('page-enter');
     });
-    window.scrollTo({ top: 0, behavior: 'auto' });
+    // scrollIntoView, bukan scrollTo(0,0) -- lihat catatan di atas:
+    // di mode tab HP hasilnya sama saja (halaman baru = satu-satunya
+    // yang tampil, jadi scroll ke atasnya = scroll ke atas layar),
+    // tapi di desktop ini scroll ke section yang benar.
+    target.scrollIntoView({ behavior: 'auto', block: 'start' });
 
     // 2) Dua requestAnimationFrame (bukan satu) supaya browser benar-benar
     //    sudah selesai melukis frame dengan opacity:0 dulu, baru class
@@ -9157,7 +9170,6 @@ body.is-scrolling *{
   var historyBtn = document.getElementById('sayaHistoryBtn');
   if (historyBtn) historyBtn.addEventListener('click', function(){
     showPage('laporan');
-    navBtns.forEach(function(b){ b.classList.toggle('active', b.dataset.page === 'laporan'); });
   });
 
   var logoutBtn = document.getElementById('sayaLogoutBtn');
