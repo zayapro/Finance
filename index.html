@@ -4361,11 +4361,6 @@ tbody tr:last-child td{border-bottom:none;}
 .empty-state svg{margin-bottom:10px;opacity:.6;}
 .empty-state p{font-size:14px;}
 
-/* Kartu kosong khusus halaman Laporan (sementara, sebelum fitur aktif) --
-   dibuat senada dengan gaya empty-state di halaman Tagihan & Hutang. */
-.laporan-empty-card{display:flex;align-items:center;justify-content:center;min-height:280px;}
-.laporan-empty-card .empty-state p{line-height:1.5;}
-
 /* ============ HEADER "RIWAYAT TRANSAKSI" (versi pro) ============
    Redesain: judul memakai FONT YANG SAMA PERSIS dengan label kartu
    "Saldo Bank & E-Wallet" (lihat .stat-card .label di atas: Plus
@@ -6100,6 +6095,30 @@ tbody tr.date-group-row:first-child td{border-top:none;}
     border-radius:20px 20px 0 0;
     padding:18px 0 4px;
   }
+
+  /* ---- Override khusus halaman Laporan (#page-laporan): dibuat KOSONG
+     (mengikuti referensi gambar) dengan ukuran banner+kartu putih yang
+     disamakan PERSIS dengan halaman "Tagihan & Hutang" (.bd-page-banner-simple
+     / .bd-page-body di atas), bukan pakai ukuran template kecil default
+     (.page-banner biasa) yang masih dipakai Dompet/Saya. Konten asli
+     (grafik/berita/riwayat) TIDAK dihapus, cuma disembunyikan lewat
+     #laporanHiddenContent supaya skrip yang masih mengambil elemen di
+     dalamnya tetap jalan tanpa error. ---- */
+  .page-banner.page-banner-simple{
+    display:flex;align-items:center;justify-content:center;
+    padding:30px 14px 44px;
+  }
+  .page-banner-title-center{
+    margin:0;width:100%;text-align:center;
+    font-size:15px;font-weight:700;letter-spacing:-0.005em;line-height:1.25;
+  }
+  #page-laporan .page-body{
+    margin-top:-14px;
+    border-radius:22px 22px 0 0;
+    box-shadow:0 -13px 24px -9px rgba(242,103,43,0.38);
+    min-height:160px;
+  }
+  #laporanHiddenContent{display:none;}
 }
 /* ---- Rapikan header banner di HP ----
    Sebelumnya kolom tanggal+kurs (banner-date-col) ikut di-center
@@ -7122,29 +7141,16 @@ body.is-scrolling *{
 
   <!-- ===== HALAMAN: LAPORAN ===== -->
   <div class="app-page" id="page-laporan" data-page="laporan">
-    <div class="page-banner">
-      <h1>Laporan</h1>
-      <p>Grafik, komposisi, dan riwayat transaksimu</p>
+    <div class="page-banner page-banner-simple">
+      <h1 class="page-banner-title-center">Laporan</h1>
     </div>
     <div class="page-body">
-
-  <!-- ===== LAPORAN: KOSONG SEMENTARA =====
-       Halaman ini sengaja dikosongkan dulu (data & grafik belum aktif),
-       tampilannya dibuat senada dengan gaya empty-state di halaman
-       Tagihan & Hutang (kartu section-card + ikon bulat + teks pendek).
-       Konten lama (grafik/berita/riwayat) di bawah TIDAK dihapus dari
-       HTML -- cuma disembunyikan lewat wrapper #laporanDataWrap supaya
-       semua kode JS yang masih mengambil elemennya (getElementById)
-       tetap jalan tanpa error, tinggal hapus "display:none" di wrapper
-       itu nanti kalau fitur laporan sudah siap diaktifkan lagi. -->
-  <section class="section-card laporan-empty-card">
-    <div class="empty-state">
-      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 12h18"/></svg>
-      <p>Laporan belum tersedia.<br>Data akan tampil di sini begitu fitur ini aktif.</p>
-    </div>
-  </section>
-
-  <div id="laporanDataWrap" style="display:none;">
+    <!-- ---- Konten asli (grafik/berita/riwayat) SENGAJA tidak dihapus,
+         cuma disembunyikan (display:none lewat #laporanHiddenContent di
+         CSS) supaya semua fungsi JS yang masih mengambil elemen di
+         dalamnya (getElementById dsb.) tetap jalan tanpa error, walau
+         halaman ini tampil kosong seperti referensi gambar. ---- -->
+    <div id="laporanHiddenContent">
 
   <!-- ===== CHARTS ===== -->
   <div class="charts-grid">
@@ -7304,8 +7310,7 @@ body.is-scrolling *{
     </div>
   </section>
 
-  </div>
-
+    </div>
     </div>
   </div>
   <!-- ===== /HALAMAN: LAPORAN ===== -->
