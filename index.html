@@ -5165,17 +5165,15 @@ tbody tr.date-group-row:first-child td{border-top:none;}
      supaya tidak terjadi tumpukan efek kartu dua kali. ================================================================ */
 .bd-sticky-head{
   position:sticky;top:0;z-index:6;
-  /* PENTING (fix "putus"/patah pas discroll): sebelumnya blok ini
-     TIDAK punya box-shadow sama sekali, padahal padding bawahnya
-     sengaja dinolkan (lihat #bdAllOverlay .bd-page-body-head di
-     bawah) supaya toolbar (tombol Cari/Tanggal/Unduh) mepet ke tepi
-     bawah header sticky. Akibatnya begitu daftar tagihan/hutang
-     discroll naik, tepinya langsung "menabrak" persis di batas
-     tombol ikon tanpa peralihan apa pun -- kelihatan seperti
-     terpotong tiba-tiba. Bayangan lembut di sini (sama polanya dgn
-     .mini-topbar) memberi kesan "melayang di atas" konten yang
-     lewat di baliknya, jadi transisinya mulus, bukan putus. */
-  box-shadow:0 10px 18px -10px rgba(15,23,42,0.16);
+  /* Sebelumnya ada box-shadow abu-gelap netral (rgba(15,23,42,...)) di
+     sini untuk menandai batas bawah header sticky supaya tidak
+     "menabrak" tiba-tiba pas discroll. Sekarang setelah latar halaman
+     ini (#bdAllOverlay) dibuat gradasi oranye penuh menyatu dengan
+     banner beranda, shadow abu-gelap itu malah jadi kelihatan sebagai
+     GARIS PEMBATAS yang mencolok di atas warna oranye/krem-nya --
+     jadi dihapus di sini supaya transisinya menyatu mulus lagi
+     (background di head & di daftar bawahnya sama-sama var(--card-fade-bg),
+     jadi tanpa shadow pun sambungannya sudah rata tanpa "patah"). */
 }
 .bd-page-body.bd-page-body-rest{margin-top:0;border-radius:0;box-shadow:none;padding-top:14px;}
 @media (max-width:640px){
@@ -5404,18 +5402,12 @@ tbody tr.date-group-row:first-child td{border-top:none;}
   .bd-icon-btn{width:34px;height:34px;border-radius:10px;}
 }
 /* ================================================================
-   Panel Cari & panel Filter Tanggal: DULU masing-masing punya
-   perilaku beda-beda (kolom cari nge-push konten turun di bawah
-   toolbar, panel tanggal malah ada jauh di blok terpisah). Sekarang
-   KEDUANYA jadi panel MENGAMBANG (position:absolute) yang menempel
-   PERSIS di bawah kelompok tombol ikonnya sendiri (.bd-toolbar-actions
-   yang sudah diberi position:relative sebagai jangkar) -- jadi begitu
-   tombol Cari atau Tanggal diklik, panelnya konsisten muncul tepat di
-   sebelah/bawah tombol itu, bukan lagi "lepas" di tempat lain terutama
-   saat toolbar wrap ke baris ke-2 di layar sempit. Dibuka/ditutup
-   lewat opacity+scale (BUKAN animasi tinggi/max-height) supaya tidak
-   ada sisa garis border yang kelihatan pas kondisi tertutup. ================================================================ */
-.bd-search-wrap,.bd-date-wrap{
+   Panel Filter Tanggal: tetap MENGAMBANG (position:absolute) menempel
+   di bawah kelompok tombol ikon (.bd-toolbar-actions, position:relative
+   sebagai jangkar) -- lihat blok Panel Cari terpisah di bawah untuk
+   perilakunya sendiri (sekarang beda: nempel di SAMPING tombolnya,
+   bukan di bawah grup). ================================================================ */
+.bd-date-wrap{
   position:absolute;top:calc(100% + 8px);right:0;z-index:6;
   background:var(--card);border:1px solid var(--line);border-radius:14px;
   box-shadow:0 14px 28px -10px rgba(15,23,42,0.22);
@@ -5423,21 +5415,43 @@ tbody tr.date-group-row:first-child td{border-top:none;}
   pointer-events:none;transform-origin:top right;
   transition:opacity .16s ease, transform .16s ease;
 }
-.bd-search-wrap.open,.bd-date-wrap.open{
+.bd-date-wrap.open{
   opacity:1;transform:translateY(0) scale(1);pointer-events:auto;
 }
-.bd-search-wrap{
-  width:min(320px, calc(100vw - 32px));padding:0;
-}
-.bd-search-wrap input[type="search"]{width:100%;height:44px;border:none;border-radius:14px;background:transparent;}
-.bd-search-wrap input[type="search"]:focus{outline:none;}
-.bd-search-wrap .search-ic{left:14px;}
-.bd-search-wrap input[type="search"]{padding-left:38px;}
 .bd-date-wrap{
   width:min(340px, calc(100vw - 32px));padding:14px;
 }
 @media (max-width:640px){
-  .bd-search-wrap,.bd-date-wrap{width:min(300px, calc(100vw - 24px));}
+  .bd-date-wrap{width:min(300px, calc(100vw - 24px));}
+}
+/* ---- Tombol Cari dipindah ke SEBELAH tombol Tanggal/kalender (lihat
+   urutan di HTML: Tanggal, Cari, Unduh). Tombol + panel inputnya
+   dibungkus bareng dalam .bd-search-anchor (position:relative) supaya
+   panelnya SELALU menempel PERSIS di sebelah kanan tombol Cari itu
+   sendiri -- bukan lagi di bawah seluruh grup toolbar -- dan lebarnya
+   otomatis menyesuaikan sisa ruang layar (min(...) + calc(100vw...))
+   supaya tetap muat rapi di HP sekecil apapun. ---- */
+.bd-search-anchor{position:relative;flex-shrink:0;}
+.bd-search-wrap{
+  position:absolute;top:0;left:calc(100% + 8px);z-index:6;
+  height:36px;
+  background:var(--card);border:1px solid transparent;border-radius:11px;
+  box-shadow:none;
+  opacity:0;transform:translateX(-6px) scale(0.98);
+  pointer-events:none;transform-origin:left center;
+  transition:opacity .16s ease, transform .16s ease, border-color .16s ease, box-shadow .16s ease;
+  width:min(230px, calc(100vw - 150px));
+}
+.bd-search-wrap.open{
+  opacity:1;transform:translateX(0) scale(1);pointer-events:auto;
+  border-color:var(--line);
+  box-shadow:0 14px 28px -10px rgba(15,23,42,0.22);
+}
+.bd-search-wrap input[type="search"]{width:100%;height:100%;border:none;border-radius:11px;background:transparent;padding-left:38px;}
+.bd-search-wrap input[type="search"]:focus{outline:none;}
+.bd-search-wrap .search-ic{left:14px;}
+@media (max-width:640px){
+  .bd-search-wrap{width:min(190px, calc(100vw - 140px));height:34px;}
 }
 .bd-date-field{display:flex;flex-direction:column;gap:5px;flex:1;min-width:130px;}
 .bd-date-field span{font-size:10.5px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em;}
@@ -6720,7 +6734,7 @@ body.is-scrolling *{
       </button>
       <div class="notif-wrap">
         <button class="notif-btn" id="miniNotifBtn" type="button" title="Tagihan &amp; Hutang" aria-label="Lihat tagihan dan hutang">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="11" height="9" rx="1.4"/><path d="M5 3v3.5M10 3v3.5M2 8.3h11"/><path d="M10 6.3a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v14.7l-1.6-1.1l-1.6 1.1l-1.6-1.1l-1.6 1.1l-1.6-1.1l-1.6 1.1z"/><path d="M13.3 16.3h4"/><text x="14" y="12.6" font-size="6.6" font-weight="700" fill="currentColor" stroke="none" font-family="Arial, Helvetica, sans-serif">$</text></svg>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="11" height="9" rx="1.4"/><path d="M5 3v3.5M10 3v3.5M2 8.3h11"/><path d="M10 6.3a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v14.7l-1.6-1.1l-1.6 1.1l-1.6-1.1l-1.6 1.1l-1.6-1.1l-1.6 1.1z"/><path d="M13.3 16.3h4" stroke-width="1.6"/><text x="14" y="12.9" font-size="6.4" font-weight="700" fill="currentColor" stroke="none" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">$</text></svg>
           <span class="notif-badge" id="miniNotifBadge" style="display:none;">0</span>
         </button>
       </div>
@@ -6809,7 +6823,7 @@ body.is-scrolling *{
         </button>
         <div class="notif-wrap">
           <button class="notif-btn" id="notifBtn" type="button" title="Tagihan &amp; Hutang" aria-label="Lihat tagihan dan hutang">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="11" height="9" rx="1.4"/><path d="M5 3v3.5M10 3v3.5M2 8.3h11"/><path d="M10 6.3a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v14.7l-1.6-1.1l-1.6 1.1l-1.6-1.1l-1.6 1.1l-1.6-1.1l-1.6 1.1z"/><path d="M13.3 16.3h4"/><text x="14" y="12.6" font-size="6.6" font-weight="700" fill="currentColor" stroke="none" font-family="Arial, Helvetica, sans-serif">$</text></svg>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="11" height="9" rx="1.4"/><path d="M5 3v3.5M10 3v3.5M2 8.3h11"/><path d="M10 6.3a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v14.7l-1.6-1.1l-1.6 1.1l-1.6-1.1l-1.6 1.1l-1.6-1.1l-1.6 1.1z"/><path d="M13.3 16.3h4" stroke-width="1.6"/><text x="14" y="12.9" font-size="6.4" font-weight="700" fill="currentColor" stroke="none" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">$</text></svg>
             <span class="notif-badge" id="notifBadge" style="display:none;">0</span>
           </button>
         </div>
@@ -7629,29 +7643,33 @@ body.is-scrolling *{
           <button type="button" class="bd-icon-btn" id="bdDateToggleBtn" aria-label="Filter berdasarkan tanggal" title="Filter tanggal">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3.5" y="4.5" width="17" height="16" rx="2.2"/><path d="M8 3v3.5M16 3v3.5M3.5 9.5h17"/></svg>
           </button>
+
+          <!-- ---- Tombol Cari dipindah ke SEBELAH tombol Tanggal (posisi
+               sekarang: Tanggal, Cari, Unduh). Tombolnya dibungkus BARENG
+               panel inputnya dalam .bd-search-anchor (position:relative)
+               supaya panelnya SELALU menempel PERSIS di sebelah kanan
+               tombol Cari itu sendiri -- bukan lagi di bawah seluruh grup
+               toolbar seperti sebelumnya -- dan lebarnya otomatis
+               menyesuaikan sisa ruang layar (lihat .bd-search-wrap di
+               CSS). ---- -->
+          <div class="bd-search-anchor">
+            <button type="button" class="bd-icon-btn" id="bdSearchToggleBtn" aria-label="Cari tagihan/hutang" title="Cari">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+            </button>
+            <div class="field-inline bd-search-wrap" id="bdSearchWrap">
+              <span class="search-ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span>
+              <input type="search" id="bdAllSearchInput" placeholder="Cari nama tagihan / hutang...">
+            </div>
+          </div>
+
           <button type="button" class="bd-icon-btn" id="bdDownloadBtn" aria-label="Unduh data tagihan/hutang" title="Unduh sebagai CSV">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0-4.5-4.5M12 15l4.5-4.5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
           </button>
-          <button type="button" class="bd-icon-btn" id="bdSearchToggleBtn" aria-label="Cari tagihan/hutang" title="Cari">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-          </button>
 
-          <!-- ---- Panel Cari & panel Filter Tanggal SEKARANG jadi anak
-               LANGSUNG dari .bd-toolbar-actions (dulu: kolom cari ada di
-               .bd-toolbar tapi turun ke baris baru; panel tanggal malah ada
-               jauh di .bd-page-body-rest) -- supaya keduanya bisa
-               diposisikan "position:absolute" MENEMPEL PERSIS DI BAWAH
-               kelompok tombolnya sendiri (.bd-toolbar-actions diberi
-               position:relative sebagai jangkar). Hasilnya: begitu tombol
-               Cari/Tanggal diklik, panelnya selalu muncul tepat di sebelah/
-               bawah tombol itu sendiri, bukan lagi di tempat lain (dulu
-               posisinya "lepas" dari tombol pas toolbar wrap ke 2 baris
-               di HP). Lihat CSS .bd-search-wrap & .bd-date-wrap. ---- -->
-          <div class="field-inline bd-search-wrap" id="bdSearchWrap">
-            <span class="search-ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span>
-            <input type="search" id="bdAllSearchInput" placeholder="Cari nama tagihan / hutang...">
-          </div>
-
+          <!-- ---- Panel Filter Tanggal: tetap anak LANGSUNG dari
+               .bd-toolbar-actions (position:relative sebagai jangkar),
+               menempel di BAWAH kelompok tombol -- beda dari panel Cari
+               di atas yang sekarang nempel di SAMPING tombolnya sendiri. -->
           <div class="bd-date-wrap" id="bdDateWrap">
             <div class="bd-date-row">
               <label class="bd-date-field">
