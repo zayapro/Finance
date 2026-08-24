@@ -6112,11 +6112,24 @@ tbody tr.date-group-row:first-child td{border-top:none;}
     margin:0;width:100%;text-align:center;
     font-size:15px;font-weight:700;letter-spacing:-0.005em;line-height:1.25;
   }
+  /* Supaya kartu putih Laporan benar-benar mengisi sampai ke bawah layar
+     (persis seperti halaman "Tagihan & Hutang" yang berupa overlay
+     position:fixed inset:0 sehingga otomatis penuh 1 layar), #page-laporan
+     dan .app-main dibuat flex-column yang "meregang" (flex:1) mengisi
+     sisa tinggi viewport -- TAPI di-scope pakai :has() supaya cuma aktif
+     selagi tab Laporan yang terbuka, jadi tidak mengubah tinggi/posisi
+     footer di halaman Beranda/Catat/Dompet/Saya. */
+  html:has(#page-laporan.active) .app-main{
+    display:flex;flex-direction:column;flex:1;
+  }
+  #page-laporan.active{
+    display:flex;flex-direction:column;flex:1;min-height:0;
+  }
   #page-laporan .page-body{
     margin-top:-14px;
     border-radius:22px 22px 0 0;
     box-shadow:0 -13px 24px -9px rgba(242,103,43,0.38);
-    min-height:160px;
+    flex:1;display:flex;flex-direction:column;
   }
   #laporanHiddenContent{display:none;}
 }
