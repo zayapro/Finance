@@ -639,13 +639,25 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
   background:var(--paper);border:1px solid var(--line);border-radius:11px;padding:11px 13px;margin:2px 0 16px;cursor:pointer;
 }
 .bill-recurring-row input{width:16px;height:16px;accent-color:var(--forest-glow);cursor:pointer;}
-.notif-item-body .due.due-soon,.notif-item-body .due.due-pill{max-width:100%;box-sizing:border-box;white-space:normal;word-break:break-word;padding:2.5px 8px 2.5px 6px;border-radius:999px;}
+.notif-item-body .due.due-soon,.notif-item-body .due.due-pill,.notif-item-body .due.due-today{max-width:100%;box-sizing:border-box;white-space:normal;word-break:break-word;padding:2.5px 8px 2.5px 6px;border-radius:999px;}
 .notif-item-body .due.due-soon{background:rgba(217,119,6,0.16);color:#B45309;}
 .notif-item-body .due.due-soon::before{background:#D97706;flex-shrink:0;}
 .notif-item-body .due.due-pill{
   color:#fff;background:var(--wine);
 }
 .notif-item-body .due.due-pill::before{background:#fff;flex-shrink:0;}
+/* Pil "Hari ini" dibedakan dari "Terlambat": oranye solid (lebih
+   mendesak dari pil "X hari lagi" yang cuma latar amber lembut,
+   tapi tetap beda dari merah wine yang dikhususkan untuk overdue). */
+.notif-item-body .due.due-today{color:#fff;background:#EA580C;}
+.notif-item-body .due.due-today::before{background:#fff;flex-shrink:0;}
+/* Konsisten dengan .bd-item-body .due di bawah: pil dikecilkan
+   secukupnya di layar sempit supaya rapi di semua ukuran perangkat. */
+@media (max-width:640px){
+  .notif-item-body .due{font-size:9.5px;gap:3px;}
+  .notif-item-body .due::before{width:4px;height:4px;}
+  .notif-item-body .due.due-pill,.notif-item-body .due.due-soon,.notif-item-body .due.due-today{padding:2px 7px 2px 5px;}
+}
 .notif-item-actions{display:flex;flex-direction:column;gap:5px;flex-shrink:0;}
 .notif-item-actions button{
   width:28px;height:28px;border-radius:9px;border:1px solid transparent;background:var(--paper);
@@ -5568,7 +5580,7 @@ tbody tr.date-group-row:first-child td{border-top:none;}
 @media (max-width:640px){
   .bd-item-body .due{font-size:9.5px;gap:3px;}
   .bd-item-body .due::before{width:4px;height:4px;}
-  .bd-item-body .due.due-pill,.bd-item-body .due.due-soon{padding:2px 7px 2px 5px;}
+  .bd-item-body .due.due-pill,.bd-item-body .due.due-soon,.bd-item-body .due.due-today{padding:2px 7px 2px 5px;}
   /* Tombol aksi & ikon kategori ikut dikecilkan sedikit di HP supaya
      lebih banyak ruang tersisa buat teks badge "Jatuh tempo ..." di
      bawahnya, mengurangi kemungkinan pil perlu membungkus 2 baris. */
@@ -5611,11 +5623,16 @@ tbody tr.date-group-row:first-child td{border-top:none;}
 .bd-item-body .amt{font-family:'IBM Plex Mono',monospace;font-size:12.5px;font-weight:700;color:var(--ink-soft);}
 .bd-item-body .due{font-size:10.5px;color:var(--ink-faint);font-weight:700;display:inline-flex;align-items:center;gap:4px;white-space:nowrap;max-width:100%;box-sizing:border-box;}
 .bd-item-body .due::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--ink-faint);flex-shrink:0;}
-.bd-item-body .due.due-pill,.bd-item-body .due.due-soon{max-width:100%;box-sizing:border-box;white-space:normal;word-break:break-word;padding:2.5px 8px 2.5px 6px;border-radius:999px;}
+.bd-item-body .due.due-pill,.bd-item-body .due.due-soon,.bd-item-body .due.due-today{max-width:100%;box-sizing:border-box;white-space:normal;word-break:break-word;padding:2.5px 8px 2.5px 6px;border-radius:999px;}
 .bd-item-body .due.due-pill{color:#fff;background:var(--wine);}
 .bd-item-body .due.due-pill::before{background:#fff;flex-shrink:0;}
 .bd-item-body .due.due-soon{background:rgba(217,119,6,0.16);color:#B45309;}
 .bd-item-body .due.due-soon::before{background:#D97706;flex-shrink:0;}
+/* Pil "Hari ini" dibedakan dari "Terlambat": oranye solid, lebih
+   mendesak dari pil amber "X hari lagi" tapi tidak semerah wine
+   (yang khusus dipakai untuk status overdue/terlambat). */
+.bd-item-body .due.due-today{color:#fff;background:#EA580C;}
+.bd-item-body .due.due-today::before{background:#fff;flex-shrink:0;}
 .bd-item-body .status-pill{font-size:10px;font-weight:800;padding:2.5px 9px;border-radius:999px;background:rgba(5,150,105,0.14);color:#047857;display:inline-flex;align-items:center;gap:4px;}
 .bd-item-body .status-pill::before{content:"✓";font-size:9px;}
 .bd-item-actions{display:flex;gap:6px;flex-shrink:0;}
@@ -6124,13 +6141,27 @@ tbody tr.date-group-row:first-child td{border-top:none;}
   }
 
   /* ---- Override khusus halaman Laporan (#page-laporan): dibuat KOSONG
-     (mengikuti referensi gambar) dengan ukuran banner+kartu putih yang
-     disamakan PERSIS dengan halaman "Tagihan & Hutang" (.bd-page-banner-simple
-     / .bd-page-body di atas), bukan pakai ukuran template kecil default
-     (.page-banner biasa) yang masih dipakai Dompet/Saya. Konten asli
-     (grafik/berita/riwayat) TIDAK dihapus, cuma disembunyikan lewat
-     #laporanHiddenContent supaya skrip yang masih mengambil elemen di
-     dalamnya tetap jalan tanpa error. ---- */
+     TOTAL (mengikuti referensi gambar) dengan ukuran & perilaku banner
+     oranye + kartu putih yang disamakan PERSIS dengan halaman "Tagihan &
+     Hutang" (#bdAllOverlay / .bd-page-banner-simple / .bd-page-body),
+     bukan pakai ukuran template kecil default (.page-banner biasa) yang
+     masih dipakai Dompet/Saya. Konten asli (grafik/berita/riwayat) TIDAK
+     dihapus, cuma disembunyikan lewat #laporanHiddenContent supaya skrip
+     yang masih mengambil elemen di dalamnya tetap jalan tanpa error.
+
+     CATATAN PERBAIKAN: pendekatan sebelumnya (flex:1 pada #page-laporan +
+     :has() pada .app-main) TIDAK benar-benar mengisi layar -- kartu putih
+     berhenti di tinggi kontennya sendiri lalu footer (logo ZAYAPRO, tombol
+     Dashboard/Leaderboard/Widget, dst.) ikut kelihatan menyambung tepat di
+     bawahnya, jadi halaman tidak terasa "kosong total" seperti halaman
+     Tagihan & Hutang. #bdAllOverlay penuh 1 layar karena position:fixed
+     inset:0 (lepas dari alur dokumen, otomatis 100% lebar+tinggi viewport)
+     -- jadi #page-laporan.active sekarang dibuat position:fixed inset:0
+     dengan cara PERSIS SAMA (pakai var(--z-page) yang sama seperti overlay
+     lain, MASIH di bawah nav bawah yang z-index:600 supaya nav tetap bisa
+     dipakai untuk pindah tab lain). Dengan ini kartu putihnya otomatis
+     penuh 1 layar & menutupi footer di belakangnya, tanpa perlu trik
+     flex-stretch yang rapuh. */
   .page-banner.page-banner-simple{
     display:flex;align-items:center;justify-content:center;
     padding:30px 14px 44px;
@@ -6139,21 +6170,22 @@ tbody tr.date-group-row:first-child td{border-top:none;}
     margin:0;width:100%;text-align:center;
     font-size:15px;font-weight:700;letter-spacing:-0.005em;line-height:1.25;
   }
-  /* Supaya kartu putih Laporan benar-benar mengisi sampai ke bawah layar
-     (persis seperti halaman "Tagihan & Hutang" yang berupa overlay
-     position:fixed inset:0 sehingga otomatis penuh 1 layar), #page-laporan
-     dan .app-main dibuat flex-column yang "meregang" (flex:1) mengisi
-     sisa tinggi viewport -- TAPI di-scope pakai :has() supaya cuma aktif
-     selagi tab Laporan yang terbuka, jadi tidak mengubah tinggi/posisi
-     footer di halaman Beranda/Catat/Dompet/Saya. */
-  html:has(#page-laporan.active) .app-main{
-    display:flex;flex-direction:column;flex:1;
-  }
   #page-laporan.active{
-    display:flex;flex-direction:column;flex:1;min-height:0;
+    position:fixed;inset:0;z-index:var(--z-page);
+    display:flex;flex-direction:column;
+    background:#FFFFFF;
+    margin:0;
+    overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
   }
+  /* Banner Laporan sengaja TIDAK ikut memakai margin:0 -14px 0 dari
+     .page-banner biasa (yang gunanya menetralkan padding 14px kiri/kanan
+     .app) -- sebab #page-laporan.active sekarang position:fixed di luar
+     alur .app sepenuhnya, jadi sudah otomatis selebar layar; kalau margin
+     -14px itu masih ikut terpakai di sini malah membuat banner meleset
+     14px melewati tiap tepi layar. */
+  #page-laporan.active .page-banner{margin-left:0;margin-right:0;}
   #page-laporan .page-body{
-    margin-top:-14px;
+    margin:-14px 0 0;
     padding-top:24px;
     border-radius:22px 22px 0 0;
     box-shadow:0 -13px 24px -9px rgba(242,103,43,0.38);
@@ -9127,13 +9159,25 @@ body.is-scrolling *{
   navBtns.forEach(function(btn){
     btn.addEventListener('click', function(){
       var name = btn.dataset.page;
-      // "Tagihan" sengaja tidak berpindah halaman -- langsung membuka
-      // panel Tagihan & Hutang yang sudah ada (openNotifPanel), supaya
-      // tidak perlu duplikat kontennya di halaman terpisah.
+      // "Tagihan" sengaja tidak berpindah ke #app-page manapun (tidak ada
+      // page-tagihan) -- tombolnya sudah punya listener SENDIRI yang
+      // dipasang di script.js (langsung membuka halaman penuh "Semua
+      // Tagihan & Hutang" lewat openBdAllPage). Cukup skip showPage() di
+      // sini dan jangan panggil apa pun lagi.
+      //
+      // PERBAIKAN BUG: sebelumnya baris ini JUGA memanggil
+      // window.openNotifPanel() -- jadi satu tap tombol "Tagihan" memicu
+      // DUA aksi sekaligus yang saling tabrakan: openBdAllPage() (dari
+      // script.js, mengunci scroll body via document.body.style.overflow
+      // langsung) dan openNotifPanel() (mengunci scroll body lewat
+      // lockBodyScroll()/openModalCount miliknya sendiri). Karena klik ini
+      // juga bubbling ke listener "klik di luar panel" yang otomatis
+      // memanggil closeNotifPanel()->unlockBodyScroll() pada event yang
+      // SAMA, hasil akhirnya body.style.overflow ke-reset ke kosong lagi
+      // ('') tepat setelah overlay "Semua Tagihan & Hutang" dibuka --
+      // jadi halaman di belakang overlay masih bisa ikut ke-scroll/jeda
+      // (patah-patah) walau overlay-nya sendiri sudah kelihatan terbuka.
       if (name === 'tagihan') {
-        if (typeof window.openNotifPanel === 'function') {
-          window.openNotifPanel();
-        }
         return;
       }
       showPage(name);

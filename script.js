@@ -7736,10 +7736,10 @@ function daysUntil(dateStr) {
 function dueLabel(dateStr) {
   const diff = daysUntil(dateStr);
   const formatted = new Date(dateStr + 'T00:00:00').toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
-  if (diff < 0) return { text: `Terlambat ${Math.abs(diff)} hari · ${formatted}`, overdue: true, soon: false };
-  if (diff === 0) return { text: `Hari ini · ${formatted}`, overdue: true, soon: false };
-  if (diff <= 3) return { text: `${diff} hari lagi · ${formatted}`, overdue: false, soon: true };
-  return { text: formatted, overdue: false, soon: false };
+  if (diff < 0) return { text: `Terlambat ${Math.abs(diff)} hari · ${formatted}`, overdue: true, today: false, soon: false };
+  if (diff === 0) return { text: `Hari ini · ${formatted}`, overdue: true, today: true, soon: false };
+  if (diff <= 3) return { text: `${diff} hari lagi · ${formatted}`, overdue: false, today: false, soon: true };
+  return { text: formatted, overdue: false, today: false, soon: false };
 }
 
 function updateNotifBadge() {
@@ -7851,7 +7851,7 @@ function renderNotifPanel() {
   listEl.innerHTML = list.map(item => {
     const due = dueLabel(item.dueDate);
     const urgencyClass = due.overdue ? ' overdue' : (due.soon ? ' soon' : '');
-    const dueClass = due.overdue ? ' due-pill' : (due.soon ? ' due-soon' : '');
+    const dueClass = due.today ? ' due-today' : (due.overdue ? ' due-pill' : (due.soon ? ' due-soon' : ''));
     return `
       <div class="notif-item type-${notifTab}${urgencyClass}">
         <div class="notif-item-ic">
@@ -8156,7 +8156,7 @@ function renderBdAllPage() {
     const isPaid = item.status === 'lunas';
     const due = dueLabel(item.dueDate);
     const urgencyClass = !isPaid && due.overdue ? ' overdue' : (!isPaid && due.soon ? ' soon' : '');
-    const dueClass = due.overdue ? ' due-pill' : (due.soon ? ' due-soon' : '');
+    const dueClass = due.today ? ' due-today' : (due.overdue ? ' due-pill' : (due.soon ? ' due-soon' : ''));
     return `
       <div class="bd-item type-${item.kind}${urgencyClass}${isPaid ? ' paid' : ''}">
         <div class="bd-item-ic">
