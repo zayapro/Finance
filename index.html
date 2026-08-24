@@ -5460,24 +5460,24 @@ tbody tr.date-group-row:first-child td{border-top:none;}
 }
 .bd-row-close:hover{color:var(--wine);border-color:rgba(225,29,72,0.35);background:rgba(225,29,72,0.06);}
 @media (max-width:640px){
-  /* Di HP: toolbar dipecah jadi 2 baris (bukan 1 baris yang bikin pil
-     harus discroll samping). Baris 1 = pil tab, dipaksa MELEBAR PENUH
-     (flex:1 1 100%) dengan tiap tombolnya dibagi rata (flex:1) supaya
-     ke-4 pil (Semua/Tagihan/Hutang/Catatan) selalu MUAT & PAS dalam
-     satu baris tanpa perlu discroll -- padding & font-size dikecilkan
-     secukupnya supaya teks "Catatan" tetap tidak terpotong. Baris 2 =
-     grup tombol aksi (Cari/Cek tanggal/Download), rata kanan. */
-  .bd-toolbar{gap:5px;margin-bottom:0;flex-wrap:wrap;}
-  .bd-toolbar-actions{gap:4px;order:2;width:100%;justify-content:flex-end;margin-left:0;}
-  .bd-icon-btn{width:28px;height:28px;}
-  .bd-icon-btn svg{width:12.5px;height:12.5px;}
+  /* Di HP: pil tab & 3 tombol aksi (Cari/Cek tanggal/Download) tetap
+     SATU BARIS sejajar (bukan turun ke baris ke-2, bukan juga discroll
+     samping) -- caranya pil dibuat melebar mengisi SISA ruang di
+     samping tombol aksi (flex:1 1 auto, bukan 100%), tiap tombol pil
+     dibagi rata (flex:1) dengan padding/font dikecilkan secukupnya,
+     dan tombol aksi ikut dikecilkan sedikit supaya total lebar semua
+     elemen pas muat di layar HP paling sempit sekalipun. */
+  .bd-toolbar{gap:6px;margin-bottom:0;flex-wrap:nowrap;}
+  .bd-toolbar-actions{gap:3px;flex-shrink:0;margin-left:0;}
+  .bd-icon-btn{width:26px;height:26px;}
+  .bd-icon-btn svg{width:11.5px;height:11.5px;}
   #bdAllTabs{
-    order:1;flex:1 1 100%;width:100%;min-width:0;
-    overflow-x:visible;gap:3px;padding:3px;
+    flex:1 1 auto;width:auto;min-width:0;
+    overflow-x:hidden;gap:2px;padding:2px;
   }
   #bdAllTabs .tab-btn{
     flex:1 1 0;width:auto;min-width:0;
-    padding:6px 4px;font-size:11.5px;
+    padding:5px 2px;font-size:10.5px;
     overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   }
   .bd-search-row,.bd-date-row{margin-top:8px;}
