@@ -6198,7 +6198,21 @@ tbody tr.date-group-row:first-child td{border-top:none;}
   #page-saya.active{
     position:fixed;inset:0;z-index:var(--z-page);
     display:flex;flex-direction:column;
-    background:#FFFFFF;
+    /* PERBAIKAN: sebelumnya latar 3 halaman ini putih polos
+       (background:#FFFFFF), beda dengan halaman "Tagihan & Hutang"
+       (#bdAllOverlay) yang latarnya gradasi oren->putih (lihat aturan
+       #bdAllOverlay di atas). Akibatnya area oren di 3 halaman ini
+       terasa lebih "pendek"/tidak full dibanding Tagihan & Hutang, dan
+       box-shadow oren pada kartu putih (.page-body) jadi kelihatan
+       "nyangkut" sendirian di atas putih polos alih-alih menyatu mulus
+       dengan gradasinya -- inilah yang kelihatan seperti bayangan aneh
+       saat animasi pindah menu. Disamakan persis jadi gradasi yang sama
+       supaya baik luas warna oren maupun kesan bayangannya identik. */
+    background:linear-gradient(180deg,
+      #FA8B1E 0px,
+      #FA8B1E 155px,
+      #FFFFFF 205px,
+      #FFFFFF 100%);
     margin:0;
     overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
   }
@@ -9261,6 +9275,19 @@ body.is-scrolling *{
       // (patah-patah) walau overlay-nya sendiri sudah kelihatan terbuka.
       if (name === 'tagihan') {
         return;
+      }
+      // PERBAIKAN BUG: overlay "Semua Tagihan & Hutang" (dibuka lewat
+      // tombol "Tagihan"/"Hutang" di atas) sebelumnya HANYA ditutup
+      // otomatis kalau user lalu tap "Beranda" (lihat listener khusus di
+      // script.js). Kalau dari situ user malah tap "Laporan"/"Dompet"/
+      // "Pengaturan", overlay itu tetap nyangkut tampil di atas layar
+      // walau halaman di baliknya (dan nav bawah) sudah berpindah --
+      // jadinya kelihatan seperti bug/nyangkut saat pindah menu. Sekarang
+      // overlay itu (kalau sedang terbuka) selalu ditutup dulu sebelum
+      // pindah ke halaman APAPUN lewat nav bawah, bukan cuma ke Beranda.
+      var bdAllOverlayEl = document.getElementById('bdAllOverlay');
+      if (bdAllOverlayEl && bdAllOverlayEl.classList.contains('open') && typeof window.closeBdAllPage === 'function') {
+        window.closeBdAllPage();
       }
       showPage(name);
     });
