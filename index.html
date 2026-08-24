@@ -5351,26 +5351,109 @@ tbody tr.date-group-row:first-child td{border-top:none;}
 @media (max-width:640px){
   .bd-note-card{width:168px;padding:9px 10px;border-radius:12px;}
 }
-/* Toolbar (tab Semua/Tagihan/Hutang) DIBUAT "menempel" (sticky) di
-   bagian atas saat halaman Tagihan & Hutang discroll -- supaya cuma
-   daftar kartu di bawahnya yang bergeser/naik, sementara toolbar ini
-   tetap diam kelihatan di layar. Sticky dihitung relatif terhadap
-   #bdAllOverlay (elemen yang scroll-nya, lihat overflow-y:auto di
-   .detail-page-overlay), dan diberi latar solid + sedikit bayangan
-   supaya kartu yang lewat di baliknya tidak tembus pandang / kelihatan
-   tumpang tindih.
-   Catatan: 3 tombol ikon yang dulu ada di sini (Tanggal/kalender, Cari,
-   Unduh) beserta seluruh CSS-nya (.bd-toolbar-actions, .bd-icon-btn,
-   .bd-date-wrap, .bd-search-anchor, .bd-search-wrap, .bd-date-field,
-   dst) SUDAH DIHAPUS PERMANEN atas permintaan user. */
+/* Toolbar (tab Semua/Tagihan/Hutang + grup tombol aksi Cari/Tanggal/
+   Unduh di kanan) DIBUAT "menempel" (sticky) di bagian atas saat
+   halaman Tagihan & Hutang discroll -- supaya cuma daftar kartu di
+   bawahnya yang bergeser/naik, sementara toolbar ini tetap diam
+   kelihatan di layar. Sticky dihitung relatif terhadap #bdAllOverlay
+   (elemen yang scroll-nya, lihat overflow-y:auto di .detail-page-overlay),
+   dan diberi latar solid + sedikit bayangan supaya kartu yang lewat di
+   baliknya tidak tembus pandang / kelihatan tumpang tindih.
+
+   Di layar lebar (>900px) pil tab masih sebesar isinya (fit-content),
+   jadi grup tombol aksi (Cari/kaca pembesar, Cek data pertanggal/
+   kalender, Unduh) cukup ditaruh di kanan lewat margin-left:auto,
+   sebaris persis dengan pil tab.
+   Di layar <=900px, pil tab (#bdAllTabs) SUDAH dibuat grid lebar-penuh
+   (width:100%, lihat media query ".tabs{display:grid...}" di atas)
+   supaya ke-4 pilnya rata & mudah disentuh -- otomatis memenuhi satu
+   baris penuh. Karena itu .bd-toolbar dibuat BOLEH wrap (flex-wrap:wrap)
+   supaya grup tombol aksi jatuh rapi ke baris ke-2 TANPA memerlukan
+   scroll (cukup wrap vertikal biasa, bukan scroll samping) -- dan
+   margin-left:auto pada .bd-toolbar-actions membuatnya tetap nempel
+   RATA KANAN di baris keduanya itu, persis di bawah ujung kanan pil. */
 .bd-toolbar{
-  display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;
+  display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 10px;margin-bottom:0;
   position:relative;
 }
-.bd-toolbar .tabs{flex-shrink:0;}
-@media (max-width:640px){
-  .bd-toolbar{gap:8px;margin-bottom:10px;}
+.bd-toolbar-actions{
+  display:flex;align-items:center;gap:6px;flex-shrink:0;margin-left:auto;
 }
+.bd-icon-btn{
+  width:32px;height:32px;border-radius:50%;flex-shrink:0;
+  border:1px solid var(--line);background:#fff;color:var(--ink-soft);
+  display:flex;align-items:center;justify-content:center;
+  transition:all .15s ease;cursor:pointer;
+  touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+}
+.bd-icon-btn:hover{background:var(--paper);border-color:rgba(242,103,43,0.35);color:var(--primary);}
+.bd-icon-btn.active{background:rgba(242,103,43,0.12);border-color:rgba(242,103,43,0.45);color:var(--primary);}
+.bd-icon-btn:active{transform:scale(0.92);}
+/* Baris pencarian & baris filter tanggal: disembunyikan default lewat
+   atribut HTML "hidden", ditampilkan lewat JS (buang atribut hidden,
+   lihat bdSearchToggleBtn/bdDateToggleBtn di script.js) saat tombol
+   ikon terkait diklik -- dengan sedikit animasi fade+slide (bdRowIn)
+   supaya kemunculannya halus. Diletakkan di dalam .bd-page-body-head
+   (ikut sticky bareng toolbar) supaya selalu kelihatan pas dibuka,
+   tidak perlu scroll turun dulu buat menemukannya. */
+.bd-search-row,.bd-date-row{
+  display:flex;align-items:center;gap:8px;margin-top:10px;
+  animation:bdRowIn .18s ease;
+}
+@keyframes bdRowIn{from{opacity:0;transform:translateY(-4px);}to{opacity:1;transform:translateY(0);}}
+.bd-search-row{
+  background:var(--paper);border:1px solid var(--line);border-radius:12px;
+  padding:8px 10px;position:relative;
+}
+.bd-search-row .search-ic{color:var(--ink-faint);flex-shrink:0;display:flex;}
+.bd-search-row input[type="search"]{
+  flex:1;min-width:0;border:none;background:transparent;padding:2px 0;
+  /* 16px sengaja dipakai (bukan lebih kecil) -- di bawah ini Safari
+     iOS otomatis zoom-in saat field disentuh di HP (lihat catatan
+     serupa di .field-inline input[type="search"] atas). */
+  font-size:16px;color:var(--ink);
+}
+.bd-search-row input[type="search"]:focus{outline:none;}
+.bd-search-row input[type="search"]::-webkit-search-cancel-button{display:none;}
+.bd-date-row{flex-wrap:wrap;}
+.bd-date-field{
+  flex:1;min-width:120px;display:flex;flex-direction:column;gap:3px;
+  background:var(--paper);border:1px solid var(--line);border-radius:12px;
+  padding:6px 10px;
+}
+.bd-date-field span{font-size:10.5px;font-weight:700;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.02em;}
+.bd-date-field input[type="date"]{
+  border:none;background:transparent;padding:0;color:var(--ink);width:100%;
+  /* 16px, sama alasannya dengan input pencarian di atas -- mencegah
+     auto-zoom Safari iOS saat field tanggal ini disentuh di HP. */
+  font-size:16px;
+}
+.bd-date-field input[type="date"]:focus{outline:none;}
+.bd-row-close{
+  width:28px;height:28px;border-radius:50%;flex-shrink:0;border:1px solid var(--line);
+  background:#fff;color:var(--ink-faint);display:flex;align-items:center;justify-content:center;
+  transition:all .15s ease;cursor:pointer;
+  touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+}
+.bd-row-close:hover{color:var(--wine);border-color:rgba(225,29,72,0.35);background:rgba(225,29,72,0.06);}
+@media (max-width:640px){
+  .bd-toolbar{gap:6px;margin-bottom:0;}
+  .bd-toolbar-actions{gap:4px;}
+  .bd-icon-btn{width:29px;height:29px;}
+  .bd-icon-btn svg{width:13px;height:13px;}
+  .bd-search-row,.bd-date-row{margin-top:8px;}
+  .bd-date-row{gap:6px;}
+  .bd-date-field{min-width:0;padding:5px 8px;}
+}
+/* ---- Jarak antara pil tab (Semua/Tagihan/Hutang/Catatan) dan kotak
+   kartu data di bawahnya dirapikan supaya pas -- dulu jaraknya kebesaran
+   (gabungan margin-bottom toolbar + padding-bottom besar bawaan
+   .detail-page + padding-top .bd-page-body-rest) karena dulu ada baris
+   tombol ikon Tanggal/Cari/Unduh yang mengisi ruang itu; sekarang
+   tombolnya sudah dihapus jadi jaraknya disatukan ke satu nilai kecil
+   & konsisten di semua ukuran layar. ---- */
+#bdAllOverlay .bd-page-body-head{padding-bottom:0;}
+#bdAllOverlay .bd-page-body-rest{padding-top:16px;}
 .bd-list{display:grid;grid-template-columns:repeat(2,1fr);gap:11px;}
 @media (max-width:760px){.bd-list{grid-template-columns:1fr;}}
 @media (max-width:640px){.bd-list{gap:8px;}}
@@ -7536,12 +7619,52 @@ body.is-scrolling *{
           <button class="tab-btn" data-bdtab="hutang">Hutang</button>
           <button class="tab-btn" data-bdtab="catatan">Catatan</button>
         </div>
-        <!-- ---- Tombol Tanggal/Cari/Unduh DIHAPUS PERMANEN atas permintaan
-             user (dulu ada di sini: kalender, kaca pembesar, panah unduh).
-             Semua elemen & panelnya (bdToolbarActions, bdDateToggleBtn,
-             bd-search-anchor, bdSearchWrap, bdDownloadBtn, bdDateWrap)
-             sudah tidak ada lagi -- lihat juga script.js, listener &
-             variabel terkait sudah ikut dibersihkan supaya tidak error. ---- -->
+        <!-- ---- Tombol aksi (Cari / Cek data pertanggal / Download) --
+             ditaruh sebagai grup terpisah di kanan pil tab. Di layar
+             lebar tetap satu baris dengan pil (margin-left:auto). Di
+             HP, pil tab sudah jadi grid lebar-penuh (lihat CSS), jadi
+             grup tombol ini otomatis "turun" rapi ke baris ke-2 lewat
+             flex-wrap biasa (BUKAN scroll samping) dan tetap rata
+             kanan -- jadi tidak pernah butuh discroll buat kelihatan. ---- -->
+        <div class="bd-toolbar-actions" id="bdToolbarActions">
+          <button class="bd-icon-btn" id="bdSearchToggleBtn" type="button" aria-expanded="false" aria-controls="bdSearchRow" title="Cari" aria-label="Cari tagihan atau hutang">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          </button>
+          <button class="bd-icon-btn" id="bdDateToggleBtn" type="button" aria-expanded="false" aria-controls="bdDateRow" title="Cek data pertanggal" aria-label="Cek data pertanggal">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="5" width="18" height="16" rx="2.4"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+          </button>
+          <button class="bd-icon-btn" id="bdDownloadBtn" type="button" title="Download file data (CSV)" aria-label="Download file data tagihan dan hutang">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 3v12m0 0-4-4m4 4 4-4M4 21h16"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- ---- Baris pencarian, disembunyikan default (hidden), tampil
+           saat tombol kaca pembesar di atas diklik. ---- -->
+      <div class="bd-search-row" id="bdSearchRow" hidden>
+        <span class="search-ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span>
+        <input type="search" id="bdSearchInput" placeholder="Cari nama tagihan atau hutang...">
+        <button class="bd-row-close" id="bdSearchCloseBtn" type="button" aria-label="Tutup pencarian">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </div>
+
+      <!-- ---- Baris filter tanggal (dari/sampai), disembunyikan default,
+           tampil saat tombol kalender di atas diklik. Filternya berlaku
+           ke tanggal jatuh tempo (item aktif) atau tanggal lunas (item
+           yang sudah dibayar) -- lihat bdAllRefDate() di script.js. ---- -->
+      <div class="bd-date-row" id="bdDateRow" hidden>
+        <label class="bd-date-field">
+          <span>Dari</span>
+          <input type="date" id="bdDateFromInput">
+        </label>
+        <label class="bd-date-field">
+          <span>Sampai</span>
+          <input type="date" id="bdDateToInput">
+        </label>
+        <button class="bd-row-close" id="bdDateResetBtn" type="button" title="Reset filter tanggal" aria-label="Reset filter tanggal">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
       </div>
     </div>
   </div>

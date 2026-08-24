@@ -8164,6 +8164,16 @@ function openBdAllPage(initialTab) {
   bdAllSearch = '';
   bdAllDateFrom = '';
   bdAllDateTo = '';
+  // Pastikan baris cari/tanggal & inputnya balik ke kondisi tertutup +
+  // kosong tiap kali halaman ini dibuka ulang, supaya tidak kebawa
+  // status terbuka/terisi dari sesi buka-tutup sebelumnya.
+  document.getElementById('bdSearchRow').hidden = true;
+  document.getElementById('bdDateRow').hidden = true;
+  document.getElementById('bdSearchToggleBtn').classList.remove('active');
+  document.getElementById('bdDateToggleBtn').classList.remove('active');
+  document.getElementById('bdSearchInput').value = '';
+  document.getElementById('bdDateFromInput').value = '';
+  document.getElementById('bdDateToInput').value = '';
 
   document.getElementById('bdAllOverlay').classList.add('open');
   document.body.style.overflow = 'hidden';
@@ -8212,16 +8222,113 @@ document.getElementById('bdAllTabs').addEventListener('click', (e) => {
   renderBdAllPage();
 });
 
-/* ---------- Tombol Cari / Filter tanggal / Unduh di toolbar ----------
-   DIHAPUS PERMANEN atas permintaan user (dulu 3 ikon: kalender, kaca
-   pembesar, panah unduh). Elemennya sudah tidak ada lagi di HTML, jadi
-   semua listener & fungsi terkait (bdSearchToggleBtn, bdDateToggleBtn,
-   bdDateFromInput/bdDateToInput/bdDateResetBtn, bdDownloadBtn,
-   downloadBdAllCsv) ikut dihapus di sini supaya tidak error mencari
-   elemen yang tidak ada. bdAllSearch/bdAllDateFrom/bdAllDateTo tetap
-   dibiarkan ada (selalu string kosong) karena masih dipakai fungsi
-   filter di renderBdAllPage -- efeknya sekarang daftar selalu tampil
-   tanpa filter cari/tanggal. */
+/* ---------- Tombol Cari / Cek data pertanggal / Download di toolbar ----------
+   Baris pencarian & baris filter tanggal disembunyikan lewat atribut
+   HTML "hidden" secara default, dibuka/ditutup saat tombol ikon
+   terkait diklik. Supaya toolbar tidak makan tempat dobel di layar
+   sempit, cuma SATU baris (cari ATAU tanggal) yang boleh terbuka
+   dalam satu waktu -- buka salah satu otomatis menutup yang lain. */
+const bdSearchToggleBtn = document.getElementById('bdSearchToggleBtn');
+const bdDateToggleBtn = document.getElementById('bdDateToggleBtn');
+const bdDownloadBtn = document.getElementById('bdDownloadBtn');
+const bdSearchRow = document.getElementById('bdSearchRow');
+const bdDateRow = document.getElementById('bdDateRow');
+const bdSearchInput = document.getElementById('bdSearchInput');
+const bdSearchCloseBtn = document.getElementById('bdSearchCloseBtn');
+const bdDateFromInput = document.getElementById('bdDateFromInput');
+const bdDateToInput = document.getElementById('bdDateToInput');
+const bdDateResetBtn = document.getElementById('bdDateResetBtn');
+
+function closeBdSearchRow() {
+  bdSearchRow.hidden = true;
+  bdSearchToggleBtn.classList.remove('active');
+  bdSearchToggleBtn.setAttribute('aria-expanded', 'false');
+  if (bdAllSearch) { bdAllSearch = ''; bdSearchInput.value = ''; renderBdAllPage(); }
+}
+function closeBdDateRow() {
+  bdDateRow.hidden = true;
+  bdDateToggleBtn.classList.remove('active');
+  bdDateToggleBtn.setAttribute('aria-expanded', 'false');
+  if (bdAllDateFrom || bdAllDateTo) {
+    bdAllDateFrom = ''; bdAllDateTo = '';
+    bdDateFromInput.value = ''; bdDateToInput.value = '';
+    renderBdAllPage();
+  }
+}
+
+bdSearchToggleBtn.addEventListener('click', () => {
+  const willOpen = bdSearchRow.hidden;
+  closeBdDateRow();
+  if (willOpen) {
+    bdSearchRow.hidden = false;
+    bdSearchToggleBtn.classList.add('active');
+    bdSearchToggleBtn.setAttribute('aria-expanded', 'true');
+    bdSearchInput.focus();
+  } else {
+    closeBdSearchRow();
+  }
+});
+bdDateToggleBtn.addEventListener('click', () => {
+  const willOpen = bdDateRow.hidden;
+  closeBdSearchRow();
+  if (willOpen) {
+    bdDateRow.hidden = false;
+    bdDateToggleBtn.classList.add('active');
+    bdDateToggleBtn.setAttribute('aria-expanded', 'true');
+  } else {
+    closeBdDateRow();
+  }
+});
+bdSearchInput.addEventListener('input', () => {
+  bdAllSearch = bdSearchInput.value;
+  renderBdAllPage();
+});
+bdSearchCloseBtn.addEventListener('click', closeBdSearchRow);
+bdDateFromInput.addEventListener('change', () => {
+  bdAllDateFrom = bdDateFromInput.value;
+  renderBdAllPage();
+});
+bdDateToInput.addEventListener('change', () => {
+  bdAllDateTo = bdDateToInput.value;
+  renderBdAllPage();
+});
+bdDateResetBtn.addEventListener('click', () => {
+  bdAllDateFrom = ''; bdAllDateTo = '';
+  bdDateFromInput.value = ''; bdDateToInput.value = '';
+  renderBdAllPage();
+});
+
+/* Unduh data tagihan/hutang yang SEDANG TAMPIL (mengikuti pil tab &
+   filter cari/tanggal yang aktif saat tombol ini diklik) sebagai file
+   CSV -- dipakai dari bdAllFilteredCache yang sudah dihitung ulang
+   tiap kali renderBdAllPage() jalan. Format CSV pakai pemisah titik-
+   koma (;) + BOM UTF-8 supaya kebuka rapi di Excel versi Indonesia. */
+function downloadBdAllCsv() {
+  if (!bdAllFilteredCache.length) {
+    showToast('Tidak ada data tagihan/hutang untuk diunduh.', 'err');
+    return;
+  }
+  const header = ['Jenis', 'Nama', 'Jumlah (Rp)', 'Status', 'Jatuh Tempo', 'Tanggal Lunas', 'Berulang Bulanan', 'Catatan'];
+  const rows = bdAllFilteredCache.map(item => [
+    item.kind === 'hutang' ? 'Hutang' : 'Tagihan',
+    item.name || '',
+    Math.round(Number(item.amount) || 0),
+    item.status === 'lunas' ? 'Lunas' : 'Belum Lunas',
+    item.dueDate || '',
+    item.paidAt || '',
+    item.recurring ? 'Ya' : 'Tidak',
+    (item.note || '').replace(/\r?\n/g, ' ')
+  ]);
+  const csvEscape = (val) => {
+    const s = String(val);
+    return /[";\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const lines = [header, ...rows].map(r => r.map(csvEscape).join(';'));
+  const csvContent = '\uFEFF' + lines.join('\r\n');
+  downloadBlob(new Blob([csvContent], { type: 'text/csv;charset=utf-8;' }), `tagihan-hutang_${todayStr()}.csv`);
+  showToast('File CSV tagihan & hutang berhasil diunduh.');
+}
+bdDownloadBtn.addEventListener('click', downloadBdAllCsv);
 
 document.getElementById('bdAllAddBtn').addEventListener('click', () => {
   openBillModal(bdAllTab === 'hutang' ? 'hutang' : 'tagihan');
