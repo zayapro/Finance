@@ -4079,6 +4079,11 @@ body.density-compact .income-cards-group{gap:10px;}
   /* position:relative supaya .tab-indicator (kotak putih yang meluncur
      di belakang pil aktif) bisa diposisikan absolute relatif ke sini. */
   position:relative;
+  /* Kunci pil oranye supaya tidak pernah "bocor" melewati lengkungan
+     sudut kapsul terluar (dulu box-shadow-nya bisa nyembul tipis di
+     sudut kanan/kiri saat pil aktif pas di ujung -- mis. tab "Catatan"
+     -- sehingga bordernya kelihatan berantakan/ganda). */
+  overflow:hidden;
 }
 /* ---- Kotak putih yang meluncur (slide) ke pil yang sedang aktif tiap
    kali salah satu pil tab diklik -- posisi & lebarnya dihitung & di-
@@ -4095,9 +4100,19 @@ body.density-compact .income-cards-group{gap:10px;}
      juga oranye (var(--primary)) -- jadi pil aktif kelihatan jelas
      "menyala" tanpa perlu garis tepi di dalam. */
   background:rgba(242,103,43,0.14);border-radius:999px;
-  box-shadow:0 2px 6px rgba(242,103,43,0.12);
+  /* Border tipis solid (bukan cuma shadow blur) supaya tepi pil oranye
+     kelihatan rapi & tegas keliling penuh, termasuk saat pil aktifnya
+     ada di ujung kapsul (mis. tab "Catatan" paling kanan). Shadow-nya
+     dikecilkan blur-nya jadi cuma pemanis tipis di bawah, bukan sumber
+     utama "border" yang gampang kelihatan buram/berantakan. */
+  border:1px solid rgba(242,103,43,0.4);
+  box-shadow:0 1px 3px rgba(242,103,43,0.12);
   transition:transform .32s cubic-bezier(.34,1.15,.34,1), width .32s cubic-bezier(.34,1.15,.34,1), opacity .15s ease;
   opacity:0;pointer-events:none;z-index:0;
+  /* Kompensasi lebar +2px karena border 1px di kiri+kanan supaya lebar
+     visualnya tetap presisi menutupi tombol aktif (width dihitung dari
+     offsetWidth tombol di JS, bukan termasuk border indikator ini). */
+  box-sizing:border-box;
 }
 .tabs.tab-indicator-ready .tab-indicator{opacity:1;}
 @media (prefers-reduced-motion:reduce){
