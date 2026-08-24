@@ -9155,6 +9155,10 @@ body.is-scrolling *{
       });
     });
   }
+  // Diekspos ke window supaya bisa dipanggil dari script.js juga (mis.
+  // tombol "Dashboard" di footer -- lihat goToDashboard() di script.js),
+  // bukan cuma dari listener nav bawah di bawah ini.
+  window.showPage = showPage;
 
   navBtns.forEach(function(btn){
     btn.addEventListener('click', function(){

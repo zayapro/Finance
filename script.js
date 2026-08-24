@@ -8221,7 +8221,18 @@ function openBdAllPage(initialTab) {
 function closeBdAllPage() {
   document.getElementById('bdAllOverlay').classList.remove('open');
   document.body.style.overflow = '';
-  setBottomNavActive('beranda');
+  // PERBAIKAN BUG: sebelumnya baris ini SELALU memaksa nav bawah menyala
+  // ke "Beranda" (setBottomNavActive('beranda')) apa pun tab yang
+  // sebenarnya sedang aktif di belakang overlay ini. Contoh nyatanya:
+  // user buka tab "Dompet" -> tap "Tagihan" (buka overlay ini, nav
+  // pindah ke "Tagihan") -> tutup lagi (tombol kembali/Escape/dsb, yang
+  // semuanya lewat fungsi ini) -> overlay hilang, halaman "Dompet" yang
+  // kelihatan lagi, TAPI nav bawah malah nyala di "Beranda" -- nyala nav
+  // & konten yang tampil jadi tidak sinkron. Sekarang disamakan ke
+  // halaman .app-page yang MEMANG sedang aktif (fallback 'beranda' kalau
+  // karena suatu hal tidak ada .app-page yang aktif).
+  var currentPage = document.querySelector('.app-page.active');
+  setBottomNavActive(currentPage ? currentPage.dataset.page : 'beranda');
 }
 
 /* ---------- Sinkronkan tombol aktif di navigasi bawah ----------
@@ -8415,6 +8426,15 @@ function goToDashboard() {
   if (document.getElementById('incomeSourceOverlay').classList.contains('open')) closeIncomeSourcePage();
   if (document.getElementById('bdAllOverlay').classList.contains('open')) closeBdAllPage();
   if (notifPanel.classList.contains('open')) closeNotifPanel();
+  // PERBAIKAN BUG: baris di atas cuma menutup overlay/panel yang lagi
+  // terbuka -- tapi kalau user sedang berada di tab bawah SELAIN
+  // "Beranda" (mis. lagi di tab "Dompet"/"Laporan"/"Pengaturan" saat
+  // menekan "Dashboard" di footer), sebelumnya tab yang aktif tidak
+  // ikut berpindah balik ke "Beranda" sama sekali -- padahal itu yang
+  // dijanjikan komentar & label tombolnya ("kembali ke tampilan utama").
+  // showPage() didaftarkan secara global di index.html (lihat blok
+  // "NAVIGASI BAWAH") supaya bisa dipanggil dari sini.
+  if (typeof window.showPage === 'function') window.showPage('beranda');
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
