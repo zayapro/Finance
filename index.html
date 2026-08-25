@@ -164,15 +164,41 @@ html.zp-page-restore-saya #bottomNav .bn-item[data-page="saya"] .bn-ic-wrap{
 </style>
 <script>
 try {
-  if (sessionStorage.getItem('zp_tagihan_open') === '1') {
+  // Baca lebih dulu apakah overlay "Tagihan & Hutang" sedang terbuka.
+  // FIX "bayangan tab lama (Laporan/Dompet/Pengaturan) sempat kelihatan
+  // di refresh saat overlay Tagihan & Hutang lagi terbuka": kalau
+  // overlay ini dibuka DARI tab Laporan/Dompet/Pengaturan, sessionStorage
+  // menyimpan DUA status "terakhir" sekaligus -- zp_tagihan_open='1' DAN
+  // zp_active_page=<tab asal>, karena membuka overlay Tagihan TIDAK
+  // pernah menghapus/mengubah zp_active_page (dia cuma tab yang "ketiban"
+  // di baliknya). Sebelumnya, kode di bawah memasang KEDUA class pemaksa
+  // (zp-tagihan-restore DAN zp-page-restore-<tab asal>) secara bersamaan
+  // di frame pertama -- jadi tab asal ikut dipaksa tampil (display:flex)
+  // DI BALIK overlay, padahal overlay itu sendiri baru benar-benar
+  // "hidup" (isi/renderBdAllPage + class .open asli) belakangan lewat
+  // script.js, yang kini dimuat SECARA DINAMIS oleh cloud-sync.js
+  // (setelah login + tarik data cloud selesai -- bisa berjeda cukup
+  // lama). Di jeda itulah tab asal yang dipaksa tampil sempat "bocor"
+  // kelihatan sekilas -- itulah bayangan/shadow yang dikeluhkan.
+  // Sekarang: kalau overlay Tagihan sedang dipulihkan, JANGAN ikut
+  // memasang zp-page-restore-* sama sekali -- tab di baliknya cukup
+  // dibiarkan default (tersembunyi), karena toh akan tertutup penuh
+  // oleh overlay begitu overlay itu benar-benar terbuka lagi. Status tab
+  // asal yang sesungguhnya tetap benar lewat mekanisme lain (restoreActivePage()
+  // di akhir <body> & bdAllReturnPage di openBdAllPage()), jadi ini
+  // murni menghapus tampilan paksa yang tidak perlu/berbahaya saja.
+  var zpTagihanOpen = (sessionStorage.getItem('zp_tagihan_open') === '1');
+  if (zpTagihanOpen) {
     document.documentElement.classList.add('zp-tagihan-restore');
   }
   // Baca tab aktif terakhir (Laporan/Dompet/Pengaturan) SEPALING AWAL
   // mungkin, lalu pasang class pemicu style zp-page-restore-* di atas
   // -- lihat catatan panjang di <style> untuk alasannya. Beranda tidak
   // butuh class apa pun karena memang sudah default di markup HTML.
+  // Dilewati sama sekali kalau overlay Tagihan sedang dipulihkan (lihat
+  // catatan di atas) supaya tidak lagi tabrakan dengan zp-tagihan-restore.
   var zpSavedPage = sessionStorage.getItem('zp_active_page');
-  if (zpSavedPage === 'laporan' || zpSavedPage === 'dompet' || zpSavedPage === 'saya') {
+  if (!zpTagihanOpen && (zpSavedPage === 'laporan' || zpSavedPage === 'dompet' || zpSavedPage === 'saya')) {
     document.documentElement.classList.add('zp-page-restore-' + zpSavedPage);
   }
   // Class umum "sedang memuat" -- dipasang di SETIAP load/refresh
