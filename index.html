@@ -5755,6 +5755,37 @@ tbody tr:last-child td{border-bottom:none;}
 }
 .bd-empty p{font-weight:600;color:var(--ink-soft);font-size:13px;max-width:280px;margin:0 auto;}
 
+/* ---- Skeleton loading untuk kartu Tagihan & Hutang ----
+   Dipakai selagi #bdAllList belum diisi data ASLI oleh
+   renderBdAllPage() (script.js) -- baik saat pertama kali overlay
+   dibuka (jeda singkat menunggu script.js siap) maupun saat overlay
+   dibuka kembali otomatis setelah refresh (lihat script inline
+   "FIX refresh di halaman Tagihan & Hutang" tepat setelah tombol
+   #bdAllAddBtn di HTML). Bentuk & ukurannya sengaja disamakan
+   dengan .bd-item asli supaya transisi skeleton -> data asli tidak
+   "loncat" (tidak ada perubahan tinggi/lebar kartu yang berarti).
+   renderBdAllPage() menimpa innerHTML #bdAllList sepenuhnya begitu
+   data asli siap, jadi skeleton ini otomatis hilang tanpa perlu
+   kode tambahan untuk membersihkannya. */
+.bd-item.bd-skel{cursor:default;}
+.bd-item.bd-skel:hover{transform:none;border-color:var(--line);box-shadow:var(--shadow-sm);}
+.bd-item.bd-skel .bd-item-ic{background:var(--paper);}
+.bd-skel-bar{
+  height:12px;border-radius:6px;background:var(--paper);
+  background-image:linear-gradient(90deg, var(--paper) 0%, rgba(148,163,184,0.28) 50%, var(--paper) 100%);
+  background-size:200% 100%;animation:bdSkelShimmer 1.3s ease-in-out infinite;
+}
+.bd-item-body .bd-skel-bar.bd-skel-title{width:62%;height:13px;margin-bottom:8px;}
+.bd-item-body .bd-skel-bar.bd-skel-sub{width:40%;height:10px;}
+.bd-item-actions .bd-skel-bar.bd-skel-btn{width:29px;height:29px;border-radius:10px;}
+@keyframes bdSkelShimmer{
+  0%{background-position:200% 0;}
+  100%{background-position:-200% 0;}
+}
+@media (prefers-reduced-motion:reduce){
+  .bd-skel-bar{animation:none;}
+}
+
 /* ---- Preview terbatas di popup notifikasi + tombol lihat semua ---- */
 .notif-list-more{
   text-align:center;font-size:11.5px;font-weight:700;color:var(--forest-glow);
@@ -7956,6 +7987,29 @@ body.is-scrolling *{
       var ov = document.getElementById('bdAllOverlay');
       if (ov) ov.classList.add('open');
       document.body.style.overflow = 'hidden';
+
+      // Isi #bdAllList dengan kartu skeleton (bukan daftar kosong)
+      // selagi menunggu script.js + data asli siap -- supaya terasa
+      // "sedang memuat", bukan seolah datanya benar-benar kosong.
+      // renderBdAllPage() di script.js akan menimpa innerHTML ini
+      // sepenuhnya begitu data asli sudah tersedia, jadi skeleton
+      // otomatis tergantikan tanpa perlu kode tambahan.
+      var listEl = document.getElementById('bdAllList');
+      if (listEl && !listEl.children.length) {
+        var skelCard =
+          '<div class="bd-item bd-skel">' +
+            '<div class="bd-item-ic bd-skel-bar" style="width:40px;height:40px;border-radius:13px;"></div>' +
+            '<div class="bd-item-body">' +
+              '<div class="bd-skel-bar bd-skel-title"></div>' +
+              '<div class="bd-skel-bar bd-skel-sub"></div>' +
+            '</div>' +
+            '<div class="bd-item-actions">' +
+              '<div class="bd-skel-bar bd-skel-btn"></div>' +
+              '<div class="bd-skel-bar bd-skel-btn"></div>' +
+            '</div>' +
+          '</div>';
+        listEl.innerHTML = skelCard.repeat(6);
+      }
     }
   } catch (e) { /* sessionStorage tidak tersedia (mode privat dsb) -- abaikan */ }
 })();
