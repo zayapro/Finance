@@ -845,7 +845,7 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
   background:var(--paper);border:1px solid var(--line);border-radius:11px;padding:11px 13px;margin:2px 0 16px;cursor:pointer;
 }
 .bill-recurring-row input{width:16px;height:16px;accent-color:var(--forest-glow);cursor:pointer;}
-.notif-item-body .due.due-soon,.notif-item-body .due.due-pill{max-width:100%;box-sizing:border-box;white-space:normal;word-break:break-word;padding:2.5px 8px 2.5px 6px;border-radius:999px;}
+.notif-item-body .due.due-soon,.notif-item-body .due.due-pill{max-width:100%;box-sizing:border-box;white-space:normal;word-break:break-word;padding:2.5px 8px 2.5px 6px;border-radius:999px;line-height:1.35;}
 .notif-item-body .due.due-soon{background:rgba(217,119,6,0.16);color:#B45309;}
 .notif-item-body .due.due-soon::before{background:#D97706;flex-shrink:0;}
 .notif-item-body .due.due-pill{
@@ -5862,6 +5862,7 @@ tbody tr:last-child td{border-bottom:none;}
      bawahnya, mengurangi kemungkinan pil perlu membungkus 2 baris. */
   .bd-item-ic{width:34px;height:34px;border-radius:11px;}
   .bd-item-ic svg{width:13px;height:13px;}
+  .bd-item.bd-skel .bd-item-ic.bd-skel-bar{width:34px;height:34px;border-radius:11px;}
   .bd-item-actions{gap:4px;}
   .bd-item-actions button{width:25px;height:25px;border-radius:8px;}
   .bd-item-actions button svg{width:12px;height:12px;}
@@ -5899,7 +5900,7 @@ tbody tr:last-child td{border-bottom:none;}
 .bd-item-body .amt{font-family:'IBM Plex Mono',monospace;font-size:12.5px;font-weight:700;color:var(--ink-soft);}
 .bd-item-body .due{font-size:10.5px;color:var(--ink-faint);font-weight:700;display:inline-flex;align-items:center;gap:4px;white-space:nowrap;max-width:100%;box-sizing:border-box;}
 .bd-item-body .due::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--ink-faint);flex-shrink:0;}
-.bd-item-body .due.due-pill,.bd-item-body .due.due-soon{max-width:100%;box-sizing:border-box;white-space:normal;word-break:break-word;padding:2.5px 8px 2.5px 6px;border-radius:999px;}
+.bd-item-body .due.due-pill,.bd-item-body .due.due-soon{max-width:100%;box-sizing:border-box;white-space:normal;word-break:break-word;padding:2.5px 8px 2.5px 6px;border-radius:999px;line-height:1.35;}
 .bd-item-body .due.due-pill{color:#fff;background:var(--wine);}
 .bd-item-body .due.due-pill::before{background:#fff;flex-shrink:0;}
 .bd-item-body .due.due-soon{background:rgba(217,119,6,0.16);color:#B45309;}
@@ -5945,14 +5946,36 @@ tbody tr:last-child td{border-bottom:none;}
    catatan lengkap di sana). */
 .bd-item.bd-skel{cursor:default;box-shadow:none;}
 .bd-item.bd-skel:hover{transform:none;border-color:var(--line);box-shadow:none;}
-.bd-item.bd-skel .bd-item-ic{background:var(--paper);}
+/* ---- FIX bentuk skeleton (ikon): sebelumnya ukuran ikon skeleton
+   dipatok lewat inline style (width/height/border-radius 40px/13px)
+   di HTML, jadi ikut TIDAK mengecil di layar sempit walau ikon ASLI
+   (.bd-item-ic, lihat @media max-width:640px di atas) mengecil jadi
+   34px/11px di HP. Akibatnya bentuk "bayangan" skeleton beda ukuran
+   dari konten asli yang menggantikannya begitu data siap -- kelihatan
+   "loncat" sesaat khusus di HP. Sekarang dipindah ke sini (selector
+   digabung .bd-item-ic.bd-skel-bar spesifisitasnya sengaja dibuat
+   lebih tinggi dari .bd-skel-bar biasa supaya height-nya tidak
+   ketiban height:12px bawaan .bd-skel-bar) supaya otomatis ikut
+   responsive persis sama seperti ikon asli di semua ukuran layar. */
+.bd-item.bd-skel .bd-item-ic.bd-skel-bar{background:var(--paper);width:40px;height:40px;border-radius:13px;}
 .bd-skel-bar{
   height:12px;border-radius:6px;background:var(--paper);
   background-image:linear-gradient(90deg, var(--paper) 0%, rgba(148,163,184,0.28) 50%, var(--paper) 100%);
   background-size:200% 100%;animation:bdSkelShimmer 1.3s ease-in-out infinite;
 }
-.bd-item-body .bd-skel-bar.bd-skel-title{width:62%;height:13px;margin-bottom:8px;}
-.bd-item-body .bd-skel-bar.bd-skel-sub{width:40%;height:10px;}
+.bd-item-body .bd-skel-bar.bd-skel-title{width:62%;height:13px;}
+/* ---- FIX bentuk skeleton: kartu ASLI (.bd-item, lihat .bd-item-body
+   .meta di atas) menampilkan Rp nominal DI ATAS lalu badge jatuh
+   tempo berbentuk PIL bulat (border-radius:999px) di bawahnya --
+   dua baris terpisah, bukan satu baris teks polos. Skeleton lama
+   cuma punya 1 bar persegi ("sub") buat mewakili baris ke-2, jadi
+   bentuk bayangannya tidak sama dengan konten asli yang nanti
+   dimuat (beda jumlah baris & beda bentuk sudut). Sekarang disamakan:
+   .bd-skel-meta meniru .meta (kolom, Rp lalu pil), dan .bd-skel-pill
+   sengaja dibuat border-radius:999px persis seperti badge asli. */
+.bd-item-body .bd-skel-meta{display:flex;flex-direction:column;align-items:flex-start;gap:6px;margin-top:8px;}
+.bd-item-body .bd-skel-bar.bd-skel-amt{width:30%;height:11px;}
+.bd-item-body .bd-skel-bar.bd-skel-pill{width:54%;height:18px;border-radius:999px;}
 .bd-item-actions .bd-skel-bar.bd-skel-btn{width:29px;height:29px;border-radius:10px;}
 @keyframes bdSkelShimmer{
   0%{background-position:200% 0;}
@@ -8225,12 +8248,12 @@ body.is-scrolling *{
            script.js begitu data asli siap, jadi otomatis hilang
            sendiri tanpa perlu kode tambahan/class apa pun untuk
            membersihkannya. -->
-      <div class="bd-item bd-skel" aria-hidden="true"><div class="bd-item-ic bd-skel-bar" style="width:40px;height:40px;border-radius:13px;"></div><div class="bd-item-body"><div class="bd-skel-bar bd-skel-title"></div><div class="bd-skel-bar bd-skel-sub"></div></div><div class="bd-item-actions"><div class="bd-skel-bar bd-skel-btn"></div><div class="bd-skel-bar bd-skel-btn"></div></div></div>
-      <div class="bd-item bd-skel" aria-hidden="true"><div class="bd-item-ic bd-skel-bar" style="width:40px;height:40px;border-radius:13px;"></div><div class="bd-item-body"><div class="bd-skel-bar bd-skel-title"></div><div class="bd-skel-bar bd-skel-sub"></div></div><div class="bd-item-actions"><div class="bd-skel-bar bd-skel-btn"></div><div class="bd-skel-bar bd-skel-btn"></div></div></div>
-      <div class="bd-item bd-skel" aria-hidden="true"><div class="bd-item-ic bd-skel-bar" style="width:40px;height:40px;border-radius:13px;"></div><div class="bd-item-body"><div class="bd-skel-bar bd-skel-title"></div><div class="bd-skel-bar bd-skel-sub"></div></div><div class="bd-item-actions"><div class="bd-skel-bar bd-skel-btn"></div><div class="bd-skel-bar bd-skel-btn"></div></div></div>
-      <div class="bd-item bd-skel" aria-hidden="true"><div class="bd-item-ic bd-skel-bar" style="width:40px;height:40px;border-radius:13px;"></div><div class="bd-item-body"><div class="bd-skel-bar bd-skel-title"></div><div class="bd-skel-bar bd-skel-sub"></div></div><div class="bd-item-actions"><div class="bd-skel-bar bd-skel-btn"></div><div class="bd-skel-bar bd-skel-btn"></div></div></div>
-      <div class="bd-item bd-skel" aria-hidden="true"><div class="bd-item-ic bd-skel-bar" style="width:40px;height:40px;border-radius:13px;"></div><div class="bd-item-body"><div class="bd-skel-bar bd-skel-title"></div><div class="bd-skel-bar bd-skel-sub"></div></div><div class="bd-item-actions"><div class="bd-skel-bar bd-skel-btn"></div><div class="bd-skel-bar bd-skel-btn"></div></div></div>
-      <div class="bd-item bd-skel" aria-hidden="true"><div class="bd-item-ic bd-skel-bar" style="width:40px;height:40px;border-radius:13px;"></div><div class="bd-item-body"><div class="bd-skel-bar bd-skel-title"></div><div class="bd-skel-bar bd-skel-sub"></div></div><div class="bd-item-actions"><div class="bd-skel-bar bd-skel-btn"></div><div class="bd-skel-bar bd-skel-btn"></div></div></div>
+      <div class="bd-item bd-skel" aria-hidden="true"><div class="bd-item-ic bd-skel-bar"></div><div class="bd-item-body"><div class="bd-skel-bar bd-skel-title"></div><div class="bd-skel-meta"><div class="bd-skel-bar bd-skel-amt"></div><div class="bd-skel-bar bd-skel-pill"></div></div></div><div class="bd-item-actions"><div class="bd-skel-bar bd-skel-btn"></div><div class="bd-skel-bar bd-skel-btn"></div></div></div>
+      <div class="bd-item bd-skel" aria-hidden="true"><div class="bd-item-ic bd-skel-bar"></div><div class="bd-item-body"><div class="bd-skel-bar bd-skel-title"></div><div class="bd-skel-meta"><div class="bd-skel-bar bd-skel-amt"></div><div class="bd-skel-bar bd-skel-pill"></div></div></div><div class="bd-item-actions"><div class="bd-skel-bar bd-skel-btn"></div><div class="bd-skel-bar bd-skel-btn"></div></div></div>
+      <div class="bd-item bd-skel" aria-hidden="true"><div class="bd-item-ic bd-skel-bar"></div><div class="bd-item-body"><div class="bd-skel-bar bd-skel-title"></div><div class="bd-skel-meta"><div class="bd-skel-bar bd-skel-amt"></div><div class="bd-skel-bar bd-skel-pill"></div></div></div><div class="bd-item-actions"><div class="bd-skel-bar bd-skel-btn"></div><div class="bd-skel-bar bd-skel-btn"></div></div></div>
+      <div class="bd-item bd-skel" aria-hidden="true"><div class="bd-item-ic bd-skel-bar"></div><div class="bd-item-body"><div class="bd-skel-bar bd-skel-title"></div><div class="bd-skel-meta"><div class="bd-skel-bar bd-skel-amt"></div><div class="bd-skel-bar bd-skel-pill"></div></div></div><div class="bd-item-actions"><div class="bd-skel-bar bd-skel-btn"></div><div class="bd-skel-bar bd-skel-btn"></div></div></div>
+      <div class="bd-item bd-skel" aria-hidden="true"><div class="bd-item-ic bd-skel-bar"></div><div class="bd-item-body"><div class="bd-skel-bar bd-skel-title"></div><div class="bd-skel-meta"><div class="bd-skel-bar bd-skel-amt"></div><div class="bd-skel-bar bd-skel-pill"></div></div></div><div class="bd-item-actions"><div class="bd-skel-bar bd-skel-btn"></div><div class="bd-skel-bar bd-skel-btn"></div></div></div>
+      <div class="bd-item bd-skel" aria-hidden="true"><div class="bd-item-ic bd-skel-bar"></div><div class="bd-item-body"><div class="bd-skel-bar bd-skel-title"></div><div class="bd-skel-meta"><div class="bd-skel-bar bd-skel-amt"></div><div class="bd-skel-bar bd-skel-pill"></div></div></div><div class="bd-item-actions"><div class="bd-skel-bar bd-skel-btn"></div><div class="bd-skel-bar bd-skel-btn"></div></div></div>
     </div>
   </div>
 </div>

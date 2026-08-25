@@ -7781,10 +7781,18 @@ function daysUntil(dateStr) {
 
 function dueLabel(dateStr) {
   const diff = daysUntil(dateStr);
-  const formatted = new Date(dateStr + 'T00:00:00').toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
-  if (diff < 0) return { text: `Terlambat ${Math.abs(diff)} hari · ${formatted}`, overdue: true, soon: false };
-  if (diff === 0) return { text: `Hari ini · ${formatted}`, overdue: true, soon: false };
-  if (diff <= 3) return { text: `${diff} hari lagi · ${formatted}`, overdue: false, soon: true };
+  // FIX "pil rapi": tanggal & frasa hari sengaja disambung pakai spasi
+  // non-breaking (\u00A0) supaya "24 Agu 2026" atau "1 hari" tidak pernah
+  // patah/wrap di tengah jadi kata yang menggantung sendirian di baris
+  // ke-2 (mis. cuma "2026" doang, lihat foto laporan bug). Spasi biasa
+  // cuma disisakan di sekitar "·" (satu-satunya titik jeda yang wajar),
+  // jadi kalau pil ini terpaksa membungkus 2 baris di layar sempit,
+  // hasilnya tetap rapi: baris 1 "Terlambat 1 hari ·", baris 2
+  // "24 Agu 2026" -- bukan patah asal di sembarang kata.
+  const formatted = new Date(dateStr + 'T00:00:00').toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '\u00A0');
+  if (diff < 0) return { text: `Terlambat\u00A0${Math.abs(diff)}\u00A0hari · ${formatted}`, overdue: true, soon: false };
+  if (diff === 0) return { text: `Hari\u00A0ini · ${formatted}`, overdue: true, soon: false };
+  if (diff <= 3) return { text: `${diff}\u00A0hari\u00A0lagi · ${formatted}`, overdue: false, soon: true };
   return { text: formatted, overdue: false, soon: false };
 }
 
