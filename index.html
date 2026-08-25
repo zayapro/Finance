@@ -3887,42 +3887,74 @@ body.density-compact .income-cards-group{gap:10px;}
    dihilangkan supaya menyatu langsung dengan kartu putih di belakangnya. */
 #historySection{background:transparent;border:none;box-shadow:none;}
 #historySection:hover{box-shadow:none;transform:none;}
-/* ---- PERMINTAAN: header "Semua Transaksi" (judul + tombol Cari/Download/
-   Filter + baris pencarian kalau dibuka) dibuat MENEMPEL (position:sticky)
-   di tab Aktifitas -- batas scroll-nya persis di bawah header ini, jadi
-   yang scroll normal cuma daftar transaksinya (#txTableWrap) saja.
-   Latar diberi var(--card) (putih) SENDIRI di sini -- walau #historySection
-   di atas sengaja ditembuskan (background:transparent) supaya menyatu dgn
-   .page-body -- soalnya begitu wrapper ini nempel di atas layar saat
-   discroll, ia perlu latar solid sendiri supaya baris transaksi yang lewat
-   di baliknya tidak "tembus pandang" kelihatan tertumpuk di belakang teks
-   judul/tombolnya. top pakai var(--mini-topbar-h) (variabel yang sama juga
-   dipakai scroll-margin-top #historySection/#txTableWrap di atas) supaya
-   di HP dia berhenti tepat DI BAWAH mini-topbar, bukan malah ketutup
-   olehnya -- otomatis jadi 0 sendiri di desktop/tablet karena mini-topbar
-   memang disembunyikan (display:none) di sana. z-index satu tingkat di
-   bawah mini-topbar (var(--z-mini-topbar) - 1), pola yg sama dipakai
-   .tabs-sticky-wrap, supaya kalau dua-duanya sama-sama nempel di HP,
-   mini-topbar selalu tetap di lapisan paling atas. */
-#historySection .lap-sticky-head{
+/* ================================================================
+   PERMINTAAN (screenshot acuan): banner "Laporan" + tab Aktifitas/
+   Tabungan/Aset + header "Semua Transaksi" (judul + tombol Cari/
+   Download/Filter + baris pencarian) dijadikan SATU KESATUAN yang
+   MENEMPEL (position:sticky) di atas layar saat halaman Laporan
+   discroll -- persis seperti posisi ketiganya di screenshot. Batas
+   scroll-nya jatuh tepat di bawah header ini: yang scroll normal
+   cuma daftar transaksinya (.lap-page-body-rest / #txTableWrap) saja.
+   Markup-nya lihat #page-laporan di HTML -- direstruktur jadi
+   .lap-sticky-top (bungkus banner+tab+header) + .lap-page-body-rest
+   (blok terpisah berisi 3 panel yg scroll normal), pola yg SAMA
+   dgn halaman Tagihan & Hutang (.bd-sticky-head + .bd-page-body-rest).
+   ================================================================ */
+.lap-sticky-top{
   position:sticky;
+  /* top pakai var(--mini-topbar-h) -- variabel yg sama jg dipakai di
+     scroll-margin-top #historySection/#txTableWrap -- supaya di HP dia
+     berhenti tepat DI BAWAH mini-topbar (bukan ketutup olehnya), dan
+     otomatis jadi 0 sendiri di desktop/tablet krn mini-topbar memang
+     disembunyikan (display:none) di sana. */
   top:var(--mini-topbar-h,0px);
+  /* z-index satu tingkat di bawah mini-topbar (var(--z-mini-topbar) - 1),
+     pola yg sama dipakai .tabs-sticky-wrap -- supaya kalau dua-duanya
+     sama-sama nempel di HP, mini-topbar selalu tetap di lapisan
+     paling atas. */
   z-index:calc(var(--z-mini-topbar) - 1);
-  background:var(--card);
-  padding-top:2px;
 }
-#historySection .lap-sticky-head .section-head{margin-bottom:14px;}
-#historySection .lap-sticky-head .bd-search-row{margin-bottom:14px;}
+/* Bagian atas (banner+tab+header) TIDAK butuh padding-bottom lagi di
+   ujung bawahnya -- .lap-aktifitas-head di dalamnya sudah punya
+   padding-bottom sendiri (lihat aturannya di bawah). */
+.page-body.lap-page-body-top{padding-bottom:0;}
+/* Blok bawah (3 panel, scroll normal): margin-atas negatif/radius/
+   shadow "kartu menumpang di atas banner" dinolkan di sini krn sudah
+   "dipakai" oleh .lap-page-body-top di atasnya -- kalau tidak,
+   efeknya numpuk dobel (lihat catatan panjang pola yg sama persis
+   di .bd-page-body.bd-page-body-rest, halaman Tagihan & Hutang). */
+.page-body.lap-page-body-rest{margin-top:0;border-radius:0;box-shadow:none;padding-top:14px;}
+.page-body.lap-page-body-rest::before{display:none;}
+@media (max-width:640px){
+  .page-body.lap-page-body-rest{margin-top:0;border-radius:0;box-shadow:none;}
+}
+/* ---- Header "Semua Transaksi": dulu ada DI DALAM kartu
+   #historySection (jadi otomatis kebagian padding kiri-kanannya lewat
+   .section-card), sekarang dipindah keluar ke area sticky di atas --
+   jadi padding kiri-kanannya perlu DISAMAKAN MANUAL di sini dgn
+   padding .section-card/#historySection (20px 22px desktop; 16px/16
+   di ≤600px; 14px/12 di ≤380px) supaya judulnya tetap sejajar persis
+   dgn tab di atasnya & daftar transaksi di bawahnya. Disembunyikan
+   otomatis (lihat aturan :not() di bawah) begitu tab aktif BUKAN
+   "aktifitas", supaya tidak nyangkut nongol menutupi panel placeholder
+   Tabungan/Aset yang tidak terkait dengannya. ---- */
+.lap-aktifitas-head{padding:20px 22px 14px;}
+.lap-sticky-top:not([data-active-laptab="aktifitas"]) .lap-aktifitas-head{display:none;}
 @media (max-width:600px){
-  #historySection .lap-sticky-head .section-head{margin-bottom:12px;}
+  .lap-aktifitas-head{padding:16px 16px 12px;}
 }
-/* ---- Font judul "Semua Transaksi" DISAMAKAN PERSIS dengan font judul
-   halaman (.page-banner h1 -- "Laporan") -- sebelumnya cuma ikut
-   aturan umum h1,h2,h3 (weight 600, size 18px tetap/tidak responsif),
-   beda dari judul banner yang pakai weight 500 + ukuran clamp()
-   responsif. Selector di-scope ke #historySection saja supaya judul
-   section-card lain (Beranda dkk) tidak ikut berubah. */
-#historySection .section-head h2{
+@media (max-width:380px){
+  .lap-aktifitas-head{padding:14px 12px 10px;}
+}
+.lap-aktifitas-head .section-head{margin-bottom:0;}
+.lap-aktifitas-head .bd-search-row{margin-top:14px;}
+/* ---- Font judul "Semua Transaksi" DISAMAKAN PERSIS dengan font
+   judul halaman (.page-banner h1 -- "Laporan") -- sebelumnya cuma
+   ikut aturan umum h1,h2,h3 (weight 600, size 18px tetap/tidak
+   responsif), beda dari judul banner yang pakai weight 500 + ukuran
+   clamp() responsif. Selector di-scope ke .lap-aktifitas-head saja
+   supaya judul section-card lain (Beranda dkk) tidak ikut berubah. */
+.lap-aktifitas-head .section-head h2{
   font-family:'Poppins',sans-serif;
   font-size:clamp(16px,3.6vw,19px);font-weight:500;letter-spacing:-0.005em;line-height:1.25;
 }
@@ -3931,11 +3963,11 @@ body.density-compact .income-cards-group{gap:10px;}
    (32px->29px, ikon 16px->14.5px) supaya proporsinya pas dgn tinggi
    teks judul (clamp 16-19px) di sebelahnya -- sebelumnya cuma 1
    tombol Filter ukuran 32px terasa agak besar sendiri dibanding
-   judul. Di-scope ke #historySection saja spy .bd-icon-btn di
+   judul. Di-scope ke .lap-aktifitas-head saja spy .bd-icon-btn di
    halaman lain (mis. Tagihan/Hutang) tidak ikut berubah. ---- */
-#historySection .lap-header-actions{display:flex;align-items:center;gap:7px;flex-shrink:0;}
-#historySection .lap-header-actions .bd-icon-btn{width:29px;height:29px;}
-#historySection .lap-header-actions .bd-icon-btn svg{width:14.5px;height:14.5px;}
+.lap-aktifitas-head .lap-header-actions{display:flex;align-items:center;gap:7px;flex-shrink:0;}
+.lap-aktifitas-head .lap-header-actions .bd-icon-btn{width:29px;height:29px;}
+.lap-aktifitas-head .lap-header-actions .bd-icon-btn svg{width:14.5px;height:14.5px;}
 /* ---- Garis pembatas antar-transaksi (.rw-item) otomatis sejajar dgn
    garis bawah tab "Aktifitas/Tabungan/Aset" karena keduanya sekarang
    sama-sama diberi jarak 22px/14px/12px dari tepi layar (lihat
@@ -6368,8 +6400,10 @@ html.zp-app-loading .page-body > .lap-panel{display:none;}
   color:var(--ink);cursor:pointer;
   /* Font DISAMAKAN dengan judul popup (Poppins) -- sama dgn opsi radio
      "Rentang Waktu" (.lap-radio-tabs .tab-btn) supaya kedua daftar
-     radio dlm alur Filter ini terasa satu keluarga tampilan. */
-  font-family:'Poppins',sans-serif;font-weight:500;letter-spacing:-0.005em;font-size:14px;
+     radio dlm alur Filter ini terasa satu keluarga tampilan.
+     font-weight DITURUNKAN ke 400 (Regular, bukan 500/Medium) supaya
+     daftar kategori tidak kelihatan tebal -- sesuai permintaan. */
+  font-family:'Poppins',sans-serif;font-weight:400;letter-spacing:-0.005em;font-size:14px;
   touch-action:manipulation;-webkit-tap-highlight-color:transparent;
 }
 .lap-cat-item:last-child{border-bottom:none;}
@@ -6512,7 +6546,14 @@ select#categoryFilter[hidden]{display:none;}
    sudut membulat 14px. Warna TETAP ikut tema app (var(--primary),
    oranye) lewat .btn-primary yg sudah ada, bukan biru spt di gambar
    referensi. */
-.lap-filter-save-btn{width:100%;justify-content:center;padding:15px;border-radius:999px;font-size:14.5px;font-family:'Poppins',sans-serif;font-weight:500;letter-spacing:-0.005em;}
+/* ---- Selektor DINAIKKAN jadi ".btn.lap-filter-save-btn" (2 class,
+   bukan 1) supaya spesifisitasnya lebih tinggi dari ".btn" polos di
+   media query layar HP (@media max-width:600px & 400px di bawah) --
+   sebelumnya pakai 1 class saja jadi KALAH di HP krn aturan ".btn" di
+   media query itu ditulis BELAKANGAN di file (border-radius balik jadi
+   8px kotak, bukan pil 999px). Sekarang bentuk pil INI yang selalu
+   menang di semua ukuran layar, sesuai referensi. */
+.btn.lap-filter-save-btn{width:100%;justify-content:center;padding:15px;border-radius:999px;font-size:14.5px;font-family:'Poppins',sans-serif;font-weight:500;letter-spacing:-0.005em;}
 @media (max-width:400px){
   .lap-filter-head{padding-left:14px;padding-right:14px;}
   .lap-filter-card{padding-left:14px;padding-right:14px;}
@@ -7008,8 +7049,16 @@ select#categoryFilter[hidden]{display:none;}
   .bn-item{
     flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
     background:none;border:none;padding:2px 2px 3px;margin:0;cursor:pointer;
-    font-family:inherit;font-size:11px;font-weight:700;color:#374151;
-    letter-spacing:0.01em;line-height:1;
+    /* font-family DISAMAKAN dengan judul halaman (.page-banner h1, Poppins)
+       -- sebelumnya "inherit" jadi ikut font body default (Plus Jakarta
+       Sans), beda dgn judul oranye di atasnya. letter-spacing juga
+       DISESUAIKAN (dari 0.01em ke -0.005em) SAMA PERSIS dengan judul,
+       biar rasa hurufnya benar-benar senada, bukan cuma keluarga
+       fontnya. font-weight TETAP 700 (bukan ikut 500 spt judul) --
+       sengaja dipertahankan tebal krn ukurannya jauh lebih kecil (11px)
+       supaya label nav tetap gampang dibaca, bukan krn beda font. */
+    font-family:'Poppins',sans-serif;font-size:11px;font-weight:700;color:#374151;
+    letter-spacing:-0.005em;line-height:1;
     -webkit-tap-highlight-color:transparent;
     /* outline:none tambahan -- jaga-jaga supaya tidak ada kotak/ring
        fokus bawaan browser yang sempat kelihatan sekilas saat tombol
@@ -8196,61 +8245,64 @@ body.is-scrolling *{
 
   <!-- ===== HALAMAN: LAPORAN ===== -->
   <div class="app-page" id="page-laporan" data-page="laporan">
-    <div class="page-banner">
-      <h1>Laporan</h1>
-      <p>Grafik, komposisi, dan riwayat transaksimu</p>
-    </div>
-    <div class="page-body">
-      <div class="zp-page-skel" aria-hidden="true">
-        <div class="zp-skel-card">
-          <div class="bd-skel-bar" style="width:38%;height:14px;"></div>
-          <div class="bd-skel-bar" style="width:92%;height:32px;margin-top:12px;"></div>
-        </div>
-        <div class="zp-skel-card">
-          <div class="bd-skel-bar" style="width:45%;height:14px;"></div>
-          <div class="bd-skel-bar" style="width:100%;height:10px;"></div>
-          <div class="bd-skel-bar" style="width:80%;height:10px;"></div>
-          <div class="bd-skel-bar" style="width:65%;height:10px;"></div>
-        </div>
-        <div class="zp-skel-card">
-          <div class="bd-skel-bar" style="width:30%;height:14px;"></div>
-          <div class="bd-skel-bar" style="width:100%;height:10px;"></div>
-          <div class="bd-skel-bar" style="width:70%;height:10px;"></div>
-        </div>
+    <!-- ---- PERMINTAAN: seluruh bagian atas halaman Laporan -- banner
+         oranye "Laporan", tab Aktifitas/Tabungan/Aset, DAN header
+         "Semua Transaksi" (judul + tombol Cari/Download/Filter + baris
+         pencarian) -- dijadikan SATU KESATUAN yang MENEMPEL (position:
+         sticky) di atas layar saat discroll, persis seperti screenshot
+         acuan yang dikirim. Pola restrukturnya SAMA dgn halaman Tagihan
+         & Hutang (.bd-sticky-head + .bd-page-body-rest, lihat catatan
+         lengkap di sana): bagian atas ini dibungkus 1 wrapper sticky
+         (.lap-sticky-top), sedangkan daftar transaksinya jadi blok
+         page-body TERPISAH di bawah (.lap-page-body-rest) yang scroll
+         normal seperti biasa -- itulah "batas scroll"-nya, persis di
+         antara header "Semua Transaksi" dengan datanya.
+         data-active-laptab di-timpa oleh switchLapMainTab() (script.js)
+         setiap ganti tab -- dipakai CSS supaya header "Semua Transaksi"
+         di dalamnya OTOMATIS disembunyikan begitu pindah ke tab
+         Tabungan/Aset (placeholder), jadi tidak nyangkut menutupi
+         panel lain yang tidak terkait dengannya. ---- -->
+    <div class="lap-sticky-top" id="lapStickyTop" data-active-laptab="aktifitas">
+      <div class="page-banner">
+        <h1>Laporan</h1>
+        <p>Grafik, komposisi, dan riwayat transaksimu</p>
       </div>
-      <!-- Tab utama halaman Laporan: Aktifitas (riwayat transaksi uang
-           masuk & keluar), Tabungan, Aset. Pakai komponen .tabs yang
-           sama dgn tab lain di app (indikator pil meluncur otomatis
-           lewat updateTabIndicator() di script.js, cukup container
-           ini juga ikut kena querySelectorAll('.tabs')). -->
-      <div class="tabs lap-toptabs" id="lapMainTabs">
-        <span class="tab-indicator" aria-hidden="true"></span>
-        <button type="button" class="tab-btn active" data-laptab="aktifitas">Aktifitas</button>
-        <button type="button" class="tab-btn" data-laptab="tabungan">Tabungan</button>
-        <button type="button" class="tab-btn" data-laptab="aset">Aset</button>
-      </div>
+      <div class="page-body lap-page-body-top">
+        <div class="zp-page-skel" aria-hidden="true">
+          <div class="zp-skel-card">
+            <div class="bd-skel-bar" style="width:38%;height:14px;"></div>
+            <div class="bd-skel-bar" style="width:92%;height:32px;margin-top:12px;"></div>
+          </div>
+          <div class="zp-skel-card">
+            <div class="bd-skel-bar" style="width:45%;height:14px;"></div>
+            <div class="bd-skel-bar" style="width:100%;height:10px;"></div>
+            <div class="bd-skel-bar" style="width:80%;height:10px;"></div>
+            <div class="bd-skel-bar" style="width:65%;height:10px;"></div>
+          </div>
+          <div class="zp-skel-card">
+            <div class="bd-skel-bar" style="width:30%;height:14px;"></div>
+            <div class="bd-skel-bar" style="width:100%;height:10px;"></div>
+            <div class="bd-skel-bar" style="width:70%;height:10px;"></div>
+          </div>
+        </div>
+        <!-- Tab utama halaman Laporan: Aktifitas (riwayat transaksi uang
+             masuk & keluar), Tabungan, Aset. Pakai komponen .tabs yang
+             sama dgn tab lain di app (indikator pil meluncur otomatis
+             lewat updateTabIndicator() di script.js, cukup container
+             ini juga ikut kena querySelectorAll('.tabs')). -->
+        <div class="tabs lap-toptabs" id="lapMainTabs">
+          <span class="tab-indicator" aria-hidden="true"></span>
+          <button type="button" class="tab-btn active" data-laptab="aktifitas">Aktifitas</button>
+          <button type="button" class="tab-btn" data-laptab="tabungan">Tabungan</button>
+          <button type="button" class="tab-btn" data-laptab="aset">Aset</button>
+        </div>
 
-      <!-- ---- Pembungkus ketiga panel di bawah -- dipakai sebagai area
-           deteksi usap (swipe) kiri/kanan utk pindah tab Aktifitas/
-           Tabungan/Aset, lihat setupLapSwipeTabs() di script.js. ---- -->
-      <div class="lap-panels-swipe" id="lapPanelsSwipe">
-
-      <!-- ---- PANEL: AKTIFITAS (Semua Transaksi -- uang masuk & keluar) ---- -->
-      <div class="lap-panel active" data-lap-panel="aktifitas" id="lapPanelAktifitas">
-        <div class="section-card" id="historySection">
-          <!-- ---- PERMINTAAN: batas scroll tab Aktifitas ditaruh persis di
-               antara header "Semua Transaksi" (judul + tombol Cari/Download/
-               Filter, dan baris pencarian kalau sedang dibuka) dengan daftar
-               transaksinya (#txTableWrap) -- header ini dibungkus 1 wrapper
-               "lap-sticky-head" yang dibuat position:sticky (lihat CSS
-               #historySection .lap-sticky-head) supaya tetap diam menempel
-               di posisinya walau daftar di bawahnya discroll turun. top-nya
-               pakai var(--mini-topbar-h) -- variabel yang sama dipakai
-               #historySection/#txTableWrap di scroll-margin-top -- supaya di
-               HP dia berhenti tepat di bawah mini-topbar (bukan ketutup),
-               dan otomatis 0 di desktop/tablet karena mini-topbar memang
-               disembunyikan di sana. ---- -->
-          <div class="lap-sticky-head" id="lapStickyHead">
+        <!-- ---- Header "Semua Transaksi" khusus tab Aktifitas -- dulu
+             ada DI DALAM kartu #historySection, sekarang ikut nempel
+             bareng banner+tab di atas (lihat CSS .lap-aktifitas-head).
+             Disembunyikan otomatis lewat CSS kalau tab aktif BUKAN
+             "aktifitas" (lihat data-active-laptab di wrapper induk). ---- -->
+        <div class="lap-aktifitas-head" id="lapAktifitasHead">
           <div class="section-head">
             <div>
               <h2>Semua Transaksi</h2>
@@ -8302,9 +8354,29 @@ body.is-scrolling *{
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8"><path d="M6 6l12 12M18 6 6 18"/></svg>
             </button>
           </div>
-          </div>
-          <!-- /.lap-sticky-head -->
+        </div>
+        <!-- /.lap-aktifitas-head -->
+      </div>
+    </div>
+    <!-- /.lap-sticky-top -->
 
+    <!-- ---- Blok TERPISAH di bawah wrapper sticky di atas -- berisi
+         ketiga panel (Aktifitas/Tabungan/Aset) yang scroll NORMAL.
+         Dibuat dari class .page-body yang sama (supaya latar putihnya
+         menyambung rata tanpa sambungan terlihat dgn .lap-page-body-top
+         di atas), tapi margin-atas negatif/radius/shadow-nya dinolkan
+         lewat .lap-page-body-rest (sudah "dipakai" oleh page-body-top
+         di atasnya) -- sama persis polanya dgn .bd-page-body-rest di
+         halaman Tagihan & Hutang. ---- -->
+    <div class="page-body lap-page-body-rest">
+      <!-- ---- Pembungkus ketiga panel di bawah -- dipakai sebagai area
+           deteksi usap (swipe) kiri/kanan utk pindah tab Aktifitas/
+           Tabungan/Aset, lihat setupLapSwipeTabs() di script.js. ---- -->
+      <div class="lap-panels-swipe" id="lapPanelsSwipe">
+
+      <!-- ---- PANEL: AKTIFITAS (Semua Transaksi -- uang masuk & keluar) ---- -->
+      <div class="lap-panel active" data-lap-panel="aktifitas" id="lapPanelAktifitas">
+        <div class="section-card" id="historySection">
           <div class="rw-list-wrap" id="txTableWrap">
             <div class="rw-list" id="txBody"></div>
             <div class="bd-empty" id="emptyState" style="display:none;">

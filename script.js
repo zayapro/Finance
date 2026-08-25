@@ -3479,6 +3479,58 @@ function populateCategoryFilter() {
   updateLapCategoryFieldLabel();
 }
 
+/* ---- Gestur usap/tarik (drag) dengan jari utk SEMUA bottom sheet popup
+   Filter Laporan (Pilih Bulan, Pilih Rentang Tanggal, Kategori Transaksi)
+   -- pegangan (.lap-sheet-handle) & judul (.lap-sheet-head) jadi area yg
+   bisa "diusap" turun pakai jari buat menutup sheet, persis gestur
+   bottom-sheet asli di HP (mis. share sheet iOS/Android): begitu jari
+   ditekan lalu ditarik, sheet-nya IKUT BERGERAK naik-turun mengikuti
+   posisi jari secara langsung (bukan animasi tetap), TAPI cuma boleh
+   ditarik ke BAWAH (translateY>=0) -- ditarik ke atas cuma balik ke 0.
+   Dilepas SEBELUM jarak ambang batas (CLOSE_THRESHOLD) -> sheet
+   "melenting" balik ke posisi semula (transition dihidupkan lagi).
+   Dilepas SETELAH ambang batas -> sheet beneran ditutup (closeFn). */
+function initLapSheetDrag(overlay, sheet, closeFn) {
+  if (!overlay || !sheet || sheet.dataset.dragBound === '1') return;
+  sheet.dataset.dragBound = '1';
+  const grabZones = sheet.querySelectorAll('.lap-sheet-handle, .lap-sheet-head');
+  if (!grabZones.length) return;
+  const CLOSE_THRESHOLD = 90; // px -- jarak tarik ke bawah minimum sblm sheet ditutup
+  let startY = null, currentY = 0, dragging = false, pointerId = null;
+
+  function onPointerMove(e) {
+    if (!dragging || e.pointerId !== pointerId) return;
+    const deltaY = e.clientY - startY;
+    currentY = Math.max(0, deltaY); // cuma boleh ditarik turun, bukan naik lewat batas atas
+    sheet.style.transform = `translateY(${currentY}px)`;
+  }
+  function onPointerUp(e) {
+    if (!dragging || e.pointerId !== pointerId) return;
+    dragging = false;
+    startY = null;
+    pointerId = null;
+    sheet.style.transition = '';
+    sheet.style.transform = '';
+    if (currentY >= CLOSE_THRESHOLD) closeFn();
+    currentY = 0;
+  }
+  grabZones.forEach(zone => {
+    zone.style.touchAction = 'none';
+    zone.addEventListener('pointerdown', (e) => {
+      if (!overlay.classList.contains('open')) return;
+      startY = e.clientY;
+      currentY = 0;
+      dragging = true;
+      pointerId = e.pointerId;
+      sheet.style.transition = 'none'; // dinonaktifkan sementara supaya sheet nempel pas di jari, bukan telat kena easing
+      try { zone.setPointerCapture(pointerId); } catch (err) {}
+    });
+    zone.addEventListener('pointermove', onPointerMove);
+    zone.addEventListener('pointerup', onPointerUp);
+    zone.addEventListener('pointercancel', onPointerUp);
+  });
+}
+
 /* ---- Bottom sheet "Kategori Transaksi" (popup Filter Laporan) ----
    <select id="categoryFilter"> di atas TETAP jadi satu-satunya sumber
    nilai (dibaca getFilteredTransactions, tombol Reset, dst) -- sheet
@@ -3523,6 +3575,7 @@ document.getElementById('lapCategorySheetCloseBtn')?.addEventListener('click', c
 document.getElementById('lapCategorySheetOverlay')?.addEventListener('click', (e) => {
   if (e.target.id === 'lapCategorySheetOverlay') closeLapCategorySheet();
 });
+initLapSheetDrag(document.getElementById('lapCategorySheetOverlay'), document.getElementById('lapCategorySheet'), closeLapCategorySheet);
 document.getElementById('lapCategorySheetList')?.addEventListener('click', (e) => {
   const btn = e.target.closest('.lap-cat-item');
   if (!btn) return;
@@ -7762,6 +7815,7 @@ document.getElementById('lapMonthSheetCloseBtn')?.addEventListener('click', clos
 document.getElementById('lapMonthSheetOverlay')?.addEventListener('click', (e) => {
   if (e.target.id === 'lapMonthSheetOverlay') closeLapMonthSheet();
 });
+initLapSheetDrag(document.getElementById('lapMonthSheetOverlay'), document.getElementById('lapMonthSheet'), closeLapMonthSheet);
 document.getElementById('lapMonthSheetSaveBtn')?.addEventListener('click', () => {
   const monthCol = document.getElementById('lapWheelMonthCol');
   const yearCol = document.getElementById('lapWheelYearCol');
@@ -7873,6 +7927,7 @@ document.getElementById('lapDateRangeSheetCloseBtn')?.addEventListener('click', 
 document.getElementById('lapDateRangeSheetOverlay')?.addEventListener('click', (e) => {
   if (e.target.id === 'lapDateRangeSheetOverlay') closeLapDateRangeSheet();
 });
+initLapSheetDrag(document.getElementById('lapDateRangeSheetOverlay'), document.getElementById('lapDateRangeSheet'), closeLapDateRangeSheet);
 document.getElementById('lapDateRangeSheetSaveBtn')?.addEventListener('click', () => {
   if (!lapCalRangeStart) { closeLapDateRangeSheet(); return; }
   lapFilterDateFrom = lapCalRangeStart;
@@ -7898,6 +7953,11 @@ function switchLapMainTab(target) {
   btn.classList.add('active');
   updateTabIndicator(container);
   document.querySelectorAll('.lap-panel').forEach(p => p.classList.toggle('active', p.dataset.lapPanel === target));
+  // ---- Ikut timpa data-active-laptab di wrapper sticky (#lapStickyTop) --
+  // dipakai CSS (.lap-sticky-top:not([data-active-laptab="aktifitas"]) ...)
+  // supaya header "Semua Transaksi" yg ikut nempel di sana otomatis
+  // disembunyikan begitu pindah ke tab Tabungan/Aset. ----
+  document.getElementById('lapStickyTop')?.setAttribute('data-active-laptab', target);
 }
 document.getElementById('lapMainTabs')?.addEventListener('click', (e) => {
   const btn = e.target.closest('.tab-btn');
