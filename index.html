@@ -6070,7 +6070,17 @@ tbody tr:last-child td{border-bottom:none;}
      .bd-page-body di halaman Tagihan & Hutang (dua-duanya z-index:2). */
   position:relative;z-index:2;
   background:var(--card,#fff);
-  margin:-24px 0 0;
+  /* PENTING: sebelumnya cuma margin atas (vertikal) yang di-set di
+     sini, jadi kartu putih ini masih kepotong padding kiri-kanan
+     .app (24px di desktop) dan TIDAK sampai ke pinggir layar --
+     beda dengan .page-banner di atas yang sudah full-bleed lewat
+     trik margin calc() ini. Baris left/right di bawah ini
+     nyamain .page-body dengan .page-banner (dan dengan
+     .bd-page-body di halaman Tagihan & Hutang, yang otomatis
+     full-bleed karena overlay-nya sendiri sudah position:fixed
+     tanpa padding .app), supaya kartu putihnya juga mepet
+     sampai ke pinggir layar persis seperti bannernya. */
+  margin:-24px calc(-50vw + 50%) 0;
   border-radius:28px 28px 0 0;
   padding:24px 0 4px;
 }
@@ -8915,13 +8925,18 @@ body.is-scrolling *{
   navBtns.forEach(function(btn){
     btn.addEventListener('click', function(){
       var name = btn.dataset.page;
-      // "Tagihan" sengaja tidak berpindah halaman -- langsung membuka
-      // panel Tagihan & Hutang yang sudah ada (openNotifPanel), supaya
-      // tidak perlu duplikat kontennya di halaman terpisah.
+      // "Tagihan" sengaja tidak dipindah pakai showPage() di sini --
+      // tombolnya (#bnTagihanBtn) sudah punya listener SENDIRI di
+      // script.js yang membuka halaman penuh "Semua Tagihan & Hutang"
+      // (openBdAllPage). Dulu di sini juga sempat manggil openNotifPanel()
+      // (panel kecil dropdown notifikasi) sebagai fallback, TAPI itu
+      // bikin klik pada tombol Tagihan memicu DUA aksi sekaligus (panel
+      // kecil kebuka lalu langsung tertutup/tertimpa oleh overlay
+      // halaman penuh), dan saat overlay-nya ditutup, status scroll-lock
+      // panel kecil itu ikut nyangkut karena tidak lewat unlockBodyScroll()
+      // yang semestinya. Panggilan openNotifPanel() itu sudah dihapus --
+      // listener di script.js yang menangani tombol ini sepenuhnya.
       if (name === 'tagihan') {
-        if (typeof window.openNotifPanel === 'function') {
-          window.openNotifPanel();
-        }
         return;
       }
       showPage(name);
