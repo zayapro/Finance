@@ -3528,33 +3528,37 @@ function groupTransactionsByMonth(list) {
    dkk sekarang mengembalikan null. ---------- */
 
 
-/* ---------- Satu baris riwayat transaksi (tr tabel) ---------- */
+/* ---------- Satu kartu riwayat transaksi (gaya "Riwayat" mutasi bank,
+   ikon di kiri + nama/keterangan/tanggal, nominal & pil status "Sukses"
+   di kanan) -- warna & bentuk kartu disamakan dengan kartu tagihan/hutang
+   (.bd-item) supaya satu tema dengan halaman Tagihan & Hutang. ---------- */
 function renderHistoryRow(t, delay) {
   const isIn = t.type === 'masuk';
   const color = categoryColor(t.category);
-  const dateLabel = new Date(t.date + 'T00:00:00').toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+  const dateLabel = new Date(t.date + 'T00:00:00').toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
   return `
-    <tr class="fade-up" style="animation-delay:${delay}ms">
-      <td class="date-cell">${dateLabel}</td>
-      <td><span class="cat-pill"><span class="cat-dot" style="background:${color}"></span>${escapeHtml(t.category)}</span></td>
-      <td class="desc-cell" title="${escapeHtml(t.desc || '')}">${escapeHtml(t.desc || '—')}</td>
-      <td>
-        <span class="type-pill ${isIn ? 'in' : 'out'}">
-          ${iconArrow(isIn ? 'down' : 'up')} ${isIn ? 'Masuk' : 'Keluar'}
-        </span>
-      </td>
-      <td style="text-align:right" class="amount-cell ${isIn ? 'in' : 'out'}">${isIn ? '+' : '-'} ${fmtRupiah(t.amount)}</td>
-      <td>
-        <div class="row-actions" style="justify-content:center">
+    <div class="rw-item fade-up" style="animation-delay:${delay}ms">
+      <span class="rw-item-ic" style="background:color-mix(in srgb, ${color} 15%, transparent);color:${color}">
+        ${iconArrow(isIn ? 'down' : 'up', 15)}
+      </span>
+      <div class="rw-item-body">
+        <div class="rw-item-name">${escapeHtml(t.category)}</div>
+        <div class="rw-item-sub" title="${escapeAttr(t.desc || '')}">${escapeHtml(t.desc || 'Tanpa keterangan')}</div>
+        <div class="rw-item-date">${dateLabel}</div>
+      </div>
+      <div class="rw-item-right">
+        <div class="rw-item-amount ${isIn ? 'in' : 'out'}">${isIn ? '+' : '-'} ${fmtRupiah(t.amount)}</div>
+        <span class="rw-status-pill">Sukses</span>
+        <div class="rw-item-actions">
           <button class="icon-btn edit" data-edit="${t.id}" title="Edit">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
           </button>
           <button class="icon-btn del" data-del="${t.id}" title="Hapus">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6h16Z"/></svg>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6h16Z"/></svg>
           </button>
         </div>
-      </td>
-    </tr>`;
+      </div>
+    </div>`;
 }
 
 function renderTransactionList() {
@@ -3588,14 +3592,10 @@ function renderTransactionList() {
       return html;
     }).join('');
     return `
-      <tr class="date-group-row">
-        <td colspan="6">
-          <div class="dgr-flex">
-            <span>${escapeHtml(isYearly ? formatHistoryMonthLabel(key) : formatHistoryDateLabel(key))}</span>
-            <span class="dgr-net ${dayNet >= 0 ? 'in' : 'out'}">${dayNet >= 0 ? '+' : '-'} ${fmtRupiah(Math.abs(dayNet))}</span>
-          </div>
-        </td>
-      </tr>
+      <div class="rw-group-head">
+        <span>${escapeHtml(isYearly ? formatHistoryMonthLabel(key) : formatHistoryDateLabel(key))}</span>
+        <span class="rw-group-net ${dayNet >= 0 ? 'in' : 'out'}">${dayNet >= 0 ? '+' : '-'} ${fmtRupiah(Math.abs(dayNet))}</span>
+      </div>
       ${rowsHtml}`;
   }).join('');
 
@@ -7736,10 +7736,10 @@ function daysUntil(dateStr) {
 function dueLabel(dateStr) {
   const diff = daysUntil(dateStr);
   const formatted = new Date(dateStr + 'T00:00:00').toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
-  if (diff < 0) return { text: `Terlambat ${Math.abs(diff)} hari · ${formatted}`, overdue: true, today: false, soon: false };
-  if (diff === 0) return { text: `Hari ini · ${formatted}`, overdue: true, today: true, soon: false };
-  if (diff <= 3) return { text: `${diff} hari lagi · ${formatted}`, overdue: false, today: false, soon: true };
-  return { text: formatted, overdue: false, today: false, soon: false };
+  if (diff < 0) return { text: `Terlambat ${Math.abs(diff)} hari · ${formatted}`, overdue: true, soon: false };
+  if (diff === 0) return { text: `Hari ini · ${formatted}`, overdue: true, soon: false };
+  if (diff <= 3) return { text: `${diff} hari lagi · ${formatted}`, overdue: false, soon: true };
+  return { text: formatted, overdue: false, soon: false };
 }
 
 function updateNotifBadge() {
@@ -7851,7 +7851,7 @@ function renderNotifPanel() {
   listEl.innerHTML = list.map(item => {
     const due = dueLabel(item.dueDate);
     const urgencyClass = due.overdue ? ' overdue' : (due.soon ? ' soon' : '');
-    const dueClass = due.today ? ' due-today' : (due.overdue ? ' due-pill' : (due.soon ? ' due-soon' : ''));
+    const dueClass = due.overdue ? ' due-pill' : (due.soon ? ' due-soon' : '');
     return `
       <div class="notif-item type-${notifTab}${urgencyClass}">
         <div class="notif-item-ic">
@@ -8156,7 +8156,7 @@ function renderBdAllPage() {
     const isPaid = item.status === 'lunas';
     const due = dueLabel(item.dueDate);
     const urgencyClass = !isPaid && due.overdue ? ' overdue' : (!isPaid && due.soon ? ' soon' : '');
-    const dueClass = due.today ? ' due-today' : (due.overdue ? ' due-pill' : (due.soon ? ' due-soon' : ''));
+    const dueClass = due.overdue ? ' due-pill' : (due.soon ? ' due-soon' : '');
     return `
       <div class="bd-item type-${item.kind}${urgencyClass}${isPaid ? ' paid' : ''}">
         <div class="bd-item-ic">
@@ -8221,18 +8221,7 @@ function openBdAllPage(initialTab) {
 function closeBdAllPage() {
   document.getElementById('bdAllOverlay').classList.remove('open');
   document.body.style.overflow = '';
-  // PERBAIKAN BUG: sebelumnya baris ini SELALU memaksa nav bawah menyala
-  // ke "Beranda" (setBottomNavActive('beranda')) apa pun tab yang
-  // sebenarnya sedang aktif di belakang overlay ini. Contoh nyatanya:
-  // user buka tab "Dompet" -> tap "Tagihan" (buka overlay ini, nav
-  // pindah ke "Tagihan") -> tutup lagi (tombol kembali/Escape/dsb, yang
-  // semuanya lewat fungsi ini) -> overlay hilang, halaman "Dompet" yang
-  // kelihatan lagi, TAPI nav bawah malah nyala di "Beranda" -- nyala nav
-  // & konten yang tampil jadi tidak sinkron. Sekarang disamakan ke
-  // halaman .app-page yang MEMANG sedang aktif (fallback 'beranda' kalau
-  // karena suatu hal tidak ada .app-page yang aktif).
-  var currentPage = document.querySelector('.app-page.active');
-  setBottomNavActive(currentPage ? currentPage.dataset.page : 'beranda');
+  setBottomNavActive('beranda');
 }
 
 /* ---------- Sinkronkan tombol aktif di navigasi bawah ----------
@@ -8426,15 +8415,6 @@ function goToDashboard() {
   if (document.getElementById('incomeSourceOverlay').classList.contains('open')) closeIncomeSourcePage();
   if (document.getElementById('bdAllOverlay').classList.contains('open')) closeBdAllPage();
   if (notifPanel.classList.contains('open')) closeNotifPanel();
-  // PERBAIKAN BUG: baris di atas cuma menutup overlay/panel yang lagi
-  // terbuka -- tapi kalau user sedang berada di tab bawah SELAIN
-  // "Beranda" (mis. lagi di tab "Dompet"/"Laporan"/"Pengaturan" saat
-  // menekan "Dashboard" di footer), sebelumnya tab yang aktif tidak
-  // ikut berpindah balik ke "Beranda" sama sekali -- padahal itu yang
-  // dijanjikan komentar & label tombolnya ("kembali ke tampilan utama").
-  // showPage() didaftarkan secara global di index.html (lihat blok
-  // "NAVIGASI BAWAH") supaya bisa dipanggil dari sini.
-  if (typeof window.showPage === 'function') window.showPage('beranda');
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
