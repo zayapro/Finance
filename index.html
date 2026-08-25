@@ -4653,10 +4653,14 @@ tbody tr:last-child td{border-bottom:none;}
    satu tema desain di seluruh app. ---- */
 .history-loadmore-wrap{display:flex;justify-content:center;padding:16px 0 2px;}
 .rw-list-wrap{display:flex;flex-direction:column;}
-.rw-list{display:flex;flex-direction:column;gap:9px;}
+/* ---- Daftar transaksi "flat" (bukan tumpukan kartu terpisah lagi):
+   setiap baris tidak lagi punya border/radius/shadow sendiri-sendiri,
+   cukup garis pemisah tipis di bawah tiap baris (kecuali baris
+   terakhir), persis gaya mutasi/riwayat pada referensi desain. ---- */
+.rw-list{display:flex;flex-direction:column;gap:0;}
 .rw-group-head{
   display:flex;align-items:center;justify-content:space-between;gap:10px;
-  padding:10px 4px 4px;font-weight:800;font-size:11px;text-transform:uppercase;
+  padding:14px 2px 8px;font-weight:800;font-size:11px;text-transform:uppercase;
   letter-spacing:0.05em;color:var(--ink-soft);
 }
 .rw-list > .rw-group-head:first-child{padding-top:2px;}
@@ -4664,11 +4668,12 @@ tbody tr:last-child td{border-bottom:none;}
 .rw-group-net.in{color:#047857;}
 .rw-group-net.out{color:var(--wine);}
 .rw-item{
-  display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);
-  border-radius:16px;padding:13px 14px;box-shadow:var(--shadow-sm);
-  transition:border-color .15s ease, transform .15s ease, box-shadow .15s ease;
+  display:flex;align-items:center;gap:12px;background:transparent;border:none;
+  border-bottom:1px solid var(--line);border-radius:0;padding:13px 2px;box-shadow:none;
+  transition:background .15s ease;
 }
-.rw-item:hover{transform:translateY(-1px);border-color:rgba(250,139,30,0.3);box-shadow:0 8px 20px -10px rgba(15,23,42,0.2);}
+.rw-item:last-child{border-bottom:none;}
+.rw-item:hover{transform:none;background:rgba(15,23,42,0.03);box-shadow:none;border-color:var(--line);}
 .rw-item-ic{
   width:40px;height:40px;border-radius:13px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
 }
@@ -4693,7 +4698,7 @@ tbody tr:last-child td{border-bottom:none;}
 @media (max-width:640px){
   /* Di HP tidak ada hover, jadi tombol aksi ditampilkan permanen tapi
      dikecilkan supaya tetap ringkas di samping pil status. */
-  .rw-item{padding:11px 12px;border-radius:14px;gap:10px;}
+  .rw-item{padding:11px 2px;gap:10px;}
   .rw-item-ic{width:34px;height:34px;border-radius:11px;}
   .rw-item-ic svg{width:13px;height:13px;}
   .rw-item-actions{opacity:1;max-height:none;margin-top:2px;}
