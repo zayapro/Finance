@@ -5216,7 +5216,13 @@ tbody tr:last-child td{border-bottom:none;}
 }
 .bd-page-banner-title{
   color:#FFF8F1;font-family:var(--font-body);
-  font-size:clamp(16.5px,2.2vw,17.5px);font-weight:700;letter-spacing:-0.005em;line-height:1.25;
+  /* Font judul DISAMAKAN PERSIS (clamp yang sama persis) dengan
+     .page-banner h1 di halaman Laporan/Dompet/Pengaturan -- satu
+     formula fluid tunggal ini sudah otomatis mencakup rentang HP
+     kecil s/d desktop (16px di layar sempit -> 19px begitu lebar
+     layar cukup, lalu rata di situ), jadi TIDAK perlu lagi override
+     ukuran font terpisah di media query HP (lihat catatan di sana). */
+  font-size:clamp(16px,3.6vw,19px);font-weight:800;letter-spacing:-0.005em;line-height:1.25;
 }
 .bd-page-banner-title-center{
   text-align:center;width:100%;max-width:1180px;margin:0 auto;
@@ -5326,7 +5332,9 @@ tbody tr:last-child td{border-bottom:none;}
      mulai jadi 24px rapi (40 - 16), dan sudut kartu putih dilengkungkan
      lebih halus (22px -> 26px) senada dengan referensi desain. */
   .bd-page-banner-simple{padding:calc(clamp(14px,4vw,18px) + env(safe-area-inset-top,0px)) clamp(14px,4vw,16px) clamp(32px,9vw,40px);}
-  .bd-page-banner-title{font-size:clamp(16px,4.4vw,18px);font-weight:800;}
+  /* Ukuran font judul TIDAK di-override lagi di sini -- sudah satu
+     formula clamp tunggal di .bd-page-banner-title (dasar, non-media)
+     yang otomatis pas di semua lebar layar, termasuk HP. */
   .bd-page-body{margin-top:-16px;border-radius:26px 26px 0 0;box-shadow:0 -14px 26px -9px rgba(242,103,43,0.38);}
   /* Di HP, tombol digeser naik supaya duduk RAPI di atas nav bawah
      (tinggi nav ±72px, lihat body{padding-bottom:72px} di bagian
@@ -6075,9 +6083,26 @@ tbody tr:last-child td{border-bottom:none;}
   margin-left:calc(-50vw + 50%);margin-right:calc(-50vw + 50%);
   padding:clamp(30px,6vw,44px) clamp(16px,3vw,20px) clamp(44px,9vw,68px);
   box-sizing:border-box;
+  /* Judul di-tengah-kan (text-align:center) supaya PERSIS sama posisi
+     dengan judul halaman Tagihan & Hutang (.bd-page-banner-title-center)
+     dan dengan referensi desain -- sebelumnya rata kiri, beda posisi
+     dengan 1 halaman lainnya. */
+  text-align:center;
 }
-.page-banner h1{margin:0;font-size:clamp(17px,2.2vw,19px);font-weight:800;letter-spacing:.2px;}
-.page-banner p{margin:4px 0 0;font-size:12.5px;color:rgba(255,248,241,0.85);}
+/* Font judul SAMA PERSIS (satu formula clamp yang sama) dengan
+   .bd-page-banner-title di halaman Tagihan & Hutang -- lihat catatan
+   lengkap di sana. Berlaku otomatis di semua lebar layar tanpa perlu
+   override terpisah lagi di media query HP. */
+.page-banner h1{margin:0;font-size:clamp(16px,3.6vw,19px);font-weight:800;letter-spacing:-0.005em;line-height:1.25;}
+/* Subjudul (mis. "Grafik, komposisi, dan riwayat transaksimu") DIMATIKAN
+   -- referensi desain & halaman Tagihan & Hutang cuma punya SATU baris
+   judul di tengah tanpa subjudul, jadi kalau subjudul ini tetap tampil,
+   tinggi banner oren di 3 halaman ini (Laporan/Dompet/Pengaturan) jadi
+   lebih tinggi dari Tagihan & Hutang -- itulah sumber "ukuran oren-putih
+   belum sama" yang dikeluhkan. Teks tetap ada di HTML (tidak dihapus),
+   cuma disembunyikan lewat CSS, supaya gampang dikembalikan lagi kalau
+   suatu saat dibutuhkan. */
+.page-banner p{display:none;}
 .page-body{
   /* z-index DISAMAKAN dengan .page-banner (2, bukan 1) -- kalau lebih
      rendah dari banner, sudut atas kartu yang seharusnya "menumpang"
@@ -6145,6 +6170,12 @@ tbody tr:last-child td{border-bottom:none;}
     font-family:inherit;font-size:11px;font-weight:700;color:#374151;
     letter-spacing:0.01em;line-height:1;
     -webkit-tap-highlight-color:transparent;
+    /* outline:none tambahan -- jaga-jaga supaya tidak ada kotak/ring
+       fokus bawaan browser yang sempat kelihatan sekilas saat tombol
+       nav bawah ini di-tap (beberapa browser Android memunculkannya
+       sesaat setelah tap), yang bisa ikut terlihat seperti "bayangan
+       kotak" dadakan saat pindah menu. */
+    outline:none;
   }
   /* Ikon dibungkus PIL (kapsul melebar), bukan lingkaran penuh --
      meniru referensi (Chat/Panggilan/dsb): default transparan tanpa
@@ -6220,8 +6251,30 @@ tbody tr:last-child td{border-bottom:none;}
      transisi cuma fade opacity murni -- shadow ikut fade bareng
      seluruh halaman (karena opacity ada di elemen induk .app-page)
      tanpa pernah ikut bergerak sendiri, jadi tidak ada lagi kesan
-     "bayangan muncul" saat pindah tab. */
-  .app-page.active{display:block;animation:appPageIn .2s ease both;}
+     "bayangan muncul" saat pindah tab.
+
+     PENGERASAN TAMBAHAN (masih ada laporan bayangan sesaat di
+     beberapa HP, mis. Dompet -> Pengaturan): browser di banyak HP
+     kelas menengah/bawah kadang tetap sempat "melukis ulang" box-
+     shadow (.page-body::before) di layer normal (bukan layer GPU
+     terpisah) selama animasi opacity berjalan, walau cuma opacity
+     yang berubah -- inilah yang masih sesekali terlihat sebagai
+     kedipan bayangan. Ditambahkan will-change + isolation supaya
+     browser SENGAJA mempromosikan halaman aktif jadi layer GPU
+     tersendiri SEBELUM animasi mulai (bukan baru dibuat di tengah
+     animasi, yang sering jadi sumber kedipan itu sendiri), dan
+     isolation:isolate memastikan tidak ada shadow/efek dari elemen
+     lain yang ikut "bocor"/tumpang tindih secara visual selama
+     transisi. contain:paint mengunci area gambar cuma di dalam
+     batas halaman ini saja, supaya browser tidak perlu menggambar
+     ulang apapun di luar kotak halaman yang sedang aktif. */
+  .app-page.active{
+    display:block;
+    animation:appPageIn .18s cubic-bezier(.32,.72,.35,1) both;
+    will-change:opacity;
+    isolation:isolate;
+    contain:paint;
+  }
   @keyframes appPageIn{
     from{opacity:0;}
     to{opacity:1;}
@@ -6245,9 +6298,10 @@ tbody tr:last-child td{border-bottom:none;}
      padding .app berubah di breakpoint lain). */
   /* Nilai sama persis dengan .bd-page-banner-simple/.bd-page-body di
      atas (lihat catatan lengkap di sana): padding atas ikut safe-area,
-     judul 18px/800, overlap -16px, radius 26px, strip oranye 24px. */
+     overlap -16px, radius 26px, strip oranye 24px. Ukuran font judul
+     TIDAK di-override lagi di sini -- sudah satu formula clamp tunggal
+     di aturan dasar (non-media) yang otomatis pas di semua lebar layar. */
   .page-banner{padding:calc(clamp(14px,4vw,18px) + env(safe-area-inset-top,0px)) clamp(14px,4vw,16px) clamp(32px,9vw,40px);}
-  .page-banner h1{font-size:clamp(16px,4.4vw,18px);font-weight:800;}
   .page-body{
     margin-top:-16px;
     border-radius:26px 26px 0 0;
