@@ -7927,6 +7927,40 @@ body.is-scrolling *{
   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
 </button>
 
+<!-- FIX "refresh di halaman Tagihan & Hutang terasa pindah ke menu
+     lain": openBdAllPage() (yang membuka ULANG overlay ini kalau
+     sebelum refresh memang sedang terbuka, lihat sessionStorage
+     'zp_tagihan_open') baru dipanggil di akhir init() di script.js --
+     dan script.js sendiri baru disisipkan ke halaman SETELAH proses
+     cek sesi login + tarik data dari Supabase selesai (lihat
+     cloud-sync.js > startAppOnce()). Di koneksi yang agak lambat, itu
+     bisa makan waktu 1-3 detik, dan SELAMA itu yang tampil di layar
+     cuma tab biasa di baliknya (mis. Beranda) -- persis terasa
+     seperti "pindah ke menu lain", padahal overlay-nya memang akan
+     kebuka lagi, cuma telat.
+     Diperbaiki di sini: tampilkan LAGI overlay-nya SEKARANG JUGA
+     (sesegera elemen #bdAllOverlay ada di DOM, jauh sebelum
+     menunggu login/cloud sama sekali) kalau sessionStorage menandai
+     halaman ini memang sedang terbuka sebelum refresh -- supaya user
+     langsung melihat halaman Tagihan & Hutang lagi TANPA jeda/flash
+     ke tab lain. Isinya (daftar tagihan/hutang) sendiri baru terisi
+     sesaat kemudian, disegarkan otomatis begitu script.js benar-benar
+     siap lewat openBdAllPage() yang sesungguhnya (fungsi yang sama,
+     dipanggil lagi dengan data asli begitu tersedia) -- jadi ini
+     murni menghilangkan jeda visualnya, bukan pengganti logic yang
+     sudah ada. -->
+<script>
+(function () {
+  try {
+    if (sessionStorage.getItem('zp_tagihan_open') === '1') {
+      var ov = document.getElementById('bdAllOverlay');
+      if (ov) ov.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+  } catch (e) { /* sessionStorage tidak tersedia (mode privat dsb) -- abaikan */ }
+})();
+</script>
+
 <!-- ===== HALAMAN PENGATURAN WIDGET ===== -->
 <div class="detail-page-overlay" id="widgetSettingsOverlay">
   <div class="detail-page">
