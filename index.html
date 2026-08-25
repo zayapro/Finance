@@ -6247,19 +6247,100 @@ html.zp-app-loading .page-body > .lap-panel{display:none;}
 .lap-subpicker-field{
   display:flex;align-items:center;justify-content:space-between;gap:8px;
   background:var(--paper);border-radius:10px;padding:11px 14px;
+  width:100%;border:none;font-size:16px;color:var(--ink-faint);cursor:pointer;
+  font-family:inherit;text-align:left;touch-action:manipulation;-webkit-tap-highlight-color:transparent;
 }
-.lap-subpicker-field input[type="month"]{
-  border:none;background:transparent;padding:0;color:var(--ink);width:100%;
-  font-size:16px;
-}
-.lap-subpicker-field input[type="month"]:focus{outline:none;}
+.lap-subpicker-field.has-value{color:var(--ink);}
+.lap-subpicker-field:active{background:var(--line);}
 .lap-subpicker-ic{color:var(--ink-faint);flex-shrink:0;display:flex;pointer-events:none;}
-.lap-subpicker-range{
-  display:flex;flex-wrap:nowrap;align-items:center;gap:0;
-  background:var(--paper);border-radius:10px;padding:9px 14px;
+.lap-subpicker-range .lap-subpicker-field{width:100%;}
+
+/* ============ BOTTOM SHEET (Pilih Bulan / Pilih Rentang Tanggal) ============
+   Gaya kartu putih meluncur dari BAWAH layar dgn handle abu-abu di atas +
+   tombol X (bukan tombol back oranye) -- mengikuti referensi gambar yg
+   diminta, beda dari .modal-overlay yang dipakai popup form lain (yang
+   itu muncul di tengah layar). Ditumpuk DI ATAS #lapFilterOverlay
+   (z-index lebih tinggi) supaya bisa dibuka dari dalam popup Filter. */
+.lap-sheet-overlay{
+  position:fixed;inset:0;z-index:800;background:rgba(11,29,22,0.45);
+  display:flex;align-items:flex-end;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity .22s ease;
 }
-.lap-subpicker-range .bd-date-field{flex:1;min-width:0;}
-.lap-subpicker-range .bd-date-field input[type="date"]{font-size:16px;}
+.lap-sheet-overlay.open{opacity:1;pointer-events:auto;}
+.lap-sheet{
+  background:var(--card);width:100%;max-width:640px;
+  border-radius:22px 22px 0 0;padding:10px 18px calc(18px + env(safe-area-inset-bottom,0px));
+  display:flex;flex-direction:column;gap:14px;
+  transform:translateY(100%);transition:transform .28s cubic-bezier(.22,.9,.3,1);
+  max-height:82vh;overflow-y:auto;overscroll-behavior:contain;
+}
+.lap-sheet-overlay.open .lap-sheet{transform:translateY(0);}
+.lap-sheet-handle{width:36px;height:4px;border-radius:999px;background:var(--line);margin:2px auto 0;flex-shrink:0;}
+.lap-sheet-head{display:flex;align-items:center;justify-content:center;position:relative;flex-shrink:0;padding:2px 0;}
+.lap-sheet-head h3{margin:0;font-size:16px;font-weight:600;font-family:'Poppins',sans-serif;letter-spacing:-0.005em;color:var(--ink);}
+.lap-sheet-close-btn{
+  position:absolute;right:0;top:50%;transform:translateY(-50%);
+  width:30px;height:30px;border-radius:50%;border:none;background:var(--paper);color:var(--ink-soft);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;
+  touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+}
+.lap-sheet-close-btn:hover{background:var(--line);}
+
+/* ---- Wheel picker (kolom Bulan & Tahun bergaya scroll-snap "iOS
+   picker") -- 5 baris terlihat sekaligus, baris tengah ditandai pita
+   garis atas-bawah (.lap-wheel-highlight), baris lain dibuat pudar
+   sesuai jaraknya dari tengah lewat opacity yang diatur JS. ---- */
+.lap-wheel-wrap{position:relative;flex-shrink:0;}
+.lap-wheel-highlight{
+  position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);
+  height:42px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+  pointer-events:none;z-index:1;background:rgba(217,119,6,0.05);
+}
+.lap-wheel-cols{display:flex;gap:6px;}
+.lap-wheel-col{
+  position:relative;flex:1;height:210px;overflow-y:scroll;scroll-snap-type:y mandatory;
+  scrollbar-width:none;-ms-overflow-style:none;
+}
+.lap-wheel-col::-webkit-scrollbar{display:none;}
+.lap-wheel-item{
+  height:42px;line-height:42px;text-align:center;scroll-snap-align:center;
+  font-size:16px;font-weight:500;color:var(--ink);cursor:pointer;
+  font-family:'Poppins',sans-serif;letter-spacing:-0.005em;
+  transition:opacity .1s ease;user-select:none;-webkit-user-select:none;
+}
+
+/* ---- Kalender rentang tanggal ---- */
+.lap-cal-nav{display:flex;align-items:center;justify-content:space-between;flex-shrink:0;padding:2px 4px;}
+.lap-cal-nav-label{font-size:15px;font-weight:600;font-family:'Poppins',sans-serif;color:var(--ink);letter-spacing:-0.005em;}
+.lap-cal-nav-btn{
+  width:30px;height:30px;border-radius:50%;border:none;background:var(--paper);color:var(--ink-soft);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;
+  touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+}
+.lap-cal-nav-btn:hover{background:var(--line);}
+.lap-cal-dow{
+  display:grid;grid-template-columns:repeat(7,1fr);flex-shrink:0;
+  font-size:12px;font-weight:700;color:var(--ink-faint);text-align:center;padding:2px 0;
+}
+.lap-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);grid-auto-rows:40px;flex-shrink:0;}
+.lap-cal-cell{
+  position:relative;display:flex;align-items:center;justify-content:center;
+  font-size:13.5px;color:var(--ink);cursor:pointer;user-select:none;-webkit-user-select:none;
+}
+.lap-cal-cell.is-muted{color:var(--ink-faint);opacity:.55;}
+.lap-cal-cell .lap-cal-num{
+  position:relative;z-index:1;width:30px;height:30px;display:flex;align-items:center;justify-content:center;
+  border-radius:50%;transition:background .12s ease,color .12s ease;
+}
+.lap-cal-cell.in-range::before{
+  content:'';position:absolute;inset:0 0 0 0;background:rgba(37,99,235,0.12);z-index:0;
+}
+.lap-cal-cell.range-start::before{border-radius:999px 0 0 999px;}
+.lap-cal-cell.range-end::before{border-radius:0 999px 999px 0;}
+.lap-cal-cell.range-start.range-end::before{border-radius:999px;}
+.lap-cal-cell.range-start .lap-cal-num,.lap-cal-cell.range-end .lap-cal-num{
+  background:var(--forest-glow, #2563EB);color:#fff;font-weight:700;
+}
 /* ---- "Rentang Waktu" bergaya daftar radio: memakai ulang komponen
    .tabs/.tab-btn (id #tabs) yang sudah ada -- cuma ditimpa jadi
    susunan vertikal dgn lingkaran radio di kanan, gantinya pil
@@ -8128,25 +8209,21 @@ body.is-scrolling *{
           <h3>Rentang Waktu</h3>
           <div class="tabs lap-radio-tabs" id="tabs">
             <span class="tab-indicator" aria-hidden="true"></span>
-            <button type="button" class="tab-btn active" data-tab="hari-ini">Hari ini</button>
+            <button type="button" class="tab-btn" data-tab="hari-ini">Hari ini</button>
             <button type="button" class="tab-btn" data-tab="7-hari">7 Hari Terakhir</button>
-            <button type="button" class="tab-btn" data-tab="bulan">Pilih Bulan</button>
-            <div class="lap-subpicker-month" id="lapMonthPickerWrap" hidden>
-              <label class="lap-subpicker-field">
-                <input type="month" id="lapFilterMonthInput" aria-label="Pilih bulan">
+            <button type="button" class="tab-btn active" data-tab="bulan">Pilih Bulan</button>
+            <div class="lap-subpicker-month" id="lapMonthPickerWrap">
+              <button type="button" class="lap-subpicker-field" id="lapMonthFieldBtn">
+                <span id="lapMonthFieldLabel">Pilih Bulan</span>
                 <span class="lap-subpicker-ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>
-              </label>
+              </button>
             </div>
             <button type="button" class="tab-btn" data-tab="tanggal">Pilih Tanggal</button>
             <div class="lap-subpicker-range" id="lapDatePickerWrap" hidden>
-              <label class="bd-date-field">
-                <span>Dari</span>
-                <input type="date" id="lapFilterDateFromInput">
-              </label>
-              <label class="bd-date-field">
-                <span>Sampai</span>
-                <input type="date" id="lapFilterDateToInput">
-              </label>
+              <button type="button" class="lap-subpicker-field" id="lapDateRangeFieldBtn">
+                <span id="lapDateRangeFieldLabel">Pilih Rentang Tanggal</span>
+                <span class="lap-subpicker-ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>
+              </button>
             </div>
           </div>
         </div>
@@ -8177,6 +8254,56 @@ body.is-scrolling *{
     </div>
   </div>
   <!-- ===== /POPUP FILTER LAPORAN ===== -->
+
+  <!-- ===== BOTTOM SHEET: PILIH BULAN (wheel picker bulan/tahun) ===== -->
+  <div class="lap-sheet-overlay" id="lapMonthSheetOverlay">
+    <div class="lap-sheet" id="lapMonthSheet">
+      <div class="lap-sheet-handle"></div>
+      <div class="lap-sheet-head">
+        <h3>Pilih Bulan</h3>
+        <button type="button" class="lap-sheet-close-btn" id="lapMonthSheetCloseBtn" aria-label="Tutup">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </div>
+      <div class="lap-wheel-wrap">
+        <div class="lap-wheel-highlight" aria-hidden="true"></div>
+        <div class="lap-wheel-cols">
+          <div class="lap-wheel-col" id="lapWheelMonthCol"></div>
+          <div class="lap-wheel-col" id="lapWheelYearCol"></div>
+        </div>
+      </div>
+      <button type="button" class="btn btn-primary lap-filter-save-btn" id="lapMonthSheetSaveBtn">Simpan</button>
+    </div>
+  </div>
+  <!-- ===== /BOTTOM SHEET: PILIH BULAN ===== -->
+
+  <!-- ===== BOTTOM SHEET: PILIH RENTANG TANGGAL (kalender) ===== -->
+  <div class="lap-sheet-overlay" id="lapDateRangeSheetOverlay">
+    <div class="lap-sheet" id="lapDateRangeSheet">
+      <div class="lap-sheet-handle"></div>
+      <div class="lap-sheet-head">
+        <h3>Pilih Rentang Tanggal</h3>
+        <button type="button" class="lap-sheet-close-btn" id="lapDateRangeSheetCloseBtn" aria-label="Tutup">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </div>
+      <div class="lap-cal-nav">
+        <button type="button" class="lap-cal-nav-btn" id="lapCalPrevBtn" aria-label="Bulan sebelumnya">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <span class="lap-cal-nav-label" id="lapCalNavLabel">Agustus 2026</span>
+        <button type="button" class="lap-cal-nav-btn" id="lapCalNextBtn" aria-label="Bulan berikutnya">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 6l6 6-6 6"/></svg>
+        </button>
+      </div>
+      <div class="lap-cal-dow">
+        <span>M</span><span>S</span><span>S</span><span>R</span><span>K</span><span>J</span><span>S</span>
+      </div>
+      <div class="lap-cal-grid" id="lapCalGrid"></div>
+      <button type="button" class="btn btn-primary lap-filter-save-btn" id="lapDateRangeSheetSaveBtn">Simpan</button>
+    </div>
+  </div>
+  <!-- ===== /BOTTOM SHEET: PILIH RENTANG TANGGAL ===== -->
 
   <!-- ===== HALAMAN: DOMPET ===== -->
   <div class="app-page" id="page-dompet" data-page="dompet">

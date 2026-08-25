@@ -708,12 +708,12 @@ function getISOWeekRange(weekStr) {
 
 /* ---------- State ---------- */
 let transactions = loadData();
-let activeTab = 'hari-ini';
+let activeTab = 'bulan';
 // Nilai bulan ('YYYY-MM') & rentang tanggal ('YYYY-MM-DD') yang dipilih
 // lewat sub-picker "Pilih Bulan"/"Pilih Tanggal" pada popup Filter Laporan
 // -- lihat listener #lapFilterMonthInput/#lapFilterDateFromInput/
 // #lapFilterDateToInput & pemakaiannya di getFilteredTransactions().
-let lapFilterMonth = '';
+let lapFilterMonth = thisMonthStr();
 let lapFilterDateFrom = '';
 let lapFilterDateTo = '';
 // Tipe transaksi yang dipilih lewat pil "Semua/Uang Masuk/Uang Keluar" di
@@ -7591,30 +7591,235 @@ document.getElementById('tabs')?.addEventListener('click', (e) => {
   const dateWrap = document.getElementById('lapDatePickerWrap');
   if (monthWrap) monthWrap.hidden = activeTab !== 'bulan';
   if (dateWrap) dateWrap.hidden = activeTab !== 'tanggal';
-  if (activeTab === 'bulan') {
-    const monthInput = document.getElementById('lapFilterMonthInput');
-    if (monthInput && !monthInput.value) {
-      monthInput.value = thisMonthStr();
-      lapFilterMonth = thisMonthStr();
-    }
+  if (activeTab === 'bulan' && !lapFilterMonth) {
+    lapFilterMonth = thisMonthStr();
+    updateLapMonthFieldLabel();
   }
   resetHistoryPagination();
   renderRangePicker();
   renderTransactionList();
 });
 
-document.getElementById('lapFilterMonthInput')?.addEventListener('change', (e) => {
-  lapFilterMonth = e.target.value;
+/* ==========================================================
+   BOTTOM SHEET "PILIH BULAN" -- wheel picker Bulan/Tahun
+   Menggantikan <input type="month"> bawaan browser dgn kartu kustom
+   gaya iOS-picker (2 kolom scroll-snap: nama bulan & tahun, baris
+   tengah ditandai pita .lap-wheel-highlight) supaya tampilannya
+   sama persis dgn gambar referensi yang diminta, sambil tetap
+   menulis ke variabel state (lapFilterMonth) & alur render yang
+   sudah ada persis seperti input bawaan sebelumnya.
+========================================================== */
+const LAP_MONTH_NAMES_FULL = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+const LAP_WHEEL_ITEM_H = 42;
+let lapWheelYears = [];
+
+function buildLapMonthWheelYears() {
+  const nowY = new Date().getFullYear();
+  const dates = transactions.map(t => t.date).filter(Boolean);
+  let minY = nowY - 3, maxY = nowY + 1;
+  dates.forEach(d => {
+    const y = Number(d.slice(0, 4));
+    if (y < minY) minY = y;
+    if (y > maxY) maxY = y;
+  });
+  const years = [];
+  for (let y = minY; y <= maxY; y++) years.push(y);
+  return years;
+}
+
+function updateLapMonthFieldLabel() {
+  const label = document.getElementById('lapMonthFieldLabel');
+  const fieldBtn = document.getElementById('lapMonthFieldBtn');
+  if (!label || !fieldBtn) return;
+  if (lapFilterMonth) {
+    const [y, m] = lapFilterMonth.split('-');
+    label.textContent = `${LAP_MONTH_NAMES_FULL[Number(m) - 1]} ${y}`;
+    fieldBtn.classList.add('has-value');
+  } else {
+    label.textContent = 'Pilih Bulan';
+    fieldBtn.classList.remove('has-value');
+  }
+}
+
+// Terapkan opacity pudar pada baris wheel sesuai jaraknya dari baris
+// tengah (yg ditandai pita highlight) -- bikin efek "roda" khas iOS.
+function lapWheelApplyFade(col) {
+  const items = [...col.querySelectorAll('.lap-wheel-item')];
+  const centerScroll = col.scrollTop + col.clientHeight / 2;
+  items.forEach(it => {
+    const itemCenter = it.offsetTop + LAP_WHEEL_ITEM_H / 2;
+    const dist = Math.abs(itemCenter - centerScroll) / LAP_WHEEL_ITEM_H;
+    it.style.opacity = String(Math.max(0.25, 1 - dist * 0.4));
+  });
+}
+function lapWheelCenteredIndex(col) {
+  return Math.round(col.scrollTop / LAP_WHEEL_ITEM_H);
+}
+function lapWheelScrollToIndex(col, idx, smooth) {
+  col.scrollTo({ top: idx * LAP_WHEEL_ITEM_H, behavior: smooth ? 'smooth' : 'instant' });
+}
+function setupLapWheelCol(col, items, initialIdx) {
+  col.innerHTML = '<div style="height:' + (LAP_WHEEL_ITEM_H * 2) + 'px;flex-shrink:0;"></div>' +
+    items.map((label, i) => `<div class="lap-wheel-item" data-idx="${i}">${label}</div>`).join('') +
+    '<div style="height:' + (LAP_WHEEL_ITEM_H * 2) + 'px;flex-shrink:0;"></div>';
+  // offsetTop di atas dihitung relatif elemen scroll -- karena kita pakai
+  // padding lewat div spacer (bukan CSS padding), offsetTop item ke-i
+  // sudah otomatis termasuk tinggi spacer atas, jadi index = offsetTop/ITEM_H - 2.
+  let scrollTimer = null;
+  col.addEventListener('scroll', () => {
+    lapWheelApplyFade(col);
+    if (scrollTimer) clearTimeout(scrollTimer);
+    scrollTimer = setTimeout(() => {
+      const idx = Math.max(0, Math.min(items.length - 1, lapWheelCenteredIndex(col)));
+      lapWheelScrollToIndex(col, idx, true);
+    }, 90);
+  }, { passive: true });
+  col.addEventListener('click', (e) => {
+    const it = e.target.closest('.lap-wheel-item');
+    if (!it) return;
+    lapWheelScrollToIndex(col, Number(it.dataset.idx), true);
+  });
+  lapWheelScrollToIndex(col, initialIdx, false);
+  requestAnimationFrame(() => lapWheelApplyFade(col));
+}
+function openLapMonthSheet() {
+  const monthCol = document.getElementById('lapWheelMonthCol');
+  const yearCol = document.getElementById('lapWheelYearCol');
+  if (!monthCol || !yearCol) return;
+  lapWheelYears = buildLapMonthWheelYears();
+  const [selY, selM] = (lapFilterMonth || thisMonthStr()).split('-');
+  const monthIdx = Number(selM) - 1;
+  let yearIdx = lapWheelYears.indexOf(Number(selY));
+  if (yearIdx === -1) yearIdx = 0;
+  setupLapWheelCol(monthCol, LAP_MONTH_NAMES_FULL, monthIdx);
+  setupLapWheelCol(yearCol, lapWheelYears.map(String), yearIdx);
+  document.getElementById('lapMonthSheetOverlay').classList.add('open');
+}
+function closeLapMonthSheet() {
+  document.getElementById('lapMonthSheetOverlay').classList.remove('open');
+}
+document.getElementById('lapMonthFieldBtn')?.addEventListener('click', openLapMonthSheet);
+document.getElementById('lapMonthSheetCloseBtn')?.addEventListener('click', closeLapMonthSheet);
+document.getElementById('lapMonthSheetOverlay')?.addEventListener('click', (e) => {
+  if (e.target.id === 'lapMonthSheetOverlay') closeLapMonthSheet();
+});
+document.getElementById('lapMonthSheetSaveBtn')?.addEventListener('click', () => {
+  const monthCol = document.getElementById('lapWheelMonthCol');
+  const yearCol = document.getElementById('lapWheelYearCol');
+  const mIdx = lapWheelCenteredIndex(monthCol);
+  const yIdx = lapWheelCenteredIndex(yearCol);
+  const year = lapWheelYears[Math.max(0, Math.min(lapWheelYears.length - 1, yIdx))];
+  const month = String(mIdx + 1).padStart(2, '0');
+  lapFilterMonth = `${year}-${month}`;
+  updateLapMonthFieldLabel();
+  closeLapMonthSheet();
   resetHistoryPagination();
   renderTransactionList();
 });
-document.getElementById('lapFilterDateFromInput')?.addEventListener('change', (e) => {
-  lapFilterDateFrom = e.target.value;
-  resetHistoryPagination();
-  renderTransactionList();
+
+/* ==========================================================
+   BOTTOM SHEET "PILIH RENTANG TANGGAL" -- kalender kustom
+   Menggantikan 2 <input type="date"> (Dari/Sampai) bawaan browser
+   dengan kalender satu-bulan yang bisa dinavigasi (chevron kiri/
+   kanan) & mendukung pilih rentang (tap tanggal awal, lalu tanggal
+   akhir) dgn pita highlight biru menyambung antar tanggal -- gaya
+   & interaksi mengikuti gambar referensi yg diminta.
+========================================================== */
+const LAP_DOW_LABELS = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+let lapCalViewYear = new Date().getFullYear();
+let lapCalViewMonth = new Date().getMonth(); // 0-11
+let lapCalRangeStart = '';
+let lapCalRangeEnd = '';
+
+function updateLapDateRangeFieldLabel() {
+  const label = document.getElementById('lapDateRangeFieldLabel');
+  const fieldBtn = document.getElementById('lapDateRangeFieldBtn');
+  if (!label || !fieldBtn) return;
+  if (lapFilterDateFrom && lapFilterDateTo) {
+    const fmt = (s) => { const d = new Date(s + 'T00:00:00'); return `${String(d.getDate()).padStart(2,'0')} ${MONTH_LABELS_SHORT[d.getMonth()]} ${d.getFullYear()}`; };
+    label.textContent = lapFilterDateFrom === lapFilterDateTo ? fmt(lapFilterDateFrom) : `${fmt(lapFilterDateFrom)} - ${fmt(lapFilterDateTo)}`;
+    fieldBtn.classList.add('has-value');
+  } else {
+    label.textContent = 'Pilih Rentang Tanggal';
+    fieldBtn.classList.remove('has-value');
+  }
+}
+function lapCalRenderGrid() {
+  const grid = document.getElementById('lapCalGrid');
+  const navLabel = document.getElementById('lapCalNavLabel');
+  if (!grid || !navLabel) return;
+  navLabel.textContent = `${LAP_MONTH_NAMES_FULL[lapCalViewMonth]} ${lapCalViewYear}`;
+  const firstOfMonth = new Date(lapCalViewYear, lapCalViewMonth, 1);
+  const startOffset = firstOfMonth.getDay(); // 0=Minggu
+  const daysInMonth = new Date(lapCalViewYear, lapCalViewMonth + 1, 0).getDate();
+  const daysInPrevMonth = new Date(lapCalViewYear, lapCalViewMonth, 0).getDate();
+  const cells = [];
+  for (let i = startOffset - 1; i >= 0; i--) cells.push({ day: daysInPrevMonth - i, muted: true, y: lapCalViewMonth === 0 ? lapCalViewYear - 1 : lapCalViewYear, m: (lapCalViewMonth + 11) % 12 });
+  for (let d = 1; d <= daysInMonth; d++) cells.push({ day: d, muted: false, y: lapCalViewYear, m: lapCalViewMonth });
+  const remain = (7 - (cells.length % 7)) % 7;
+  for (let d = 1; d <= remain; d++) cells.push({ day: d, muted: true, y: lapCalViewMonth === 11 ? lapCalViewYear + 1 : lapCalViewYear, m: (lapCalViewMonth + 1) % 12 });
+
+  grid.innerHTML = cells.map(c => {
+    const ds = `${c.y}-${String(c.m + 1).padStart(2, '0')}-${String(c.day).padStart(2, '0')}`;
+    let cls = 'lap-cal-cell' + (c.muted ? ' is-muted' : '');
+    if (lapCalRangeStart && lapCalRangeEnd) {
+      if (ds >= lapCalRangeStart && ds <= lapCalRangeEnd) cls += ' in-range';
+      if (ds === lapCalRangeStart) cls += ' range-start';
+      if (ds === lapCalRangeEnd) cls += ' range-end';
+    } else if (lapCalRangeStart && ds === lapCalRangeStart) {
+      cls += ' in-range range-start range-end';
+    }
+    return `<div class="${cls}" data-date="${ds}"><span class="lap-cal-num">${c.day}</span></div>`;
+  }).join('');
+}
+function lapCalHandleDayClick(ds) {
+  if (!lapCalRangeStart || (lapCalRangeStart && lapCalRangeEnd)) {
+    lapCalRangeStart = ds;
+    lapCalRangeEnd = '';
+  } else if (ds < lapCalRangeStart) {
+    lapCalRangeStart = ds;
+    lapCalRangeEnd = '';
+  } else {
+    lapCalRangeEnd = ds;
+  }
+  lapCalRenderGrid();
+}
+document.getElementById('lapCalGrid')?.addEventListener('click', (e) => {
+  const cell = e.target.closest('.lap-cal-cell');
+  if (!cell) return;
+  lapCalHandleDayClick(cell.dataset.date);
 });
-document.getElementById('lapFilterDateToInput')?.addEventListener('change', (e) => {
-  lapFilterDateTo = e.target.value;
+document.getElementById('lapCalPrevBtn')?.addEventListener('click', () => {
+  lapCalViewMonth--; if (lapCalViewMonth < 0) { lapCalViewMonth = 11; lapCalViewYear--; }
+  lapCalRenderGrid();
+});
+document.getElementById('lapCalNextBtn')?.addEventListener('click', () => {
+  lapCalViewMonth++; if (lapCalViewMonth > 11) { lapCalViewMonth = 0; lapCalViewYear++; }
+  lapCalRenderGrid();
+});
+function openLapDateRangeSheet() {
+  const base = lapFilterDateFrom ? new Date(lapFilterDateFrom + 'T00:00:00') : new Date();
+  lapCalViewYear = base.getFullYear();
+  lapCalViewMonth = base.getMonth();
+  lapCalRangeStart = lapFilterDateFrom || '';
+  lapCalRangeEnd = lapFilterDateTo || '';
+  lapCalRenderGrid();
+  document.getElementById('lapDateRangeSheetOverlay').classList.add('open');
+}
+function closeLapDateRangeSheet() {
+  document.getElementById('lapDateRangeSheetOverlay').classList.remove('open');
+}
+document.getElementById('lapDateRangeFieldBtn')?.addEventListener('click', openLapDateRangeSheet);
+document.getElementById('lapDateRangeSheetCloseBtn')?.addEventListener('click', closeLapDateRangeSheet);
+document.getElementById('lapDateRangeSheetOverlay')?.addEventListener('click', (e) => {
+  if (e.target.id === 'lapDateRangeSheetOverlay') closeLapDateRangeSheet();
+});
+document.getElementById('lapDateRangeSheetSaveBtn')?.addEventListener('click', () => {
+  if (!lapCalRangeStart) { closeLapDateRangeSheet(); return; }
+  lapFilterDateFrom = lapCalRangeStart;
+  lapFilterDateTo = lapCalRangeEnd || lapCalRangeStart;
+  updateLapDateRangeFieldLabel();
+  closeLapDateRangeSheet();
   resetHistoryPagination();
   renderTransactionList();
 });
@@ -7700,6 +7905,8 @@ function openLapFilterOverlay() {
   document.getElementById('lapFilterOverlay').classList.add('open');
   lockBodyScroll();
   updateTabIndicator(document.getElementById('tabs'));
+  updateLapMonthFieldLabel();
+  updateLapDateRangeFieldLabel();
 }
 function closeLapFilterOverlay() {
   document.getElementById('lapFilterOverlay').classList.remove('open');
@@ -7720,17 +7927,12 @@ document.getElementById('lapFilterTypeRow')?.addEventListener('click', (e) => {
 });
 
 document.getElementById('lapFilterResetBtn')?.addEventListener('click', () => {
-  // Rentang Waktu -> "Hari ini"
-  document.getElementById('tabs')?.querySelector('[data-tab="hari-ini"]')?.click();
-  // Kotak "Pilih Bulan"/"Pilih Tanggal" ikut dikosongkan (sudah otomatis
-  // tersembunyi lewat klik di atas, ini cuma membersihkan nilainya)
-  lapFilterMonth = ''; lapFilterDateFrom = ''; lapFilterDateTo = '';
-  const monthInput = document.getElementById('lapFilterMonthInput');
-  if (monthInput) monthInput.value = '';
-  const fromInput = document.getElementById('lapFilterDateFromInput');
-  if (fromInput) fromInput.value = '';
-  const toInput = document.getElementById('lapFilterDateToInput');
-  if (toInput) toInput.value = '';
+  // Rentang Waktu -> "Pilih Bulan" (bulan berjalan), sesuai default awal
+  lapFilterDateFrom = ''; lapFilterDateTo = '';
+  lapFilterMonth = thisMonthStr();
+  updateLapMonthFieldLabel();
+  updateLapDateRangeFieldLabel();
+  document.getElementById('tabs')?.querySelector('[data-tab="bulan"]')?.click();
   // Transaksi -> "Semua"
   document.getElementById('lapFilterTypeRow')?.querySelector('[data-filtertype="semua"]')?.click();
   // Kategori -> "Semua Kategori"
@@ -8685,6 +8887,8 @@ document.getElementById('bdAllList').addEventListener('click', (e) => {
 function refreshAll() {
   renderSummary();
   populateCategoryFilter();
+  updateLapMonthFieldLabel();
+  updateLapDateRangeFieldLabel();
   renderTransactionList();
   renderChart();
   renderYearlyBarChart();
