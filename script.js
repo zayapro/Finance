@@ -3475,7 +3475,66 @@ function populateCategoryFilter() {
   const current = sel.value;
   sel.innerHTML = '<option value="semua">Semua Kategori</option>' + all.map(c => `<option value="${c}">${c}</option>`).join('');
   if (all.includes(current)) sel.value = current;
+  renderLapCategorySheetList(all);
+  updateLapCategoryFieldLabel();
 }
+
+/* ---- Bottom sheet "Kategori Transaksi" (popup Filter Laporan) ----
+   <select id="categoryFilter"> di atas TETAP jadi satu-satunya sumber
+   nilai (dibaca getFilteredTransactions, tombol Reset, dst) -- sheet
+   di bawah ini cuma tampilan radio-list utk mengisi select itu, isinya
+   dibangun ulang tiap kali populateCategoryFilter() jalan. */
+function escapeHtmlAttr(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+}
+function renderLapCategorySheetList(all) {
+  const wrap = document.getElementById('lapCategorySheetList');
+  if (!wrap) return;
+  const items = [{ value: 'semua', label: 'Semua' }, ...all.map(c => ({ value: c, label: c }))];
+  wrap.innerHTML = items.map(it => `<button type="button" class="lap-cat-item" data-value="${escapeHtmlAttr(it.value)}">${escapeHtmlAttr(it.label)}</button>`).join('');
+  const sel = document.getElementById('categoryFilter');
+  markLapCategorySheetActive(sel ? (sel.value || 'semua') : 'semua');
+}
+function markLapCategorySheetActive(val) {
+  document.querySelectorAll('#lapCategorySheetList .lap-cat-item').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.value === val);
+  });
+}
+function updateLapCategoryFieldLabel() {
+  const sel = document.getElementById('categoryFilter');
+  const label = document.getElementById('lapCategoryFieldLabel');
+  if (!sel || !label) return;
+  const val = sel.value || 'semua';
+  label.textContent = val === 'semua' ? 'Semua Kategori' : val;
+  markLapCategorySheetActive(val);
+}
+let lapCategoryPendingValue = 'semua';
+function openLapCategorySheet() {
+  const sel = document.getElementById('categoryFilter');
+  lapCategoryPendingValue = sel ? (sel.value || 'semua') : 'semua';
+  markLapCategorySheetActive(lapCategoryPendingValue);
+  document.getElementById('lapCategorySheetOverlay').classList.add('open');
+}
+function closeLapCategorySheet() {
+  document.getElementById('lapCategorySheetOverlay').classList.remove('open');
+}
+document.getElementById('lapCategoryFieldBtn')?.addEventListener('click', openLapCategorySheet);
+document.getElementById('lapCategorySheetCloseBtn')?.addEventListener('click', closeLapCategorySheet);
+document.getElementById('lapCategorySheetOverlay')?.addEventListener('click', (e) => {
+  if (e.target.id === 'lapCategorySheetOverlay') closeLapCategorySheet();
+});
+document.getElementById('lapCategorySheetList')?.addEventListener('click', (e) => {
+  const btn = e.target.closest('.lap-cat-item');
+  if (!btn) return;
+  lapCategoryPendingValue = btn.dataset.value;
+  markLapCategorySheetActive(lapCategoryPendingValue);
+});
+document.getElementById('lapCategorySheetDoneBtn')?.addEventListener('click', () => {
+  const sel = document.getElementById('categoryFilter');
+  if (sel) { sel.value = lapCategoryPendingValue; sel.dispatchEvent(new Event('change')); }
+  updateLapCategoryFieldLabel();
+  closeLapCategorySheet();
+});
 
 function getFilteredTransactions() {
   const searchEl = document.getElementById('searchInput');
@@ -7938,12 +7997,9 @@ document.getElementById('lapFilterResetBtn')?.addEventListener('click', () => {
   // Kategori -> "Semua Kategori"
   const catEl = document.getElementById('categoryFilter');
   if (catEl) { catEl.value = 'semua'; catEl.dispatchEvent(new Event('change')); }
-  // Cari -> dikosongkan
-  const searchEl = document.getElementById('searchInput');
-  if (searchEl && searchEl.value) { searchEl.value = ''; searchEl.dispatchEvent(new Event('input')); }
+  updateLapCategoryFieldLabel();
 });
 
-document.getElementById('searchInput')?.addEventListener('input', () => { resetHistoryPagination(); renderTransactionList(); });
 document.getElementById('categoryFilter')?.addEventListener('change', () => { resetHistoryPagination(); renderTransactionList(); });
 document.getElementById('btnLoadMoreHistory')?.addEventListener('click', () => {
   historyVisibleGroups += HISTORY_GROUPS_PER_PAGE;

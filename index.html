@@ -6215,20 +6215,19 @@ html.zp-app-loading .page-body > .lap-panel{display:none;}
   padding:22px 16px 20px;
   display:flex;flex-direction:column;gap:16px;
 }
-.lap-filter-field{position:relative;}
-.lap-filter-field input[type="search"]{
-  width:100%;padding:11px 14px 11px 36px;border-radius:12px;border:1px solid var(--line);
-  font-size:16px;background:var(--card);outline:none;
-}
-.lap-filter-field input[type="search"]:focus{border-color:var(--forest-glow);}
-.lap-filter-field .search-ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-faint);}
 .lap-filter-section{
   background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
   padding:14px 16px 4px;box-shadow:var(--shadow-sm);
 }
 .lap-filter-section h3{
-  margin:0 0 2px;font-size:12.5px;font-weight:800;color:var(--ink);
-  text-transform:uppercase;letter-spacing:0.03em;
+  margin:0 0 2px;font-size:12.5px;color:var(--ink);
+  text-transform:uppercase;letter-spacing:0.04em;
+  /* Font DISAMAKAN dengan judul popup "Filter" (Poppins) -- sebelumnya
+     ikut font body default (Plus Jakarta Sans). Beratnya (600, bukan
+     500 spt judul) sengaja dibuat sedikit lebih tebal krn ukurannya
+     jauh lebih kecil & huruf kapital semua, supaya tetap enak dibaca
+     sbg label section, bukan krn beda keluarga font. */
+  font-family:'Poppins',sans-serif;font-weight:600;
 }
 /* ---- Varian "tanpa kartu": dipakai khusus utk section Rentang Waktu
    supaya daftar radionya duduk langsung di atas kartu putih .lap-filter-card
@@ -6247,8 +6246,12 @@ html.zp-app-loading .page-body > .lap-panel{display:none;}
 .lap-subpicker-field{
   display:flex;align-items:center;justify-content:space-between;gap:8px;
   background:var(--paper);border-radius:10px;padding:11px 14px;
-  width:100%;border:none;font-size:16px;color:var(--ink-faint);cursor:pointer;
-  font-family:inherit;text-align:left;touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+  width:100%;border:none;color:var(--ink-faint);cursor:pointer;
+  /* Font DISAMAKAN dengan judul popup (Poppins) -- sebelumnya `inherit`
+     (ikut font body). Ukuran diturunkan sedikit dari 16px supaya
+     sepadan dgn label section & pil Transaksi di sekitarnya. */
+  font-family:'Poppins',sans-serif;font-weight:500;letter-spacing:-0.005em;font-size:14.5px;
+  text-align:left;touch-action:manipulation;-webkit-tap-highlight-color:transparent;
 }
 .lap-subpicker-field.has-value{color:var(--ink);}
 .lap-subpicker-field:active{background:var(--line);}
@@ -6285,6 +6288,49 @@ html.zp-app-loading .page-body > .lap-panel{display:none;}
   touch-action:manipulation;-webkit-tap-highlight-color:transparent;
 }
 .lap-sheet-close-btn:hover{background:var(--line);}
+
+/* ---- BOTTOM SHEET "KATEGORI TRANSAKSI" ----
+   Menggantikan <select id="categoryFilter"> bawaan browser dgn bottom
+   sheet daftar radio (persis gambar referensi yg diminta): tombol
+   field "Kategori" di halaman Filter (.lap-subpicker-field) membuka
+   sheet ini, isinya daftar kategori bergaya sama dgn radio "Rentang
+   Waktu" (label kiri + lingkaran radio kanan, dipisah garis tipis
+   antar-baris -- garis pembatas ini SENGAJA hanya ada di sini, tidak
+   di halaman Filter utama). Kalau daftarnya panjang, hanya bagian
+   daftar (.lap-cat-list) yg discroll -- bukan seluruh sheet -- supaya
+   tinggi sheet tetap terbatas & tidak menutupi banner oranye halaman
+   Filter di baliknya (sesuai .lap-sheet-overlay yg menampilkan overlay
+   gelap transparan di atas halaman Filter). Tombol "Selesai" di bawah
+   baru benar-benar menerapkan pilihan (spt pola "Simpan" pd sheet
+   Bulan/Tanggal) -- tap salah satu baris cuma menandai pilihan
+   sementara dulu. */
+.lap-cat-list{
+  display:flex;flex-direction:column;
+  margin:0 -18px;padding:0 18px;
+  overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;
+  max-height:min(50vh,420px);
+}
+.lap-cat-item{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  width:100%;text-align:left;padding:13px 2px;border-radius:0;
+  border:none;border-bottom:1px solid var(--line);background:none;
+  color:var(--ink);cursor:pointer;
+  /* Font DISAMAKAN dengan judul popup (Poppins) -- sama dgn opsi radio
+     "Rentang Waktu" (.lap-radio-tabs .tab-btn) supaya kedua daftar
+     radio dlm alur Filter ini terasa satu keluarga tampilan. */
+  font-family:'Poppins',sans-serif;font-weight:500;letter-spacing:-0.005em;font-size:14px;
+  touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+}
+.lap-cat-item:last-child{border-bottom:none;}
+.lap-cat-item::after{
+  content:'';flex-shrink:0;width:20px;height:20px;border-radius:50%;
+  border:2px solid var(--line);background:#fff;box-sizing:border-box;
+  transition:border-color .15s ease, background .15s ease;
+}
+.lap-cat-item.active::after{
+  border-color:var(--primary);
+  background:radial-gradient(circle, var(--primary) 0 42%, #fff 44% 100%);
+}
 
 /* ---- Wheel picker (kolom Bulan & Tahun bergaya scroll-snap "iOS
    picker") -- 5 baris terlihat sekaligus, baris tengah ditandai pita
@@ -6378,8 +6424,11 @@ html.zp-app-loading .page-body > .lap-panel{display:none;}
    (mis. .type-toggle pada form tambah transaksi) supaya konsisten. */
 .lap-pill-row{display:flex;gap:8px;flex-wrap:wrap;margin:2px 0 14px;}
 .lap-pill-btn{
-  flex:1 1 auto;padding:10px 12px;border-radius:999px;border:1.5px solid var(--line);
-  background:var(--paper);color:var(--ink-soft);font-size:13px;
+  /* Ukuran pil DIPERKECIL supaya lebih pas mengikuti ukuran font
+     (sebelumnya padding 10px/12px terasa kebesaran dibanding teks
+     13px di dalamnya) -- padding & font diciutkan sedikit. */
+  flex:1 1 auto;padding:7px 10px;border-radius:999px;border:1.5px solid var(--line);
+  background:var(--paper);color:var(--ink-soft);font-size:12.5px;
   /* Font DISAMAKAN dengan judul halaman (Poppins weight 500), sama
      seperti opsi radio Rentang Waktu di atas -- sebelumnya font body
      weight 700. */
@@ -6390,16 +6439,14 @@ html.zp-app-loading .page-body > .lap-panel{display:none;}
 .lap-pill-btn.active{border-color:var(--primary);background:var(--primary-soft);color:var(--primary-deep);}
 .lap-pill-btn[data-filtertype="masuk"].active{border-color:var(--brass);background:rgba(5,150,105,0.12);color:#047857;}
 .lap-pill-btn[data-filtertype="keluar"].active{border-color:var(--wine);background:rgba(225,29,72,0.08);color:var(--wine);}
-.lap-filter-select-wrap{position:relative;margin:2px 0 14px;}
-.lap-filter-select-wrap select{
-  width:100%;padding:11px 34px 11px 14px;border-radius:12px;border:1px solid var(--line);
-  background:var(--paper);color:var(--ink);font-size:14.5px;appearance:none;
-}
-.lap-filter-select-wrap select:focus{border-color:var(--forest-glow);}
-.lap-filter-select-wrap .filter-select-ic{
-  display:flex;position:absolute;right:12px;top:50%;transform:translateY(-50%) rotate(90deg);
-  color:var(--ink-faint);pointer-events:none;
-}
+/* ---- Field "Kategori" di halaman Filter kini tombol biasa (gaya sama
+   persis dgn .lap-subpicker-field milik "Pilih Bulan"/"Pilih Tanggal")
+   yang membuka bottom sheet daftar radio kategori (lihat blok
+   "BOTTOM SHEET KATEGORI TRANSAKSI" di bawah) -- <select id="categoryFilter">
+   aslinya TETAP ada di HTML (disembunyikan via [hidden]) semata sbg
+   penyimpan nilai supaya logika filter di script.js (getFilteredTransactions,
+   tombol Reset, dst) tidak perlu diubah sama sekali. ---- */
+select#categoryFilter[hidden]{display:none;}
 .lap-filter-footer{
   flex:0 0 auto;position:relative;z-index:2;
   background:var(--card);
@@ -8200,11 +8247,6 @@ body.is-scrolling *{
       </div>
 
       <div class="lap-filter-card">
-        <div class="lap-filter-field">
-          <span class="search-ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span>
-          <input type="search" id="searchInput" placeholder="Cari kategori atau keterangan...">
-        </div>
-
         <div class="lap-filter-section lap-filter-section--flat">
           <h3>Rentang Waktu</h3>
           <div class="tabs lap-radio-tabs" id="tabs">
@@ -8228,7 +8270,7 @@ body.is-scrolling *{
           </div>
         </div>
 
-        <div class="lap-filter-section">
+        <div class="lap-filter-section lap-filter-section--flat">
           <h3>Transaksi</h3>
           <div class="lap-pill-row" id="lapFilterTypeRow">
             <button type="button" class="lap-pill-btn active" data-filtertype="semua">Semua</button>
@@ -8237,14 +8279,17 @@ body.is-scrolling *{
           </div>
         </div>
 
-        <div class="lap-filter-section">
+        <div class="lap-filter-section lap-filter-section--flat">
           <h3>Kategori</h3>
-          <div class="lap-filter-select-wrap">
-            <select id="categoryFilter" aria-label="Filter kategori transaksi">
-              <option value="semua">Semua Kategori</option>
-            </select>
-            <span class="filter-select-ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12l7 7 7-7"/></svg></span>
-          </div>
+          <button type="button" class="lap-subpicker-field has-value" id="lapCategoryFieldBtn" aria-haspopup="true">
+            <span id="lapCategoryFieldLabel">Semua Kategori</span>
+            <span class="lap-subpicker-ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9l6 6 6-6"/></svg></span>
+          </button>
+          <!-- Penyimpan nilai kategori terpilih (bukan tampilan) -- lihat
+               komentar di CSS "select#categoryFilter[hidden]" di atas. -->
+          <select id="categoryFilter" hidden aria-hidden="true">
+            <option value="semua">Semua Kategori</option>
+          </select>
         </div>
       </div>
 
@@ -8304,6 +8349,22 @@ body.is-scrolling *{
     </div>
   </div>
   <!-- ===== /BOTTOM SHEET: PILIH RENTANG TANGGAL ===== -->
+
+  <!-- ===== BOTTOM SHEET: KATEGORI TRANSAKSI ===== -->
+  <div class="lap-sheet-overlay" id="lapCategorySheetOverlay">
+    <div class="lap-sheet" id="lapCategorySheet">
+      <div class="lap-sheet-handle"></div>
+      <div class="lap-sheet-head">
+        <h3>Kategori Transaksi</h3>
+        <button type="button" class="lap-sheet-close-btn" id="lapCategorySheetCloseBtn" aria-label="Tutup">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </div>
+      <div class="lap-cat-list" id="lapCategorySheetList"></div>
+      <button type="button" class="btn btn-primary lap-filter-save-btn" id="lapCategorySheetDoneBtn">Selesai</button>
+    </div>
+  </div>
+  <!-- ===== /BOTTOM SHEET: KATEGORI TRANSAKSI ===== -->
 
   <!-- ===== HALAMAN: DOMPET ===== -->
   <div class="app-page" id="page-dompet" data-page="dompet">
