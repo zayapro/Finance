@@ -708,7 +708,14 @@ function getISOWeekRange(weekStr) {
 
 /* ---------- State ---------- */
 let transactions = loadData();
-let activeTab = 'semua';
+let activeTab = 'hari-ini';
+// Nilai bulan ('YYYY-MM') & rentang tanggal ('YYYY-MM-DD') yang dipilih
+// lewat sub-picker "Pilih Bulan"/"Pilih Tanggal" pada popup Filter Laporan
+// -- lihat listener #lapFilterMonthInput/#lapFilterDateFromInput/
+// #lapFilterDateToInput & pemakaiannya di getFilteredTransactions().
+let lapFilterMonth = '';
+let lapFilterDateFrom = '';
+let lapFilterDateTo = '';
 // Tipe transaksi yang dipilih lewat pil "Semua/Uang Masuk/Uang Keluar" di
 // dalam popup Filter halaman Laporan (menggantikan <select id="typeFilter">
 // yang lama -- lihat #lapFilterTypeRow di index.html & openLapFilterOverlay()).
@@ -3479,20 +3486,20 @@ function getFilteredTransactions() {
 
   let list = [...transactions];
 
-  if (activeTab === 'semua') {
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - 27);
-    const cutoffStr = localDateStr(cutoff);
-    list = list.filter(t => t.date && t.date >= cutoffStr);
-  } else if (activeTab === 'mingguan') {
+  if (activeTab === 'hari-ini') {
+    const todayS = todayStr();
+    list = list.filter(t => t.date === todayS);
+  } else if (activeTab === '7-hari') {
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - 6);
     const cutoffStr = localDateStr(cutoff);
     list = list.filter(t => t.date && t.date >= cutoffStr);
-  } else if (activeTab === 'bulanan') {
-    list = list.filter(t => t.date && t.date.slice(0, 7) === thisMonthStr());
-  } else if (activeTab === 'tahunan') {
-    list = list.filter(t => t.date && t.date.slice(0, 4) === String(thisYearStr()));
+  } else if (activeTab === 'bulan') {
+    const monthVal = lapFilterMonth || thisMonthStr();
+    list = list.filter(t => t.date && t.date.slice(0, 7) === monthVal);
+  } else if (activeTab === 'tanggal') {
+    if (lapFilterDateFrom) list = list.filter(t => t.date && t.date >= lapFilterDateFrom);
+    if (lapFilterDateTo) list = list.filter(t => t.date && t.date <= lapFilterDateTo);
   }
 
   if (typeFilter !== 'semua') list = list.filter(t => t.type === typeFilter);
@@ -7572,28 +7579,111 @@ window.addEventListener('resize', () => {
 document.getElementById('tabs')?.addEventListener('click', (e) => {
   const btn = e.target.closest('.tab-btn');
   if (!btn) return;
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  const tabsContainer = document.getElementById('tabs');
+  tabsContainer.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  updateTabIndicator(document.getElementById('tabs'));
+  updateTabIndicator(tabsContainer);
   activeTab = btn.dataset.tab;
+  // Tampilkan kotak "Pilih Bulan"/"Pilih Tanggal" hanya saat radio yg
+  // sesuai sedang aktif -- radio lain (Hari ini/7 Hari Terakhir) tidak
+  // butuh input tambahan jadi kedua kotak ini disembunyikan lagi.
+  const monthWrap = document.getElementById('lapMonthPickerWrap');
+  const dateWrap = document.getElementById('lapDatePickerWrap');
+  if (monthWrap) monthWrap.hidden = activeTab !== 'bulan';
+  if (dateWrap) dateWrap.hidden = activeTab !== 'tanggal';
+  if (activeTab === 'bulan') {
+    const monthInput = document.getElementById('lapFilterMonthInput');
+    if (monthInput && !monthInput.value) {
+      monthInput.value = thisMonthStr();
+      lapFilterMonth = thisMonthStr();
+    }
+  }
   resetHistoryPagination();
   renderRangePicker();
   renderTransactionList();
 });
 
+document.getElementById('lapFilterMonthInput')?.addEventListener('change', (e) => {
+  lapFilterMonth = e.target.value;
+  resetHistoryPagination();
+  renderTransactionList();
+});
+document.getElementById('lapFilterDateFromInput')?.addEventListener('change', (e) => {
+  lapFilterDateFrom = e.target.value;
+  resetHistoryPagination();
+  renderTransactionList();
+});
+document.getElementById('lapFilterDateToInput')?.addEventListener('change', (e) => {
+  lapFilterDateTo = e.target.value;
+  resetHistoryPagination();
+  renderTransactionList();
+});
+
 /* ---- Tab utama halaman Laporan: Aktifitas / Tabungan / Aset ----
    Pola sama dgn tab #tabs (Semua/Mingguan/dst) di atas, tapi menimpa
-   .lap-panel mana yang tampil (bukan re-render daftar transaksi). ---- */
-document.getElementById('lapMainTabs')?.addEventListener('click', (e) => {
-  const btn = e.target.closest('.tab-btn');
-  if (!btn) return;
+   .lap-panel mana yang tampil (bukan re-render daftar transaksi).
+   Logikanya ditaruh di satu fungsi (switchLapMainTab) supaya bisa
+   dipicu dari 2 sumber: klik tombol tab ATAU usap (swipe) di atas
+   area panelnya -- lihat setupLapSwipeTabs() di bawah. ---- */
+const LAP_TAB_ORDER = ['aktifitas', 'tabungan', 'aset'];
+function switchLapMainTab(target) {
   const container = document.getElementById('lapMainTabs');
+  const btn = container?.querySelector(`.tab-btn[data-laptab="${target}"]`);
+  if (!container || !btn) return;
   container.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   updateTabIndicator(container);
-  const target = btn.dataset.laptab;
   document.querySelectorAll('.lap-panel').forEach(p => p.classList.toggle('active', p.dataset.lapPanel === target));
+}
+document.getElementById('lapMainTabs')?.addEventListener('click', (e) => {
+  const btn = e.target.closest('.tab-btn');
+  if (!btn) return;
+  switchLapMainTab(btn.dataset.laptab);
 });
+
+/* ---- Usap kiri/kanan pada area panel Laporan (#lapPanelsSwipe) utk
+   pindah tab Aktifitas <-> Tabungan <-> Aset, pengganti/pelengkap tap
+   tab di atas -- lazim dipakai di app finansial supaya pindah tab bisa
+   1 tangan tanpa harus menjangkau baris tab. Dipakai touchstart/
+   touchend polos (bukan touchmove tiap frame) supaya scroll vertikal
+   daftar transaksi TIDAK ikut ke-drag/patah -- gesture hanya dihitung
+   valid kalau pergeseran mendatarnya jauh lebih besar drpd vertikalnya
+   (rasio 1.3x) DAN melewati ambang batas jarak (SWIPE_THRESHOLD),
+   supaya scroll biasa (bahkan yg agak miring) tidak salah kepencet
+   sebagai usap ganti tab. ---- */
+function setupLapSwipeTabs() {
+  const wrap = document.getElementById('lapPanelsSwipe');
+  if (!wrap) return;
+  const SWIPE_THRESHOLD = 46;
+  let startX = 0, startY = 0, tracking = false;
+
+  wrap.addEventListener('touchstart', (e) => {
+    if (e.touches.length !== 1) { tracking = false; return; }
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    tracking = true;
+  }, { passive: true });
+
+  wrap.addEventListener('touchend', (e) => {
+    if (!tracking) return;
+    tracking = false;
+    const touch = e.changedTouches[0];
+    const dx = touch.clientX - startX;
+    const dy = touch.clientY - startY;
+    if (Math.abs(dx) < SWIPE_THRESHOLD || Math.abs(dx) < Math.abs(dy) * 1.3) return;
+
+    const activeBtn = document.querySelector('#lapMainTabs .tab-btn.active');
+    const current = activeBtn ? activeBtn.dataset.laptab : LAP_TAB_ORDER[0];
+    const idx = LAP_TAB_ORDER.indexOf(current);
+    if (idx === -1) return;
+    if (dx < 0 && idx < LAP_TAB_ORDER.length - 1) {
+      switchLapMainTab(LAP_TAB_ORDER[idx + 1]); // usap ke kiri -> tab berikutnya
+    } else if (dx > 0 && idx > 0) {
+      switchLapMainTab(LAP_TAB_ORDER[idx - 1]); // usap ke kanan -> tab sebelumnya
+    }
+  }, { passive: true });
+}
+setupLapSwipeTabs();
 
 /* ==========================================================
    POPUP FILTER LAPORAN (halaman penuh)
@@ -7630,8 +7720,17 @@ document.getElementById('lapFilterTypeRow')?.addEventListener('click', (e) => {
 });
 
 document.getElementById('lapFilterResetBtn')?.addEventListener('click', () => {
-  // Rentang Waktu -> "Semua"
-  document.getElementById('tabs')?.querySelector('[data-tab="semua"]')?.click();
+  // Rentang Waktu -> "Hari ini"
+  document.getElementById('tabs')?.querySelector('[data-tab="hari-ini"]')?.click();
+  // Kotak "Pilih Bulan"/"Pilih Tanggal" ikut dikosongkan (sudah otomatis
+  // tersembunyi lewat klik di atas, ini cuma membersihkan nilainya)
+  lapFilterMonth = ''; lapFilterDateFrom = ''; lapFilterDateTo = '';
+  const monthInput = document.getElementById('lapFilterMonthInput');
+  if (monthInput) monthInput.value = '';
+  const fromInput = document.getElementById('lapFilterDateFromInput');
+  if (fromInput) fromInput.value = '';
+  const toInput = document.getElementById('lapFilterDateToInput');
+  if (toInput) toInput.value = '';
   // Transaksi -> "Semua"
   document.getElementById('lapFilterTypeRow')?.querySelector('[data-filtertype="semua"]')?.click();
   // Kategori -> "Semua Kategori"

@@ -6127,6 +6127,10 @@ html.zp-app-loading .page-body > .lap-panel{display:none;}
 }
 .lap-panel{display:none;}
 .lap-panel.active{display:block;}
+/* pan-y: browser tetap menangani scroll vertikal drpd daftar transaksi
+   secara native (jadi tetap mulus), sementara gesture geser mendatarnya
+   sendiri kita baca lewat JS (touchstart/touchend) di setupLapSwipeTabs(). */
+.lap-panels-swipe{touch-action:pan-y;}
 
 /* ============ POPUP FILTER LAPORAN (halaman penuh) ============
    Menggantikan baris cari/tipe/kategori yang dulu nyempil di bawah
@@ -6153,7 +6157,17 @@ html.zp-app-loading .page-body > .lap-panel{display:none;}
      halaman "Pengaturan" penuh), makanya dipisah jadi variabel sendiri
      alih-alih ikut var(--z-page) yang dipakai overlay lain. */
   z-index:700;
+  /* ---- Arah animasi DITIMPA khusus di sini (translateX, bukan
+     translateY bawaan .detail-page-overlay) -- popup Filter ini masuk
+     meluncur dari KANAN layar (mirip halaman "push" navigasi khas
+     app), beda dgn overlay halaman penuh lain yg meluncur naik dari
+     bawah. Spesifisitas ".lap-filter-overlay.open" (di bawah) SAMA
+     dgn ".detail-page-overlay.open" (2 class) -- karena blok ini
+     ditulis BELAKANGAN di file, aturan translateX di sini yang menang
+     saat popup dibuka. ---- */
+  transform:translateX(100%);
 }
+.lap-filter-overlay.open{transform:translateX(0);}
 .lap-filter-page{max-width:640px;margin:0 auto;min-height:100%;min-height:100dvh;display:flex;flex-direction:column;padding:0;}
 /* ---- Header oranye + kartu putih melengkung DISAMAKAN PERSIS dengan
    pola .page-banner + .page-body di halaman Laporan/Dompet/Pengaturan:
@@ -6178,11 +6192,13 @@ html.zp-app-loading .page-body > .lap-panel{display:none;}
 .lap-filter-back-btn:hover{background:rgba(255,255,255,0.3);}
 .lap-filter-head h2{
   flex:1;margin:0;text-align:center;color:#FFF8F1;
-  font-family:'Poppins',sans-serif;font-size:clamp(16px,3.6vw,19px);font-weight:500;letter-spacing:-0.005em;
+  font-family:'Poppins',sans-serif;font-size:clamp(16px,3.6vw,19px);font-weight:500;letter-spacing:-0.005em;line-height:1.25;
 }
 .lap-filter-reset-btn{
   flex-shrink:0;background:none;border:none;color:#FFF8F1;
-  font-size:13.5px;font-weight:700;cursor:pointer;padding:8px 2px;
+  /* Font DISAMAKAN dengan judul "Filter" di sebelahnya (Poppins) --
+     sebelumnya font body weight 700. */
+  font-family:'Poppins',sans-serif;font-size:13.5px;font-weight:500;cursor:pointer;padding:8px 2px;
   touch-action:manipulation;-webkit-tap-highlight-color:transparent;
 }
 .lap-filter-reset-btn:hover{text-decoration:underline;}
@@ -6214,6 +6230,36 @@ html.zp-app-loading .page-body > .lap-panel{display:none;}
   margin:0 0 2px;font-size:12.5px;font-weight:800;color:var(--ink);
   text-transform:uppercase;letter-spacing:0.03em;
 }
+/* ---- Varian "tanpa kartu": dipakai khusus utk section Rentang Waktu
+   supaya daftar radionya duduk langsung di atas kartu putih .lap-filter-card
+   (tanpa kotak/bayangan terpisah lagi di sekelilingnya) -- persis gaya
+   pada gambar referensi yang diminta, beda dgn section Transaksi &
+   Kategori di bawahnya yang tetap pakai gaya kartu biasa. ---- */
+.lap-filter-section--flat{background:transparent;border:none;box-shadow:none;padding:0;}
+/* ---- Kotak "Pilih Bulan" / "Pilih Tanggal": muncul menempel tepat di
+   bawah baris radio terkait begitu radio itu dipilih (bukan dipisah ke
+   popup kalender sendiri) -- memakai <input type="month">/"date"> bawaan
+   browser supaya kalender pemilihnya tetap yang asli/familiar di HP
+   pengguna, cuma bingkainya ditata ulang menyatu dgn tema app (kotak
+   abu var(--paper), bukan kartu putih bertepi). ---- */
+.lap-subpicker-month,.lap-subpicker-range{margin:-2px 0 10px;}
+.lap-subpicker-month[hidden],.lap-subpicker-range[hidden]{display:none;}
+.lap-subpicker-field{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  background:var(--paper);border-radius:10px;padding:11px 14px;
+}
+.lap-subpicker-field input[type="month"]{
+  border:none;background:transparent;padding:0;color:var(--ink);width:100%;
+  font-size:16px;
+}
+.lap-subpicker-field input[type="month"]:focus{outline:none;}
+.lap-subpicker-ic{color:var(--ink-faint);flex-shrink:0;display:flex;pointer-events:none;}
+.lap-subpicker-range{
+  display:flex;flex-wrap:nowrap;align-items:center;gap:0;
+  background:var(--paper);border-radius:10px;padding:9px 14px;
+}
+.lap-subpicker-range .bd-date-field{flex:1;min-width:0;}
+.lap-subpicker-range .bd-date-field input[type="date"]{font-size:16px;}
 /* ---- "Rentang Waktu" bergaya daftar radio: memakai ulang komponen
    .tabs/.tab-btn (id #tabs) yang sudah ada -- cuma ditimpa jadi
    susunan vertikal dgn lingkaran radio di kanan, gantinya pil
@@ -6228,7 +6274,11 @@ html.zp-app-loading .page-body > .lap-panel{display:none;}
   display:flex;align-items:center;justify-content:space-between;gap:10px;
   width:100%;text-align:left;padding:13px 2px;border-radius:0;
   border-bottom:1px solid var(--line);color:var(--ink);
-  font-family:var(--font-body);font-weight:600;font-size:14px;
+  /* Font DISAMAKAN dengan judul halaman (.page-banner h1 -- "Laporan"):
+     Poppins weight 500, letter-spacing sama -- pola yg sama dgn
+     .lap-toptabs .tab-btn (tab Aktifitas/Tabungan/Aset) di atas.
+     Sebelumnya masih ikut .tab-btn umum (font body, weight 600). */
+  font-family:'Poppins',sans-serif;font-weight:500;letter-spacing:-0.005em;font-size:14px;
 }
 .lap-radio-tabs .tab-btn:last-child{border-bottom:none;}
 .lap-radio-tabs .tab-btn::after{
@@ -6248,7 +6298,11 @@ html.zp-app-loading .page-body > .lap-panel{display:none;}
 .lap-pill-row{display:flex;gap:8px;flex-wrap:wrap;margin:2px 0 14px;}
 .lap-pill-btn{
   flex:1 1 auto;padding:10px 12px;border-radius:999px;border:1.5px solid var(--line);
-  background:var(--paper);color:var(--ink-soft);font-size:13px;font-weight:700;
+  background:var(--paper);color:var(--ink-soft);font-size:13px;
+  /* Font DISAMAKAN dengan judul halaman (Poppins weight 500), sama
+     seperti opsi radio Rentang Waktu di atas -- sebelumnya font body
+     weight 700. */
+  font-family:'Poppins',sans-serif;font-weight:500;letter-spacing:-0.005em;
   cursor:pointer;transition:border-color .15s ease, background .15s ease, color .15s ease;
   text-align:center;white-space:nowrap;touch-action:manipulation;-webkit-tap-highlight-color:transparent;
 }
@@ -6270,7 +6324,10 @@ html.zp-app-loading .page-body > .lap-panel{display:none;}
   background:var(--card);
   padding:6px 16px calc(18px + env(safe-area-inset-bottom,0px));
 }
-.lap-filter-save-btn{width:100%;justify-content:center;padding:14px;border-radius:14px;font-size:14.5px;}
+/* Font tombol "Simpan" DISAMAKAN dengan judul halaman (Poppins weight
+   500) -- dioverride khusus di sini (bukan di .btn umum) supaya tombol
+   lain di seluruh app yang ikut pakai class .btn tidak ikut berubah. */
+.lap-filter-save-btn{width:100%;justify-content:center;padding:14px;border-radius:14px;font-size:14.5px;font-family:'Poppins',sans-serif;font-weight:500;letter-spacing:-0.005em;}
 @media (max-width:400px){
   .lap-filter-head{padding-left:14px;padding-right:14px;}
   .lap-filter-card{padding-left:14px;padding-right:14px;}
@@ -7988,6 +8045,11 @@ body.is-scrolling *{
         <button type="button" class="tab-btn" data-laptab="aset">Aset</button>
       </div>
 
+      <!-- ---- Pembungkus ketiga panel di bawah -- dipakai sebagai area
+           deteksi usap (swipe) kiri/kanan utk pindah tab Aktifitas/
+           Tabungan/Aset, lihat setupLapSwipeTabs() di script.js. ---- -->
+      <div class="lap-panels-swipe" id="lapPanelsSwipe">
+
       <!-- ---- PANEL: AKTIFITAS (Semua Transaksi -- uang masuk & keluar) ---- -->
       <div class="lap-panel active" data-lap-panel="aktifitas" id="lapPanelAktifitas">
         <div class="section-card" id="historySection">
@@ -7996,7 +8058,7 @@ body.is-scrolling *{
               <h2>Semua Transaksi</h2>
             </div>
             <button type="button" class="bd-icon-btn" id="lapFilterOpenBtn" title="Filter" aria-label="Buka filter transaksi">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16M7 12h10M10.5 19h3"/></svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h18l-7 8.5V19l-4 2v-8.5L3 4Z"/></svg>
             </button>
           </div>
 
@@ -8038,6 +8100,9 @@ body.is-scrolling *{
           </div>
         </div>
       </div>
+
+      </div>
+      <!-- /#lapPanelsSwipe -->
     </div>
   </div>
   <!-- ===== /HALAMAN: LAPORAN ===== -->
@@ -8059,14 +8124,30 @@ body.is-scrolling *{
           <input type="search" id="searchInput" placeholder="Cari kategori atau keterangan...">
         </div>
 
-        <div class="lap-filter-section">
+        <div class="lap-filter-section lap-filter-section--flat">
           <h3>Rentang Waktu</h3>
           <div class="tabs lap-radio-tabs" id="tabs">
             <span class="tab-indicator" aria-hidden="true"></span>
-            <button type="button" class="tab-btn active" data-tab="semua">Semua</button>
-            <button type="button" class="tab-btn" data-tab="mingguan">Mingguan</button>
-            <button type="button" class="tab-btn" data-tab="bulanan">Bulanan</button>
-            <button type="button" class="tab-btn" data-tab="tahunan">Tahunan</button>
+            <button type="button" class="tab-btn active" data-tab="hari-ini">Hari ini</button>
+            <button type="button" class="tab-btn" data-tab="7-hari">7 Hari Terakhir</button>
+            <button type="button" class="tab-btn" data-tab="bulan">Pilih Bulan</button>
+            <div class="lap-subpicker-month" id="lapMonthPickerWrap" hidden>
+              <label class="lap-subpicker-field">
+                <input type="month" id="lapFilterMonthInput" aria-label="Pilih bulan">
+                <span class="lap-subpicker-ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>
+              </label>
+            </div>
+            <button type="button" class="tab-btn" data-tab="tanggal">Pilih Tanggal</button>
+            <div class="lap-subpicker-range" id="lapDatePickerWrap" hidden>
+              <label class="bd-date-field">
+                <span>Dari</span>
+                <input type="date" id="lapFilterDateFromInput">
+              </label>
+              <label class="bd-date-field">
+                <span>Sampai</span>
+                <input type="date" id="lapFilterDateToInput">
+              </label>
+            </div>
           </div>
         </div>
 
