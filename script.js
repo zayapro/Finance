@@ -1254,6 +1254,7 @@ function switchNewsCategory(categoryKey) {
 }
 
 function initNews() {
+  if (!document.getElementById('newsSection') || !document.getElementById('newsList')) return;
   renderNewsCatTabs();
   loadNews(newsActiveCategory);
   document.getElementById('newsRefreshBtn')?.addEventListener('click', () => loadNews(newsActiveCategory));
@@ -2941,6 +2942,7 @@ let chartHighlightIndex = -1;
 function renderChart() {
   const chartWrap = document.querySelector('.chart-wrap');
   const legendWrap = document.getElementById('chartLegend');
+  if (!chartWrap || !legendWrap) return;
 
   try {
     const month = thisMonthStr();
@@ -3420,6 +3422,7 @@ function setupYearlyBarInteractions() {
 ========================================================== */
 function populateCategoryFilter() {
   const sel = document.getElementById('categoryFilter');
+  if (!sel) return;
   const master = [...CATEGORIES.masuk, ...CATEGORIES.keluar];
   const fromData = transactions.map(t => t.category);
   const all = [...new Set([...master, ...fromData])].sort((a, b) => a.localeCompare(b, 'id'));
@@ -3429,9 +3432,12 @@ function populateCategoryFilter() {
 }
 
 function getFilteredTransactions() {
-  const search = document.getElementById('searchInput').value.trim().toLowerCase();
-  const typeFilter = document.getElementById('typeFilter').value;
-  const catFilter = document.getElementById('categoryFilter').value;
+  const searchEl = document.getElementById('searchInput');
+  const typeFilterEl = document.getElementById('typeFilter');
+  const catFilterEl = document.getElementById('categoryFilter');
+  const search = searchEl ? searchEl.value.trim().toLowerCase() : '';
+  const typeFilter = typeFilterEl ? typeFilterEl.value : 'semua';
+  const catFilter = catFilterEl ? catFilterEl.value : 'semua';
 
   let list = [...transactions];
 
@@ -3562,11 +3568,12 @@ function renderHistoryRow(t, delay) {
 }
 
 function renderTransactionList() {
-  const list = getFilteredTransactions(); // sudah terurut tanggal terbaru → terlama
   const tbody = document.getElementById('txBody');
   const empty = document.getElementById('emptyState');
   const loadMoreWrap = document.getElementById('historyLoadMoreWrap');
   const loadMoreBtn = document.getElementById('btnLoadMoreHistory');
+  if (!tbody || !empty || !loadMoreWrap || !loadMoreBtn) return;
+  const list = getFilteredTransactions(); // sudah terurut tanggal terbaru → terlama
 
   if (list.length === 0) {
     tbody.innerHTML = '';
@@ -6114,7 +6121,7 @@ document.querySelectorAll('#txForm .type-toggle button').forEach(btn => {
 document.getElementById('modalCloseBtn').addEventListener('click', () => closeModal(txModal));
 document.getElementById('btnCancel').addEventListener('click', () => closeModal(txModal));
 txModal.addEventListener('click', (e) => { if (e.target === txModal) closeModal(txModal); });
-document.getElementById('btnAddDesktop').addEventListener('click', () => openAddModal());
+document.getElementById('btnAddDesktop')?.addEventListener('click', () => openAddModal());
 document.getElementById('btnAddMobile').addEventListener('click', () => openAddModal());
 
 /* ==========================================================
@@ -6285,7 +6292,7 @@ function renderDevices() {
   if (addCardBtn) addCardBtn.addEventListener('click', () => openDeviceModal());
 }
 
-document.getElementById('deviceTabs').addEventListener('click', (e) => {
+document.getElementById('deviceTabs')?.addEventListener('click', (e) => {
   const btn = e.target.closest('[data-devicetab]');
   if (!btn) return;
   deviceStatusFilter = btn.dataset.devicetab;
@@ -6293,7 +6300,7 @@ document.getElementById('deviceTabs').addEventListener('click', (e) => {
   renderDevices();
 });
 
-document.getElementById('deviceSearchInput').addEventListener('input', (e) => {
+document.getElementById('deviceSearchInput')?.addEventListener('input', (e) => {
   deviceSearchQuery = e.target.value;
   renderDevices();
 });
@@ -6396,9 +6403,9 @@ document.getElementById('deviceForm').addEventListener('submit', (e) => {
 document.getElementById('deviceModalCloseBtn').addEventListener('click', () => closeModal(deviceModal));
 document.getElementById('btnDeviceCancel').addEventListener('click', () => closeModal(deviceModal));
 deviceModal.addEventListener('click', (e) => { if (e.target === deviceModal) closeModal(deviceModal); });
-document.getElementById('btnAddDevice').addEventListener('click', () => openDeviceModal());
+document.getElementById('btnAddDevice')?.addEventListener('click', () => openDeviceModal());
 
-document.getElementById('deviceGrid').addEventListener('click', (e) => {
+document.getElementById('deviceGrid')?.addEventListener('click', (e) => {
   const editBtn = e.target.closest('[data-deviceedit]');
   const delBtn = e.target.closest('[data-devicedel]');
   const toggleBtn = e.target.closest('[data-devicetoggle]');
@@ -6692,7 +6699,7 @@ function renderSocial() {
   }).join('');
 }
 
-document.getElementById('socialGrid').addEventListener('click', (e) => {
+document.getElementById('socialGrid')?.addEventListener('click', (e) => {
   const btn = e.target.closest('[data-social]');
   if (!btn) return;
   const key = btn.dataset.social;
@@ -6730,7 +6737,7 @@ document.getElementById('socialForm').addEventListener('submit', (e) => {
 document.getElementById('socialModalCloseBtn').addEventListener('click', () => closeModal(socialModal));
 document.getElementById('btnSocialCancel').addEventListener('click', () => closeModal(socialModal));
 socialModal.addEventListener('click', (e) => { if (e.target === socialModal) closeModal(socialModal); });
-document.getElementById('btnEditSocial').addEventListener('click', () => openSocialModal());
+document.getElementById('btnEditSocial')?.addEventListener('click', () => openSocialModal());
 
 /* ==========================================================
    PENGATURAN APLIKASI (nama web, logo, warna aksen, bahasa,
@@ -7387,7 +7394,7 @@ document.getElementById('btnConfirmDelete').addEventListener('click', () => {
 /* ==========================================================
    DELEGASI EVENT UNTUK TOMBOL EDIT/HAPUS DI TABEL
 ========================================================== */
-document.getElementById('txBody').addEventListener('click', (e) => {
+document.getElementById('txBody')?.addEventListener('click', (e) => {
   const editBtn = e.target.closest('[data-edit]');
   const delBtn = e.target.closest('[data-del]');
   if (editBtn) openEditModal(editBtn.dataset.edit);
@@ -7516,7 +7523,7 @@ window.addEventListener('resize', () => {
   _tabIndicatorRaf = requestAnimationFrame(updateAllTabIndicators);
 });
 
-document.getElementById('tabs').addEventListener('click', (e) => {
+document.getElementById('tabs')?.addEventListener('click', (e) => {
   const btn = e.target.closest('.tab-btn');
   if (!btn) return;
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -7528,10 +7535,10 @@ document.getElementById('tabs').addEventListener('click', (e) => {
   renderTransactionList();
 });
 
-document.getElementById('searchInput').addEventListener('input', () => { resetHistoryPagination(); renderTransactionList(); });
-document.getElementById('typeFilter').addEventListener('change', () => { resetHistoryPagination(); renderTransactionList(); });
-document.getElementById('categoryFilter').addEventListener('change', () => { resetHistoryPagination(); renderTransactionList(); });
-document.getElementById('btnLoadMoreHistory').addEventListener('click', () => {
+document.getElementById('searchInput')?.addEventListener('input', () => { resetHistoryPagination(); renderTransactionList(); });
+document.getElementById('typeFilter')?.addEventListener('change', () => { resetHistoryPagination(); renderTransactionList(); });
+document.getElementById('categoryFilter')?.addEventListener('change', () => { resetHistoryPagination(); renderTransactionList(); });
+document.getElementById('btnLoadMoreHistory')?.addEventListener('click', () => {
   historyVisibleGroups += HISTORY_GROUPS_PER_PAGE;
   renderTransactionList();
 });
@@ -7697,8 +7704,8 @@ async function exportTransactionsPdf() {
   showToast('PDF berhasil diunduh.');
 }
 
-document.getElementById('btnExportXlsx').addEventListener('click', () => { document.getElementById('btnExportMenu')._close(); exportTransactionsExcel(); });
-document.getElementById('btnExportPdf').addEventListener('click', () => { document.getElementById('btnExportMenu')._close(); exportTransactionsPdf(); });
+document.getElementById('btnExportXlsx')?.addEventListener('click', () => { document.getElementById('btnExportMenu')._close(); exportTransactionsExcel(); });
+document.getElementById('btnExportPdf')?.addEventListener('click', () => { document.getElementById('btnExportMenu')._close(); exportTransactionsPdf(); });
 
 /* ==========================================================
    TOAST
