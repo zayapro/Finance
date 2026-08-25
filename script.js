@@ -8241,10 +8241,29 @@ function openBdAllPage(initialTab) {
   renderBdAllPage();
   updateTabIndicator(document.getElementById('bdAllTabs'));
   setBottomNavActive('tagihan');
+
+  // FIX "refresh di halaman Tagihan & Hutang malah pindah ke menu
+  // lain": overlay ini (beda dari tab Beranda/Laporan/Dompet/
+  // Pengaturan) sebelumnya TIDAK pernah disimpan statusnya sama
+  // sekali -- jadi begitu di-refresh, yang muncul kembali cuma tab
+  // .app-page biasa di baliknya (bdAllReturnPage), overlay-nya sendiri
+  // hilang seolah-olah "pindah menu". Sekarang status "sedang
+  // terbuka" + sub-tabnya (Semua/Tagihan/Hutang) disimpan ke
+  // sessionStorage, lalu dibaca lagi & overlay ini dibuka ULANG
+  // otomatis di akhir init() (lihat pemanggilannya di bawah) setiap
+  // kali halaman selesai dimuat ulang.
+  try {
+    sessionStorage.setItem('zp_tagihan_open', '1');
+    sessionStorage.setItem('zp_tagihan_tab', bdAllTab);
+  } catch (e) { /* sessionStorage tidak tersedia -- abaikan */ }
 }
 function closeBdAllPage() {
   document.getElementById('bdAllOverlay').classList.remove('open');
   document.body.style.overflow = '';
+  try {
+    sessionStorage.removeItem('zp_tagihan_open');
+    sessionStorage.removeItem('zp_tagihan_tab');
+  } catch (e) { /* abaikan */ }
   // FIX "nav & isi halaman tidak sinkron setelah nutup Tagihan &
   // Hutang": dulu di sini SELALU dipaksa setBottomNavActive('beranda')
   // apa pun tab asalnya -- itu cuma mengubah highlight tombol nav,
@@ -9291,6 +9310,23 @@ function init() {
   // tombol yang diukur sudah pasti akurat (bukan 0 karena belum sempat
   // di-layout sama sekali).
   requestAnimationFrame(updateAllTabIndicators);
+
+  // Buka ULANG halaman "Semua Tagihan & Hutang" kalau sebelum
+  // di-refresh overlay ini memang sedang terbuka (lihat penanda yang
+  // disimpan di openBdAllPage()/closeBdAllPage()) -- baru dilakukan
+  // di sini, di akhir init(), karena openBdAllPage() butuh `bills`/
+  // `debts` (sudah tersedia di titik ini) DAN elemen-elemen DOM
+  // overlay yang terkait, jadi tidak bisa dipanggil lebih awal dari
+  // ini. Tanpa ini, refresh selagi di halaman Tagihan & Hutang akan
+  // terasa "pindah ke menu lain" karena yang tampil balik cuma tab
+  // biasa di baliknya (Beranda/Laporan/dst), overlay-nya sendiri
+  // hilang.
+  try {
+    if (sessionStorage.getItem('zp_tagihan_open') === '1') {
+      var savedBdTab = sessionStorage.getItem('zp_tagihan_tab') || 'semua';
+      openBdAllPage(savedBdTab);
+    }
+  } catch (e) { /* sessionStorage tidak tersedia -- abaikan */ }
 }
 
 init();
