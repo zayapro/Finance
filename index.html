@@ -5246,7 +5246,15 @@ tbody tr:last-child td{border-bottom:none;}
   margin:-24px auto 0;
   border-radius:28px 28px 0 0;
   padding-top:24px;
-  box-shadow:0 -16px 30px -10px rgba(242,103,43,0.38);
+  /* Bayangan oranye di tepi atas kartu DIHAPUS (sebelumnya
+     box-shadow:0 -16px 30px -10px rgba(242,103,43,0.38)) -- ini
+     yang sempat terlihat sebagai "bayangan oren" sesaat setiap kali
+     halaman Tagihan & Hutang ini dibuka/berpindah dari menu lain.
+     Disamakan dengan .page-body (Laporan/Dompet/Pengaturan) yang
+     box-shadow-nya juga sudah none, supaya SEMUA halaman benar-benar
+     bebas dari bayangan oranye saat perpindahan menu, bukan cuma
+     3 dari 4 halaman. */
+  box-shadow:none;
 }
 /* ================================================================
    Halaman Tagihan & Hutang (#bdAllOverlay) dipecah jadi 2 blok:
@@ -5346,7 +5354,9 @@ tbody tr:last-child td{border-bottom:none;}
   /* Ukuran font judul TIDAK di-override lagi di sini -- sudah satu
      formula clamp tunggal di .bd-page-banner-title (dasar, non-media)
      yang otomatis pas di semua lebar layar, termasuk HP. */
-  .bd-page-body{margin-top:-16px;border-radius:26px 26px 0 0;box-shadow:0 -14px 26px -9px rgba(242,103,43,0.38);}
+  /* box-shadow oranye dihapus (disamakan none, lihat catatan di
+     .bd-page-body versi desktop/dasar di atas). */
+  .bd-page-body{margin-top:-16px;border-radius:26px 26px 0 0;box-shadow:none;}
   /* Di HP, tombol digeser naik supaya duduk RAPI di atas nav bawah
      (tinggi nav ±72px, lihat body{padding-bottom:72px} di bagian
      NAVIGASI BAWAH) alih-alih tertutup nav seperti sebelumnya. Jarak
@@ -6247,61 +6257,39 @@ tbody tr:last-child td{border-bottom:none;}
   }
 
   /* Halaman per-tab: default tersembunyi, hanya .active yang tampil.
-     Transisi masuk halus (fade + geser tipis) ditambahkan lewat CSS
-     animation (BUKAN transition) supaya tetap jalan meski elemen
-     baru saja berubah dari display:none -> block -- transition biasa
-     tidak akan ter-trigger dalam kondisi ini, tapi animation ter-
-     trigger dengan aman. Halaman yang ditinggalkan langsung
+     Transisi masuk halus (fade + geser tipis dari bawah, ala transisi
+     tab di aplikasi native seperti Instagram/WhatsApp) ditambahkan
+     lewat CSS animation (BUKAN transition) supaya tetap jalan meski
+     elemen baru saja berubah dari display:none -> block -- transition
+     biasa tidak akan ter-trigger dalam kondisi ini, tapi animation
+     ter-trigger dengan aman. Halaman yang ditinggalkan langsung
      display:none (tanpa fade-out) supaya tidak ada 2 halaman yang
-     sempat tertumpuk/terlihat bersamaan saat pindah tab -- itulah
-     sumber "bayangan" tambahan yang tidak diinginkan (dua kartu
-     dengan shadow masing-masing sempat tumpang tindih). Dengan hanya
-     halaman BARU yang fade-in sendirian, tidak akan ada shadow ganda
-     ataupun bayangan nyasar selama transisi, di halaman manapun. */
+     sempat tertumpuk/terlihat bersamaan saat pindah tab. */
   .app-page{display:none;}
-  /* FIX "bayangan muncul saat pindah menu" (HP): sebelumnya transisi
-     masuk memakai opacity + transform:translateY(6px) sekaligus.
-     Kartu halaman (.page-body) punya box-shadow oranye di tepi
-     atasnya (lihat .page-body::before) -- selama transform geser
-     berlangsung, browser HARUS menggambar ulang shadow itu di posisi
-     baru tiap frame (box-shadow tidak murah di-composite bareng
-     transform seperti opacity), dan di banyak HP proses gambar ulang
-     ini sempat terlihat sebagai bayangan yang "muncul"/bergeser
-     sesaat sebelum settle. Solusinya: geser (translateY) dihapus,
-     transisi cuma fade opacity murni -- shadow ikut fade bareng
-     seluruh halaman (karena opacity ada di elemen induk .app-page)
-     tanpa pernah ikut bergerak sendiri, jadi tidak ada lagi kesan
-     "bayangan muncul" saat pindah tab.
-
-     PENGERASAN TAMBAHAN (masih ada laporan bayangan sesaat di
-     beberapa HP, mis. Dompet -> Pengaturan): browser di banyak HP
-     kelas menengah/bawah kadang tetap sempat "melukis ulang" box-
-     shadow (.page-body::before) di layer normal (bukan layer GPU
-     terpisah) selama animasi opacity berjalan, walau cuma opacity
-     yang berubah -- inilah yang masih sesekali terlihat sebagai
-     kedipan bayangan. Ditambahkan will-change + isolation supaya
-     browser SENGAJA mempromosikan halaman aktif jadi layer GPU
-     tersendiri SEBELUM animasi mulai (bukan baru dibuat di tengah
-     animasi, yang sering jadi sumber kedipan itu sendiri), dan
-     isolation:isolate memastikan tidak ada shadow/efek dari elemen
-     lain yang ikut "bocor"/tumpang tindih secara visual selama
-     transisi.
-
-     PENTING -- KENAPA "contain:paint" DIHAPUS (bukan sekadar dikurangi):
-     contain:paint ternyata MEMOTONG (clip) apa pun yang secara visual
-     "keluar" dari kotak .app-page itu sendiri. Ini langsung bentrok
-     dengan trik margin negatif (calc(-1 * var(--app-x))) yang dipakai
-     .page-banner & .page-body (halaman Laporan/Dompet/Pengaturan) untuk
-     mepet sampai ke pinggir layar -- overflow yang seharusnya "keluar"
-     supaya kartu putih full-bleed itu malah ikut kepotong balik oleh
-     contain:paint, sehingga kartu putih terlihat masih ada celah di
-     kiri-kanan walau nilai margin-nya sendiri sudah benar. Diganti jadi
-     "contain:layout style": tetap dapat manfaat containment untuk layout
-     (elemen ini jadi containing block sendiri utk anak position:fixed/
-     absolute, & browser tidak perlu re-layout elemen lain di luar
-     halaman ini) dan style (isolasi counter/quotes), TANPA ikut memotong
-     konten yang sengaja overflow keluar kotaknya. Perlindungan anti-
-     kedipan shadow tetap jalan lewat will-change + isolation di atas. */
+  /* RIWAYAT SINGKAT (kenapa dulu translateY sempat dihapus, lalu
+     sekarang dikembalikan lagi):
+     - Awalnya transisi pakai opacity + translateY sekaligus, tapi
+       kartu halaman (.page-body/.bd-page-body) waktu itu MASIH punya
+       box-shadow oranye asli di tepi atasnya. Box-shadow itu mahal
+       untuk digambar ulang tiap frame bersamaan transform (beda
+       dengan opacity yang murah/di-composite GPU), jadi di banyak HP
+       kelas menengah/bawah sempat terlihat sebagai bayangan yang
+       "muncul"/berkedip sesaat sebelum settle -- makanya translateY
+       waktu itu dihapus, tersisa fade opacity murni saja.
+     - Sekarang box-shadow oranye itu SUDAH DIHAPUS TOTAL di semua
+       kartu halaman (Beranda pakai kartu sendiri yang tidak terlibat
+       transisi tab ini; Tagihan/Hutang, Laporan, Dompet, Pengaturan
+       semuanya box-shadow:none, lihat catatan di .bd-page-body &
+       .page-body::before). Karena tidak ada lagi box-shadow yang
+       perlu digambar ulang, translateY aman dikembalikan tanpa
+       risiko kedipan bayangan yang dulu jadi alasan dihapus.
+     will-change mencakup transform+opacity (browser mempromosikan
+     halaman aktif jadi layer GPU sendiri sebelum animasi mulai),
+     isolation:isolate + contain:layout style tetap dipertahankan
+     supaya tidak ada efek elemen lain yang "bocor" secara visual
+     selama transisi, tanpa ikut memotong (clip) kartu putih yang
+     sengaja full-bleed ke pinggir layar (lihat catatan panjang soal
+     ini di riwayat sebelumnya). */
   .app-main{
     display:flex;
     flex-direction:column;
@@ -6311,14 +6299,14 @@ tbody tr:last-child td{border-bottom:none;}
     display:flex;
     flex-direction:column;
     flex:1;
-    animation:appPageIn .18s cubic-bezier(.32,.72,.35,1) both;
-    will-change:opacity;
+    animation:appPageIn .26s cubic-bezier(.16,1,.3,1) both;
+    will-change:opacity,transform;
     isolation:isolate;
     contain:layout style;
   }
   @keyframes appPageIn{
-    from{opacity:0;}
-    to{opacity:1;}
+    from{opacity:0;transform:translateY(14px);}
+    to{opacity:1;transform:translateY(0);}
   }
   @media (prefers-reduced-motion:reduce){
     .app-page.active{animation:none;}
