@@ -94,7 +94,15 @@
   --shadow-md: 0 14px 36px rgba(15,23,42,0.14);
   --radius: 14px;
   --font-body:'Plus Jakarta Sans', sans-serif;
-  --font-display:'Fraunces', serif;
+  /* --font-display SEBELUMNYA 'Fraunces', serif (font serif/klasik
+     bergaya "Playfair") -- diganti ke 'Poppins', sans-serif (bulat,
+     tegas, rounded) supaya SEMUA judul halaman (h1/h2/h3, termasuk
+     judul banner oranye di Beranda/Tagihan/Hutang/Laporan/Dompet/
+     Pengaturan) senada dengan gaya font contoh yang diminta ("Detail
+     Misi"): sans-serif bold rounded, bukan serif. Poppins sudah
+     di-load lewat Google Fonts di <head> (lihat <link> font2), jadi
+     tidak perlu tambahan apa pun supaya font ini tampil. */
+  --font-display:'Poppins', sans-serif;
 
   /* ============ Z-INDEX SCALE (skala lapisan) ============
      Semua elemen mengambang/popup memakai variabel ini supaya
