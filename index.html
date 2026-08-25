@@ -6310,7 +6310,18 @@ tbody tr:last-child td{border-bottom:none;}
      di aturan dasar (non-media) yang otomatis pas di semua lebar layar. */
   .page-banner{padding:calc(clamp(14px,4vw,18px) + env(safe-area-inset-top,0px)) clamp(14px,4vw,16px) clamp(32px,9vw,40px);}
   .page-body{
-    margin-top:-16px;
+    /* PENTING: sebelumnya baris ini menimpa "margin" jadi cuma
+       margin-top:-16px, sehingga trik full-bleed kiri-kanan
+       (margin-left/right:calc(-50vw + 50%)) dari aturan dasar
+       (non-media) di atas ikut KETIMPA/HILANG khusus di layar HP --
+       itulah sebabnya kartu putih di halaman Laporan/Dompet/
+       Pengaturan jadi tidak nyampe ke pinggir layar (beda dengan
+       banner orennya yang tetap full karena .page-banner TIDAK
+       menimpa margin di media query ini). Sekarang kiri-kanan
+       ditulis eksplisit lagi di sini supaya tetap full-bleed persis
+       seperti banner & seperti .bd-page-body di halaman Tagihan &
+       Hutang, sementara margin-top tetap -16px sesuai desain HP. */
+    margin:-16px calc(-50vw + 50%) 0;
     border-radius:26px 26px 0 0;
     flex:1;
     display:flex;
