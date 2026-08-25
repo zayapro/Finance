@@ -5207,11 +5207,16 @@ tbody tr:last-child td{border-bottom:none;}
 }
 .bd-page-banner-simple{
   display:flex;align-items:center;justify-content:center;
-  padding:44px 20px 68px;
+  /* Fluid (clamp), bukan cuma 2 nilai tetap (HP/desktop) -- padding
+     & ukuran ikut menyesuaikan halus mengikuti lebar layar berapapun
+     (HP kecil s/d desktop lebar), bukan "lompat" tiba-tiba pas
+     breakpoint. Nilai min/max tetap dijaga sama seperti sebelumnya
+     (44/20/68 di lebar lebar) supaya tampilan besar tidak berubah. */
+  padding:clamp(30px,6vw,44px) clamp(16px,3vw,20px) clamp(44px,9vw,68px);
 }
 .bd-page-banner-title{
   color:#FFF8F1;font-family:var(--font-body);
-  font-size:16.5px;font-weight:700;letter-spacing:-0.005em;line-height:1.25;
+  font-size:clamp(16.5px,2.2vw,17.5px);font-weight:700;letter-spacing:-0.005em;line-height:1.25;
 }
 .bd-page-banner-title-center{
   text-align:center;width:100%;max-width:1180px;margin:0 auto;
@@ -5308,9 +5313,21 @@ tbody tr:last-child td{border-bottom:none;}
      senada dengan jarak "samping" (cuma padding kartu, 14px) --
      sebelumnya reveal oranye yang lebih tebal bikin sisi atas
      terasa jauh lebih longgar dibanding kiri/kanan. */
-  .bd-page-banner-simple{padding:30px 14px 44px;}
-  .bd-page-banner-title{font-size:15px;}
-  .bd-page-body{margin-top:-14px;border-radius:22px 22px 0 0;box-shadow:0 -13px 24px -9px rgba(242,103,43,0.38);}
+  /* FIX "jarak & font banner tidak rapi di HP": padding atas sekarang
+     ikut env(safe-area-inset-top) supaya judul menempel rapi persis
+     di bawah status bar (bukan jarak tetap 30px yang di HP ber-notch
+     jadi kelihatan mepet/kepotong, atau kejauhan di HP tanpa notch).
+     Judul dibesarkan & ditebalkan (15px/700 -> 18px/800) supaya
+     senada dengan judul halaman Laporan/Dompet/Pengaturan (.page-banner
+     h1, lihat aturan mobile-nya di bawah) yang sebelumnya malah lebih
+     besar (19px) -- sekarang KEDUANYA disamakan persis 18px/800.
+     Padding bawah & overlap kartu putih (margin-top negatif) ditata
+     ulang supaya sisa strip oranye yang kelihatan sebelum kartu putih
+     mulai jadi 24px rapi (40 - 16), dan sudut kartu putih dilengkungkan
+     lebih halus (22px -> 26px) senada dengan referensi desain. */
+  .bd-page-banner-simple{padding:calc(clamp(14px,4vw,18px) + env(safe-area-inset-top,0px)) clamp(14px,4vw,16px) clamp(32px,9vw,40px);}
+  .bd-page-banner-title{font-size:clamp(16px,4.4vw,18px);font-weight:800;}
+  .bd-page-body{margin-top:-16px;border-radius:26px 26px 0 0;box-shadow:0 -14px 26px -9px rgba(242,103,43,0.38);}
   /* Di HP, tombol digeser naik supaya duduk RAPI di atas nav bawah
      (tinggi nav ±72px, lihat body{padding-bottom:72px} di bagian
      NAVIGASI BAWAH) alih-alih tertutup nav seperti sebelumnya. Jarak
@@ -6056,10 +6073,10 @@ tbody tr:last-child td{border-bottom:none;}
   background:var(--nav-orange);
   color:#FFF8F1;
   margin-left:calc(-50vw + 50%);margin-right:calc(-50vw + 50%);
-  padding:44px 20px 68px;
+  padding:clamp(30px,6vw,44px) clamp(16px,3vw,20px) clamp(44px,9vw,68px);
   box-sizing:border-box;
 }
-.page-banner h1{margin:0;font-size:19px;font-weight:800;letter-spacing:.2px;}
+.page-banner h1{margin:0;font-size:clamp(17px,2.2vw,19px);font-weight:800;letter-spacing:.2px;}
 .page-banner p{margin:4px 0 0;font-size:12.5px;color:rgba(255,248,241,0.85);}
 .page-body{
   /* z-index DISAMAKAN dengan .page-banner (2, bukan 1) -- kalau lebih
@@ -6191,10 +6208,23 @@ tbody tr:last-child td{border-bottom:none;}
      halaman BARU yang fade-in sendirian, tidak akan ada shadow ganda
      ataupun bayangan nyasar selama transisi, di halaman manapun. */
   .app-page{display:none;}
-  .app-page.active{display:block;animation:appPageIn .22s ease both;}
+  /* FIX "bayangan muncul saat pindah menu" (HP): sebelumnya transisi
+     masuk memakai opacity + transform:translateY(6px) sekaligus.
+     Kartu halaman (.page-body) punya box-shadow oranye di tepi
+     atasnya (lihat .page-body::before) -- selama transform geser
+     berlangsung, browser HARUS menggambar ulang shadow itu di posisi
+     baru tiap frame (box-shadow tidak murah di-composite bareng
+     transform seperti opacity), dan di banyak HP proses gambar ulang
+     ini sempat terlihat sebagai bayangan yang "muncul"/bergeser
+     sesaat sebelum settle. Solusinya: geser (translateY) dihapus,
+     transisi cuma fade opacity murni -- shadow ikut fade bareng
+     seluruh halaman (karena opacity ada di elemen induk .app-page)
+     tanpa pernah ikut bergerak sendiri, jadi tidak ada lagi kesan
+     "bayangan muncul" saat pindah tab. */
+  .app-page.active{display:block;animation:appPageIn .2s ease both;}
   @keyframes appPageIn{
-    from{opacity:0;transform:translateY(6px);}
-    to{opacity:1;transform:translateY(0);}
+    from{opacity:0;}
+    to{opacity:1;}
   }
   @media (prefers-reduced-motion:reduce){
     .app-page.active{animation:none;}
@@ -6213,17 +6243,21 @@ tbody tr:last-child td{border-bottom:none;}
      dasar (non-media) di atas, jadi di sini tinggal timpa padding-nya
      saja (tanpa perlu margin -14px manual yang gampang meleset kalau
      padding .app berubah di breakpoint lain). */
-  .page-banner{padding:30px 14px 44px;}
+  /* Nilai sama persis dengan .bd-page-banner-simple/.bd-page-body di
+     atas (lihat catatan lengkap di sana): padding atas ikut safe-area,
+     judul 18px/800, overlap -16px, radius 26px, strip oranye 24px. */
+  .page-banner{padding:calc(clamp(14px,4vw,18px) + env(safe-area-inset-top,0px)) clamp(14px,4vw,16px) clamp(32px,9vw,40px);}
+  .page-banner h1{font-size:clamp(16px,4.4vw,18px);font-weight:800;}
   .page-body{
-    margin-top:-14px;
-    border-radius:22px 22px 0 0;
+    margin-top:-16px;
+    border-radius:26px 26px 0 0;
   }
   /* Bayangan versi HP juga dipindah ke pseudo-elemen tipis di tepi
      atas saja (lihat penjelasan lengkap di aturan dasar/desktop di
      atas) -- supaya tidak bocor ke bawah dekat nav/footer di halaman
      yang kontennya pendek seperti Dompet & Pengaturan. */
   .page-body::before{
-    box-shadow:0 -13px 24px -9px rgba(242,103,43,0.38);
+    box-shadow:0 -14px 26px -9px rgba(242,103,43,0.38);
   }
 }
 /* ---- Rapikan header banner di HP ----
@@ -7299,7 +7333,7 @@ body.is-scrolling *{
 
   </div>
 
-  <footer class="app-footer">
+  <footer class="app-footer" id="appFooter">
     <div class="footer-top">
       <div class="footer-brand">
         <span class="footer-brand-mark" id="footerBrandMarkIcon">
@@ -8916,11 +8950,49 @@ body.is-scrolling *{
   var pages = Array.prototype.slice.call(document.querySelectorAll('.app-page'));
   var navBtns = Array.prototype.slice.call(document.querySelectorAll('#bottomNav .bn-item'));
 
+  // Footer besar (logo, link Dashboard/Leaderboard/Widget, copyright)
+  // ada di luar sistem tab (lihat #appFooter di HTML -- dia sibling
+  // setelah loop .app-page, bukan anak salah satu tab), jadi TANPA
+  // kode ini dia otomatis selalu tampil di tab manapun, termasuk
+  // Laporan/Dompet/Pengaturan yang masih kosong. Sesuai permintaan:
+  // footer cuma boleh tampil di tab Beranda saja, disembunyikan total
+  // kalau pindah ke tab lain. Ini HANYA berlaku di mode tab HP
+  // (<=640px, breakpoint yang sama dipakai nav bawah/.app-page) --
+  // di desktop/tablet semua halaman ditampilkan berurutan sebagai
+  // satu halaman panjang (bukan sistem tab), jadi footer di sana
+  // tetap selalu tampil seperti footer biasa di ujung halaman.
+  var footerEl = document.getElementById('appFooter');
+  var footerTabMq = window.matchMedia('(max-width:640px)');
+  function updateFooterVisibility(activePage){
+    if (!footerEl) return;
+    if (footerTabMq.matches) {
+      footerEl.style.display = (activePage === 'beranda') ? '' : 'none';
+    } else {
+      footerEl.style.display = '';
+    }
+  }
+  if (footerTabMq.addEventListener) {
+    footerTabMq.addEventListener('change', function(){ updateFooterVisibility(currentPageName); });
+  } else if (footerTabMq.addListener) {
+    footerTabMq.addListener(function(){ updateFooterVisibility(currentPageName); });
+  }
+
+  var currentPageName = 'beranda';
   function showPage(name){
+    currentPageName = name;
     pages.forEach(function(p){ p.classList.toggle('active', p.dataset.page === name); });
     navBtns.forEach(function(b){ b.classList.toggle('active', b.dataset.page === name); });
+    updateFooterVisibility(name);
     window.scrollTo({ top: 0, behavior: 'auto' });
   }
+  updateFooterVisibility(currentPageName);
+  // Diekspos ke window supaya closeBdAllPage() di script.js bisa
+  // manggil balik fungsi ini (lihat catatan di sana) -- perlu supaya
+  // waktu overlay "Semua Tagihan & Hutang" ditutup lewat jalur selain
+  // tap tab lain (mis. tombol X di overlay, Escape/back, atau setelah
+  // selesai bayar tagihan), tab yang ditampilkan/nav highlight/footer
+  // semuanya balik konsisten ke tab asal, bukan lompat ke Beranda.
+  window.zpShowPage = showPage;
 
   navBtns.forEach(function(btn){
     btn.addEventListener('click', function(){
@@ -8938,6 +9010,22 @@ body.is-scrolling *{
       // listener di script.js yang menangani tombol ini sepenuhnya.
       if (name === 'tagihan') {
         return;
+      }
+      // FIX "nyangkut di Tagihan & Hutang waktu pindah tab lain": kalau
+      // overlay "Semua Tagihan & Hutang" (#bdAllOverlay) lagi kebuka
+      // dan user tap tab LAIN (Beranda/Laporan/Dompet/Pengaturan) --
+      // overlay ini z-index-nya di BAWAH nav bawah (jadi tombolnya
+      // tetap bisa ditekan) tapi di ATAS isi halaman biasa, jadi kalau
+      // tidak ditutup dulu di sini, overlay-nya tetap nampang di layar
+      // walau tab di baliknya sudah ganti -- user serasa tidak
+      // berpindah kemana-mana. Ditutup dulu di sini SEBELUM showPage()
+      // supaya urutan akhirnya benar: overlay hilang, lalu tab yang
+      // betulan ditekan yang tampil (bukan bdAllReturnPage bawaan
+      // closeBdAllPage() -- itu cuma dipakai untuk jalur "implisit",
+      // lihat catatan di closeBdAllPage()).
+      var bdOverlay = document.getElementById('bdAllOverlay');
+      if (bdOverlay && bdOverlay.classList.contains('open') && typeof window.closeBdAllPage === 'function') {
+        window.closeBdAllPage();
       }
       showPage(name);
     });

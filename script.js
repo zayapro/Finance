@@ -8028,6 +8028,15 @@ document.getElementById('notifListMore').addEventListener('click', () => {
 ========================================================== */
 let bdAllTab = 'semua';     // 'semua' | 'tagihan' | 'hutang' | 'catatan'
 let bdAllStatus = 'semua';  // 'semua' | 'belum' | 'lunas'
+// Tab (.app-page) yang aktif SEBELUM overlay "Semua Tagihan & Hutang"
+// dibuka -- direkam di openBdAllPage(), lalu dipakai closeBdAllPage()
+// untuk balik ke tab yang BENAR waktu overlay ditutup lewat jalur
+// "implisit" (tombol X di dalam overlay, tombol Escape/back, atau
+// setelah selesai suatu aksi seperti bayar tagihan) -- BUKAN selalu
+// dipaksa balik ke Beranda seperti sebelumnya, yang bikin nav bawah
+// & isi halaman jadi tidak sinkron kalau overlay ini dibuka dari tab
+// selain Beranda (mis. dari Dompet/Laporan/Pengaturan).
+let bdAllReturnPage = 'beranda';
 let bdAllSearch = '';
 let bdAllDateFrom = '';    // 'YYYY-MM-DD' atau '' (tidak difilter)
 let bdAllDateTo = '';      // 'YYYY-MM-DD' atau '' (tidak difilter)
@@ -8202,6 +8211,14 @@ function openBdAllPage(initialTab) {
   if (document.getElementById('widgetSettingsOverlay').classList.contains('open')) closeWidgetSettingsPage();
   if (document.getElementById('incomeSourceOverlay').classList.contains('open')) closeIncomeSourcePage();
 
+  // Rekam tab yang lagi aktif SEKARANG (sebelum overlay ini dibuka),
+  // supaya closeBdAllPage() nanti tahu harus balik ke tab yang mana --
+  // bisa Beranda, tapi bisa juga Laporan/Dompet/Pengaturan kalau
+  // overlay ini dibuka dari salah satu tab itu (mis. lewat ikon
+  // lonceng di mini-topbar, yang tetap muncul di semua tab).
+  var currentActivePage = document.querySelector('.app-page.active');
+  bdAllReturnPage = currentActivePage ? currentActivePage.dataset.page : 'beranda';
+
   bdAllTab = (initialTab === 'tagihan' || initialTab === 'hutang') ? initialTab : 'semua';
   bdAllStatus = 'semua';
   bdAllSearch = '';
@@ -8228,7 +8245,27 @@ function openBdAllPage(initialTab) {
 function closeBdAllPage() {
   document.getElementById('bdAllOverlay').classList.remove('open');
   document.body.style.overflow = '';
-  setBottomNavActive('beranda');
+  // FIX "nav & isi halaman tidak sinkron setelah nutup Tagihan &
+  // Hutang": dulu di sini SELALU dipaksa setBottomNavActive('beranda')
+  // apa pun tab asalnya -- itu cuma mengubah highlight tombol nav,
+  // TIDAK ikut memindahkan .app-page yang benar-benar tampil, jadi
+  // kalau overlay ini dibuka dari tab Dompet/Laporan/Pengaturan,
+  // waktu ditutup highlight nav lompat ke "Beranda" padahal konten
+  // yang kelihatan sebenarnya masih tab asal itu (atau malah tidak
+  // konsisten). Sekarang dipanggil window.zpShowPage() (fungsi
+  // showPage() dari script inline "NAVIGASI BAWAH" di index.html,
+  // sengaja diekspos ke window supaya bisa dipanggil dari sini) yang
+  // memindahkan .app-page, highlight nav, DAN visibilitas footer
+  // sekaligus secara konsisten, balik ke tab yang benar-benar aktif
+  // sebelum overlay dibuka (bdAllReturnPage, direkam di
+  // openBdAllPage()). Fallback ke setBottomNavActive('beranda') tetap
+  // disediakan untuk jaga-jaga kalau script inline itu belum sempat
+  // jalan (harusnya tidak pernah terjadi dalam pemakaian normal).
+  if (typeof window.zpShowPage === 'function') {
+    window.zpShowPage(bdAllReturnPage);
+  } else {
+    setBottomNavActive(bdAllReturnPage || 'beranda');
+  }
 }
 
 /* ---------- Sinkronkan tombol aktif di navigasi bawah ----------
@@ -8248,16 +8285,19 @@ document.getElementById('bnTagihanBtn').addEventListener('click', () => {
   openBdAllPage('semua');
 });
 
-/* ---------- Tombol "Beranda" di navigasi bawah ----------
-   Menutup halaman "Semua Tagihan & Hutang" (kalau sedang terbuka)
-   supaya user bisa kembali ke beranda langsung dari nav bawah,
-   bukan cuma lewat tombol panah kembali di pojok kiri atas. */
-document.querySelector('#bottomNav .bn-item[data-page="beranda"]').addEventListener('click', () => {
-  if (document.getElementById('bdAllOverlay').classList.contains('open')) {
-    closeBdAllPage();
-    window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
-  }
-});
+/* ---------- Tombol "Beranda" (dan tombol tab lain) di navigasi bawah ----------
+   CATATAN: listener khusus yang dulu ada di sini untuk tombol
+   "Beranda" (menutup overlay Tagihan & Hutang kalau sedang terbuka)
+   SUDAH DIPINDAH & DIGABUNG ke satu tempat saja, yaitu script inline
+   "NAVIGASI BAWAH" di index.html -- supaya SEMUA tombol tab (Beranda,
+   Laporan, Dompet, Pengaturan) konsisten menutup overlay ini dulu
+   sebelum pindah tab, bukan cuma tombol Beranda saja seperti
+   sebelumnya (itulah sebabnya dulu pindah dari Tagihan & Hutang ke
+   Laporan/Dompet/Pengaturan malah overlay-nya nyangkut tidak
+   tertutup). Menyimpan 2 listener terpisah yang saling tidak tahu
+   (satu di sini, satu di index.html) untuk tombol yang sama juga
+   berisiko race condition soal urutan eksekusi -- makanya
+   disederhanakan jadi satu jalur logika saja.
 
 document.getElementById('bdAllTabs').addEventListener('click', (e) => {
   const btn = e.target.closest('[data-bdtab]');
@@ -9118,11 +9158,24 @@ function initMiniTopbar() {
         syncMobileChromeColor((rootStyles.getPropertyValue('--forest-deep') || '#0B1220').trim());
         return;
       }
-      // Banner dianggap "sudah lewat" begitu sisi PALING BAWAHnya
-      // sudah di atas batas atas layar (bottom <= 0) -- artinya
-      // seluruh banner, termasuk ringkasan Pemasukan/Pengeluaran di
-      // dalamnya, sudah tidak kelihatan sama sekali lagi.
-      const bannerFullyPassed = bannerEl.getBoundingClientRect().bottom <= 0;
+      // FIX BUG "mini-topbar nyangkut tampil di tab lain": kalau tab
+      // Beranda SEDANG TIDAK AKTIF (dipindah ke Laporan/Dompet/
+      // Pengaturan lewat nav bawah), #page-beranda (nenek moyang
+      // #banner) jadi display:none -- dan elemen yang display:none
+      // SELALU melaporkan getBoundingClientRect() semua nol (top,
+      // bottom, dst = 0). Tanpa pengecekan ini, "bottom <= 0" jadi
+      // ke-anggap true terus (0 <= 0), seolah-olah banner "sudah
+      // discroll lewat", padahal cuma lagi disembunyikan karena ganti
+      // tab -- akibatnya mini-topbar dipaksa tampil terus-menerus di
+      // SEMUA tab lain, termasuk yang masih kosong. offsetParent akan
+      // bernilai null kalau elemen (atau salah satu induknya) sedang
+      // display:none, jadi dipakai sebagai penanda "tab Beranda lagi
+      // tidak aktif" -- kalau begitu, anggap saja banner TIDAK lewat
+      // (supaya mini-topbar ikut disembunyikan), baru kalau tab
+      // Beranda aktif sungguhan, baru cek posisi scroll asli seperti
+      // biasa.
+      const bannerFullyPassed = bannerEl.offsetParent !== null
+        && bannerEl.getBoundingClientRect().bottom <= 0;
       // Status bar HP (theme-color + header Telegram) ikut disamakan
       // dengan warna mini-topbar yang sedang tampil: gelap (forest-deep)
       // selama banner besar masih kelihatan, putih (--card) begitu
