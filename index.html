@@ -6131,7 +6131,19 @@ tbody tr:last-child td{border-bottom:none;}
    .bd-page-banner-title di halaman Tagihan & Hutang -- lihat catatan
    lengkap di sana. Berlaku otomatis di semua lebar layar tanpa perlu
    override terpisah lagi di media query HP. */
-.page-banner h1{margin:0;font-size:clamp(16px,3.6vw,19px);font-weight:800;letter-spacing:-0.005em;line-height:1.25;}
+.page-banner h1{
+  margin:0;
+  /* font-family DITULIS EKSPLISIT DI SINI (var(--font-body), sama
+     persis dengan .bd-page-banner-title di halaman Tagihan & Hutang)
+     -- sebelumnya tidak diset sama sekali di sini, jadi otomatis
+     jatuh ke aturan umum "h1,h2,h3,.display{font-family:var(--font-display)}"
+     yang beda dari font judul Tagihan & Hutang, walau ukuran & bobotnya
+     sudah sama persis. Sekarang keempat halaman (Tagihan & Hutang,
+     Laporan, Dompet, Pengaturan) benar-benar pakai jenis huruf yang
+     SAMA PERSIS, bukan cuma ukurannya. */
+  font-family:var(--font-body);
+  font-size:clamp(16px,3.6vw,19px);font-weight:800;letter-spacing:-0.005em;line-height:1.25;
+}
 /* Subjudul (mis. "Grafik, komposisi, dan riwayat transaksimu") DIMATIKAN
    -- referensi desain & halaman Tagihan & Hutang cuma punya SATU baris
    judul di tengah tanpa subjudul, jadi kalau subjudul ini tetap tampil,
