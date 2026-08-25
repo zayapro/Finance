@@ -3581,15 +3581,15 @@ function renderRangePicker() {
   if (existing) existing.remove();
 }
 
-/* ---------- Label grup tanggal: "Hari Ini" / "Kemarin" / tanggal lengkap ---------- */
+/* ---------- Label grup tanggal: "Hari Ini" / tanggal lengkap ----------
+   Permintaan: label "Kemarin" dihapus dari tab Aktifitas -- tanggal
+   kemarin (dan seterusnya) sekarang langsung tampil sbg tanggal
+   lengkap (mis. "Selasa, 25 Agustus 2026"), cuma "Hari Ini" yg masih
+   dapat label khusus. */
 function formatHistoryDateLabel(dateStr) {
   if (!dateStr) return 'Tanpa Tanggal';
   const today = todayStr();
-  const y = new Date();
-  y.setDate(y.getDate() - 1);
-  const yesterdayStr = localDateStr(y);
   if (dateStr === today) return 'Hari Ini';
-  if (dateStr === yesterdayStr) return 'Kemarin';
   return new Date(dateStr + 'T00:00:00').toLocaleDateString('id-ID', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
 }
 
@@ -8001,6 +8001,40 @@ document.getElementById('lapFilterResetBtn')?.addEventListener('click', () => {
 });
 
 document.getElementById('categoryFilter')?.addEventListener('change', () => { resetHistoryPagination(); renderTransactionList(); });
+
+/* ==========================================================
+   PENCARIAN "SEMUA TRANSAKSI" (toggle kaca pembesar di header)
+   Pola sama dgn toggle cari milik halaman Tagihan/Hutang
+   (bdSearchToggleBtn dkk) -- input id="searchInput" dipakai ulang
+   PERSIS sama dgn yg sudah dibaca getFilteredTransactions(), jadi
+   tidak perlu logic filter baru sama sekali.
+========================================================== */
+(function setupLapHeaderSearch() {
+  const toggleBtn = document.getElementById('lapSearchToggleBtn');
+  const row = document.getElementById('lapSearchRow');
+  const input = document.getElementById('searchInput');
+  const closeBtn = document.getElementById('lapSearchCloseBtn');
+  if (!toggleBtn || !row || !input || !closeBtn) return;
+  function closeRow() {
+    row.hidden = true;
+    toggleBtn.classList.remove('active');
+    toggleBtn.setAttribute('aria-expanded', 'false');
+    if (input.value) { input.value = ''; resetHistoryPagination(); renderTransactionList(); }
+  }
+  toggleBtn.addEventListener('click', () => {
+    const willOpen = row.hidden;
+    if (willOpen) {
+      row.hidden = false;
+      toggleBtn.classList.add('active');
+      toggleBtn.setAttribute('aria-expanded', 'true');
+      input.focus();
+    } else {
+      closeRow();
+    }
+  });
+  input.addEventListener('input', () => { resetHistoryPagination(); renderTransactionList(); });
+  closeBtn.addEventListener('click', closeRow);
+})();
 document.getElementById('btnLoadMoreHistory')?.addEventListener('click', () => {
   historyVisibleGroups += HISTORY_GROUPS_PER_PAGE;
   renderTransactionList();
