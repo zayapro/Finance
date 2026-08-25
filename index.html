@@ -5447,14 +5447,14 @@ tbody tr:last-child td{border-bottom:none;}
   padding:clamp(30px,6vw,44px) clamp(16px,3vw,20px) clamp(44px,9vw,68px);
 }
 .bd-page-banner-title{
-  color:#FFF8F1;font-family:var(--font-body);
+  color:#FFF8F1;font-family:'Poppins',sans-serif;
   /* Font judul DISAMAKAN PERSIS (clamp yang sama persis) dengan
      .page-banner h1 di halaman Laporan/Dompet/Pengaturan -- satu
      formula fluid tunggal ini sudah otomatis mencakup rentang HP
      kecil s/d desktop (16px di layar sempit -> 19px begitu lebar
      layar cukup, lalu rata di situ), jadi TIDAK perlu lagi override
      ukuran font terpisah di media query HP (lihat catatan di sana). */
-  font-size:clamp(16px,3.6vw,19px);font-weight:400;letter-spacing:-0.005em;line-height:1.25;
+  font-size:clamp(16px,3.6vw,19px);font-weight:500;letter-spacing:-0.005em;line-height:1.25;
 }
 .bd-page-banner-title-center{
   text-align:center;width:100%;max-width:1180px;margin:0 auto;
@@ -6452,7 +6452,7 @@ html.zp-app-loading .page-body > .bd-empty{display:none;}
    override terpisah lagi di media query HP. */
 .page-banner h1{
   margin:0;
-  /* font-family DITULIS EKSPLISIT DI SINI (var(--font-body), sama
+  /* font-family DITULIS EKSPLISIT DI SINI (Poppins-medium, sama
      persis dengan .bd-page-banner-title di halaman Tagihan & Hutang)
      -- sebelumnya tidak diset sama sekali di sini, jadi otomatis
      jatuh ke aturan umum "h1,h2,h3,.display{font-family:var(--font-display)}"
@@ -6460,8 +6460,8 @@ html.zp-app-loading .page-body > .bd-empty{display:none;}
      sudah sama persis. Sekarang keempat halaman (Tagihan & Hutang,
      Laporan, Dompet, Pengaturan) benar-benar pakai jenis huruf yang
      SAMA PERSIS, bukan cuma ukurannya. */
-  font-family:var(--font-body);
-  font-size:clamp(16px,3.6vw,19px);font-weight:400;letter-spacing:-0.005em;line-height:1.25;
+  font-family:'Poppins',sans-serif;
+  font-size:clamp(16px,3.6vw,19px);font-weight:500;letter-spacing:-0.005em;line-height:1.25;
 }
 /* Subjudul (mis. "Grafik, komposisi, dan riwayat transaksimu") DIMATIKAN
    -- referensi desain & halaman Tagihan & Hutang cuma punya SATU baris
