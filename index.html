@@ -3876,6 +3876,40 @@ body.density-compact .income-cards-group{gap:10px;}
    dihilangkan supaya menyatu langsung dengan kartu putih di belakangnya. */
 #historySection{background:transparent;border:none;box-shadow:none;}
 #historySection:hover{box-shadow:none;transform:none;}
+/* ---- Font judul "Semua Transaksi" DISAMAKAN PERSIS dengan font judul
+   halaman (.page-banner h1 -- "Laporan") -- sebelumnya cuma ikut
+   aturan umum h1,h2,h3 (weight 600, size 18px tetap/tidak responsif),
+   beda dari judul banner yang pakai weight 500 + ukuran clamp()
+   responsif. Selector di-scope ke #historySection saja supaya judul
+   section-card lain (Beranda dkk) tidak ikut berubah. */
+#historySection .section-head h2{
+  font-family:'Poppins',sans-serif;
+  font-size:clamp(16px,3.6vw,19px);font-weight:500;letter-spacing:-0.005em;line-height:1.25;
+}
+/* ---- Selaraskan ujung garis pembatas antar-transaksi (.rw-item) dgn
+   ujung garis bawah tab "Aktifitas/Tabungan/Aset" (#lapMainTabs) --
+   keduanya sama-sama anak (tidak langsung) dari .page-body yang lebar
+   totalnya SAMA, tapi #historySection punya padding kiri-kanan sendiri
+   (dari .section-card) sehingga garis antar-transaksi selama ini
+   berhenti lebih pendek drpd garis bawah tab. #txTableWrap sengaja
+   "dibiarkan bocor" (margin negatif) keluar dari padding kiri-kanan
+   #historySection sebesar padding itu sendiri, supaya lebar totalnya
+   balik menyamai lebar #lapMainTabs -- padding yang hilang dipindah
+   ke .rw-item/.rw-group-head supaya jarak teks ke tepi tetap sama
+   seperti sebelumnya, cuma garis pembatasnya yang jadi full-bleed. */
+#txTableWrap{margin-left:-22px;margin-right:-22px;}
+#txTableWrap .rw-item{padding-left:24px;padding-right:24px;}
+#txTableWrap .rw-group-head{padding-left:24px;padding-right:24px;}
+@media (max-width:600px){
+  #txTableWrap{margin-left:-14px;margin-right:-14px;}
+  #txTableWrap .rw-item{padding-left:16px;padding-right:16px;}
+  #txTableWrap .rw-group-head{padding-left:16px;padding-right:16px;}
+}
+@media (max-width:400px){
+  #txTableWrap{margin-left:-12px;margin-right:-12px;}
+  #txTableWrap .rw-item{padding-left:14px;padding-right:14px;}
+  #txTableWrap .rw-group-head{padding-left:14px;padding-right:14px;}
+}
 .section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;}
 .section-head > div{min-width:0;}
 .section-head h2{font-size:18px;}
@@ -7813,7 +7847,6 @@ body.is-scrolling *{
           <div class="section-head">
             <div>
               <h2>Semua Transaksi</h2>
-              <span class="section-subtitle">Riwayat lengkap uang masuk &amp; keluar</span>
             </div>
             <button type="button" class="bd-icon-btn" id="lapSearchToggleBtn" aria-expanded="false" aria-controls="lapControlsRow" title="Cari &amp; filter" aria-label="Cari dan filter transaksi">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><circle cx="9" cy="6" r="2" fill="currentColor" stroke="none"/><line x1="4" y1="12" x2="20" y2="12"/><circle cx="15" cy="12" r="2" fill="currentColor" stroke="none"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="11" cy="18" r="2" fill="currentColor" stroke="none"/></svg>
