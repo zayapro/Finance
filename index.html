@@ -3864,6 +3864,18 @@ body.density-compact .income-cards-group{gap:10px;}
 #newsSection{animation-delay:.16s;}
 #historySection{animation-delay:.23s;}
 #deviceSocialSection{animation-delay:.30s;}
+/* ---- Permintaan: daftar "Semua Transaksi" jangan tampil sebagai kartu
+   terpisah lagi -- di halaman Laporan, #historySection duduk di atas
+   .page-body yang backgroundnya SUDAH putih (var(--card)) juga, jadi
+   kalau .section-card tetap pakai background+border+shadow sendiri,
+   hasilnya kelihatan seperti "kartu di atas kartu" (garis tepi &
+   bayangan ganda). Di sini background/border/shadow-nya dimatikan
+   khusus untuk #historySection saja (section-card lain, mis. di
+   Beranda, tidak disentuh) -- padding & jarak antar elemen di
+   dalamnya tetap dipertahankan supaya rapi, cuma "kotak" luarnya yang
+   dihilangkan supaya menyatu langsung dengan kartu putih di belakangnya. */
+#historySection{background:transparent;border:none;box-shadow:none;}
+#historySection:hover{box-shadow:none;transform:none;}
 .section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;}
 .section-head > div{min-width:0;}
 .section-head h2{font-size:18px;}
@@ -7804,7 +7816,7 @@ body.is-scrolling *{
               <span class="section-subtitle">Riwayat lengkap uang masuk &amp; keluar</span>
             </div>
             <button type="button" class="bd-icon-btn" id="lapSearchToggleBtn" aria-expanded="false" aria-controls="lapControlsRow" title="Cari &amp; filter" aria-label="Cari dan filter transaksi">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><circle cx="9" cy="6" r="2" fill="currentColor" stroke="none"/><line x1="4" y1="12" x2="20" y2="12"/><circle cx="15" cy="12" r="2" fill="currentColor" stroke="none"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="11" cy="18" r="2" fill="currentColor" stroke="none"/></svg>
             </button>
           </div>
 
