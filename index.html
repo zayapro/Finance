@@ -6145,7 +6145,7 @@ tbody tr:last-child td{border-bottom:none;}
   content:"";
   position:absolute;left:0;right:0;top:0;height:1px;
   border-radius:28px 28px 0 0;
-  box-shadow:0 -16px 30px -10px rgba(242,103,43,0.38);
+  box-shadow:none;
   pointer-events:none;
 }
 
@@ -6269,7 +6269,9 @@ tbody tr:last-child td{border-bottom:none;}
      batas halaman ini saja, supaya browser tidak perlu menggambar
      ulang apapun di luar kotak halaman yang sedang aktif. */
   .app-page.active{
-    display:block;
+    display:flex;
+    flex-direction:column;
+    flex:1;
     animation:appPageIn .18s cubic-bezier(.32,.72,.35,1) both;
     will-change:opacity;
     isolation:isolate;
@@ -6305,13 +6307,16 @@ tbody tr:last-child td{border-bottom:none;}
   .page-body{
     margin-top:-16px;
     border-radius:26px 26px 0 0;
+    flex:1;
+    display:flex;
+    flex-direction:column;
   }
   /* Bayangan versi HP juga dipindah ke pseudo-elemen tipis di tepi
      atas saja (lihat penjelasan lengkap di aturan dasar/desktop di
      atas) -- supaya tidak bocor ke bawah dekat nav/footer di halaman
      yang kontennya pendek seperti Dompet & Pengaturan. */
   .page-body::before{
-    box-shadow:0 -14px 26px -9px rgba(242,103,43,0.38);
+    box-shadow:none;
   }
 }
 /* ---- Rapikan header banner di HP ----
