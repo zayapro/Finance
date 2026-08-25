@@ -1,6 +1,30 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
+<script>
+/* Matikan restorasi scroll OTOMATIS bawaan browser ('auto', nilai
+   default) SEPALING AWAL mungkin -- sebelum elemen apa pun lain di
+   halaman ini sempat dimuat/dieksekusi. Browser (terutama di HP)
+   biasanya mencoba sendiri mengembalikan posisi scroll terakhir
+   begitu halaman di-refresh, TAPI dia melakukannya lebih awal dari
+   logika pemulihan scroll milik kita sendiri (lihat script navigasi
+   bawah di akhir <body>) dan seringkali gagal karena saat itu konten
+   Beranda belum selesai dimuat (masih pendek). Kalau dibiarkan, dua
+   mekanisme scroll-restore ini (punya browser & punya kita) saling
+   tumpang-tindih/rebutan -- itulah sumber bug "makin sering refresh,
+   makin naik ke atas": scroll bawaan browser sempat mendorong posisi
+   ke nilai yang salah/kepotong, lalu nilai yang salah itu keburu
+   ke-simpan ulang oleh logika kita sendiri sebelum sempat dikoreksi,
+   sehingga tiap refresh berikutnya start dari posisi yang makin
+   "rusak". Dengan scrollRestoration di-set 'manual', browser TIDAK
+   akan pernah mencoba mengembalikan scroll sendiri lagi -- satu-
+   satunya yang mengatur posisi scroll setelah refresh adalah logika
+   kita di akhir <body> (yang menunggu konten stabil dulu baru
+   mengembalikan posisi, jadi jauh lebih akurat). */
+if ('scrollRestoration' in history) {
+  try { history.scrollRestoration = 'manual'; } catch (e) { /* abaikan */ }
+}
+</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>ZAYAPRO — Kelola Uang Masuk &amp; Keluar</title>
@@ -9124,8 +9148,18 @@ body.is-scrolling *{
   var ACTIVE_PAGE_KEY = 'zp_active_page';
   var SCROLL_KEY_PREFIX = 'zp_scroll_';
   var validPageNames = pages.map(function(p){ return p.dataset.page; });
+  // Selama true, saveScrollPos() (dipanggil dari listener 'scroll')
+  // TIDAK menyimpan apa pun -- supaya scroll otomatis yang kita
+  // picu sendiri (window.scrollTo() di dalam restoreScrollWhenStable)
+  // tidak ikut ke-tangkap oleh listener 'scroll' lalu MENIMPA nilai
+  // target yang sedang coba dipulihkan dengan nilai sementara yang
+  // belum final. Tanpa guard ini, posisi yang tersimpan bisa jadi
+  // makin "rusak"/mengecil tiap refresh (persis bug "makin sering
+  // refresh, makin naik" yang dilaporkan).
+  var isRestoringScroll = false;
 
   function saveScrollPos(name){
+    if (isRestoringScroll) return;
     try { sessionStorage.setItem(SCROLL_KEY_PREFIX + name, String(window.scrollY || 0)); }
     catch(e){ /* sessionStorage tidak tersedia (mode privat dsb) -- abaikan */ }
   }
@@ -9158,6 +9192,7 @@ body.is-scrolling *{
     target = parseInt(target, 10);
     if (!target || target <= 0) return;
 
+    isRestoringScroll = true;
     var lastHeight = -1;
     var stableCount = 0;
     var attempts = 0;
@@ -9175,6 +9210,19 @@ body.is-scrolling *{
       // berturut-turut (≈240ms tanpa perubahan tinggi).
       if (stableCount >= 3 || attempts >= maxAttempts) {
         window.scrollTo({ top: Math.min(target, h), behavior: 'auto' });
+        // Konten dinamis (gambar, font, widget) kadang masih bisa
+        // menggeser tinggi halaman SEDIKIT lagi tepat setelah "stabil"
+        // terdeteksi -- makanya scroll dicek & dikoreksi sekali lagi
+        // setelah jeda singkat, baru guard dilepas. Guard baru
+        // dimatikan SETELAH koreksi kedua ini supaya nilai yang
+        // ke-simpan ke sessionStorage nanti (dari scroll manual user
+        // berikutnya) selalu berdasar posisi yang sudah benar-benar
+        // final, bukan posisi transisi yang belum tepat.
+        setTimeout(function(){
+          var h2 = document.documentElement.scrollHeight;
+          window.scrollTo({ top: Math.min(target, h2), behavior: 'auto' });
+          isRestoringScroll = false;
+        }, 250);
         return;
       }
       setTimeout(tick, 80);
