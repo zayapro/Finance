@@ -50,6 +50,17 @@
 <style>
 /* ============ TOKENS ============ */
 :root{
+  /* --app-x = padding kiri-kanan .app YANG SEDANG AKTIF (nilainya
+     ditimpa ulang di setiap breakpoint/density yang mengubah padding
+     .app -- lihat semua deklarasi ".app{padding:...}"). Dipakai oleh
+     .page-banner & .page-body (halaman Laporan/Dompet/Pengaturan)
+     supaya margin negatif full-bleed-nya SELALU cocok PERSIS dengan
+     padding .app yang berlaku saat itu, di breakpoint manapun --
+     jauh lebih pasti/tidak meleset dibanding trik lama berbasis
+     calc(-50vw + 50%), yang di beberapa browser/kondisi ternyata
+     masih bisa sedikit meleset sehingga kartu putih tidak benar-benar
+     nempel ke pinggir layar (celah oranye/krem tipis di kiri-kanan). */
+  --app-x:24px;
   --forest-deep:#0B1220;
   --forest-mid:#16213A;
   --forest-glow:#2563EB;
@@ -167,7 +178,7 @@ a{color:inherit;}
 ::selection{background:var(--primary-light);color:var(--forest-deep);}
 
 /* ============ LAYOUT ============ */
-.app{max-width:1180px;margin:0 auto;padding:0 24px;width:100%;flex:1;display:flex;flex-direction:column;}
+.app{max-width:1180px;margin:0 auto;padding:0 var(--app-x);width:100%;flex:1;display:flex;flex-direction:column;}
 .app-main{padding-bottom:0;}
 .eyebrow{
   text-transform:uppercase;
@@ -3319,7 +3330,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 /* ---- Kepadatan tampilan "Rapat" (opsional lewat Pengaturan Aplikasi):
    sedikit memampatkan jarak antar kartu ringkasan & padding halaman
    supaya lebih banyak konten muat di layar tanpa mengubah struktur. ---- */
-body.density-compact .app{padding-left:16px;padding-right:16px;}
+body.density-compact .app{--app-x:16px;padding-left:var(--app-x);padding-right:var(--app-x);}
 body.density-compact .summary-grid{gap:10px;}
 body.density-compact .stat-card{padding:15px 15px 13px;}
 body.density-compact .income-cards-group{gap:10px;}
@@ -6072,15 +6083,24 @@ tbody tr:last-child td{border-bottom:none;}
    supaya "kuning" (oranye) dan "putih"-nya senada di semua ukuran layar
    -- termasuk di desktop, yang sebelumnya banner-nya malah disembunyikan
    total (display:none) sehingga terlihat beda jauh dari Tagihan & Hutang.
-   Trik margin negatif calc(-50vw + 50%) dipakai (bukan angka piksel
-   tetap) supaya banner tetap edge-to-edge pas di SEMUA lebar layar,
-   termasuk saat padding .app ikut mengecil di breakpoint lain. */
+   Margin negatif dipakai (bukan angka piksel tetap) supaya banner
+   tetap edge-to-edge pas di SEMUA lebar layar, termasuk saat padding
+   .app ikut mengecil di breakpoint lain -- lewat calc(-1 * var(--app-x)),
+   yang langsung mengikuti variabel --app-x (nilai padding .app yang
+   sesungguhnya di breakpoint aktif, lihat definisi var-nya di :root
+   dan di setiap ".app{padding:...}"). Sebelumnya pakai trik
+   calc(-50vw + 50%): secara teori seharusnya sama hasilnya, tapi di
+   praktiknya (device tertentu, viewport unit yang kadang ikut
+   memperhitungkan lebar scrollbar/UI browser) bisa meleset sedikit
+   sehingga masih menyisakan celah oranye/krem tipis di kiri-kanan
+   kartu putih -- versi var(--app-x) ini bebas dari isu itu karena
+   tidak bergantung sama sekali pada satuan viewport (vw). */
 .page-banner{
   display:block;
   position:relative;z-index:2;
   background:var(--nav-orange);
   color:#FFF8F1;
-  margin-left:calc(-50vw + 50%);margin-right:calc(-50vw + 50%);
+  margin-left:calc(-1 * var(--app-x));margin-right:calc(-1 * var(--app-x));
   padding:clamp(30px,6vw,44px) clamp(16px,3vw,20px) clamp(44px,9vw,68px);
   box-sizing:border-box;
   /* Judul di-tengah-kan (text-align:center) supaya PERSIS sama posisi
@@ -6122,7 +6142,7 @@ tbody tr:last-child td{border-bottom:none;}
      full-bleed karena overlay-nya sendiri sudah position:fixed
      tanpa padding .app), supaya kartu putihnya juga mepet
      sampai ke pinggir layar persis seperti bannernya. */
-  margin:-24px calc(-50vw + 50%) 0;
+  margin:-24px calc(-1 * var(--app-x)) 0;
   border-radius:28px 28px 0 0;
   padding:24px 0 4px;
 }
@@ -6311,17 +6331,15 @@ tbody tr:last-child td{border-bottom:none;}
   .page-banner{padding:calc(clamp(14px,4vw,18px) + env(safe-area-inset-top,0px)) clamp(14px,4vw,16px) clamp(32px,9vw,40px);}
   .page-body{
     /* PENTING: sebelumnya baris ini menimpa "margin" jadi cuma
-       margin-top:-16px, sehingga trik full-bleed kiri-kanan
-       (margin-left/right:calc(-50vw + 50%)) dari aturan dasar
-       (non-media) di atas ikut KETIMPA/HILANG khusus di layar HP --
-       itulah sebabnya kartu putih di halaman Laporan/Dompet/
-       Pengaturan jadi tidak nyampe ke pinggir layar (beda dengan
-       banner orennya yang tetap full karena .page-banner TIDAK
-       menimpa margin di media query ini). Sekarang kiri-kanan
-       ditulis eksplisit lagi di sini supaya tetap full-bleed persis
-       seperti banner & seperti .bd-page-body di halaman Tagihan &
-       Hutang, sementara margin-top tetap -16px sesuai desain HP. */
-    margin:-16px calc(-50vw + 50%) 0;
+       margin-top:-16px, sehingga margin kiri-kanan full-bleed dari
+       aturan dasar (non-media) di atas ikut KETIMPA/HILANG khusus di
+       layar HP -- itulah sebabnya kartu putih di halaman Laporan/
+       Dompet/Pengaturan jadi tidak nyampe ke pinggir layar. Kiri-kanan
+       ditulis eksplisit lagi di sini pakai calc(-1 * var(--app-x))
+       (bukan lagi calc(-50vw + 50%)) supaya BENAR-BENAR presisi
+       menempel ke pinggir layar, apa pun kondisi browsernya --
+       sementara margin-top tetap -16px sesuai desain HP. */
+    margin:-16px calc(-1 * var(--app-x)) 0;
     border-radius:26px 26px 0 0;
     flex:1;
     display:flex;
@@ -6363,7 +6381,7 @@ tbody tr:last-child td{border-bottom:none;}
   .banner-date-col{order:3;flex-basis:100%;margin-top:0;}
 }
 @media (max-width:600px){
-  .app{padding:0 14px;}
+  .app{--app-x:14px;padding:0 var(--app-x);}
   .banner{
     margin:0 -14px 18px;border-radius:0;
     /* padding-top dasar (16px) + tambahan env(safe-area-inset-top)
@@ -6773,7 +6791,7 @@ body.is-scrolling *{
   body{font-size:13.5px;}
 
   /* ---- Kontainer & jarak antar elemen ---- */
-  .app{padding:0 12px;}
+  .app{--app-x:12px;padding:0 var(--app-x);}
   .section-card{padding:14px 14px;margin-bottom:12px;border-radius:14px;}
   .summary-grid{gap:10px;margin-bottom:16px;}
   .income-cards-group{gap:10px;}
