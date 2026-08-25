@@ -6285,9 +6285,23 @@ tbody tr:last-child td{border-bottom:none;}
      animasi, yang sering jadi sumber kedipan itu sendiri), dan
      isolation:isolate memastikan tidak ada shadow/efek dari elemen
      lain yang ikut "bocor"/tumpang tindih secara visual selama
-     transisi. contain:paint mengunci area gambar cuma di dalam
-     batas halaman ini saja, supaya browser tidak perlu menggambar
-     ulang apapun di luar kotak halaman yang sedang aktif. */
+     transisi.
+
+     PENTING -- KENAPA "contain:paint" DIHAPUS (bukan sekadar dikurangi):
+     contain:paint ternyata MEMOTONG (clip) apa pun yang secara visual
+     "keluar" dari kotak .app-page itu sendiri. Ini langsung bentrok
+     dengan trik margin negatif (calc(-1 * var(--app-x))) yang dipakai
+     .page-banner & .page-body (halaman Laporan/Dompet/Pengaturan) untuk
+     mepet sampai ke pinggir layar -- overflow yang seharusnya "keluar"
+     supaya kartu putih full-bleed itu malah ikut kepotong balik oleh
+     contain:paint, sehingga kartu putih terlihat masih ada celah di
+     kiri-kanan walau nilai margin-nya sendiri sudah benar. Diganti jadi
+     "contain:layout style": tetap dapat manfaat containment untuk layout
+     (elemen ini jadi containing block sendiri utk anak position:fixed/
+     absolute, & browser tidak perlu re-layout elemen lain di luar
+     halaman ini) dan style (isolasi counter/quotes), TANPA ikut memotong
+     konten yang sengaja overflow keluar kotaknya. Perlindungan anti-
+     kedipan shadow tetap jalan lewat will-change + isolation di atas. */
   .app-main{
     display:flex;
     flex-direction:column;
@@ -6300,7 +6314,7 @@ tbody tr:last-child td{border-bottom:none;}
     animation:appPageIn .18s cubic-bezier(.32,.72,.35,1) both;
     will-change:opacity;
     isolation:isolate;
-    contain:paint;
+    contain:layout style;
   }
   @keyframes appPageIn{
     from{opacity:0;}
