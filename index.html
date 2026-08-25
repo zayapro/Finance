@@ -5241,7 +5241,7 @@ tbody tr:last-child td{border-bottom:none;}
      kecil s/d desktop (16px di layar sempit -> 19px begitu lebar
      layar cukup, lalu rata di situ), jadi TIDAK perlu lagi override
      ukuran font terpisah di media query HP (lihat catatan di sana). */
-  font-size:clamp(16px,3.6vw,19px);font-weight:800;letter-spacing:-0.005em;line-height:1.25;
+  font-size:clamp(16px,3.6vw,19px);font-weight:400;letter-spacing:-0.005em;line-height:1.25;
 }
 .bd-page-banner-title-center{
   text-align:center;width:100%;max-width:1180px;margin:0 auto;
@@ -6142,7 +6142,7 @@ tbody tr:last-child td{border-bottom:none;}
      Laporan, Dompet, Pengaturan) benar-benar pakai jenis huruf yang
      SAMA PERSIS, bukan cuma ukurannya. */
   font-family:var(--font-body);
-  font-size:clamp(16px,3.6vw,19px);font-weight:800;letter-spacing:-0.005em;line-height:1.25;
+  font-size:clamp(16px,3.6vw,19px);font-weight:400;letter-spacing:-0.005em;line-height:1.25;
 }
 /* Subjudul (mis. "Grafik, komposisi, dan riwayat transaksimu") DIMATIKAN
    -- referensi desain & halaman Tagihan & Hutang cuma punya SATU baris
@@ -9092,15 +9092,125 @@ body.is-scrolling *{
     footerTabMq.addListener(function(){ updateFooterVisibility(currentPageName); });
   }
 
+  // ============================================================
+  // FIX "refresh malah balik/naik ke atas": ada 2 penyebab terpisah
+  // yang keduanya diperbaiki di sini.
+  //
+  // (A) Tab aktif TIDAK pernah disimpan di mana pun (cuma variabel
+  //     JS `currentPageName` di memori) -- jadi walau user lagi ada
+  //     di tab Laporan/Dompet/Pengaturan, begitu halaman di-refresh,
+  //     script ini selalu mulai ulang dari 'beranda' (nilai default
+  //     di bawah) karena HTML memang menandai #page-beranda sebagai
+  //     satu-satunya .app-page yang class="active" dari awal. Sekarang
+  //     tab aktif disimpan ke sessionStorage tiap kali user pindah
+  //     tab, dan dibaca balik SEBELUM apa pun lain dirender supaya
+  //     refresh tetap di tab yang sama, bukan balik ke Beranda.
+  //
+  // (B) Khusus tab Beranda: kontennya (saldo, grafik, daftar
+  //     transaksi, dst.) BARU diisi belakangan oleh init() di
+  //     script.js -- yang baru dimuat & dijalankan SETELAH proses
+  //     login-session-check + tarik data dari Supabase selesai (lihat
+  //     cloud-sync.js). Sesaat setelah refresh, sebelum proses itu
+  //     kelar, halaman Beranda sempat kosong/pendek (cuma banner +
+  //     placeholder), jadi browser gagal mengembalikan posisi scroll
+  //     lama (di-clamp ke atas karena halaman belum setinggi
+  //     posisi scroll terakhir). Begitu init() selesai & halaman jadi
+  //     tinggi lagi, browser TIDAK otomatis lanjut scroll ke posisi
+  //     semula -- makanya terasa "loncat ke atas". Diperbaiki dengan
+  //     menyimpan posisi scroll (per tab) ke sessionStorage, lalu
+  //     memulihkannya sendiri setelah tinggi halaman terdeteksi
+  //     berhenti berubah (stabil) -- lihat restoreScrollWhenStable().
+  // ============================================================
+  var ACTIVE_PAGE_KEY = 'zp_active_page';
+  var SCROLL_KEY_PREFIX = 'zp_scroll_';
+  var validPageNames = pages.map(function(p){ return p.dataset.page; });
+
+  function saveScrollPos(name){
+    try { sessionStorage.setItem(SCROLL_KEY_PREFIX + name, String(window.scrollY || 0)); }
+    catch(e){ /* sessionStorage tidak tersedia (mode privat dsb) -- abaikan */ }
+  }
+  // Disimpan cukup sering (bukan tiap event scroll mentah, supaya
+  // tidak membebani) lewat requestAnimationFrame throttle sederhana.
+  var scrollSaveTicking = false;
+  window.addEventListener('scroll', function(){
+    if (scrollSaveTicking) return;
+    scrollSaveTicking = true;
+    requestAnimationFrame(function(){
+      saveScrollPos(currentPageName);
+      scrollSaveTicking = false;
+    });
+  }, { passive: true });
+  // Jaring pengaman tambahan: posisi scroll paling akhir juga disimpan
+  // pas mau pindah halaman/nutup tab, kalau-kalau event scroll
+  // terakhir sempat tidak ke-throttle dengan benar.
+  window.addEventListener('pagehide', function(){ saveScrollPos(currentPageName); });
+  window.addEventListener('beforeunload', function(){ saveScrollPos(currentPageName); });
+
+  // Menunggu tinggi halaman berhenti berubah (konten async selesai
+  // dimuat/dirender) baru memulihkan scroll -- bukan langsung sesaat
+  // setelah load, karena saat itu kontennya masih bisa sangat pendek.
+  // Dibatasi maksimal ~5 detik total supaya tidak menunggu selamanya
+  // kalau karena suatu sebab tinggi halaman tidak pernah "diam".
+  function restoreScrollWhenStable(name){
+    var target = null;
+    try { target = sessionStorage.getItem(SCROLL_KEY_PREFIX + name); } catch(e){}
+    if (!target) return;
+    target = parseInt(target, 10);
+    if (!target || target <= 0) return;
+
+    var lastHeight = -1;
+    var stableCount = 0;
+    var attempts = 0;
+    var maxAttempts = 60; // ~60 x 80ms ≈ 4.8 detik maksimal menunggu
+    (function tick(){
+      attempts++;
+      var h = document.documentElement.scrollHeight;
+      if (h === lastHeight) {
+        stableCount++;
+      } else {
+        stableCount = 0;
+        lastHeight = h;
+      }
+      // Tinggi dianggap stabil kalau tidak berubah 3x pengecekan
+      // berturut-turut (≈240ms tanpa perubahan tinggi).
+      if (stableCount >= 3 || attempts >= maxAttempts) {
+        window.scrollTo({ top: Math.min(target, h), behavior: 'auto' });
+        return;
+      }
+      setTimeout(tick, 80);
+    })();
+  }
+
   var currentPageName = 'beranda';
   function showPage(name){
+    // Simpan posisi scroll tab LAMA dulu sebelum berpindah, supaya
+    // kalau nanti balik lagi ke tab ini (atau refresh di tab lain),
+    // posisi terakhirnya tidak hilang.
+    saveScrollPos(currentPageName);
     currentPageName = name;
     pages.forEach(function(p){ p.classList.toggle('active', p.dataset.page === name); });
     navBtns.forEach(function(b){ b.classList.toggle('active', b.dataset.page === name); });
     updateFooterVisibility(name);
+    try { sessionStorage.setItem(ACTIVE_PAGE_KEY, name); } catch(e){}
     window.scrollTo({ top: 0, behavior: 'auto' });
   }
+
+  // ---- Pulihkan tab aktif dari sesi sebelumnya (kalau ada) SEBELUM
+  // apa pun lain dirender, supaya refresh tetap di tab yang sama. ----
+  (function restoreActivePage(){
+    var saved = null;
+    try { saved = sessionStorage.getItem(ACTIVE_PAGE_KEY); } catch(e){}
+    if (saved && validPageNames.indexOf(saved) !== -1 && saved !== currentPageName) {
+      currentPageName = saved;
+      pages.forEach(function(p){ p.classList.toggle('active', p.dataset.page === saved); });
+      navBtns.forEach(function(b){ b.classList.toggle('active', b.dataset.page === saved); });
+    }
+  })();
   updateFooterVisibility(currentPageName);
+  // Mulai pantau kapan halaman (khususnya Beranda, yang datanya
+  // dimuat belakangan lewat script.js) selesai dirender, baru
+  // pulihkan posisi scroll terakhir di tab ini.
+  restoreScrollWhenStable(currentPageName);
   // Diekspos ke window supaya closeBdAllPage() di script.js bisa
   // manggil balik fungsi ini (lihat catatan di sana) -- perlu supaya
   // waktu overlay "Semua Tagihan & Hutang" ditutup lewat jalur selain
