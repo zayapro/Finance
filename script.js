@@ -3857,7 +3857,11 @@ function openDetailPage(key, opts = {}) {
   renderDetailList(key, list, isIn);
 
   document.getElementById('detailPageOverlay').classList.add('open');
-  document.body.style.overflow = 'hidden';
+  // FIX konsistensi kunci scroll (lihat catatan lengkap di
+  // lockBodyScroll/unlockBodyScroll): dulu overflow='hidden' manual,
+  // tidak cukup kuat di Safari iOS & tidak menyimpan/mengembalikan
+  // posisi scroll halaman asal dengan benar.
+  lockBodyScroll();
   if (!opts.keepScroll) {
     window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
   }
@@ -3866,7 +3870,7 @@ function openDetailPage(key, opts = {}) {
 function closeDetailPage() {
   document.getElementById('detailPageOverlay').classList.remove('open');
   document.getElementById('detailTargetForm').style.display = 'none';
-  document.body.style.overflow = '';
+  unlockBodyScroll();
   detailPageContext = null;
 }
 
@@ -4038,14 +4042,14 @@ function switchLeaderboardPeriod(period) {
 function openLeaderboardPage() {
   if (document.getElementById('bdAllOverlay').classList.contains('open')) closeBdAllPage();
   document.getElementById('leaderboardOverlay').classList.add('open');
-  document.body.style.overflow = 'hidden';
+  lockBodyScroll();
   window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
   renderLeaderboard();
 }
 
 function closeLeaderboardPage() {
   document.getElementById('leaderboardOverlay').classList.remove('open');
-  document.body.style.overflow = '';
+  unlockBodyScroll();
 }
 
 document.getElementById('lbBackBtn').addEventListener('click', closeLeaderboardPage);
@@ -4166,12 +4170,12 @@ function openWidgetSettingsPage() {
   if (document.getElementById('bdAllOverlay').classList.contains('open')) closeBdAllPage();
   syncWidgetSettingsUI(loadWidgetSettings());
   document.getElementById('widgetSettingsOverlay').classList.add('open');
-  document.body.style.overflow = 'hidden';
+  lockBodyScroll();
   window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
 }
 function closeWidgetSettingsPage() {
   document.getElementById('widgetSettingsOverlay').classList.remove('open');
-  document.body.style.overflow = '';
+  unlockBodyScroll();
 }
 
 document.getElementById('wsBackBtn').addEventListener('click', closeWidgetSettingsPage);
@@ -5178,13 +5182,13 @@ function openIncomeSourcePage() {
   // padahal datanya ada.
   document.getElementById('incomeSourceOverlay').classList.add('open');
   refreshIncomeSourcePage();
-  document.body.style.overflow = 'hidden';
+  lockBodyScroll();
   window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
 }
 
 function closeIncomeSourcePage() {
   document.getElementById('incomeSourceOverlay').classList.remove('open');
-  document.body.style.overflow = '';
+  unlockBodyScroll();
 }
 
 document.getElementById('incBackBtn').addEventListener('click', closeIncomeSourcePage);
@@ -8261,7 +8265,16 @@ function openBdAllPage(initialTab) {
   document.getElementById('bdDateToInput').value = '';
 
   document.getElementById('bdAllOverlay').classList.add('open');
-  document.body.style.overflow = 'hidden';
+  // FIX "halaman/scroll bocor di belakang panel Tagihan & Hutang di
+  // berbagai perangkat (khususnya iOS Safari)": sebelumnya cuma
+  // document.body.style.overflow='hidden' -- TIDAK cukup untuk
+  // benar-benar mengunci scroll di Safari iOS (halaman di belakang
+  // overlay masih bisa ke-scroll/rubber-band), dan juga tidak
+  // menyimpan+mengembalikan posisi scroll halaman asal dengan benar.
+  // Sekarang pakai lockBodyScroll()/unlockBodyScroll() yang sama
+  // dipakai semua modal/overlay lain di app ini (lihat catatan di
+  // definisinya) supaya perilakunya konsisten di semua perangkat.
+  lockBodyScroll();
   window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
   renderBdAllPage();
   updateTabIndicator(document.getElementById('bdAllTabs'));
@@ -8284,7 +8297,7 @@ function openBdAllPage(initialTab) {
 }
 function closeBdAllPage() {
   document.getElementById('bdAllOverlay').classList.remove('open');
-  document.body.style.overflow = '';
+  unlockBodyScroll();
   try {
     sessionStorage.removeItem('zp_tagihan_open');
     sessionStorage.removeItem('zp_tagihan_tab');
@@ -8638,7 +8651,6 @@ const aiTestResult = document.getElementById('aiTestResult');
 function openAiChatPanel() {
   openModal(aiChatOverlay);
   aiChatPanel.classList.add('open');
-  document.body.style.overflow = 'hidden';
   if (aiFabDot) aiFabDot.style.display = 'none';
   renderAiKeyBanner();
   renderAiMessages();
