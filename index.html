@@ -3886,30 +3886,10 @@ body.density-compact .income-cards-group{gap:10px;}
   font-family:'Poppins',sans-serif;
   font-size:clamp(16px,3.6vw,19px);font-weight:500;letter-spacing:-0.005em;line-height:1.25;
 }
-/* ---- Selaraskan ujung garis pembatas antar-transaksi (.rw-item) dgn
-   ujung garis bawah tab "Aktifitas/Tabungan/Aset" (#lapMainTabs) --
-   keduanya sama-sama anak (tidak langsung) dari .page-body yang lebar
-   totalnya SAMA, tapi #historySection punya padding kiri-kanan sendiri
-   (dari .section-card) sehingga garis antar-transaksi selama ini
-   berhenti lebih pendek drpd garis bawah tab. #txTableWrap sengaja
-   "dibiarkan bocor" (margin negatif) keluar dari padding kiri-kanan
-   #historySection sebesar padding itu sendiri, supaya lebar totalnya
-   balik menyamai lebar #lapMainTabs -- padding yang hilang dipindah
-   ke .rw-item/.rw-group-head supaya jarak teks ke tepi tetap sama
-   seperti sebelumnya, cuma garis pembatasnya yang jadi full-bleed. */
-#txTableWrap{margin-left:-22px;margin-right:-22px;}
-#txTableWrap .rw-item{padding-left:24px;padding-right:24px;}
-#txTableWrap .rw-group-head{padding-left:24px;padding-right:24px;}
-@media (max-width:600px){
-  #txTableWrap{margin-left:-14px;margin-right:-14px;}
-  #txTableWrap .rw-item{padding-left:16px;padding-right:16px;}
-  #txTableWrap .rw-group-head{padding-left:16px;padding-right:16px;}
-}
-@media (max-width:400px){
-  #txTableWrap{margin-left:-12px;margin-right:-12px;}
-  #txTableWrap .rw-item{padding-left:14px;padding-right:14px;}
-  #txTableWrap .rw-group-head{padding-left:14px;padding-right:14px;}
-}
+/* ---- Garis pembatas antar-transaksi (.rw-item) otomatis sejajar dgn
+   garis bawah tab "Aktifitas/Tabungan/Aset" karena keduanya sekarang
+   sama-sama diberi jarak 22px/14px/12px dari tepi layar (lihat
+   .lap-toptabs) -- tidak perlu trik margin negatif lagi. ---- */
 .section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;}
 .section-head > div{min-width:0;}
 .section-head h2{font-size:18px;}
@@ -6112,22 +6092,158 @@ html.zp-app-loading .page-body > .lap-panel{display:none;}
    cukup ditimpa tampilannya lewat aturan .lap-toptabs di bawah. */
 .lap-toptabs{
   background:transparent;border:none;border-bottom:1px solid var(--line);
-  padding:0;border-radius:0;gap:0;width:100%;margin-bottom:18px;overflow:visible;
+  padding:0;border-radius:0;gap:0;margin-bottom:18px;overflow:visible;
+  /* ---- Garis abu-abu di bawah tab sengaja tidak dibuat full-bleed lagi
+     (dulu width:100% tanpa margin, jadi mepet sampai ke pinggir layar) --
+     sekarang diberi jarak kiri-kanan yang SAMA dengan padding horizontal
+     kartu "Semua Transaksi" (.section-card / #historySection) supaya
+     ujung garisnya tetap sejajar dengan garis antar-transaksi di
+     bawahnya, cuma sama-sama tidak lagi menyentuh tepi layar. */
+  width:auto;margin-left:22px;margin-right:22px;
 }
 .lap-toptabs .tab-indicator{
-  top:auto;bottom:-1px;height:2.5px;background:var(--primary);
+  top:auto;bottom:-1px;
+  /* Garis pil aktif (oren) ditebalkan sedikit (2.5px -> 3.5px) supaya
+     lebih kelihatan/enak dipandang, tanpa mengubah ukuran garis abu-abu
+     di belakangnya. */
+  height:3.5px;background:var(--primary);
   border-radius:2px 2px 0 0;box-shadow:none;
 }
 .lap-toptabs .tab-btn{
   padding:10px 4px;margin-right:22px;border-radius:0;font-size:15px;
   color:var(--ink-faint);
+  /* Font tombol tab DISAMAKAN dengan font judul halaman (.page-banner h1
+     -- "Laporan"): Poppins weight 500, letter-spacing sama. Sebelumnya
+     ikut .tab-btn umum (font default body, weight 700). */
+  font-family:'Poppins',sans-serif;font-weight:500;letter-spacing:-0.005em;
 }
 .lap-toptabs .tab-btn.active{color:var(--primary);}
 @media (max-width:600px){
   .lap-toptabs .tab-btn{margin-right:16px;font-size:13.5px;}
+  .lap-toptabs{margin-left:14px;margin-right:14px;}
+}
+@media (max-width:400px){
+  .lap-toptabs{margin-left:12px;margin-right:12px;}
 }
 .lap-panel{display:none;}
 .lap-panel.active{display:block;}
+
+/* ============ POPUP FILTER LAPORAN (halaman penuh) ============
+   Menggantikan baris cari/tipe/kategori yang dulu nyempil di bawah
+   ikon kaca pembesar: sekarang ikon "Filter" di header "Semua
+   Transaksi" membuka halaman penuh terpisah, gaya headernya SENGAJA
+   dibuat oranye (var(--nav-orange)) -- warna & font judul yang SAMA
+   PERSIS dengan banner .page-banner di halaman Laporan/Dompet/
+   Pengaturan -- supaya popup ini kelihatan "asli" bagian dari app,
+   bukan tempelan gaya lain. Struktur (judul di tengah + tombol
+   kembali kiri + Reset kanan, lalu daftar Rentang Waktu bergaya
+   radio & pil Transaksi, ditutup tombol Simpan lebar penuh di
+   bawah) mengikuti referensi yang diminta, isinya memakai kembali
+   elemen filter yang sudah ada (id #tabs, #searchInput,
+   #categoryFilter) supaya logika filter di script.js tidak perlu
+   diutak-atik -- cukup dipindah lokasinya & ditata ulang tampilannya
+   di sini. */
+.lap-filter-overlay{background:var(--paper);}
+.lap-filter-page{max-width:640px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;padding:0;}
+.lap-filter-head{
+  display:flex;align-items:center;gap:10px;
+  background:var(--nav-orange);color:#FFF8F1;
+  padding:calc(16px + env(safe-area-inset-top,0px)) 18px 18px;
+  position:sticky;top:0;z-index:2;
+}
+.lap-filter-back-btn{
+  width:36px;height:36px;border-radius:50%;border:none;flex-shrink:0;
+  background:rgba(255,255,255,0.18);color:#fff;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+  transition:background .15s ease;touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+}
+.lap-filter-back-btn:hover{background:rgba(255,255,255,0.3);}
+.lap-filter-head h2{
+  flex:1;margin:0;text-align:center;color:#FFF8F1;
+  font-family:'Poppins',sans-serif;font-size:clamp(16px,3.6vw,19px);font-weight:500;letter-spacing:-0.005em;
+}
+.lap-filter-reset-btn{
+  flex-shrink:0;background:none;border:none;color:#FFF8F1;
+  font-size:13.5px;font-weight:700;cursor:pointer;padding:8px 2px;
+  touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+}
+.lap-filter-reset-btn:hover{text-decoration:underline;}
+.lap-filter-body{flex:1;padding:18px 16px 24px;display:flex;flex-direction:column;gap:16px;}
+.lap-filter-field{position:relative;}
+.lap-filter-field input[type="search"]{
+  width:100%;padding:11px 14px 11px 36px;border-radius:12px;border:1px solid var(--line);
+  font-size:16px;background:var(--card);outline:none;
+}
+.lap-filter-field input[type="search"]:focus{border-color:var(--forest-glow);}
+.lap-filter-field .search-ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-faint);}
+.lap-filter-section{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  padding:14px 16px 4px;box-shadow:var(--shadow-sm);
+}
+.lap-filter-section h3{
+  margin:0 0 2px;font-size:12.5px;font-weight:800;color:var(--ink);
+  text-transform:uppercase;letter-spacing:0.03em;
+}
+/* ---- "Rentang Waktu" bergaya daftar radio: memakai ulang komponen
+   .tabs/.tab-btn (id #tabs) yang sudah ada -- cuma ditimpa jadi
+   susunan vertikal dgn lingkaran radio di kanan, gantinya pil
+   oranye mendatar, supaya cocok dgn referensi. Listener klik & logic
+   activeTab di script.js TIDAK berubah sama sekali. ---- */
+.lap-radio-tabs{
+  display:flex;flex-direction:column;background:transparent;border:none;
+  padding:0;width:100%;border-radius:0;overflow:visible;gap:0;
+}
+.lap-radio-tabs .tab-indicator{display:none;}
+.lap-radio-tabs .tab-btn{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  width:100%;text-align:left;padding:13px 2px;border-radius:0;
+  border-bottom:1px solid var(--line);color:var(--ink);
+  font-family:var(--font-body);font-weight:600;font-size:14px;
+}
+.lap-radio-tabs .tab-btn:last-child{border-bottom:none;}
+.lap-radio-tabs .tab-btn::after{
+  content:'';flex-shrink:0;width:20px;height:20px;border-radius:50%;
+  border:2px solid var(--line);background:#fff;box-sizing:border-box;
+  transition:border-color .15s ease, background .15s ease;
+}
+.lap-radio-tabs .tab-btn.active{color:var(--ink);}
+.lap-radio-tabs .tab-btn.active::after{
+  border-color:var(--primary);
+  background:radial-gradient(circle, var(--primary) 0 42%, #fff 44% 100%);
+}
+/* ---- "Transaksi" bergaya pil: Semua (oranye, senada tema app),
+   Uang Masuk (hijau/brass) & Uang Keluar (merah/wine) -- warna aktif
+   disamakan dengan warna in/out yang sudah dipakai di seluruh app
+   (mis. .type-toggle pada form tambah transaksi) supaya konsisten. */
+.lap-pill-row{display:flex;gap:8px;flex-wrap:wrap;margin:2px 0 14px;}
+.lap-pill-btn{
+  flex:1 1 auto;padding:10px 12px;border-radius:999px;border:1.5px solid var(--line);
+  background:var(--paper);color:var(--ink-soft);font-size:13px;font-weight:700;
+  cursor:pointer;transition:border-color .15s ease, background .15s ease, color .15s ease;
+  text-align:center;white-space:nowrap;touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+}
+.lap-pill-btn.active{border-color:var(--primary);background:var(--primary-soft);color:var(--primary-deep);}
+.lap-pill-btn[data-filtertype="masuk"].active{border-color:var(--brass);background:rgba(5,150,105,0.12);color:#047857;}
+.lap-pill-btn[data-filtertype="keluar"].active{border-color:var(--wine);background:rgba(225,29,72,0.08);color:var(--wine);}
+.lap-filter-select-wrap{position:relative;margin:2px 0 14px;}
+.lap-filter-select-wrap select{
+  width:100%;padding:11px 34px 11px 14px;border-radius:12px;border:1px solid var(--line);
+  background:var(--paper);color:var(--ink);font-size:14.5px;appearance:none;
+}
+.lap-filter-select-wrap select:focus{border-color:var(--forest-glow);}
+.lap-filter-select-wrap .filter-select-ic{
+  display:flex;position:absolute;right:12px;top:50%;transform:translateY(-50%) rotate(90deg);
+  color:var(--ink-faint);pointer-events:none;
+}
+.lap-filter-footer{
+  position:sticky;bottom:0;padding:14px 16px calc(14px + env(safe-area-inset-bottom,0px));
+  background:linear-gradient(180deg, rgba(244,246,249,0) 0%, var(--paper) 35%);
+}
+.lap-filter-save-btn{width:100%;justify-content:center;padding:14px;border-radius:14px;font-size:14.5px;}
+@media (max-width:400px){
+  .lap-filter-head{padding-left:14px;padding-right:14px;}
+  .lap-filter-body{padding-left:14px;padding-right:14px;}
+}
 /* Baris 1 kartu (judul pendek) + baris 2 (lebih panjang) -- disusun
    beda-beda sedikit lebarnya antar kartu supaya tidak terasa
    berulang persis sama. */
@@ -7848,38 +7964,9 @@ body.is-scrolling *{
             <div>
               <h2>Semua Transaksi</h2>
             </div>
-            <button type="button" class="bd-icon-btn" id="lapSearchToggleBtn" aria-expanded="false" aria-controls="lapControlsRow" title="Cari &amp; filter" aria-label="Cari dan filter transaksi">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><circle cx="9" cy="6" r="2" fill="currentColor" stroke="none"/><line x1="4" y1="12" x2="20" y2="12"/><circle cx="15" cy="12" r="2" fill="currentColor" stroke="none"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="11" cy="18" r="2" fill="currentColor" stroke="none"/></svg>
+            <button type="button" class="bd-icon-btn" id="lapFilterOpenBtn" title="Filter" aria-label="Buka filter transaksi">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16M7 12h10M10.5 19h3"/></svg>
             </button>
-          </div>
-
-          <div class="tabs" id="tabs">
-            <span class="tab-indicator" aria-hidden="true"></span>
-            <button type="button" class="tab-btn active" data-tab="semua">Semua</button>
-            <button type="button" class="tab-btn" data-tab="mingguan">Mingguan</button>
-            <button type="button" class="tab-btn" data-tab="bulanan">Bulanan</button>
-            <button type="button" class="tab-btn" data-tab="tahunan">Tahunan</button>
-          </div>
-
-          <div class="controls-row" id="lapControlsRow" hidden>
-            <div class="field-inline">
-              <span class="search-ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span>
-              <input type="search" id="searchInput" placeholder="Cari kategori atau keterangan...">
-            </div>
-            <div class="filter-select-wrap">
-              <span class="filter-select-ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12l7 7 7-7"/></svg></span>
-              <select id="typeFilter" aria-label="Filter tipe transaksi">
-                <option value="semua">Semua Tipe</option>
-                <option value="masuk">Uang Masuk</option>
-                <option value="keluar">Uang Keluar</option>
-              </select>
-            </div>
-            <div class="filter-select-wrap">
-              <span class="filter-select-ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span>
-              <select id="categoryFilter" aria-label="Filter kategori transaksi">
-                <option value="semua">Semua Kategori</option>
-              </select>
-            </div>
           </div>
 
           <div class="rw-list-wrap" id="txTableWrap">
@@ -7923,6 +8010,61 @@ body.is-scrolling *{
     </div>
   </div>
   <!-- ===== /HALAMAN: LAPORAN ===== -->
+
+  <!-- ===== POPUP FILTER LAPORAN (halaman penuh, tema oranye sama seperti banner Laporan) ===== -->
+  <div class="detail-page-overlay lap-filter-overlay" id="lapFilterOverlay">
+    <div class="lap-filter-page">
+      <div class="lap-filter-head">
+        <button class="lap-filter-back-btn" id="lapFilterBackBtn" type="button" aria-label="Tutup filter">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <h2>Filter</h2>
+        <button type="button" class="lap-filter-reset-btn" id="lapFilterResetBtn">Reset</button>
+      </div>
+
+      <div class="lap-filter-body">
+        <div class="lap-filter-field">
+          <span class="search-ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span>
+          <input type="search" id="searchInput" placeholder="Cari kategori atau keterangan...">
+        </div>
+
+        <div class="lap-filter-section">
+          <h3>Rentang Waktu</h3>
+          <div class="tabs lap-radio-tabs" id="tabs">
+            <span class="tab-indicator" aria-hidden="true"></span>
+            <button type="button" class="tab-btn active" data-tab="semua">Semua</button>
+            <button type="button" class="tab-btn" data-tab="mingguan">Mingguan</button>
+            <button type="button" class="tab-btn" data-tab="bulanan">Bulanan</button>
+            <button type="button" class="tab-btn" data-tab="tahunan">Tahunan</button>
+          </div>
+        </div>
+
+        <div class="lap-filter-section">
+          <h3>Transaksi</h3>
+          <div class="lap-pill-row" id="lapFilterTypeRow">
+            <button type="button" class="lap-pill-btn active" data-filtertype="semua">Semua</button>
+            <button type="button" class="lap-pill-btn" data-filtertype="masuk">Uang Masuk</button>
+            <button type="button" class="lap-pill-btn" data-filtertype="keluar">Uang Keluar</button>
+          </div>
+        </div>
+
+        <div class="lap-filter-section">
+          <h3>Kategori</h3>
+          <div class="lap-filter-select-wrap">
+            <select id="categoryFilter" aria-label="Filter kategori transaksi">
+              <option value="semua">Semua Kategori</option>
+            </select>
+            <span class="filter-select-ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12l7 7 7-7"/></svg></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="lap-filter-footer">
+        <button type="button" class="btn btn-primary lap-filter-save-btn" id="lapFilterSaveBtn">Simpan</button>
+      </div>
+    </div>
+  </div>
+  <!-- ===== /POPUP FILTER LAPORAN ===== -->
 
   <!-- ===== HALAMAN: DOMPET ===== -->
   <div class="app-page" id="page-dompet" data-page="dompet">

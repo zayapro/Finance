@@ -709,6 +709,10 @@ function getISOWeekRange(weekStr) {
 /* ---------- State ---------- */
 let transactions = loadData();
 let activeTab = 'semua';
+// Tipe transaksi yang dipilih lewat pil "Semua/Uang Masuk/Uang Keluar" di
+// dalam popup Filter halaman Laporan (menggantikan <select id="typeFilter">
+// yang lama -- lihat #lapFilterTypeRow di index.html & openLapFilterOverlay()).
+let lapTypeFilter = 'semua';
 let editingId = null;
 let deletingId = null;
 let detailPageContext = null; // key halaman detail yang sedang terbuka (jika ada)
@@ -3468,10 +3472,9 @@ function populateCategoryFilter() {
 
 function getFilteredTransactions() {
   const searchEl = document.getElementById('searchInput');
-  const typeFilterEl = document.getElementById('typeFilter');
   const catFilterEl = document.getElementById('categoryFilter');
   const search = searchEl ? searchEl.value.trim().toLowerCase() : '';
-  const typeFilter = typeFilterEl ? typeFilterEl.value : 'semua';
+  const typeFilter = lapTypeFilter;
   const catFilter = catFilterEl ? catFilterEl.value : 'semua';
 
   let list = [...transactions];
@@ -7462,6 +7465,10 @@ document.getElementById('detailBackBtn').addEventListener('click', closeDetailPa
 document.addEventListener('keydown', (e) => {
   if (e.key !== 'Escape') return;
   if (txModal.classList.contains('open') || confirmModal.classList.contains('open') || billModal.classList.contains('open')) return;
+  if (document.getElementById('lapFilterOverlay').classList.contains('open')) {
+    closeLapFilterOverlay();
+    return;
+  }
   if (document.getElementById('leaderboardOverlay').classList.contains('open')) {
     closeLeaderboardPage();
     return;
@@ -7588,21 +7595,54 @@ document.getElementById('lapMainTabs')?.addEventListener('click', (e) => {
   document.querySelectorAll('.lap-panel').forEach(p => p.classList.toggle('active', p.dataset.lapPanel === target));
 });
 
-/* ---- Tombol kaca pembesar di header "Semua Transaksi": buka/tutup
-   baris cari & filter (disembunyikan default lewat atribut [hidden]
-   supaya panel Aktifitas terasa ringkas seperti referensi desain). ---- */
-document.getElementById('lapSearchToggleBtn')?.addEventListener('click', (e) => {
-  const btn = e.currentTarget;
-  const row = document.getElementById('lapControlsRow');
-  if (!row) return;
-  const willShow = row.hasAttribute('hidden');
-  if (willShow) row.removeAttribute('hidden'); else row.setAttribute('hidden', '');
-  btn.setAttribute('aria-expanded', String(willShow));
-  if (willShow) document.getElementById('searchInput')?.focus();
+/* ==========================================================
+   POPUP FILTER LAPORAN (halaman penuh)
+   Ikon "Filter" di header "Semua Transaksi" (#lapFilterOpenBtn)
+   membuka halaman penuh #lapFilterOverlay berisi field yang sama
+   persis dgn yang dulu ada di baris cari & filter lama (#searchInput,
+   #categoryFilter, dan #tabs Rentang Waktu) -- cuma dipindah lokasi &
+   ditata ulang tampilannya (radio list + pil), jadi tiap field ini
+   TETAP memicu render list transaksi langsung begitu diubah (live),
+   sama seperti sebelumnya. Tombol Kembali & Simpan di popup jadi
+   sama-sama menutup popup; tombol Reset mengembalikan semua field ke
+   nilai default lalu ikut me-render ulang. ---- */
+function openLapFilterOverlay() {
+  document.getElementById('lapFilterOverlay').classList.add('open');
+  lockBodyScroll();
+  updateTabIndicator(document.getElementById('tabs'));
+}
+function closeLapFilterOverlay() {
+  document.getElementById('lapFilterOverlay').classList.remove('open');
+  unlockBodyScroll();
+}
+document.getElementById('lapFilterOpenBtn')?.addEventListener('click', openLapFilterOverlay);
+document.getElementById('lapFilterBackBtn')?.addEventListener('click', closeLapFilterOverlay);
+document.getElementById('lapFilterSaveBtn')?.addEventListener('click', closeLapFilterOverlay);
+
+document.getElementById('lapFilterTypeRow')?.addEventListener('click', (e) => {
+  const btn = e.target.closest('.lap-pill-btn');
+  if (!btn) return;
+  document.querySelectorAll('#lapFilterTypeRow .lap-pill-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  lapTypeFilter = btn.dataset.filtertype;
+  resetHistoryPagination();
+  renderTransactionList();
+});
+
+document.getElementById('lapFilterResetBtn')?.addEventListener('click', () => {
+  // Rentang Waktu -> "Semua"
+  document.getElementById('tabs')?.querySelector('[data-tab="semua"]')?.click();
+  // Transaksi -> "Semua"
+  document.getElementById('lapFilterTypeRow')?.querySelector('[data-filtertype="semua"]')?.click();
+  // Kategori -> "Semua Kategori"
+  const catEl = document.getElementById('categoryFilter');
+  if (catEl) { catEl.value = 'semua'; catEl.dispatchEvent(new Event('change')); }
+  // Cari -> dikosongkan
+  const searchEl = document.getElementById('searchInput');
+  if (searchEl && searchEl.value) { searchEl.value = ''; searchEl.dispatchEvent(new Event('input')); }
 });
 
 document.getElementById('searchInput')?.addEventListener('input', () => { resetHistoryPagination(); renderTransactionList(); });
-document.getElementById('typeFilter')?.addEventListener('change', () => { resetHistoryPagination(); renderTransactionList(); });
 document.getElementById('categoryFilter')?.addEventListener('change', () => { resetHistoryPagination(); renderTransactionList(); });
 document.getElementById('btnLoadMoreHistory')?.addEventListener('click', () => {
   historyVisibleGroups += HISTORY_GROUPS_PER_PAGE;
