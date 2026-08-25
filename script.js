@@ -3589,7 +3589,7 @@ function renderHistoryRow(t, delay) {
       </div>
       <div class="rw-item-right">
         <div class="rw-item-amount ${isIn ? 'in' : 'out'}">${isIn ? '+' : '-'} ${fmtRupiah(t.amount)}</div>
-        <span class="rw-status-pill">Sukses</span>
+        <span class="rw-status-pill ${isIn ? '' : 'out'}">${isIn ? 'Masuk' : 'Keluar'}</span>
         <div class="rw-item-actions">
           <button class="icon-btn edit" data-edit="${t.id}" title="Edit">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
@@ -7574,6 +7574,33 @@ document.getElementById('tabs')?.addEventListener('click', (e) => {
   renderTransactionList();
 });
 
+/* ---- Tab utama halaman Laporan: Aktifitas / Tabungan / Aset ----
+   Pola sama dgn tab #tabs (Semua/Mingguan/dst) di atas, tapi menimpa
+   .lap-panel mana yang tampil (bukan re-render daftar transaksi). ---- */
+document.getElementById('lapMainTabs')?.addEventListener('click', (e) => {
+  const btn = e.target.closest('.tab-btn');
+  if (!btn) return;
+  const container = document.getElementById('lapMainTabs');
+  container.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  updateTabIndicator(container);
+  const target = btn.dataset.laptab;
+  document.querySelectorAll('.lap-panel').forEach(p => p.classList.toggle('active', p.dataset.lapPanel === target));
+});
+
+/* ---- Tombol kaca pembesar di header "Semua Transaksi": buka/tutup
+   baris cari & filter (disembunyikan default lewat atribut [hidden]
+   supaya panel Aktifitas terasa ringkas seperti referensi desain). ---- */
+document.getElementById('lapSearchToggleBtn')?.addEventListener('click', (e) => {
+  const btn = e.currentTarget;
+  const row = document.getElementById('lapControlsRow');
+  if (!row) return;
+  const willShow = row.hasAttribute('hidden');
+  if (willShow) row.removeAttribute('hidden'); else row.setAttribute('hidden', '');
+  btn.setAttribute('aria-expanded', String(willShow));
+  if (willShow) document.getElementById('searchInput')?.focus();
+});
+
 document.getElementById('searchInput')?.addEventListener('input', () => { resetHistoryPagination(); renderTransactionList(); });
 document.getElementById('typeFilter')?.addEventListener('change', () => { resetHistoryPagination(); renderTransactionList(); });
 document.getElementById('categoryFilter')?.addEventListener('change', () => { resetHistoryPagination(); renderTransactionList(); });
@@ -8009,8 +8036,16 @@ window.addEventListener('resize', () => { if (notifPanel.classList.contains('ope
 // lagi. Fallback ke #historySection kalau elemen tabelnya entah
 // kenapa tidak ditemukan.
 function scrollToTransactionTable() {
-  const target = document.getElementById('txTableWrap') || document.getElementById('historySection');
-  target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  // Daftar transaksi sekarang tinggal di halaman Laporan (tab
+  // "Aktifitas"), bukan lagi di Beranda -- pindah ke sana dulu kalau
+  // belum aktif, baru scroll ke tabelnya, supaya tombol "Riwayat
+  // Transaksi" di Beranda tetap terasa langsung "melompat" ke
+  // datanya seperti sebelumnya.
+  if (window.zpShowPage) window.zpShowPage('laporan');
+  requestAnimationFrame(() => {
+    const target = document.getElementById('txTableWrap') || document.getElementById('historySection');
+    target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
 }
 document.getElementById('historyJumpBtn').addEventListener('click', scrollToTransactionTable);
 // Versi mini topbar dari tombol Riwayat, Tagihan & Hutang, dan Tambah

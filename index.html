@@ -4684,7 +4684,9 @@ tbody tr:last-child td{border-bottom:none;}
   font-size:10px;font-weight:800;padding:2.5px 9px;border-radius:999px;
   background:rgba(5,150,105,0.14);color:#047857;display:inline-flex;align-items:center;gap:4px;
 }
-.rw-status-pill::before{content:"✓";font-size:9px;}
+.rw-status-pill::before{content:"↓";font-size:9px;}
+.rw-status-pill.out{background:rgba(190,18,60,0.12);color:var(--wine);}
+.rw-status-pill.out::before{content:"↑";}
 .rw-item-actions{display:flex;gap:5px;opacity:0;max-height:0;overflow:hidden;transition:opacity .15s ease;}
 .rw-item:hover .rw-item-actions,.rw-item:focus-within .rw-item-actions{opacity:1;max-height:none;}
 .rw-item-actions .icon-btn{width:25px;height:25px;border-radius:8px;}
@@ -6045,6 +6047,36 @@ tbody tr:last-child td{border-bottom:none;}
 .zp-page-skel{display:none;flex-direction:column;gap:12px;}
 html.zp-app-loading .page-body > .zp-page-skel{display:flex;}
 html.zp-app-loading .page-body > .bd-empty{display:none;}
+html.zp-app-loading .page-body > .lap-toptabs,
+html.zp-app-loading .page-body > .lap-panel{display:none;}
+
+/* ============ HALAMAN LAPORAN — tab utama Aktifitas/Tabungan/Aset ============
+   Sengaja dibuat gaya "underline" (bukan pil oranye seperti .tabs biasa)
+   supaya terasa seperti tab kategori tingkat-halaman (mirip referensi
+   desain "Aktifitas | Tabungan | Aset"), beda level dengan sub-tab
+   Semua/Mingguan/Bulanan/Tahunan di dalam panel Aktifitas yang tetap
+   pakai gaya pil standar. Tetap memakai class dasar .tabs & .tab-indicator
+   supaya updateTabIndicator()/updateAllTabIndicators() yang sudah ada
+   di script.js otomatis ikut menggerakkan indikator di sini juga --
+   cukup ditimpa tampilannya lewat aturan .lap-toptabs di bawah. */
+.lap-toptabs{
+  background:transparent;border:none;border-bottom:1px solid var(--line);
+  padding:0;border-radius:0;gap:0;width:100%;margin-bottom:18px;overflow:visible;
+}
+.lap-toptabs .tab-indicator{
+  top:auto;bottom:-1px;height:2.5px;background:var(--primary);
+  border-radius:2px 2px 0 0;box-shadow:none;
+}
+.lap-toptabs .tab-btn{
+  padding:10px 4px;margin-right:22px;border-radius:0;font-size:15px;
+  color:var(--ink-faint);
+}
+.lap-toptabs .tab-btn.active{color:var(--primary);}
+@media (max-width:600px){
+  .lap-toptabs .tab-btn{margin-right:16px;font-size:13.5px;}
+}
+.lap-panel{display:none;}
+.lap-panel.active{display:block;}
 /* Baris 1 kartu (judul pendek) + baris 2 (lebih panjang) -- disusun
    beda-beda sedikit lebarnya antar kartu supaya tidak terasa
    berulang persis sama. */
@@ -7746,11 +7778,97 @@ body.is-scrolling *{
           <div class="bd-skel-bar" style="width:70%;height:10px;"></div>
         </div>
       </div>
-      <div class="bd-empty">
-        <div class="bd-empty-ic">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 12h18"/></svg>
+      <!-- Tab utama halaman Laporan: Aktifitas (riwayat transaksi uang
+           masuk & keluar), Tabungan, Aset. Pakai komponen .tabs yang
+           sama dgn tab lain di app (indikator pil meluncur otomatis
+           lewat updateTabIndicator() di script.js, cukup container
+           ini juga ikut kena querySelectorAll('.tabs')). -->
+      <div class="tabs lap-toptabs" id="lapMainTabs">
+        <span class="tab-indicator" aria-hidden="true"></span>
+        <button type="button" class="tab-btn active" data-laptab="aktifitas">Aktifitas</button>
+        <button type="button" class="tab-btn" data-laptab="tabungan">Tabungan</button>
+        <button type="button" class="tab-btn" data-laptab="aset">Aset</button>
+      </div>
+
+      <!-- ---- PANEL: AKTIFITAS (Semua Transaksi -- uang masuk & keluar) ---- -->
+      <div class="lap-panel active" data-lap-panel="aktifitas" id="lapPanelAktifitas">
+        <div class="section-card" id="historySection">
+          <div class="section-head">
+            <div>
+              <h2>Semua Transaksi</h2>
+              <span class="section-subtitle">Riwayat lengkap uang masuk &amp; keluar</span>
+            </div>
+            <button type="button" class="bd-icon-btn" id="lapSearchToggleBtn" aria-expanded="false" aria-controls="lapControlsRow" title="Cari &amp; filter" aria-label="Cari dan filter transaksi">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+            </button>
+          </div>
+
+          <div class="tabs" id="tabs">
+            <span class="tab-indicator" aria-hidden="true"></span>
+            <button type="button" class="tab-btn active" data-tab="semua">Semua</button>
+            <button type="button" class="tab-btn" data-tab="mingguan">Mingguan</button>
+            <button type="button" class="tab-btn" data-tab="bulanan">Bulanan</button>
+            <button type="button" class="tab-btn" data-tab="tahunan">Tahunan</button>
+          </div>
+
+          <div class="controls-row" id="lapControlsRow" hidden>
+            <div class="field-inline">
+              <span class="search-ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span>
+              <input type="search" id="searchInput" placeholder="Cari kategori atau keterangan...">
+            </div>
+            <div class="filter-select-wrap">
+              <span class="filter-select-ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12l7 7 7-7"/></svg></span>
+              <select id="typeFilter" aria-label="Filter tipe transaksi">
+                <option value="semua">Semua Tipe</option>
+                <option value="masuk">Uang Masuk</option>
+                <option value="keluar">Uang Keluar</option>
+              </select>
+            </div>
+            <div class="filter-select-wrap">
+              <span class="filter-select-ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span>
+              <select id="categoryFilter" aria-label="Filter kategori transaksi">
+                <option value="semua">Semua Kategori</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="rw-list-wrap" id="txTableWrap">
+            <div class="rw-list" id="txBody"></div>
+            <div class="bd-empty" id="emptyState" style="display:none;">
+              <div class="bd-empty-ic">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 12h18"/></svg>
+              </div>
+              <p>Belum ada transaksi yang cocok.</p>
+            </div>
+            <div class="history-loadmore-wrap" id="historyLoadMoreWrap" style="display:none;">
+              <button type="button" class="btn btn-ghost" id="btnLoadMoreHistory">Muat Lebih Banyak</button>
+            </div>
+          </div>
         </div>
-        <p>Belum ada data untuk ditampilkan.</p>
+      </div>
+
+      <!-- ---- PANEL: TABUNGAN (belum ada model data -- placeholder rapi) ---- -->
+      <div class="lap-panel" data-lap-panel="tabungan" id="lapPanelTabungan">
+        <div class="section-card">
+          <div class="bd-empty">
+            <div class="bd-empty-ic">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            </div>
+            <p>Fitur ringkasan Tabungan segera hadir di sini.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ---- PANEL: ASET (belum ada model data -- placeholder rapi) ---- -->
+      <div class="lap-panel" data-lap-panel="aset" id="lapPanelAset">
+        <div class="section-card">
+          <div class="bd-empty">
+            <div class="bd-empty-ic">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="6" width="18" height="13" rx="2.4"/><path d="M3 10h18"/></svg>
+            </div>
+            <p>Fitur ringkasan Aset segera hadir di sini.</p>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -9654,6 +9772,12 @@ body.is-scrolling *{
     updateFooterVisibility(name);
     try { sessionStorage.setItem(ACTIVE_PAGE_KEY, name); } catch(e){}
     window.scrollTo({ top: 0, behavior: 'auto' });
+    // Halaman yang baru saja tampil (mis. Laporan) mungkin punya
+    // ".tabs" yang sebelumnya offsetWidth 0 (tersembunyi) sehingga
+    // updateTabIndicator() melewatinya -- ukur ulang sekarang setelah
+    // halamannya benar-benar terlihat, supaya pil indikatornya muncul
+    // pas di posisi tab aktif, bukan nyangkut di pojok kiri.
+    if (window.updateAllTabIndicators) requestAnimationFrame(window.updateAllTabIndicators);
   }
 
   // ---- Pulihkan tab aktif dari sesi sebelumnya (kalau ada) SEBELUM
@@ -9686,6 +9810,7 @@ body.is-scrolling *{
       requestAnimationFrame(function(){
         requestAnimationFrame(function(){
           pages.forEach(function(p){ p.classList.remove('zp-no-anim'); });
+          if (window.updateAllTabIndicators) window.updateAllTabIndicators();
         });
       });
     }
