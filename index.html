@@ -6041,8 +6041,62 @@ tbody tr:last-child td{border-bottom:none;}
 /* --- Default (tablet/desktop, >640px): tampilan ASLI --- */
 .bottom-nav{display:none;}
 .app-page{display:block;}
-.page-banner{display:none;}
-.page-body{margin:0;padding:0;border-radius:0;background:transparent;}
+/* Banner oranye + kartu putih di halaman Laporan/Dompet/Pengaturan
+   DISAMAKAN PERSIS ukurannya (padding banner, overlap kartu, radius,
+   shadow) dengan halaman Tagihan & Hutang (.bd-page-banner/.bd-page-body),
+   supaya "kuning" (oranye) dan "putih"-nya senada di semua ukuran layar
+   -- termasuk di desktop, yang sebelumnya banner-nya malah disembunyikan
+   total (display:none) sehingga terlihat beda jauh dari Tagihan & Hutang.
+   Trik margin negatif calc(-50vw + 50%) dipakai (bukan angka piksel
+   tetap) supaya banner tetap edge-to-edge pas di SEMUA lebar layar,
+   termasuk saat padding .app ikut mengecil di breakpoint lain. */
+.page-banner{
+  display:block;
+  position:relative;z-index:2;
+  background:var(--nav-orange);
+  color:#FFF8F1;
+  margin-left:calc(-50vw + 50%);margin-right:calc(-50vw + 50%);
+  padding:44px 20px 68px;
+  box-sizing:border-box;
+}
+.page-banner h1{margin:0;font-size:19px;font-weight:800;letter-spacing:.2px;}
+.page-banner p{margin:4px 0 0;font-size:12.5px;color:rgba(255,248,241,0.85);}
+.page-body{
+  /* z-index DISAMAKAN dengan .page-banner (2, bukan 1) -- kalau lebih
+     rendah dari banner, sudut atas kartu yang seharusnya "menumpang"
+     di atas banner (lewat margin negatif) malah ketutup balik oleh
+     banner, jadi radius & bayangan atasnya tidak kelihatan sama
+     sekali. Ini persis nilai yang dipakai .bd-page-banner &
+     .bd-page-body di halaman Tagihan & Hutang (dua-duanya z-index:2). */
+  position:relative;z-index:2;
+  background:var(--card,#fff);
+  margin:-24px 0 0;
+  border-radius:28px 28px 0 0;
+  padding:24px 0 4px;
+}
+/* PENTING: shadow "kartu menumpang di atas banner" TIDAK ditaruh
+   langsung sebagai box-shadow di .page-body itu sendiri -- box-shadow
+   otomatis melingkupi KEEMPAT sisi kotak (atas, bawah, kiri, kanan),
+   jadi kalau konten halaman (mis. Dompet/Pengaturan) pendek/tidak
+   sampai penuh 1 layar, sisi BAWAH kartu (yang duduk pas di atas nav
+   bawah/footer) ikut kebagian bayangan oranye itu -- itulah "bayangan
+   footer" yang terlihat saat pindah ke halaman Dompet/Pengaturan.
+   Sebagai gantinya bayangan ditaruh di pseudo-elemen tipis (1px)
+   yang HANYA menempel di TEPI ATAS kartu (persis di sambungan dengan
+   banner), jadi efek "terangkat dari banner"-nya tetap dapat tapi
+   tidak pernah bocor ke bawah/dekat footer, berapa pun pendeknya
+   konten halaman. Pola ini meniru punya halaman Tagihan & Hutang,
+   yang juga sengaja mematikan box-shadow di bagian body panjang/
+   scroll-nya (lihat .bd-page-body-rest{box-shadow:none} di atas) dan
+   hanya menyisakan bayangan di bagian "head"-nya yang pendek. */
+.page-body::before{
+  content:"";
+  position:absolute;left:0;right:0;top:0;height:1px;
+  border-radius:28px 28px 0 0;
+  box-shadow:0 -16px 30px -10px rgba(242,103,43,0.38);
+  pointer-events:none;
+}
+
 
 /* --- Mode nav+halaman: HANYA aktif di layar HP (<=640px) --- */
 @media (max-width:640px){
@@ -6114,29 +6168,52 @@ tbody tr:last-child td{border-bottom:none;}
     box-shadow:0 0 0 2px #fff;
   }
 
-  /* Halaman per-tab: default tersembunyi, hanya .active yang tampil */
+  /* Halaman per-tab: default tersembunyi, hanya .active yang tampil.
+     Transisi masuk halus (fade + geser tipis) ditambahkan lewat CSS
+     animation (BUKAN transition) supaya tetap jalan meski elemen
+     baru saja berubah dari display:none -> block -- transition biasa
+     tidak akan ter-trigger dalam kondisi ini, tapi animation ter-
+     trigger dengan aman. Halaman yang ditinggalkan langsung
+     display:none (tanpa fade-out) supaya tidak ada 2 halaman yang
+     sempat tertumpuk/terlihat bersamaan saat pindah tab -- itulah
+     sumber "bayangan" tambahan yang tidak diinginkan (dua kartu
+     dengan shadow masing-masing sempat tumpang tindih). Dengan hanya
+     halaman BARU yang fade-in sendirian, tidak akan ada shadow ganda
+     ataupun bayangan nyasar selama transisi, di halaman manapun. */
   .app-page{display:none;}
-  .app-page.active{display:block;}
+  .app-page.active{display:block;animation:appPageIn .22s ease both;}
+  @keyframes appPageIn{
+    from{opacity:0;transform:translateY(6px);}
+    to{opacity:1;transform:translateY(0);}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .app-page.active{animation:none;}
+  }
 
   /* Template banner oranye kecil untuk halaman selain Beranda (Laporan/
      Dompet/Saya) — banner utama (.banner) yang besar dengan saldo cuma
      dipakai di halaman Beranda, jadi halaman lain butuh banner sendiri
-     yang sederhana (judul saja) memakai warna oranye yang sama persis. */
-  .page-banner{
-    display:block;
-    background:var(--nav-orange);
-    color:#FFF8F1;
-    margin:0 -14px 0;
-    padding:18px 18px 40px;
-  }
-  .page-banner h1{margin:0;font-size:19px;font-weight:800;letter-spacing:.2px;}
-  .page-banner p{margin:4px 0 0;font-size:12.5px;color:rgba(255,248,241,0.85);}
+     yang sederhana (judul saja) memakai warna oranye yang sama persis.
+     Ukuran (padding/overlap/radius/shadow) di breakpoint HP ini DISAMAKAN
+     PERSIS dengan angka mobile halaman Tagihan & Hutang (lihat
+     .bd-page-banner-simple & .bd-page-body di bagian "HALAMAN SEMUA
+     TAGIHAN & HUTANG" atas), bukan angka sendiri seperti sebelumnya,
+     supaya kuning/putihnya senada persis di semua 4 halaman ini. Sisi
+     kiri-kanan sudah full-bleed lewat trik margin calc() di aturan
+     dasar (non-media) di atas, jadi di sini tinggal timpa padding-nya
+     saja (tanpa perlu margin -14px manual yang gampang meleset kalau
+     padding .app berubah di breakpoint lain). */
+  .page-banner{padding:30px 14px 44px;}
   .page-body{
-    position:relative;z-index:1;
-    background:var(--card,#fff);
-    margin:-26px 0 0;
-    border-radius:20px 20px 0 0;
-    padding:18px 0 4px;
+    margin-top:-14px;
+    border-radius:22px 22px 0 0;
+  }
+  /* Bayangan versi HP juga dipindah ke pseudo-elemen tipis di tepi
+     atas saja (lihat penjelasan lengkap di aturan dasar/desktop di
+     atas) -- supaya tidak bocor ke bawah dekat nav/footer di halaman
+     yang kontennya pendek seperti Dompet & Pengaturan. */
+  .page-body::before{
+    box-shadow:0 -13px 24px -9px rgba(242,103,43,0.38);
   }
 }
 /* ---- Rapikan header banner di HP ----
