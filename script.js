@@ -8364,8 +8364,15 @@ document.getElementById('bnTagihanBtn').addEventListener('click', () => {
    tertutup). Menyimpan 2 listener terpisah yang saling tidak tahu
    (satu di sini, satu di index.html) untuk tombol yang sama juga
    berisiko race condition soal urutan eksekusi -- makanya
-   disederhanakan jadi satu jalur logika saja.
+   disederhanakan jadi satu jalur logika saja. */
 
+/* FIX "pil tab Semua/Tagihan/Hutang/Catatan tidak berfungsi": listener
+   klik di bawah ini SEBELUMNYA ikut kebungkus di dalam komentar
+   penjelasan di atas (komentarnya belum ditutup sebelum kode ini),
+   sehingga seluruh addEventListener ini dianggap teks komentar oleh
+   JS -- bukan kode yang benar-benar jalan -- jadi klik pada pil tab
+   sama sekali tidak berefek. Sekarang komentarnya sudah ditutup rapi
+   di atas, jadi listener ini kembali aktif. */
 document.getElementById('bdAllTabs').addEventListener('click', (e) => {
   const btn = e.target.closest('[data-bdtab]');
   if (!btn) return;

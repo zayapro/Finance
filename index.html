@@ -130,6 +130,37 @@ html.zp-page-restore-saya #bottomNav .bn-item[data-page="saya"] .bn-ic-wrap{
   background:color-mix(in srgb, var(--nav-orange) 15%, transparent) !important;
   color:var(--nav-orange) !important;
 }
+/* FIX "bayangan footer" (footer gelap ZAYAPRO ikut nyembul sekilas
+   di bawah) yang muncul PERSIS saat refresh di tab Laporan/Dompet/
+   Pengaturan di HP, lalu hilang lagi -- akar masalahnya beda dari
+   fix zp-page-restore-* di atas (yang hanya urus konten halaman &
+   nav bawah). Footer besar (#appFooter, di luar sistem tab -- lihat
+   markup <footer> dekat akhir <body>) di layar HP MEMANG cuma boleh
+   tampil di tab Beranda saja, tapi aturan sembunyikan itu murni
+   dikerjakan JS (updateFooterVisibility() di script.js, dipanggil
+   sekali saat script.js mulai jalan). Karena script.js baru
+   dieksekusi/dipanggil BELAKANGAN (setelah HTML & CSS ini selesai
+   di-parse), footer sempat digambar browser dalam kondisi DEFAULT-nya
+   (selalu tampil, tidak ada style apa pun yang menyembunyikannya
+   duluan) tepat di ujung bawah konten pendek Laporan/Dompet/
+   Pengaturan -- footer gelap itulah yang terlihat sekilas seperti
+   "bayangan" menempel di bawah, sebelum updateFooterVisibility()
+   menyusul menyembunyikannya. Diperbaiki dengan pola yang sama
+   persis seperti fix zp-page-restore-* di atas: begitu sessionStorage
+   menandakan tab aktif terakhir adalah salah satu dari 3 tab ini,
+   footer langsung disembunyikan SEJAK FRAME PERTAMA lewat CSS di
+   sini, jadi tidak pernah sempat digambar browser sama sekali --
+   tanpa perlu menunggu JS. Dibatasi ke layar HP (<=640px) supaya
+   sama persis dengan syarat penyembunyian aslinya di
+   updateFooterVisibility() (di desktop, footer memang selalu tampil
+   di semua halaman, jadi tidak boleh ikut disembunyikan di sini). */
+@media (max-width:640px){
+  html.zp-page-restore-laporan #appFooter,
+  html.zp-page-restore-dompet #appFooter,
+  html.zp-page-restore-saya #appFooter{
+    display:none !important;
+  }
+}
 </style>
 <script>
 try {
@@ -5781,10 +5812,14 @@ tbody tr:last-child td{border-bottom:none;}
     flex:1 1 auto;width:auto;min-width:0;
     overflow-x:hidden;gap:2px;padding:2px;
   }
-  /* Jarak pil aktif (.tab-indicator) ke tepi kapsul disamakan dgn
-     padding kapsul di lebar ini (2px, bukan 4px bawaan) -- supaya
-     pil tidak kelihatan "menjorok" tidak rata dari border pinggir. */
-  #bdAllTabs .tab-indicator{top:2px;bottom:2px;}
+  /* FIX "pil aktif terlalu mepet ke border kapsul": sebelumnya jarak
+     pil aktif (.tab-indicator) ke tepi kapsul disamakan PERSIS dengan
+     padding kapsul (2px) tanpa sisa ruang, jadi pil aktif kelihatan
+     nempel/gesekan langsung ke garis border kapsul luar. Sekarang
+     dikasih jarak sedikit lebih longgar (4px, bukan 2px) supaya ada
+     "nafas" yang jelas antara pil aktif dan border-nya, tapi tetap
+     proporsional untuk lebar layar HP yang sempit. */
+  #bdAllTabs .tab-indicator{top:4px;bottom:4px;}
   #bdAllTabs .tab-btn{
     flex:1 1 0;width:auto;min-width:0;
     padding:5px 2px;font-size:10.5px;
@@ -5899,8 +5934,17 @@ tbody tr:last-child td{border-bottom:none;}
    renderBdAllPage() menimpa innerHTML #bdAllList sepenuhnya begitu
    data asli siap, jadi skeleton ini otomatis hilang tanpa perlu
    kode tambahan untuk membersihkannya. */
-.bd-item.bd-skel{cursor:default;}
-.bd-item.bd-skel:hover{transform:none;border-color:var(--line);box-shadow:var(--shadow-sm);}
+/* box-shadow:none SENGAJA ditimpa di sini (bukan cuma di :hover) --
+   kartu .bd-item ASLI (data sungguhan) memang boleh punya shadow-sm,
+   tapi versi .bd-skel ini cuma tampil sesaat sebagai skeleton loading
+   sebelum data asli siap. Kalau ikut warisi shadow-sm dari .bd-item,
+   kartu skeleton paling bawah (yang sering duduk pas di atas footer)
+   memunculkan "bayangan" yang berkedip sesaat lalu hilang begitu
+   renderBdAllPage() mengganti skeleton dengan data asli -- persis bug
+   "bayangan footer" yang sama seperti pada .zp-skel-card (lihat
+   catatan lengkap di sana). */
+.bd-item.bd-skel{cursor:default;box-shadow:none;}
+.bd-item.bd-skel:hover{transform:none;border-color:var(--line);box-shadow:none;}
 .bd-item.bd-skel .bd-item-ic{background:var(--paper);}
 .bd-skel-bar{
   height:12px;border-radius:6px;background:var(--paper);
@@ -5928,8 +5972,26 @@ tbody tr:last-child td{border-bottom:none;}
    terlihat cuma: skeleton tampil selama halaman menunggu login +
    tarik data cloud, lalu digantikan konten aslinya begitu siap. */
 .zp-skel-card{
+  /* PENTING: SEBELUMNYA baris ini punya box-shadow:var(--shadow-sm),
+     yaitu shadow PENUH di keempat sisi kartu skeleton. Kartu skeleton
+     ini yang tampil sesaat di halaman Laporan/Dompet/Pengaturan (dan
+     skeleton daftar Tagihan & Hutang) SETIAP kali halaman di-refresh,
+     selama proses login + tarik data cloud belum selesai (dikontrol
+     class html.zp-app-loading, lihat komentar panjang di atas & di
+     <head>). Karena kartu terakhir dalam tumpukan skeleton ini sering
+     duduk pas di atas nav bawah/footer (apalagi di halaman yang
+     kontennya pendek seperti Dompet & Pengaturan), sisi BAWAH shadow
+     kartu itu terlihat seperti "bayangan menempel di footer" yang
+     muncul sesaat lalu hilang begitu skeleton diganti konten asli --
+     ini PERSIS bug yang sama dengan "bayangan footer" yang dulu sudah
+     diperbaiki untuk kartu putih (.page-body) itu sendiri (lihat
+     catatan box-shadow:none di .page-body::before di bawah), tapi
+     waktu itu kartu skeleton di DALAM-nya belum ikut disamakan.
+     Dihapus total (box-shadow:none) di sini juga supaya konsisten:
+     border 1px + background sudah cukup membedakan kartu skeleton
+     dari latar, tanpa shadow yang bisa bocor ke footer sama sekali. */
   background:var(--card);border:1px solid var(--line);border-radius:16px;
-  padding:16px 18px;box-shadow:var(--shadow-sm);
+  padding:16px 18px;box-shadow:none;
 }
 .zp-page-skel{display:none;flex-direction:column;gap:12px;}
 html.zp-app-loading .page-body > .zp-page-skel{display:flex;}
