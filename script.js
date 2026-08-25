@@ -10,6 +10,31 @@
    perangkat lain, selama login pakai akun yang sama.
 ========================================================== */
 
+/* FIX lanjutan "flash ke Beranda sekilas saat refresh di halaman
+   Tagihan & Hutang": class paksa `zp-tagihan-restore` (ditambahkan
+   di <head> index.html, SEBELUM <body> sempat digambar sama sekali,
+   supaya overlay #bdAllOverlay langsung tampil penuh dari frame
+   PERTAMA tanpa transisi) dilepas lagi di sini, SEBAGAI BARIS PALING
+   ATAS yang dieksekusi file ini. Alasannya dilepas justru di awal
+   (bukan di akhir): supaya kontrol visual overlay diserahkan
+   sepenuhnya ke mekanisme ASLI (class .open yang ditoggle oleh
+   openBdAllPage()/closeBdAllPage(), lihat lebih bawah) SEBELUM
+   mekanisme itu sempat dipanggil ulang di akhir init() -- kalau
+   class paksa ini masih ada saat closeBdAllPage() nanti melepas
+   class .open, overlay akan "nyangkut" tetap kelihatan terbuka
+   (di-paksa CSS !important) walau harusnya sudah tertutup.
+   TIDAK menyebabkan kedipan apa pun: dari baris ini sampai
+   openBdAllPage() dipanggil ulang di akhir init() (lihat paling
+   bawah file ini) semuanya berjalan SINKRON dalam satu eksekusi
+   script yang sama -- browser tidak pernah sempat menggambar ulang
+   di tengah-tengahnya, jadi transisi "class paksa dilepas -> class
+   .open asli dipasang lagi" ini sama sekali tidak terlihat mata. */
+try {
+  document.documentElement.classList.remove('zp-tagihan-restore');
+  document.documentElement.classList.remove('zp-app-loading');
+} catch (e) { /* abaikan */ }
+
+
 /* PENTING (fix "patah-patah" saat refresh di HP): ExcelJS, jsPDF, &
    jspdf-autotable dulu dimuat lewat <script src> statis di index.html
    dan dieksekusi BLOCKING berurutan setiap kali halaman dibuka —

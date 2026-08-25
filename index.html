@@ -25,6 +25,68 @@ if ('scrollRestoration' in history) {
   try { history.scrollRestoration = 'manual'; } catch (e) { /* abaikan */ }
 }
 </script>
+
+<!-- FIX "refresh di halaman Tagihan & Hutang masih kelihatan
+     lompat/kedip ke Beranda sekilas": script + style di bawah ini
+     SENGAJA dipasang PALING ATAS <head>, sebelum elemen/CSS/gambar
+     apa pun lain sempat dimuat -- supaya kalau overlay Tagihan &
+     Hutang memang sedang terbuka sebelum refresh, browser TIDAK
+     PERNAH menggambar (paint) sama sekali tampilan "default"-nya
+     (overlay tertutup/transparan, isi Beranda kelihatan). Fix
+     sebelumnya (script yang menambah class "open" di tengah <body>,
+     tepat setelah markup #bdAllOverlay) masih kalah cepat dari paint
+     pertama browser -- karena file HTML ini panjang, browser sempat
+     menggambar bagian atas halaman (termasuk Beranda) SEBELUM parser
+     sampai ke script itu. Style paksa di sini berlaku sejak frame
+     PERTAMA yang digambar, jadi tidak ada lagi celah waktu untuk
+     "kelihatan Beranda dulu". Class pemicunya (zp-tagihan-restore)
+     dilepas lagi otomatis di baris paling atas script.js begitu file
+     itu selesai dimuat, tanpa kedipan (lihat komentar di sana). -->
+<style>
+html.zp-tagihan-restore #bdAllOverlay{
+  opacity:1 !important;
+  transform:none !important;
+  pointer-events:auto !important;
+  transition:none !important;
+}
+/* Sekalian samakan highlight tombol "Tagihan" di nav bawah sejak
+   frame pertama (murni kosmetik) -- supaya tidak sempat kelihatan
+   tombol "Beranda" (yang di markup HTML memang class="active" secara
+   default) menyala duluan sebelum script.js menyusul memperbaikinya
+   lewat setBottomNavActive('tagihan'). Nilai warna/latar di sini
+   SENGAJA disamakan persis dengan aturan .bn-item.active asli (lihat
+   CSS-nya lebih bawah) supaya tidak ada tampilan baru yang beda. */
+html.zp-tagihan-restore #bottomNav .bn-item.active:not(#bnTagihanBtn){
+  color:#374151 !important;
+}
+html.zp-tagihan-restore #bottomNav .bn-item.active:not(#bnTagihanBtn) .bn-ic-wrap{
+  background:transparent !important;
+  color:#4B5563 !important;
+}
+html.zp-tagihan-restore #bnTagihanBtn{color:#111827 !important;}
+html.zp-tagihan-restore #bnTagihanBtn .bn-ic-wrap{
+  background:color-mix(in srgb, var(--nav-orange) 15%, transparent) !important;
+  color:var(--nav-orange) !important;
+}
+</style>
+<script>
+try {
+  if (sessionStorage.getItem('zp_tagihan_open') === '1') {
+    document.documentElement.classList.add('zp-tagihan-restore');
+  }
+  // Class umum "sedang memuat" -- dipasang di SETIAP load/refresh
+  // (bukan cuma kasus overlay Tagihan & Hutang), dipakai untuk
+  // menampilkan skeleton loading di "kartu putih" halaman Tagihan &
+  // Hutang, Laporan, Dompet, dan Pengaturan selagi script.js +
+  // proses login/tarik data cloud belum selesai. Dilepas lagi di
+  // baris paling atas script.js begitu file itu mulai dieksekusi
+  // (lihat komentar di sana) -- TANPA kedip, karena semua terjadi
+  // sinkron dalam satu proses yang sama seperti class
+  // zp-tagihan-restore di atas.
+  document.documentElement.classList.add('zp-app-loading');
+} catch (e) { /* sessionStorage tidak tersedia (mode privat dsb) -- abaikan */ }
+</script>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>ZAYAPRO — Kelola Uang Masuk &amp; Keluar</title>
@@ -5786,6 +5848,27 @@ tbody tr:last-child td{border-bottom:none;}
   .bd-skel-bar{animation:none;}
 }
 
+/* ---- Skeleton loading "kartu putih" generik ----
+   Dipakai di halaman Tagihan & Hutang, Laporan, Dompet, dan
+   Pengaturan selagi html punya class "zp-app-loading" (dipasang
+   PALING ATAS <head>, dilepas lagi di baris paling atas script.js
+   begitu file itu mulai dieksekusi -- lihat komentar di kedua
+   tempat itu). Karena class ini di-toggle sebelum/sesudah satu
+   proses sinkron yang sama, tidak ada kedip sama sekali -- yang
+   terlihat cuma: skeleton tampil selama halaman menunggu login +
+   tarik data cloud, lalu digantikan konten aslinya begitu siap. */
+.zp-skel-card{
+  background:var(--card);border:1px solid var(--line);border-radius:16px;
+  padding:16px 18px;box-shadow:var(--shadow-sm);
+}
+.zp-page-skel{display:none;flex-direction:column;gap:12px;}
+html.zp-app-loading .page-body > .zp-page-skel{display:flex;}
+html.zp-app-loading .page-body > .bd-empty{display:none;}
+/* Baris 1 kartu (judul pendek) + baris 2 (lebih panjang) -- disusun
+   beda-beda sedikit lebarnya antar kartu supaya tidak terasa
+   berulang persis sama. */
+.zp-skel-card .bd-skel-bar + .bd-skel-bar{margin-top:8px;}
+
 /* ---- Preview terbatas di popup notifikasi + tombol lihat semua ---- */
 .notif-list-more{
   text-align:center;font-size:11.5px;font-weight:700;color:var(--forest-glow);
@@ -7456,6 +7539,23 @@ body.is-scrolling *{
       <p>Grafik, komposisi, dan riwayat transaksimu</p>
     </div>
     <div class="page-body">
+      <div class="zp-page-skel" aria-hidden="true">
+        <div class="zp-skel-card">
+          <div class="bd-skel-bar" style="width:38%;height:14px;"></div>
+          <div class="bd-skel-bar" style="width:92%;height:32px;margin-top:12px;"></div>
+        </div>
+        <div class="zp-skel-card">
+          <div class="bd-skel-bar" style="width:45%;height:14px;"></div>
+          <div class="bd-skel-bar" style="width:100%;height:10px;"></div>
+          <div class="bd-skel-bar" style="width:80%;height:10px;"></div>
+          <div class="bd-skel-bar" style="width:65%;height:10px;"></div>
+        </div>
+        <div class="zp-skel-card">
+          <div class="bd-skel-bar" style="width:30%;height:14px;"></div>
+          <div class="bd-skel-bar" style="width:100%;height:10px;"></div>
+          <div class="bd-skel-bar" style="width:70%;height:10px;"></div>
+        </div>
+      </div>
       <div class="bd-empty">
         <div class="bd-empty-ic">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 12h18"/></svg>
@@ -7473,6 +7573,17 @@ body.is-scrolling *{
       <p>Perangkat dan akun sosial media kamu</p>
     </div>
     <div class="page-body">
+      <div class="zp-page-skel" aria-hidden="true">
+        <div class="zp-skel-card">
+          <div class="bd-skel-bar" style="width:35%;height:14px;"></div>
+          <div class="bd-skel-bar" style="width:88%;height:10px;"></div>
+        </div>
+        <div class="zp-skel-card">
+          <div class="bd-skel-bar" style="width:50%;height:14px;"></div>
+          <div class="bd-skel-bar" style="width:95%;height:10px;"></div>
+          <div class="bd-skel-bar" style="width:60%;height:10px;"></div>
+        </div>
+      </div>
       <div class="bd-empty">
         <div class="bd-empty-ic">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 12h18"/></svg>
@@ -7490,6 +7601,21 @@ body.is-scrolling *{
       <p>Akun &amp; pengaturan aplikasi</p>
     </div>
     <div class="page-body">
+      <div class="zp-page-skel" aria-hidden="true">
+        <div class="zp-skel-card">
+          <div class="bd-skel-bar" style="width:42%;height:14px;"></div>
+          <div class="bd-skel-bar" style="width:75%;height:10px;"></div>
+        </div>
+        <div class="zp-skel-card">
+          <div class="bd-skel-bar" style="width:55%;height:14px;"></div>
+          <div class="bd-skel-bar" style="width:90%;height:10px;"></div>
+          <div class="bd-skel-bar" style="width:40%;height:10px;"></div>
+        </div>
+        <div class="zp-skel-card">
+          <div class="bd-skel-bar" style="width:33%;height:14px;"></div>
+          <div class="bd-skel-bar" style="width:85%;height:10px;"></div>
+        </div>
+      </div>
       <div class="bd-empty">
         <div class="bd-empty-ic">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 12h18"/></svg>
@@ -7866,7 +7992,21 @@ body.is-scrolling *{
     </div>
 
     <div class="detail-page bd-page-body bd-page-body-head">
-      <div class="bd-summary-row" id="bdAllSummary"></div>
+      <div class="bd-summary-row" id="bdAllSummary">
+        <!-- Skeleton statis (bukan lewat JS) -- ditimpa sepenuhnya
+             oleh renderBdAllPage() (script.js) begitu data asli
+             siap, apa pun kondisinya, jadi tidak perlu di-toggle
+             lewat class zp-app-loading segala. Lihat juga #bdAllList
+             di bawah untuk penjelasan yang sama. -->
+        <div class="zp-skel-card" aria-hidden="true">
+          <div class="bd-skel-bar" style="width:44%;height:12px;"></div>
+          <div class="bd-skel-bar" style="width:60%;height:20px;margin-top:8px;"></div>
+        </div>
+        <div class="zp-skel-card" aria-hidden="true">
+          <div class="bd-skel-bar" style="width:44%;height:12px;"></div>
+          <div class="bd-skel-bar" style="width:60%;height:20px;margin-top:8px;"></div>
+        </div>
+      </div>
 
       <!-- ===== CATATAN (tagihan/hutang yang punya isian "Catatan") =====
            Sengaja diletakkan DI DALAM .bd-sticky-head (bareng ringkasan &
@@ -7938,7 +8078,19 @@ body.is-scrolling *{
   </div>
 
   <div class="detail-page bd-page-body bd-page-body-rest">
-    <div class="bd-list" id="bdAllList"></div>
+    <div class="bd-list" id="bdAllList">
+      <!-- Skeleton statis (bukan lewat JS) -- SELALU ditimpa penuh
+           (innerHTML diganti seluruhnya) oleh renderBdAllPage() di
+           script.js begitu data asli siap, jadi otomatis hilang
+           sendiri tanpa perlu kode tambahan/class apa pun untuk
+           membersihkannya. -->
+      <div class="bd-item bd-skel" aria-hidden="true"><div class="bd-item-ic bd-skel-bar" style="width:40px;height:40px;border-radius:13px;"></div><div class="bd-item-body"><div class="bd-skel-bar bd-skel-title"></div><div class="bd-skel-bar bd-skel-sub"></div></div><div class="bd-item-actions"><div class="bd-skel-bar bd-skel-btn"></div><div class="bd-skel-bar bd-skel-btn"></div></div></div>
+      <div class="bd-item bd-skel" aria-hidden="true"><div class="bd-item-ic bd-skel-bar" style="width:40px;height:40px;border-radius:13px;"></div><div class="bd-item-body"><div class="bd-skel-bar bd-skel-title"></div><div class="bd-skel-bar bd-skel-sub"></div></div><div class="bd-item-actions"><div class="bd-skel-bar bd-skel-btn"></div><div class="bd-skel-bar bd-skel-btn"></div></div></div>
+      <div class="bd-item bd-skel" aria-hidden="true"><div class="bd-item-ic bd-skel-bar" style="width:40px;height:40px;border-radius:13px;"></div><div class="bd-item-body"><div class="bd-skel-bar bd-skel-title"></div><div class="bd-skel-bar bd-skel-sub"></div></div><div class="bd-item-actions"><div class="bd-skel-bar bd-skel-btn"></div><div class="bd-skel-bar bd-skel-btn"></div></div></div>
+      <div class="bd-item bd-skel" aria-hidden="true"><div class="bd-item-ic bd-skel-bar" style="width:40px;height:40px;border-radius:13px;"></div><div class="bd-item-body"><div class="bd-skel-bar bd-skel-title"></div><div class="bd-skel-bar bd-skel-sub"></div></div><div class="bd-item-actions"><div class="bd-skel-bar bd-skel-btn"></div><div class="bd-skel-bar bd-skel-btn"></div></div></div>
+      <div class="bd-item bd-skel" aria-hidden="true"><div class="bd-item-ic bd-skel-bar" style="width:40px;height:40px;border-radius:13px;"></div><div class="bd-item-body"><div class="bd-skel-bar bd-skel-title"></div><div class="bd-skel-bar bd-skel-sub"></div></div><div class="bd-item-actions"><div class="bd-skel-bar bd-skel-btn"></div><div class="bd-skel-bar bd-skel-btn"></div></div></div>
+      <div class="bd-item bd-skel" aria-hidden="true"><div class="bd-item-ic bd-skel-bar" style="width:40px;height:40px;border-radius:13px;"></div><div class="bd-item-body"><div class="bd-skel-bar bd-skel-title"></div><div class="bd-skel-bar bd-skel-sub"></div></div><div class="bd-item-actions"><div class="bd-skel-bar bd-skel-btn"></div><div class="bd-skel-bar bd-skel-btn"></div></div></div>
+    </div>
   </div>
 </div>
 
@@ -7987,29 +8139,12 @@ body.is-scrolling *{
       var ov = document.getElementById('bdAllOverlay');
       if (ov) ov.classList.add('open');
       document.body.style.overflow = 'hidden';
-
-      // Isi #bdAllList dengan kartu skeleton (bukan daftar kosong)
-      // selagi menunggu script.js + data asli siap -- supaya terasa
-      // "sedang memuat", bukan seolah datanya benar-benar kosong.
-      // renderBdAllPage() di script.js akan menimpa innerHTML ini
-      // sepenuhnya begitu data asli sudah tersedia, jadi skeleton
-      // otomatis tergantikan tanpa perlu kode tambahan.
-      var listEl = document.getElementById('bdAllList');
-      if (listEl && !listEl.children.length) {
-        var skelCard =
-          '<div class="bd-item bd-skel">' +
-            '<div class="bd-item-ic bd-skel-bar" style="width:40px;height:40px;border-radius:13px;"></div>' +
-            '<div class="bd-item-body">' +
-              '<div class="bd-skel-bar bd-skel-title"></div>' +
-              '<div class="bd-skel-bar bd-skel-sub"></div>' +
-            '</div>' +
-            '<div class="bd-item-actions">' +
-              '<div class="bd-skel-bar bd-skel-btn"></div>' +
-              '<div class="bd-skel-bar bd-skel-btn"></div>' +
-            '</div>' +
-          '</div>';
-        listEl.innerHTML = skelCard.repeat(6);
-      }
+      // Catatan: kartu skeleton di #bdAllSummary/#bdAllList TIDAK
+      // lagi disisipkan di sini lewat JS -- sekarang sudah statis
+      // di markup HTML-nya langsung (lihat elemen-elemen itu di
+      // atas), jadi otomatis kelihatan dari frame pertama tanpa
+      // perlu kode tambahan, dan otomatis tertimpa konten asli
+      // begitu renderBdAllPage() (script.js) jalan.
     }
   } catch (e) { /* sessionStorage tidak tersedia (mode privat dsb) -- abaikan */ }
 })();
