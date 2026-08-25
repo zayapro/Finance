@@ -6143,13 +6143,31 @@ html.zp-app-loading .page-body > .lap-panel{display:none;}
    #categoryFilter) supaya logika filter di script.js tidak perlu
    diutak-atik -- cukup dipindah lokasinya & ditata ulang tampilannya
    di sini. */
-.lap-filter-overlay{background:var(--paper);}
-.lap-filter-page{max-width:640px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;padding:0;}
+.lap-filter-overlay{
+  background:var(--paper);
+  /* z-index DINAIKKAN melebihi .bottom-nav (z-index:600, lihat blok
+     "Mode nav+halaman" di bawah) -- overlay halaman-penuh lain (mis.
+     #detailPageOverlay) sengaja masih TAMPIL DI BAWAH nav bawah supaya
+     nav tetap bisa dipakai pindah tab, tapi popup Filter ini beda:
+     diminta benar-benar menutupi nav bawah selagi terbuka (mirip
+     halaman "Pengaturan" penuh), makanya dipisah jadi variabel sendiri
+     alih-alih ikut var(--z-page) yang dipakai overlay lain. */
+  z-index:700;
+}
+.lap-filter-page{max-width:640px;margin:0 auto;min-height:100%;min-height:100dvh;display:flex;flex-direction:column;padding:0;}
+/* ---- Header oranye + kartu putih melengkung DISAMAKAN PERSIS dengan
+   pola .page-banner + .page-body di halaman Laporan/Dompet/Pengaturan:
+   banner dikasih padding-bawah ekstra supaya ada "ruang" oranye untuk
+   ditumpangi, lalu .lap-filter-card ditarik naik (margin-top negatif)
+   dengan sudut atas melengkung (border-radius 28px) sehingga tampak
+   seperti kartu putih yang "duduk" di atas banner oranye -- persis
+   lengkungan yang ada di halaman Laporan asli, bukan potongan lurus
+   seperti sebelumnya. */
 .lap-filter-head{
-  display:flex;align-items:center;gap:10px;
+  display:flex;align-items:center;gap:10px;flex:0 0 auto;
+  position:relative;z-index:1;
   background:var(--nav-orange);color:#FFF8F1;
-  padding:calc(16px + env(safe-area-inset-top,0px)) 18px 18px;
-  position:sticky;top:0;z-index:2;
+  padding:calc(16px + env(safe-area-inset-top,0px)) 18px clamp(40px,9vw,56px);
 }
 .lap-filter-back-btn{
   width:36px;height:36px;border-radius:50%;border:none;flex-shrink:0;
@@ -6168,7 +6186,19 @@ html.zp-app-loading .page-body > .lap-panel{display:none;}
   touch-action:manipulation;-webkit-tap-highlight-color:transparent;
 }
 .lap-filter-reset-btn:hover{text-decoration:underline;}
-.lap-filter-body{flex:1;padding:18px 16px 24px;display:flex;flex-direction:column;gap:16px;}
+/* ---- Kartu putih (dulu bernama .lap-filter-body): sekarang menumpang
+   di atas banner (margin-top negatif + border-radius 28px 28px 0 0,
+   persis .page-body) dan diberi flex:1 supaya TETAP mengisi putih
+   sampai ke bawah layar walau isinya pendek -- jadi tidak ada celah
+   abu-abu/oranye tersisa di bawah, senada dgn halaman Laporan asli. */
+.lap-filter-card{
+  flex:1 1 auto;position:relative;z-index:2;
+  background:var(--card);
+  margin:-24px 0 0;
+  border-radius:28px 28px 0 0;
+  padding:22px 16px 20px;
+  display:flex;flex-direction:column;gap:16px;
+}
 .lap-filter-field{position:relative;}
 .lap-filter-field input[type="search"]{
   width:100%;padding:11px 14px 11px 36px;border-radius:12px;border:1px solid var(--line);
@@ -6236,13 +6266,14 @@ html.zp-app-loading .page-body > .lap-panel{display:none;}
   color:var(--ink-faint);pointer-events:none;
 }
 .lap-filter-footer{
-  position:sticky;bottom:0;padding:14px 16px calc(14px + env(safe-area-inset-bottom,0px));
-  background:linear-gradient(180deg, rgba(244,246,249,0) 0%, var(--paper) 35%);
+  flex:0 0 auto;position:relative;z-index:2;
+  background:var(--card);
+  padding:6px 16px calc(18px + env(safe-area-inset-bottom,0px));
 }
 .lap-filter-save-btn{width:100%;justify-content:center;padding:14px;border-radius:14px;font-size:14.5px;}
 @media (max-width:400px){
   .lap-filter-head{padding-left:14px;padding-right:14px;}
-  .lap-filter-body{padding-left:14px;padding-right:14px;}
+  .lap-filter-card{padding-left:14px;padding-right:14px;}
 }
 /* Baris 1 kartu (judul pendek) + baris 2 (lebih panjang) -- disusun
    beda-beda sedikit lebarnya antar kartu supaya tidak terasa
@@ -8022,7 +8053,7 @@ body.is-scrolling *{
         <button type="button" class="lap-filter-reset-btn" id="lapFilterResetBtn">Reset</button>
       </div>
 
-      <div class="lap-filter-body">
+      <div class="lap-filter-card">
         <div class="lap-filter-field">
           <span class="search-ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span>
           <input type="search" id="searchInput" placeholder="Cari kategori atau keterangan...">
