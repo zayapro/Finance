@@ -68,11 +68,81 @@ html.zp-tagihan-restore #bnTagihanBtn .bn-ic-wrap{
   background:color-mix(in srgb, var(--nav-orange) 15%, transparent) !important;
   color:var(--nav-orange) !important;
 }
+
+/* FIX "refresh di tab Laporan/Dompet/Pengaturan kelihatan lompat
+   sekilas ke Beranda, lalu pindah lagi ke tab asal disertai
+   bayangan/animasi masuk": akar masalahnya sama persis dengan fix
+   zp-tagihan-restore di atas, cuma untuk 3 tab biasa ini (bukan
+   overlay Tagihan & Hutang). Tab aktif memang SUDAH disimpan ke
+   sessionStorage (zp_active_page, lihat script navigasi di akhir
+   <body>) dan dipulihkan -- TAPI baru dipulihkan lewat JS di akhir
+   <body>, jauh SETELAH browser sempat menggambar frame pertama
+   dengan #page-beranda apa adanya (karena di markup HTML,
+   #page-beranda memang satu-satunya yang class="active" secara
+   default). Itulah sumber "lompat ke Beranda sekilas". Lalu begitu
+   JS di akhir <body> menambahkan class .active ke halaman yang
+   benar (mis. #page-dompet), animasi masuk appPageIn (fade + geser
+   dari bawah, lihat definisinya lebih bawah) ikut terpicu ulang --
+   itulah "bayangan"/perpindahan yang masih terlihat SETELAH
+   lompatan pertama tadi.
+   Diperbaiki dengan pola sama seperti zp-tagihan-restore: baca
+   sessionStorage SEPALING AWAL mungkin (script tepat di bawah style
+   ini) lalu style di sini langsung memaksa halaman yang benar
+   tampil & Beranda disembunyikan SEJAK FRAME PERTAMA, TANPA animasi
+   (animation:none) karena ini pemulihan, bukan perpindahan tab oleh
+   user. Class-class ini dilepas lagi tanpa kedip di baris paling
+   atas script.js (sinkron, sama seperti zp-tagihan-restore), dan
+   JS di akhir <body> juga sudah disesuaikan supaya tidak memutar
+   ulang animasi masuknya saat menyusul menyamakan status internal
+   (lihat catatan zpApplyActiveNoAnim di sana). */
+html.zp-page-restore-laporan #page-beranda,
+html.zp-page-restore-dompet #page-beranda,
+html.zp-page-restore-saya #page-beranda{
+  display:none !important;
+}
+html.zp-page-restore-laporan #page-laporan,
+html.zp-page-restore-dompet #page-dompet,
+html.zp-page-restore-saya #page-saya{
+  display:flex !important;
+  flex-direction:column;
+  flex:1;
+  animation:none !important;
+}
+html.zp-page-restore-laporan #bottomNav .bn-item.active:not([data-page="laporan"]),
+html.zp-page-restore-dompet #bottomNav .bn-item.active:not([data-page="dompet"]),
+html.zp-page-restore-saya #bottomNav .bn-item.active:not([data-page="saya"]){
+  color:#374151 !important;
+}
+html.zp-page-restore-laporan #bottomNav .bn-item.active:not([data-page="laporan"]) .bn-ic-wrap,
+html.zp-page-restore-dompet #bottomNav .bn-item.active:not([data-page="dompet"]) .bn-ic-wrap,
+html.zp-page-restore-saya #bottomNav .bn-item.active:not([data-page="saya"]) .bn-ic-wrap{
+  background:transparent !important;
+  color:#4B5563 !important;
+}
+html.zp-page-restore-laporan #bottomNav .bn-item[data-page="laporan"],
+html.zp-page-restore-dompet #bottomNav .bn-item[data-page="dompet"],
+html.zp-page-restore-saya #bottomNav .bn-item[data-page="saya"]{
+  color:#111827 !important;
+}
+html.zp-page-restore-laporan #bottomNav .bn-item[data-page="laporan"] .bn-ic-wrap,
+html.zp-page-restore-dompet #bottomNav .bn-item[data-page="dompet"] .bn-ic-wrap,
+html.zp-page-restore-saya #bottomNav .bn-item[data-page="saya"] .bn-ic-wrap{
+  background:color-mix(in srgb, var(--nav-orange) 15%, transparent) !important;
+  color:var(--nav-orange) !important;
+}
 </style>
 <script>
 try {
   if (sessionStorage.getItem('zp_tagihan_open') === '1') {
     document.documentElement.classList.add('zp-tagihan-restore');
+  }
+  // Baca tab aktif terakhir (Laporan/Dompet/Pengaturan) SEPALING AWAL
+  // mungkin, lalu pasang class pemicu style zp-page-restore-* di atas
+  // -- lihat catatan panjang di <style> untuk alasannya. Beranda tidak
+  // butuh class apa pun karena memang sudah default di markup HTML.
+  var zpSavedPage = sessionStorage.getItem('zp_active_page');
+  if (zpSavedPage === 'laporan' || zpSavedPage === 'dompet' || zpSavedPage === 'saya') {
+    document.documentElement.classList.add('zp-page-restore-' + zpSavedPage);
   }
   // Class umum "sedang memuat" -- dipasang di SETIAP load/refresh
   // (bukan cuma kasus overlay Tagihan & Hutang), dipakai untuk
@@ -6469,6 +6539,15 @@ html.zp-app-loading .page-body > .bd-empty{display:none;}
   @media (prefers-reduced-motion:reduce){
     .app-page.active{animation:none;}
   }
+  /* Dipakai HANYA sesaat oleh restoreActivePage() (lihat script di
+     akhir <body>) waktu menyamakan status .active "resmi" untuk tab
+     yang barusan dipulihkan lewat sessionStorage (bukan diklik user).
+     Tanpa ini, class .active yang baru pertama kali ditambahkan ke
+     halaman tsb tetap memicu animasi appPageIn dari awal lagi --
+     padahal halaman itu sudah kelihatan normal sejak frame pertama
+     berkat style zp-page-restore-* di <head>. Class ini dilepas lagi
+     sesaat setelahnya (lihat komentar di JS-nya). */
+  .app-page.active.zp-no-anim{animation:none;}
 
   /* Template banner oranye kecil untuk halaman selain Beranda (Laporan/
      Dompet/Saya) — banner utama (.banner) yang besar dengan saldo cuma
@@ -9468,13 +9547,36 @@ body.is-scrolling *{
 
   // ---- Pulihkan tab aktif dari sesi sebelumnya (kalau ada) SEBELUM
   // apa pun lain dirender, supaya refresh tetap di tab yang sama. ----
+  // CATATAN (zpApplyActiveNoAnim): untuk Laporan/Dompet/Pengaturan,
+  // tampilan yang BENAR sudah dipaksa tampil sejak frame pertama oleh
+  // style zp-page-restore-* di <head> (murni CSS, class .active
+  // "resmi" elemen-nya belum disentuh sama sekali). Baris di bawah
+  // cuma menyusul menyamakan status INTERNAL (class .active yang
+  // sesungguhnya + variabel currentPageName) supaya showPage() dkk
+  // berikutnya berjalan normal. Kalau class .active ditambahkan
+  // dengan cara biasa di sini, animasi masuk appPageIn akan terpicu
+  // DARI AWAL LAGI walau halaman sudah kelihatan normal sejak tadi --
+  // itulah "bayangan"/perpindahan susulan yang dikeluhkan. Makanya
+  // class .zp-no-anim disertakan BERSAMAAN saat .active ditambahkan
+  // (mematikan animasi utk momen itu saja), lalu dilepas lagi setelah
+  // 1 frame supaya tidak mempengaruhi perpindahan tab manual berikutnya
+  // (klik nav bawah tetap dapat animasi masuk yang halus seperti biasa).
   (function restoreActivePage(){
     var saved = null;
     try { saved = sessionStorage.getItem(ACTIVE_PAGE_KEY); } catch(e){}
     if (saved && validPageNames.indexOf(saved) !== -1 && saved !== currentPageName) {
       currentPageName = saved;
-      pages.forEach(function(p){ p.classList.toggle('active', p.dataset.page === saved); });
+      pages.forEach(function(p){
+        var isTarget = p.dataset.page === saved;
+        if (isTarget) p.classList.add('zp-no-anim');
+        p.classList.toggle('active', isTarget);
+      });
       navBtns.forEach(function(b){ b.classList.toggle('active', b.dataset.page === saved); });
+      requestAnimationFrame(function(){
+        requestAnimationFrame(function(){
+          pages.forEach(function(p){ p.classList.remove('zp-no-anim'); });
+        });
+      });
     }
   })();
   updateFooterVisibility(currentPageName);

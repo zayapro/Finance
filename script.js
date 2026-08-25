@@ -32,6 +32,16 @@
 try {
   document.documentElement.classList.remove('zp-tagihan-restore');
   document.documentElement.classList.remove('zp-app-loading');
+  // Lepas juga class pemulihan tab Laporan/Dompet/Pengaturan (lihat
+  // <style>/<script> paling atas <head> index.html) -- sama-sama
+  // sinkron & tanpa kedip seperti 2 class di atas. Setelah ini,
+  // kendali visual halaman aktif sepenuhnya balik ke mekanisme ASLI
+  // (showPage()/restoreActivePage() di akhir <body>), yang sudah
+  // dibuat "sadar" akan pemulihan ini supaya tidak memutar ulang
+  // animasi masuk (lihat zpApplyActiveNoAnim di sana).
+  document.documentElement.classList.remove('zp-page-restore-laporan');
+  document.documentElement.classList.remove('zp-page-restore-dompet');
+  document.documentElement.classList.remove('zp-page-restore-saya');
 } catch (e) { /* abaikan */ }
 
 
