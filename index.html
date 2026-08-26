@@ -4989,10 +4989,21 @@ tbody tr:last-child td{border-bottom:none;}
   width:100%;max-width:100%;height:100%;max-height:100%;
   display:flex;flex-direction:column;
   box-shadow:none;
-  /* Gradasi oranye MENUTUPI SELURUH layar (bukan cuma area header) --
-     supaya kartu putih yg diberi margin di bawah tetap "dikelilingi"
-     warna di kiri/kanan/bawahnya, bukan berakhir putih kosong. */
-  background:linear-gradient(180deg, var(--primary-deep) 0%, var(--primary) 40%, var(--primary) 100%);
+  /* Oranye disamakan PERSIS dengan oranye banner Beranda (#FA8B1E,
+     lihat .banner{background:#FA8B1E}) -- SEBELUMNYA popup ini pakai
+     var(--primary)/var(--primary-deep) (oranye-merah #F2672B/#C2410C),
+     beda tone dgn banner. --banner-orange & --banner-orange-deep di
+     bawah CUMA dipakai lokal di dalam popup struk ini (di-scope lewat
+     selector .receipt-modal), jadi tidak mengubah warna --primary di
+     bagian lain aplikasi. #D97706 dipakai sbg titik gelap gradasi krn
+     sudah dipakai di tempat lain file ini sbg pasangan gelap oranye
+     (lihat garis aksen atas kartu, var(--brass) dkk). Gradasi
+     MENUTUPI SELURUH layar (bukan cuma area header) supaya kartu putih
+     yg diberi margin di bawah tetap "dikelilingi" warna di
+     kiri/kanan/bawahnya, bukan berakhir putih kosong. */
+  --banner-orange:#FA8B1E;
+  --banner-orange-deep:#D97706;
+  background:linear-gradient(180deg, var(--banner-orange-deep) 0%, var(--banner-orange) 32%, var(--banner-orange) 100%);
   transform:translateY(100%);
   transition:transform .4s cubic-bezier(.22,1,.36,1), opacity .32s ease;
 }
@@ -5014,17 +5025,25 @@ tbody tr:last-child td{border-bottom:none;}
 .receipt-close-btn:hover{background:rgba(255,255,255,0.34);}
 .receipt-close-btn:active{transform:scale(.9);}
 
-.receipt-brand{display:flex;align-items:center;justify-content:center;gap:7px;}
+/* Logo brand diubah SUSUNANNYA jadi VERTIKAL (gambar/lambang di atas,
+   nama aplikasi kecil di bawahnya) -- persis gambar referensi "Qita
+   by BRI": lambang besar di atas, nama merek kecil menempel tepat di
+   bawahnya sbg keterangan, BUKAN lagi sejajar/horizontal spt
+   sebelumnya (ikon kecil + nama besar bersebelahan). */
+.receipt-brand{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;}
 .receipt-brand-mark{
-  width:22px;height:22px;border-radius:7px;flex-shrink:0;
+  width:42px;height:42px;border-radius:13px;flex-shrink:0;
   background:rgba(255,255,255,0.22);color:#fff;
   display:flex;align-items:center;justify-content:center;
 }
+.receipt-brand-mark svg{width:20px;height:20px;}
 .receipt-brand-mark img{width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block;}
-/* Nama brand di header popup -- font DISAMAKAN dgn judul halaman
-   "Laporan" (.page-banner h1: Poppins weight 500, letter-spacing
-   -0.005em), sebelumnya Plus Jakarta Sans weight 800. */
-.receipt-brand-name{font-family:'Poppins',sans-serif;font-weight:500;font-size:14.5px;letter-spacing:-0.005em;color:#fff;}
+/* Nama brand SEKARANG kecil (bukan lagi ukuran judul), duduk tepat di
+   bawah lambang -- meniru "by BRI" pd referensi yg ukurannya jauh
+   lebih kecil drpd wordmark "Qita" di atasnya & warnanya sedikit
+   diredupkan (bukan putih solid) supaya terasa sbg keterangan/tagline,
+   bukan judul utama. */
+.receipt-brand-name{font-family:'Poppins',sans-serif;font-weight:500;font-size:11px;letter-spacing:0.01em;color:rgba(255,255,255,0.82);}
 
 /* Wadah scroll utk kartu putih -- diberi jarak/margin di
    kiri-kanan-bawah supaya gradasi oranye tetap kelihatan
@@ -5033,15 +5052,22 @@ tbody tr:last-child td{border-bottom:none;}
 .receipt-card-wrap{
   flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;
   display:flex;flex-direction:column;
-  padding:0 14px calc(env(safe-area-inset-bottom,0px) + 16px);
+  padding:0 14px calc(env(safe-area-inset-bottom,0px) + 18px);
 }
 
 /* Kartu putih -- sudut dibulatkan PENUH di keempat sisi & punya
    bayangan sendiri, supaya benar-benar terlihat "mengambang" di atas
-   gradasi (BUKAN rata ke pinggir layar). */
+   gradasi (BUKAN rata ke pinggir layar). SEBELUMNYA flex:1 1 auto
+   (memaksa kartu meregang mengisi SISA layar, jadi Bagikan/Unduh/
+   Selesai yg dulu ada di dalamnya ikut terdorong ke bawah kartu).
+   Sekarang tombol2 itu sudah dipindah KELUAR jadi .receipt-actions
+   tersendiri (lihat bawah), jadi kartu ini dibiarkan flex:0 1 auto
+   supaya tingginya mengikuti isi -- persis gambar referensi, ada
+   jarak gradasi oranye yg kelihatan di ANTARA kartu putih & baris
+   tombol di bawahnya, bukan tombol menyatu jadi bagian kartu. */
 .receipt-body{
-  position:relative;flex:1 1 auto;background:#fff;
-  border-radius:24px;padding:26px 22px 20px;text-align:center;
+  position:relative;flex:0 1 auto;background:#fff;
+  border-radius:24px;padding:26px 22px 22px;text-align:center;
   box-shadow:0 20px 45px -14px rgba(15,23,42,0.35);
   display:flex;flex-direction:column;
 }
@@ -5064,21 +5090,42 @@ tbody tr:last-child td{border-bottom:none;}
 }
 
 .receipt-detail-title{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-faint);text-align:left;margin-bottom:12px;}
-.receipt-detail-list{display:flex;flex-direction:column;gap:14px;text-align:left;}
+/* Daftar rincian kini dibungkus jadi SATU KARTU tersendiri (bukan lagi
+   baris polos nempel ke badan putih) -- gaya "kartu di dalam kartu"
+   persis gambar referensi (blok abu-abu lembut berisi nama
+   pengirim/penerima). Tiap baris dipisah garis putus2 tipis (bukan
+   baris ke-2 dst saja) supaya terlihat seperti daftar struk. */
+.receipt-detail-list{
+  display:flex;flex-direction:column;gap:14px;text-align:left;
+  background:color-mix(in srgb, var(--banner-orange, var(--primary)) 5%, var(--paper));
+  border:1px solid color-mix(in srgb, var(--banner-orange, var(--primary)) 10%, var(--line));
+  border-radius:16px;padding:14px 15px;
+}
 .receipt-detail-row{display:flex;align-items:flex-start;gap:11px;}
+.receipt-detail-row + .receipt-detail-row{padding-top:14px;border-top:1px dashed var(--line);}
 .receipt-detail-ic{
   width:34px;height:34px;border-radius:10px;flex-shrink:0;
   display:flex;align-items:center;justify-content:center;
+  background:#fff;box-shadow:0 1px 3px rgba(15,23,42,0.08);
 }
 .receipt-detail-text{min-width:0;flex:1;}
 .receipt-detail-label{font-size:15px;font-weight:700;color:var(--ink);line-height:1.25;word-break:break-word;}
 .receipt-detail-sub{font-size:12.5px;color:var(--ink-soft);margin-top:1px;word-break:break-word;}
 
+/* "Lihat Detail" DIUBAH jadi bentuk PIL sungguhan (sebelumnya cuma
+   teks+panah polos tanpa latar) -- diberi latar oranye lembut &
+   sudut membulat penuh (999px) supaya lebih terlihat sbg tombol yg
+   bisa ditekan, senada gradasi oranye baru popup ini. */
 .receipt-expand-btn{
-  display:flex;align-items:center;justify-content:center;gap:5px;
-  width:100%;margin:16px 0 0;padding:6px;background:none;border:none;
-  font-size:12.5px;font-weight:700;color:var(--primary-deep);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  width:auto;margin:16px auto 0;padding:8px 18px;border-radius:999px;
+  background:color-mix(in srgb, var(--banner-orange, var(--primary)) 12%, transparent);
+  border:none;
+  font-size:12.5px;font-weight:700;color:var(--banner-orange-deep, var(--primary-deep));cursor:pointer;
+  transition:background .15s ease, transform .15s ease;
 }
+.receipt-expand-btn:hover{background:color-mix(in srgb, var(--banner-orange, var(--primary)) 20%, transparent);}
+.receipt-expand-btn:active{transform:scale(.96);}
 .receipt-expand-btn svg{transition:transform .2s ease;}
 .receipt-expand-btn.open svg{transform:rotate(180deg);}
 .receipt-expand-body{max-height:0;overflow:hidden;transition:max-height .25s ease;text-align:left;}
@@ -5087,16 +5134,28 @@ tbody tr:last-child td{border-bottom:none;}
 .receipt-expand-row span:first-child{color:var(--ink-faint);flex-shrink:0;}
 .receipt-expand-row span:last-child{color:var(--ink);font-weight:600;text-align:right;word-break:break-all;}
 
+/* Baris Bagikan/Unduh/Selesai -- sekarang jadi elemen tersendiri yg
+   duduk LANGSUNG DI ATAS GRADASI ORANYE (bukan lagi di dalam kartu
+   putih, lihat catatan di .receipt-body), persis posisi di gambar
+   referensi: dua tombol bulat lalu satu pil besar, "mengambang" di
+   atas warna, bukan menyatu ke badan kartu. margin-top:auto di sini
+   mendorongnya nempel ke bagian paling bawah .receipt-card-wrap. */
 .receipt-actions{
-  display:flex;align-items:center;gap:10px;flex-shrink:0;margin-top:auto;padding-top:20px;
+  display:flex;align-items:center;gap:10px;flex-shrink:0;margin-top:auto;padding-top:22px;
 }
 .receipt-icon-btn{
   width:46px;height:46px;border-radius:50%;flex-shrink:0;
   display:flex;align-items:center;justify-content:center;
-  background:var(--primary-soft);color:var(--primary-deep);border:none;cursor:pointer;
+  /* Latar tombol bulat DIUBAH jadi putih tembus pandang (sebelumnya
+     krem/oranye muda var(--primary-soft)) -- di atas gradasi oranye
+     solid, latar krem nyaris tak kelihatan bedanya dgn latar
+     belakangnya sendiri. Putih transparan (gaya "glass") jauh lebih
+     kontras & senada dgn tombol Bagikan/Unduh bulat pd gambar
+     referensi yg juga duduk di atas warna solid gradasinya. */
+  background:rgba(255,255,255,0.22);color:#fff;border:none;cursor:pointer;
   transition:transform .15s ease, background .15s ease;
 }
-.receipt-icon-btn:hover{background:#FFE4CE;}
+.receipt-icon-btn:hover{background:rgba(255,255,255,0.34);}
 .receipt-icon-btn:active{transform:scale(.92);}
 .receipt-done-btn{
   flex:1;border-radius:999px;padding:13px;
@@ -5106,7 +5165,16 @@ tbody tr:last-child td{border-bottom:none;}
      Plus Jakarta Sans di bobot yg sama, pola yg sama persis dgn
      override #historyLoadMoreWrap .btn-ghost di halaman Laporan). */
   font-family:'Poppins',sans-serif;font-weight:600;letter-spacing:-0.005em;
+  /* Pil "Selesai" DIUBAH agar memakai warna oranye BANNER yg lebih
+     gelap (sama keluarga dgn gradasi popup ini), bukan lagi
+     var(--primary) bawaan .btn-primary (oranye-merah, beda tone) --
+     supaya pil solid ini tetap kelihatan sbg tombol yg menonjol/beda
+     dari gradasi di belakangnya (persis pil biru solid pd gambar
+     referensi yg tetap kontras dari latar birunya), bukan melebur. */
+  background:var(--banner-orange-deep, var(--primary-deep));color:#fff;
+  box-shadow:0 10px 24px -10px rgba(0,0,0,0.4);
 }
+.receipt-done-btn:hover{background:#B45F04;}
 
 @media (max-width:480px){
   .receipt-amount{font-size:24px;}
@@ -8994,16 +9062,22 @@ body.is-scrolling *{
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg>
         </button>
         <div class="receipt-expand-body" id="receiptExpandBody"></div>
+      </div>
 
-        <div class="receipt-actions">
-          <button type="button" class="receipt-icon-btn" id="receiptShareBtn" title="Bagikan" aria-label="Bagikan bukti transaksi">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="10.6" x2="15.4" y2="6.4"/><line x1="8.6" y1="13.4" x2="15.4" y2="17.6"/></svg>
-          </button>
-          <button type="button" class="receipt-icon-btn" id="receiptDownloadBtn" title="Unduh" aria-label="Unduh bukti transaksi">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13m0 0-4.5-4.5M12 16l4.5-4.5"/><path d="M4 19.5h16"/></svg>
-          </button>
-          <button type="button" class="btn btn-primary receipt-done-btn" id="receiptDoneBtn">Selesai</button>
-        </div>
+      <!-- Bagikan/Unduh/Selesai SENGAJA dipindah KELUAR dari kartu putih
+           (.receipt-body) supaya duduk langsung di atas gradasi oranye,
+           persis gambar referensi: 2 tombol bulat (Bagikan, Unduh)
+           bersanding dengan 1 tombol pil besar (Selesai), semuanya
+           "mengambang" di atas gradasi -- bukan lagi menyatu jadi
+           bagian bawah kartu putih. -->
+      <div class="receipt-actions">
+        <button type="button" class="receipt-icon-btn" id="receiptShareBtn" title="Bagikan" aria-label="Bagikan bukti transaksi">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="10.6" x2="15.4" y2="6.4"/><line x1="8.6" y1="13.4" x2="15.4" y2="17.6"/></svg>
+        </button>
+        <button type="button" class="receipt-icon-btn" id="receiptDownloadBtn" title="Unduh" aria-label="Unduh bukti transaksi">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13m0 0-4.5-4.5M12 16l4.5-4.5"/><path d="M4 19.5h16"/></svg>
+        </button>
+        <button type="button" class="btn btn-primary receipt-done-btn" id="receiptDoneBtn">Selesai</button>
       </div>
     </div>
   </div>

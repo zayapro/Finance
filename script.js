@@ -6494,11 +6494,14 @@ function drawAndDownloadReceipt(t) {
   // Header gradasi oranye (memudar ke bawah -- padanan warna biru pada
   // referensi struk, diganti oranye sesuai identitas aplikasi ini)
   const headerH = 190;
+  // Warna header disamakan dgn oranye banner Beranda (#FA8B1E, lihat
+  // .banner{background:#FA8B1E} & --banner-orange di popup struk),
+  // BUKAN lagi var(--primary)/#F2672B (oranye-merah, beda tone).
   const headerGrad = ctx.createLinearGradient(0, cardY, 0, cardY + headerH);
-  headerGrad.addColorStop(0, '#C2410C');
-  headerGrad.addColorStop(0.45, '#F2672B');
-  headerGrad.addColorStop(0.78, 'rgba(242,103,43,0.35)');
-  headerGrad.addColorStop(1, 'rgba(242,103,43,0)');
+  headerGrad.addColorStop(0, '#D97706');
+  headerGrad.addColorStop(0.45, '#FA8B1E');
+  headerGrad.addColorStop(0.78, 'rgba(250,139,30,0.35)');
+  headerGrad.addColorStop(1, 'rgba(250,139,30,0)');
   ctx.fillStyle = headerGrad;
   ctx.fillRect(cardX, cardY, cardW, headerH);
   ctx.restore();
@@ -6568,16 +6571,57 @@ function drawAndDownloadReceipt(t) {
     ['Keterangan', t.desc || 'Tanpa keterangan'],
     ['No. Referensi', formatReceiptRef(t.id)]
   ];
-  rows.forEach(([label, value]) => {
+
+  // Baris rincian kini digambar DI ATAS satu kartu abu-abu lembut
+  // (senada perubahan .receipt-detail-list jadi "kartu" di popup HTML)
+  // -- bukan lagi teks polos langsung di atas badan putih. Tinggi
+  // kartu dihitung dulu lewat "dry run" (teks digambar transparan
+  // cuma utk menghitung berapa baris yg dipakai wrapCanvasText),
+  // supaya kartunya pas membungkus 3 baris rincian ini persis,
+  // baru digambar ulang sungguhan di atasnya.
+  const boxPad = 18;
+  const boxX = cardX + 24, boxW = cardW - 48;
+  let dryCy = cy + boxPad;
+  ctx.save();
+  ctx.globalAlpha = 0.001; // "tinta tak terlihat" cuma utk mengukur baris
+  rows.forEach(([, value]) => {
+    ctx.font = '700 17px "Plus Jakarta Sans", sans-serif';
+    dryCy += 22;
+    const linesUsed = wrapCanvasText(ctx, String(value), boxX + 18, dryCy, boxW - 36, 22, 2);
+    dryCy += 22 * linesUsed + 16;
+  });
+  ctx.restore();
+  const boxH = dryCy - cy - 16 + boxPad;
+
+  roundRectPath(ctx, boxX, cy, boxW, boxH, 14);
+  ctx.fillStyle = '#F4F6F9';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(250,139,30,0.14)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  cy += boxPad;
+  rows.forEach(([label, value], idx) => {
+    if (idx > 0) {
+      ctx.strokeStyle = '#E4E8EF';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([5, 5]);
+      ctx.beginPath();
+      ctx.moveTo(boxX + 18, cy - 8);
+      ctx.lineTo(boxX + boxW - 18, cy - 8);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
     ctx.fillStyle = '#8A93A3';
     ctx.font = '700 11.5px "Plus Jakarta Sans", sans-serif';
-    ctx.fillText(label.toUpperCase(), cardX + 24, cy);
+    ctx.fillText(label.toUpperCase(), boxX + 18, cy);
     cy += 22;
     ctx.fillStyle = '#131A2A';
     ctx.font = '700 17px "Plus Jakarta Sans", sans-serif';
-    const linesUsed = wrapCanvasText(ctx, String(value), cardX + 24, cy, cardW - 48, 22, 2);
+    const linesUsed = wrapCanvasText(ctx, String(value), boxX + 18, cy, boxW - 36, 22, 2);
     cy += 22 * linesUsed + 16;
   });
+  cy += boxPad - 16;
 
   ctx.textAlign = 'center';
   ctx.fillStyle = '#8A93A3';
