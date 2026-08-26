@@ -4976,34 +4976,39 @@ tbody tr:last-child td{border-bottom:none;}
    lencana sukses, nominal, rincian, lalu Bagikan/Unduh/Selesai.
    Warna biru pada referensi diganti gradasi ORANYE (var(--primary))
    senada identitas aplikasi ini. ---- */
-/* Popup dibuka FULL LAYAR (menutupi seluruh viewport persis gambar
-   referensi Qita by BRI), bukan kartu mengambang di tengah -- overlay
-   khusus ini tak perlu padding/backdrop-blur krn kontennya sendiri
-   sudah menutupi semuanya. */
-#txReceiptOverlay{padding:0;background:rgba(11,29,22,0.001);}
+/* Popup dibuka FULL LAYAR (menutupi seluruh viewport TERMASUK nav
+   bawah, persis gambar referensi Qita by BRI). z-index sengaja
+   dinaikkan MELEBIHI .bottom-nav (z-index:600) -- var(--z-modal) yang
+   dipakai modal lain (200) tidak cukup tinggi utk menutupi nav, jadi
+   overlay ini dipisah pakai angka sendiri seperti pola
+   .lap-filter-overlay (700) di tempat lain pada file ini. */
+#txReceiptOverlay{padding:0;background:rgba(11,29,22,0.001);z-index:750;}
 #txReceiptOverlay.open{backdrop-filter:none;}
 .receipt-modal{
   position:relative;overflow:hidden;border-radius:0;padding:0;
   width:100%;max-width:100%;height:100%;max-height:100%;
   display:flex;flex-direction:column;
   box-shadow:none;
+  /* Gradasi oranye MENUTUPI SELURUH layar (bukan cuma area header) --
+     supaya kartu putih di bawahnya terlihat "mengambang" di atas
+     warna, sesuai gambar referensi yang gradasinya terlihat di
+     kiri/kanan/bawah kartu, bukan cuma di belakang logo. */
+  background:linear-gradient(180deg, var(--primary-deep) 0%, var(--primary) 38%, var(--primary) 100%);
   transform:translateY(100%);
   transition:transform .4s cubic-bezier(.22,1,.36,1), opacity .32s ease;
 }
 .modal-overlay.open .receipt-modal{transform:translateY(0);}
 
-/* Header gradasi oranye (padanan area biru "Qita by BRI" pada
-   referensi) -- memudar dari oranye pekat di atas menjadi transparan
-   di bawah, supaya menyatu mulus ke badan kartu putih (.receipt-body)
-   yang ditumpuk di atasnya lewat margin negatif. Ikut menghormati
-   safe-area status bar di HP berponi/notch. */
+/* Header cuma berisi tombol tutup + logo brand, TANPA background
+   sendiri (menyatu dgn gradasi penuh milik .receipt-modal di
+   belakangnya). Ikut menghormati safe-area status bar di HP
+   berponi/notch. */
 .receipt-header{
   position:relative;flex-shrink:0;text-align:center;
-  padding:calc(env(safe-area-inset-top,0px) + 22px) 26px 58px;
-  background:linear-gradient(180deg, var(--primary-deep) 0%, var(--primary) 45%, color-mix(in srgb, var(--primary) 35%, transparent) 78%, transparent 100%);
+  padding:calc(env(safe-area-inset-top,0px) + 22px) 26px 18px;
 }
 .receipt-close-btn{
-  position:absolute;top:14px;right:14px;z-index:2;
+  position:absolute;top:calc(env(safe-area-inset-top,0px) + 14px);right:14px;z-index:2;
   width:28px;height:28px;border-radius:50%;flex-shrink:0;
   display:flex;align-items:center;justify-content:center;
   background:rgba(255,255,255,0.22);color:#fff;border:none;cursor:pointer;
@@ -5021,23 +5026,32 @@ tbody tr:last-child td{border-bottom:none;}
 .receipt-brand-mark img{width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block;}
 .receipt-brand-name{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:13.5px;letter-spacing:.02em;color:#fff;}
 
-/* Badan kartu putih -- ditarik naik menutupi ujung bawah header
-   gradasi (margin-top negatif), sudut atasnya dibulatkan supaya
-   terlihat seperti "kartu di atas kartu" persis gambar referensi. */
+/* Wadah scroll utk kartu putih -- kartu TIDAK ditarik full ke pinggir
+   layar (beda dari versi sebelumnya), melainkan diberi jarak/margin
+   di kiri-kanan-bawah supaya gradasi oranye tetap kelihatan
+   mengelilingi kartu persis gambar referensi. */
+.receipt-card-wrap{
+  flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;
+  display:flex;flex-direction:column;
+  padding:0 16px calc(env(safe-area-inset-bottom,0px) + 18px);
+}
+
+/* Kartu putih -- sudut dibulatkan PENUH di keempat sisi (bukan cuma
+   atas) & punya bayangan sendiri, supaya benar-benar terlihat
+   "mengambang" di atas gradasi, sesuai gambar referensi. */
 .receipt-body{
-  position:relative;flex:1 1 auto;min-height:0;overflow-y:auto;
-  margin-top:-38px;background:#fff;
-  border-radius:22px 22px 0 0;padding:0 26px 24px;text-align:center;
-  overscroll-behavior:contain;
+  position:relative;flex-shrink:0;margin-top:auto;background:#fff;
+  border-radius:24px;padding:26px 22px 20px;text-align:center;
+  box-shadow:0 20px 45px -14px rgba(15,23,42,0.35);
 }
 
 .receipt-status{
-  width:76px;height:76px;border-radius:50%;margin:0 auto 16px;
+  width:74px;height:74px;border-radius:50%;margin:0 auto 14px;
   display:flex;align-items:center;justify-content:center;flex-shrink:0;
-  background:linear-gradient(155deg,#4ADE80,#16A34A 55%,#15803D);
+  background:#22C55E;
   box-shadow:0 0 0 5px #fff, 0 10px 22px -8px rgba(21,128,61,0.5);
 }
-.receipt-status.out{background:linear-gradient(155deg,#FB7185,var(--wine));box-shadow:0 0 0 5px #fff, 0 10px 22px -8px rgba(190,18,60,0.45);}
+.receipt-status.out{background:var(--wine);box-shadow:0 0 0 5px #fff, 0 10px 22px -8px rgba(190,18,60,0.45);}
 .receipt-status-label{font-size:14.5px;color:var(--ink-soft);font-weight:600;margin-bottom:7px;}
 .receipt-amount{font-family:'IBM Plex Mono',monospace;font-size:27px;font-weight:800;letter-spacing:-0.01em;margin-bottom:5px;}
 .receipt-amount.in{color:#047857;}
@@ -5045,7 +5059,7 @@ tbody tr:last-child td{border-bottom:none;}
 .receipt-date{font-size:12.5px;color:var(--ink-faint);margin-bottom:20px;}
 
 .receipt-divider{
-  height:0;border-top:1.5px dashed var(--line);margin:0 -26px 18px;
+  height:0;border-top:1.5px dashed var(--line);margin:0 -22px 18px;
 }
 
 .receipt-detail-title{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-faint);text-align:left;margin-bottom:12px;}
@@ -5073,9 +5087,7 @@ tbody tr:last-child td{border-bottom:none;}
 .receipt-expand-row span:last-child{color:var(--ink);font-weight:600;text-align:right;word-break:break-all;}
 
 .receipt-actions{
-  display:flex;align-items:center;gap:10px;flex-shrink:0;
-  background:#fff;padding:14px 26px calc(env(safe-area-inset-bottom,0px) + 16px);
-  box-shadow:0 -8px 20px -14px rgba(15,23,42,0.18);
+  display:flex;align-items:center;gap:10px;flex-shrink:0;margin-top:20px;
 }
 .receipt-icon-btn{
   width:46px;height:46px;border-radius:50%;flex-shrink:0;
@@ -8954,34 +8966,36 @@ body.is-scrolling *{
       </div>
     </div>
 
-    <div class="receipt-body">
-      <div class="receipt-status" id="receiptStatusIcon">
-        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+    <div class="receipt-card-wrap">
+      <div class="receipt-body">
+        <div class="receipt-status" id="receiptStatusIcon">
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+        </div>
+        <div class="receipt-status-label">Transaksi Berhasil</div>
+        <div class="receipt-amount" id="receiptAmount">Rp0</div>
+        <div class="receipt-date" id="receiptDate">-</div>
+
+        <div class="receipt-divider"></div>
+
+        <div class="receipt-detail-title">Detail Transaksi</div>
+        <div class="receipt-detail-list" id="receiptDetailList"></div>
+
+        <button type="button" class="receipt-expand-btn" id="receiptExpandBtn">
+          <span>Lihat Detail</span>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="receipt-expand-body" id="receiptExpandBody"></div>
+
+        <div class="receipt-actions">
+          <button type="button" class="receipt-icon-btn" id="receiptShareBtn" title="Bagikan" aria-label="Bagikan bukti transaksi">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="10.6" x2="15.4" y2="6.4"/><line x1="8.6" y1="13.4" x2="15.4" y2="17.6"/></svg>
+          </button>
+          <button type="button" class="receipt-icon-btn" id="receiptDownloadBtn" title="Unduh" aria-label="Unduh bukti transaksi">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13m0 0-4.5-4.5M12 16l4.5-4.5"/><path d="M4 19.5h16"/></svg>
+          </button>
+          <button type="button" class="btn btn-primary receipt-done-btn" id="receiptDoneBtn">Selesai</button>
+        </div>
       </div>
-      <div class="receipt-status-label">Transaksi Berhasil</div>
-      <div class="receipt-amount" id="receiptAmount">Rp0</div>
-      <div class="receipt-date" id="receiptDate">-</div>
-
-      <div class="receipt-divider"></div>
-
-      <div class="receipt-detail-title">Detail Transaksi</div>
-      <div class="receipt-detail-list" id="receiptDetailList"></div>
-
-      <button type="button" class="receipt-expand-btn" id="receiptExpandBtn">
-        <span>Lihat Detail</span>
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg>
-      </button>
-      <div class="receipt-expand-body" id="receiptExpandBody"></div>
-    </div>
-
-    <div class="receipt-actions">
-      <button type="button" class="receipt-icon-btn" id="receiptShareBtn" title="Bagikan" aria-label="Bagikan bukti transaksi">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="10.6" x2="15.4" y2="6.4"/><line x1="8.6" y1="13.4" x2="15.4" y2="17.6"/></svg>
-      </button>
-      <button type="button" class="receipt-icon-btn" id="receiptDownloadBtn" title="Unduh" aria-label="Unduh bukti transaksi">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13m0 0-4.5-4.5M12 16l4.5-4.5"/><path d="M4 19.5h16"/></svg>
-      </button>
-      <button type="button" class="btn btn-primary receipt-done-btn" id="receiptDoneBtn">Selesai</button>
     </div>
   </div>
 </div>
