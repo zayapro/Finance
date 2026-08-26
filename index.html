@@ -5020,7 +5020,15 @@ tbody tr:last-child td{border-bottom:none;}
      cuma area header) supaya kartu putih yg diberi margin di bawah
      tetap "dikelilingi" warna di kiri/kanan/bawahnya, bukan berakhir
      putih kosong. */
-  background:linear-gradient(180deg, var(--banner-orange-deep) 0%, var(--banner-orange) 32%, var(--banner-orange) 100%);
+  background:linear-gradient(180deg,
+    var(--banner-orange-deep) 0%,
+    var(--banner-orange) 20%,
+    var(--banner-orange) 34%,
+    color-mix(in srgb, var(--banner-orange) 72%, white) 50%,
+    color-mix(in srgb, var(--banner-orange) 38%, white) 64%,
+    color-mix(in srgb, var(--banner-orange) 14%, white) 76%,
+    #FEFFF9 88%,
+    #FEFFF9 100%);
   transform:translateY(100%);
   transition:transform .4s cubic-bezier(.22,1,.36,1), opacity .32s ease;
 }
