@@ -281,6 +281,19 @@ try {
   --primary-deep:#C2410C;
   --primary-light:#FFB088;
   --primary-soft:#FFF1E7;
+  /* ---- SUMBER WARNA TUNGGAL untuk oranye banner Beranda ----
+     Dulu warna ini di-hardcode terpisah #FA8B1E/#D97706 di beberapa
+     tempat (.banner, gradasi body di bawah banner, popup struk
+     .receipt-modal, dll) -- rawan "lupa update" satu tempat kalau
+     warnanya diganti. Sekarang disatukan jadi 2 variabel di :root ini
+     supaya SEMUA elemen yang warnanya "harus senada banner Beranda"
+     tinggal pakai var(--banner-orange)/var(--banner-orange-deep), dan
+     kalau suatu saat warna banner diubah (baik ganti nilai di sini,
+     atau lewat JS document.documentElement.style.setProperty(...) bila
+     nanti dibuat fitur ganti warna beranda di Pengaturan), semuanya
+     ikut berubah otomatis tanpa perlu diedit satu-satu. */
+  --banner-orange:#FA8B1E;
+  --banner-orange-deep:#D97706;
   --brass:#059669;
   --brass-light:#6EE7B7;
   --wine:#E11D48;
@@ -362,11 +375,11 @@ body{
      perpaduannya tetap senada dengan oranye barunya) dan sudah putih
      bersih (#FEFFF9) di ±252px, tetap flat setelah itu. */
   background:linear-gradient(180deg,
-    #FA8B1E 0px,
-    #FA8B1E 155px,
-    #F9A855 180px,
-    #FBC488 205px,
-    #FCDDB8 228px,
+    var(--banner-orange) 0px,
+    var(--banner-orange) 155px,
+    color-mix(in srgb, var(--banner-orange) 78%, white) 180px,
+    color-mix(in srgb, var(--banner-orange) 47%, white) 205px,
+    color-mix(in srgb, var(--banner-orange) 21%, white) 228px,
     #FEFFF9 252px,
     #FEFFF9 100%);
   color:var(--ink);
@@ -419,7 +432,7 @@ a{color:inherit;}
      di body{} di bawah). Warna dipekatkan sedikit dari sampel awal
      (#FF9E36 -> #FA8B1E) supaya oranyenya terasa lebih dalam/pekat,
      senada dengan tone gradasi body di bawah yang juga disesuaikan. */
-  background:#FA8B1E;
+  background:var(--banner-orange);
   border-radius:0;
   padding:20px 28px 46px;
   margin:0 -24px 0;
@@ -432,7 +445,7 @@ a{color:inherit;}
      tetap tampil sebagai dasarnya. Tanpa ini, area yang belum sempat
      digambar ulang akan menampakkan warna halaman (--paper, terang)
      alih-alih gelap, kelihatan seperti banner "sobek"/pecah sesaat. */
-  background-color:#FA8B1E;
+  background-color:var(--banner-orange);
   /* CATATAN: dulu di sini ada transform:translateZ(0) + will-change +
      backface-visibility + isolation untuk memaksa banner ini punya
      layer kompositing GPU sendiri — perlu waktu itu karena banner
@@ -4989,20 +5002,24 @@ tbody tr:last-child td{border-bottom:none;}
   width:100%;max-width:100%;height:100%;max-height:100%;
   display:flex;flex-direction:column;
   box-shadow:none;
-  /* Oranye disamakan PERSIS dengan oranye banner Beranda (#FA8B1E,
-     lihat .banner{background:#FA8B1E}) -- SEBELUMNYA popup ini pakai
-     var(--primary)/var(--primary-deep) (oranye-merah #F2672B/#C2410C),
-     beda tone dgn banner. --banner-orange & --banner-orange-deep di
-     bawah CUMA dipakai lokal di dalam popup struk ini (di-scope lewat
-     selector .receipt-modal), jadi tidak mengubah warna --primary di
-     bagian lain aplikasi. #D97706 dipakai sbg titik gelap gradasi krn
-     sudah dipakai di tempat lain file ini sbg pasangan gelap oranye
-     (lihat garis aksen atas kartu, var(--brass) dkk). Gradasi
-     MENUTUPI SELURUH layar (bukan cuma area header) supaya kartu putih
-     yg diberi margin di bawah tetap "dikelilingi" warna di
-     kiri/kanan/bawahnya, bukan berakhir putih kosong. */
-  --banner-orange:#FA8B1E;
-  --banner-orange-deep:#D97706;
+  /* Oranye disamakan PERSIS dengan oranye banner Beranda -- pakai
+     var(--banner-orange)/var(--banner-orange-deep) yang didefinisikan
+     SATU KALI di :root (lihat TOKENS di atas), BUKAN lagi dihardcode
+     ulang/di-scope lokal di sini. SEBELUMNYA popup ini pakai
+     var(--primary)/var(--primary-deep) (oranye-merah #F2672B/#C2410C,
+     beda tone dgn banner), lalu sempat diperbaiki tapi dengan variabel
+     yang di-redeclare lokal khusus popup ini -- rawan warnanya "lepas
+     sinkron" dari banner asli kalau banner-nya diganti tapi popup ini
+     lupa ikut diedit. Dengan memakai variabel :root yang SAMA persis
+     dengan yang dipakai .banner, popup struk ini DIJAMIN selalu
+     mengikuti warna banner Beranda yang sedang aktif -- termasuk kalau
+     nanti warna banner diganti (baik lewat edit --banner-orange di
+     :root, atau lewat JS setProperty kalau dibuat fitur ganti warna
+     beranda di Pengaturan), popup ini otomatis ikut berubah tanpa
+     perlu disentuh sama sekali. Gradasi MENUTUPI SELURUH layar (bukan
+     cuma area header) supaya kartu putih yg diberi margin di bawah
+     tetap "dikelilingi" warna di kiri/kanan/bawahnya, bukan berakhir
+     putih kosong. */
   background:linear-gradient(180deg, var(--banner-orange-deep) 0%, var(--banner-orange) 32%, var(--banner-orange) 100%);
   transform:translateY(100%);
   transition:transform .4s cubic-bezier(.22,1,.36,1), opacity .32s ease;
