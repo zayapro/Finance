@@ -350,6 +350,31 @@ try {
   --z-toast:300;
 }
 *{box-sizing:border-box;}
+/* ---- Hapus SEMUA "kotak/bayangan biru" bawaan browser saat elemen
+   disentuh di HP -- ini bukan style yang kita buat, tapi highlight
+   default WebKit (Chrome/Safari Android & iOS) yang otomatis muncul
+   di ATAS elemen apa pun yang bisa disentuh/diklik (tombol, link,
+   dsb) selama proses tap berlangsung. Sebelumnya
+   -webkit-tap-highlight-color:transparent sudah dipasang satu-satu
+   di banyak komponen, tapi tidak semua (mis. pil filter Uang Masuk/
+   Keluar yang baru) -- sekarang dipasang GLOBAL di sini (berlaku ke
+   seluruh elemen lewat selector *) supaya tidak ada lagi yang
+   kelewatan/nyempil di komponen mana pun, sekarang maupun yang
+   ditambah nanti. Aturan per-komponen yang sudah ada sebelumnya tetap
+   dibiarkan (tidak merusak apa pun, cuma jadi berlebihan/redundan). */
+*{-webkit-tap-highlight-color:transparent;}
+/* Beberapa browser Android non-WebKit memakai properti standar ini
+   (belum di-prefix) utk highlight tap serupa -- turut dimatikan. */
+*{tap-highlight-color:transparent;}
+/* Sejalan dengan penghapusan tap-highlight di atas: outline fokus biru
+   bawaan browser (muncul di tombol/link/input saat disentuh/diklik
+   mouse) juga dimatikan secara global. :focus-visible (ring yang
+   sengaja dipertahankan di beberapa komponen, mis. .pfd-row,
+   .wallet-deal-card di atas) TIDAK terpengaruh oleh baris ini karena
+   selector-nya beda -- jadi navigasi via keyboard (Tab) tetap kelihatan
+   ring fokusnya, cuma sentuhan/klik mouse biasa yang tidak lagi
+   memunculkan kotak biru. */
+button:focus,a:focus,input:focus,select:focus,textarea:focus,[tabindex]:focus{outline:none;}
 html,body{margin:0;padding:0;}
 html{
   /* Warna dasar html (bukan body) SENGAJA disamakan dengan warna
@@ -5214,30 +5239,33 @@ tbody tr:last-child td{border-bottom:none;}
 .receipt-icon-btn{
   width:42px;height:42px;border-radius:50%;flex-shrink:0;
   display:flex;align-items:center;justify-content:center;
-  /* Ikon ini sekarang duduk di baris footer PUTIH bersama pil
-     "Selesai" (bukan lagi di atas gradasi oranye kepala popup), jadi
-     latarnya diganti oranye lembut senada gradasi banner -- persis
-     gaya lingkaran soft pada .receipt-expand-btn -- supaya tetap
-     kontras & terlihat sbg tombol yg bisa ditekan di atas latar putih. */
-  background:color-mix(in srgb, var(--banner-orange, var(--primary)) 13%, transparent);
-  color:var(--banner-orange-deep, var(--primary-deep));border:none;cursor:pointer;
+  /* Warna lingkaran ikon DISAMAKAN jg dgn warna oranye banner --
+     sebelumnya cuma tint tipis (13%) dari --banner-orange, jadi
+     hasilnya jauh lebih pucat/pudar drpd oranye banner aslinya &
+     kurang senada dgn pil "Selesai" yg sekarang solid
+     --banner-orange-deep di sampingnya. Sekarang latarnya SOLID pakai
+     --banner-orange (versi terang dari keluarga warna yg sama dgn pil
+     deep-nya) & ikonnya putih -- supaya ketiga tombol (2 lingkaran +
+     1 pil) di baris ini kelihatan jelas satu keluarga warna oranye
+     banner, bukan cuma pil-nya saja yg oranye pekat sementara
+     lingkaran ikon tetap pucat. */
+  background:var(--banner-orange);
+  color:#fff;border:none;cursor:pointer;
   transition:transform .15s ease, background .15s ease;
   /* Sama seperti .receipt-expand-btn -- hilangkan kotak bayangan
      bawaan browser (tap highlight/focus outline) saat disentuh. */
   touch-action:manipulation;-webkit-tap-highlight-color:transparent;outline:none;
 }
-.receipt-icon-btn:hover{background:color-mix(in srgb, var(--banner-orange, var(--primary)) 22%, transparent);}
+.receipt-icon-btn:hover{background:color-mix(in srgb, var(--banner-orange) 82%, black);}
 .receipt-icon-btn:active{transform:scale(.92);}
 .receipt-done-btn{
-  flex:1;border-radius:999px;padding:18px 14px;
-  /* Tinggi pil DINAIKKAN (padding vertikal 14px->18px) supaya pil
-     "Selesai" terlihat LEBIH TINGGI drpd lingkaran ikon Bagikan/Unduh
-     di sampingnya (bukan sama tinggi persis) -- diukur langsung dari
-     gambar referensi terbaru pakai grid piksel: tinggi pil di sana
-     sekitar 1.25-1.3x diameter lingkaran ikonnya (bukan 1:1), jadi
-     padding vertikal pil ditambah supaya rasio itu ikut tercermin di
-     sini (lingkaran ikon tetap 42px, pil jadi ~54px = rasio ~0.78,
-     persis rasio pada referensi). */
+  flex:1;border-radius:999px;height:42px;padding:0 14px;
+  /* Tinggi pil DISAMAKAN persis dgn diameter lingkaran ikon
+     Bagikan/Unduh di sampingnya (.receipt-icon-btn = 42px), bukan lg
+     dibuat lebih tinggi lewat padding vertikal besar -- pakai
+     height:42px + padding vertikal 0 (padding horizontal saja) spy
+     pil & lingkaran duduk sejajar rata tingginya persis seperti pada
+     gambar referensi terbaru, konsisten di semua ukuran layar. */
   /* Teks "Selesai" DIPASTIKAN rata TENGAH persis gambar referensi --
      .btn dasar cuma inline-flex TANPA justify-content, jadi begitu
      lebar tombol dipaksa penuh lewat flex:1, teksnya numpuk ke kiri
@@ -5259,13 +5287,14 @@ tbody tr:last-child td{border-bottom:none;}
      putihnya. Bayangannya DIUBAH jadi oranye lembut (bukan lagi hitam
      pekat) krn sekarang duduk di atas putih, bukan di atas gradasi
      gelap lagi. */
-  /* Warna pil DISESUAIKAN persis sampel piksel dari gambar referensi
-     terbaru (pil coklat-oranye keemasan #C47B2F, BUKAN lagi oranye
-     amber --banner-orange-deep #D97706 yg lebih terang/menyala) --
-     hover & shadow diturunkan dari warna dasar yg sama supaya tetap
-     senada. */
-  background:#C47B2F;color:#fff;
-  box-shadow:0 10px 22px -10px color-mix(in srgb, #C47B2F 55%, transparent);
+  /* Warna pil DISAMAKAN dgn warna oranye gradasi banner popup ini
+     (var(--banner-orange-deep) #D97706) -- bukan lagi warna coklat
+     custom #C47B2F yg beda tone sendiri, supaya pil "Selesai" senada
+     persis dgn header oranye di atasnya. Hover diturunkan sedikit
+     lebih gelap dari warna dasar yg sama (bukan warna lain) spy tetap
+     satu keluarga tone. */
+  background:var(--banner-orange-deep);color:#fff;
+  box-shadow:0 10px 22px -10px color-mix(in srgb, var(--banner-orange-deep) 55%, transparent);
   /* Hilangkan kotak bayangan focus/tap-highlight bawaan browser saat
      tombol ini ditekan (sama seperti .receipt-icon-btn &
      .receipt-expand-btn) -- box-shadow oranye lembut di atas tetap
@@ -5273,7 +5302,7 @@ tbody tr:last-child td{border-bottom:none;}
      bukan efek klik. */
   outline:none;
 }
-.receipt-done-btn:hover{background:#A8661F;}
+.receipt-done-btn:hover{background:color-mix(in srgb, var(--banner-orange-deep) 82%, black);}
 
 @media (max-width:480px){
   .receipt-amount{font-size:24px;}
@@ -6554,6 +6583,7 @@ tbody tr:last-child td{border-bottom:none;}
 html.zp-app-loading .page-body > .zp-page-skel{display:flex;}
 html.zp-app-loading .page-body > .bd-empty{display:none;}
 html.zp-app-loading .page-body > .lap-toptabs,
+html.zp-app-loading .page-body > .lap-aktifitas-head,
 html.zp-app-loading .page-body > .lap-panel{display:none;}
 
 /* ============ HALAMAN LAPORAN — tab utama Aktifitas/Tabungan/Aset ============
@@ -6918,6 +6948,12 @@ html.zp-app-loading .page-body > .lap-panel{display:none;}
 .lap-pill-btn.active{border-color:var(--primary);background:var(--primary-soft);color:var(--primary-deep);}
 .lap-pill-btn[data-filtertype="masuk"].active{border-color:var(--brass);background:rgba(5,150,105,0.12);color:#047857;}
 .lap-pill-btn[data-filtertype="keluar"].active{border-color:var(--wine);background:rgba(225,29,72,0.08);color:var(--wine);}
+/* ---- Ikon panah pada pil "Uang Masuk"/"Uang Keluar" -- svg pakai
+   stroke:currentColor jadi otomatis ikut warna teks pil (abu-abu saat
+   nonaktif, hijau/merah saat aktif, lihat aturan .active di atas),
+   tidak perlu warna terpisah. ---- */
+.lap-pill-btn--ic{display:inline-flex;align-items:center;justify-content:center;gap:5px;}
+.lap-pill-ic{display:inline-flex;flex-shrink:0;}
 /* ---- Field "Kategori" di halaman Filter kini tombol biasa (gaya sama
    persis dgn .lap-subpicker-field milik "Pilih Bulan"/"Pilih Tanggal")
    yang membuka bottom sheet daftar radio kategori (lihat blok
@@ -7447,10 +7483,12 @@ select#categoryFilter[hidden]{display:none;}
        Sans), beda dgn judul oranye di atasnya. letter-spacing juga
        DISESUAIKAN (dari 0.01em ke -0.005em) SAMA PERSIS dengan judul,
        biar rasa hurufnya benar-benar senada, bukan cuma keluarga
-       fontnya. font-weight TETAP 700 (bukan ikut 500 spt judul) --
-       sengaja dipertahankan tebal krn ukurannya jauh lebih kecil (11px)
-       supaya label nav tetap gampang dibaca, bukan krn beda font. */
-    font-family:'Poppins',sans-serif;font-size:11px;font-weight:700;color:#374151;
+       fontnya. font-weight DITURUNKAN dari 700 -> 600: sebelumnya
+       terlalu tebal dibanding judul halaman (.page-banner h1 pakai
+       500), 600 dipilih (bukan turun sampai 500 persis) supaya di
+       ukuran kecil (11px) label nav tetap cukup jelas terbaca, tanpa
+       terkesan tebal/berat seperti 700. */
+    font-family:'Poppins',sans-serif;font-size:11px;font-weight:600;color:#374151;
     letter-spacing:-0.005em;line-height:1;
     -webkit-tap-highlight-color:transparent;
     /* outline:none tambahan -- jaga-jaga supaya tidak ada kotak/ring
@@ -7486,7 +7524,13 @@ select#categoryFilter[hidden]{display:none;}
     background:color-mix(in srgb, var(--nav-orange) 15%, transparent);
     color:var(--nav-orange);
   }
-  .bn-label-swap{display:inline-block;transition:opacity .18s ease;}
+  .bn-label-swap{display:inline-block;transition:opacity .28s ease;}
+  /* ---- Animasi gonta-ganti teks "Tagihan"/"Hutang": TETAP di tempat
+     (tidak geser/muncul dari bawah) -- cuma transisi opacity turun
+     lalu naik lagi, tapi durasinya diperpanjang & pakai easing supaya
+     terasa mulus (crossfade halus), bukan kedip cepat seperti
+     sebelumnya. Urutan class-nya diatur di script <script> paling
+     bawah halaman ini. ---- */
   .bn-label-swap.is-swapping{opacity:0;}
 
   /* Pengaman ekstra khusus HP paling sempit (mis. iPhone SE gen-1,
@@ -8143,10 +8187,12 @@ body.is-scrolling *{
      jadi kotak kecil bersudut tumpul begitu dibuka di layar HP --
      persis bug yg bikin tombol "Selesai" TIDAK terlihat sbg pil bulat
      penuh spt gambar referensi walau di CSS aslinya sudah diberi
-     border-radius:999px. Radius pil & padding tombol ditulis ulang
+     border-radius:999px. Radius pil & tinggi tombol ditulis ulang
      di sini scoped ke .receipt-done-btn saja supaya menang telak
-     tanpa mengubah tombol ".btn" lain di halaman manapun. */
-  .receipt-done-btn{border-radius:999px;padding:18px 14px;}
+     tanpa mengubah tombol ".btn" lain di halaman manapun -- tinggi
+     tetap disamakan 42px dgn lingkaran ikon di sampingnya spy tetap
+     konsisten walau di layar HP kecil. */
+  .receipt-done-btn{border-radius:999px;height:42px;padding:0 14px;}
 
   /* ---- Modal tambah/edit & konfirmasi ---- */
   .modal{border-radius:16px;padding:16px;}
@@ -8868,8 +8914,19 @@ body.is-scrolling *{
           <h3>Transaksi</h3>
           <div class="lap-pill-row" id="lapFilterTypeRow">
             <button type="button" class="lap-pill-btn active" data-filtertype="semua">Semua</button>
-            <button type="button" class="lap-pill-btn" data-filtertype="masuk">Uang Masuk</button>
-            <button type="button" class="lap-pill-btn" data-filtertype="keluar">Uang Keluar</button>
+            <!-- ---- Ikon panah disamakan dgn konvensi ikon in/out yang
+                 sudah dipakai di baris transaksi (iconArrow() di script.js:
+                 panah turun-kanan utk Masuk, panah naik-kanan utk Keluar)
+                 supaya pil filter ini konsisten dgn ikon di daftar
+                 transaksi & di form tambah transaksi. ---- -->
+            <button type="button" class="lap-pill-btn lap-pill-btn--ic" data-filtertype="masuk">
+              <span class="lap-pill-ic"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="7" x2="17" y2="17"/><polyline points="17 8 17 17 8 17"/></svg></span>
+              <span>Uang Masuk</span>
+            </button>
+            <button type="button" class="lap-pill-btn lap-pill-btn--ic" data-filtertype="keluar">
+              <span class="lap-pill-ic"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="8 7 17 7 17 16"/></svg></span>
+              <span>Uang Keluar</span>
+            </button>
           </div>
         </div>
 
@@ -11050,11 +11107,14 @@ body.is-scrolling *{
     var tagihanIdx = 0;
     setInterval(function(){
       tagihanIdx = (tagihanIdx + 1) % tagihanWords.length;
+      // Teks lama memudar dulu (opacity turun, tetap di tempat -- tidak
+      // geser), lalu teksnya diganti pas transisi memudar itu selesai,
+      // baru memudar masuk lagi ke opacity penuh.
       tagihanLabel.classList.add('is-swapping');
       setTimeout(function(){
         tagihanLabel.textContent = tagihanWords[tagihanIdx];
         tagihanLabel.classList.remove('is-swapping');
-      }, 180);
+      }, 280);
     }, 1800);
   }
 

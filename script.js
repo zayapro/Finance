@@ -6499,11 +6499,11 @@ function wrapCanvasText(ctx, text, x, y, maxWidth, lineHeight, maxLines = 2) {
   return lines + 1;
 }
 
-// Baris rincian struk (dipakai sama-sama oleh popup HTML & canvas
-// unduhan, supaya isinya selalu identik) -- HANYA field yg benar2
-// tercatat di data transaksi aplikasi ini sendiri (tidak ada data
-// bank/merchant/PAN sungguhan krn transaksi di sini input manual
-// pengguna).
+// Baris rincian struk (field list bawah, gaya "Jenis Transaksi /
+// Nama Merchant / dst" pada referensi Qita by BRI) -- HANYA field yg
+// benar2 tercatat di data transaksi aplikasi ini sendiri (tidak ada
+// data bank/merchant/PAN sungguhan krn transaksi di sini input manual
+// pengguna, jadi TIDAK dikarang seolah2 data dari bank sungguhan).
 function receiptRows(t) {
   const isIn = t.type === 'masuk';
   const dateLabel = new Date(t.date + 'T00:00:00').toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
@@ -6512,51 +6512,248 @@ function receiptRows(t) {
     ['Kategori', t.category],
     ['Tanggal', dateLabel],
     ['Catatan', t.desc || '-'],
-    ['No. Referensi', formatReceiptRef(t.id)],
     ['ID Transaksi', t.id],
     ['Status', 'Tercatat']
   ];
 }
 
-// Tinggi kartu abu-abu rincian TIDAK lagi dipatok, jadi tinggi kanvas
-// keseluruhan juga perlu dihitung dulu (bukan angka tetap h:900 spt
-// sebelumnya) -- kalau tidak, saat baris rincian bertambah (dulu 3,
-// sekarang 7) badan kartu putih bisa lebih pendek drpd isinya & footer
-// "Dibuat otomatis..." jadi tertumpuk/terpotong. Dry-run pengukuran ini
-// pakai context sementara (ukuran font tidak bergantung ukuran kanvas).
-function measureReceiptCardHeight(rows) {
-  const measureCanvas = document.createElement('canvas');
-  const mctx = measureCanvas.getContext('2d');
-  const boxW = (640 - 64) - 48; // samakan dgn cardW - 48 di bawah (w=640, pad=32)
-  let dryCy = 0;
-  rows.forEach(([, value]) => {
-    mctx.font = '700 17px "Plus Jakarta Sans", sans-serif';
-    dryCy += 22;
-    const linesUsed = wrapCanvasText(mctx, String(value), 0, -99999, boxW - 36, 22, 2);
-    dryCy += 22 * linesUsed + 16;
-  });
-  const boxH = dryCy - 16 + 18 * 2; // + boxPad atas & bawah
-  // Offset tetap dari atas kartu sampai ke awal kotak rincian: nama
-  // app (40+58) + lencana sukses (r*2+30=110) + label "Transaksi
-  // Berhasil" (44) + nominal (30) + tanggal (32) + garis pemisah (38)
-  // -- HARUS disamakan persis kalau urutan/jarak elemen di atas box
-  // pada badan fungsi gambar sungguhan diubah nanti.
-  const fixedTopToBox = 40 + 58 + 110 + 44 + 30 + 32 + 38;
-  // Jarak setelah kotak rincian sampai ke footer "Dibuat otomatis..."
-  // (yg ditulis di posisi tetap cardY+cardH-20 pada badan fungsi
-  // gambar sungguhan) + tinggi teks footer itu sendiri.
-  const bottomGap = 70;
-  const cardH = fixedTopToBox + boxH + bottomGap;
-  return cardH;
+// Ubah hex "#RRGGBB" jadi rgb(r,g,b) -- helper kecil krn Canvas 2D
+// TIDAK mendukung fungsi CSS color-mix() dlm fillStyle (beda dgn CSS
+// biasa yg dipakai popup HTML), jadi pencampuran warna hrs dihitung
+// manual di sini.
+function hexToRgbTuple(hex) {
+  let h = String(hex).replace('#', '');
+  if (h.length === 3) h = h.split('').map(c => c + c).join('');
+  const num = parseInt(h, 16);
+  return [(num >> 16) & 255, (num >> 8) & 255, num & 255];
+}
+function mixWithWhiteRgb(hex, pct) {
+  const [r, g, b] = hexToRgbTuple(hex);
+  const p = pct / 100;
+  const mr = Math.round(r * p + 255 * (1 - p));
+  const mg = Math.round(g * p + 255 * (1 - p));
+  const mb = Math.round(b * p + 255 * (1 - p));
+  return `rgb(${mr},${mg},${mb})`;
 }
 
-function drawAndDownloadReceipt(t) {
+// Bungkus teks jadi beberapa baris (word-wrap biasa, TAPI kalau ada
+// satu "kata" yg sendirian sudah lebih lebar dari maxWidth -- kasus
+// umum utk ID transaksi/angka panjang tanpa spasi -- jatuhkan ke
+// pemotongan per-KARAKTER spy tetap tidak meluber, persis gaya
+// bungkus nomor invoice/PAN panjang pada referensi struk). Baris
+// terakhir diberi elipsis kalau teksnya masih terpotong.
+function wrapTextLines(ctx, text, maxWidth, maxLines) {
+  const full = String(text ?? '');
+  const words = full.split(' ');
+  const lines = [];
+  let line = '';
+  for (let i = 0; i < words.length && lines.length < maxLines; i++) {
+    const word = words[i];
+    if (ctx.measureText(word).width > maxWidth) {
+      if (line) { lines.push(line.trim()); line = ''; }
+      let chunk = '';
+      for (const ch of word) {
+        if (lines.length >= maxLines) break;
+        const test = chunk + ch;
+        if (ctx.measureText(test).width > maxWidth && chunk) {
+          lines.push(chunk);
+          chunk = ch;
+        } else {
+          chunk = test;
+        }
+      }
+      line = chunk;
+      continue;
+    }
+    const test = line ? line + ' ' + word : word;
+    if (ctx.measureText(test).width > maxWidth && line) {
+      lines.push(line.trim());
+      line = word;
+    } else {
+      line = test;
+    }
+  }
+  if (lines.length < maxLines && line) lines.push(line.trim());
+  if (lines.length > maxLines) lines.length = maxLines;
+  if (!lines.length) lines.push('');
+  const consumedLen = lines.join(' ').length;
+  const fullLen = full.replace(/\s+/g, ' ').trim().length;
+  if (consumedLen < fullLen) {
+    let last = lines[lines.length - 1];
+    while (last.length > 1 && ctx.measureText(last + '…').width > maxWidth) last = last.slice(0, -1);
+    lines[lines.length - 1] = last + '…';
+  }
+  return lines;
+}
+
+// Potong SATU baris teks dgn elipsis kalau melebihi maxWidth (dipakai
+// utk subjudul baris ikon "Keterangan" yg dibatasi 1 baris saja).
+function fitEllipsis(ctx, text, maxWidth) {
+  const full = String(text ?? '');
+  if (ctx.measureText(full).width <= maxWidth) return full;
+  let t = full;
+  while (t.length > 1 && ctx.measureText(t + '…').width > maxWidth) t = t.slice(0, -1);
+  return t.length < full.length ? t + '…' : t;
+}
+
+// Rencanakan SELURUH tata letak struk (posisi Y tiap elemen + baris
+// teks yg sudah dibungkus) lebih dulu lewat kanvas sementara (mctx),
+// sebelum kanvas asli dibuat. Dgn begini tinggi kanvas akhir & posisi
+// tiap elemen SELALU konsisten satu sama lain (dihitung SEKALI saja,
+// bukan didup dgn logika terpisah di fungsi lain spt sebelumnya --
+// itu pola LAMA yg rawan "desync" kalau salah satu diubah tapi yg
+// lain lupa disamakan) krn fase gambar nanti tinggal MEMBACA hasil
+// rencana ini, tidak menghitung ulang.
+function planReceipt(t) {
   const isIn = t.type === 'masuk';
   const appName = currentAppName();
-  const rows = receiptRows(t);
-  const w = 640;
-  const pad = 32;
-  const h = measureReceiptCardHeight(rows) + pad * 2;
+  const dateLabel = new Date(t.date + 'T00:00:00').toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+  const amountText = `${isIn ? '+' : '-'} ${fmtRupiah(t.amount)}`;
+  const refText = formatReceiptRef(t.id);
+  const catColor = categoryColor(t.category);
+  const fieldRows = receiptRows(t);
+
+  const pageW = 640;
+  const sidePad = 24;
+  const cardX = sidePad, cardW = pageW - sidePad * 2;
+  // Pita biru berlogo di paling atas (padanan header biru "Qita by
+  // BRI" pada referensi) -- diberi warna biru krn ITU warna khas
+  // gaya referensi yg diminta, bukan lagi oranye identitas lama.
+  const bandH = 104;
+  const topGap = 30;
+  const badgeR = 42;
+  // Lencana centang duduk PERSIS di garis batas pita biru & kartu
+  // putih (setengah nongol ke atas kartu) -- persis gaya "mengambang"
+  // pada referensi.
+  const cardY = bandH + topGap + badgeR;
+
+  const mctx = document.createElement('canvas').getContext('2d');
+
+  let cy = cardY + badgeR + 28;
+
+  const yStatusLabel = cy; cy += 30;
+  const yAmount = cy; cy += 36;
+  const yDate = cy; cy += 28;
+  const yDivider1 = cy + 12; cy += 34;
+  const yDetailHeading = cy; cy += 26;
+
+  // Kotak 2 baris ikon (kategori + keterangan), padanan baris
+  // "ARI WANSA PUTRA / DUNIA BAJU HITS.." pada referensi.
+  const boxX = cardX + 24, boxW = cardW - 48;
+  const boxPad = 16, rowH = 56;
+  const boxY = cy;
+  const boxH = boxPad * 2 + rowH * 2;
+  cy += boxH + 22;
+
+  const yDivider2 = cy + 12; cy += 34;
+
+  mctx.font = '700 14px "Plus Jakarta Sans", sans-serif';
+  const yNoRef = cy; cy += 34;
+
+  const yDivider3 = cy + 12; cy += 34;
+
+  // Daftar field datar (Jenis Transaksi/Kategori/dst), label kiri +
+  // nilai kanan sebaris -- kalau nilainya kepanjangan (spt ID
+  // transaksi), baru turun ke baris ke-2 (persis gaya nomor
+  // invoice/PAN panjang pada referensi yg patah ke baris berikutnya).
+  const valueMaxWidth = (cardW - 48) * 0.56;
+  const fieldLineHeight = 19;
+  const rowGap = 15;
+  const plannedFieldRows = [];
+  fieldRows.forEach(([label, value]) => {
+    mctx.font = '700 13px "Plus Jakarta Sans", sans-serif';
+    const lines = wrapTextLines(mctx, value, valueMaxWidth, 2);
+    plannedFieldRows.push({ label, lines, y: cy });
+    cy += Math.max(1, lines.length) * fieldLineHeight + rowGap;
+  });
+
+  const yDivider4 = cy + 6; cy += 28;
+
+  // Rincian nominal (padanan "Nominal Pembayaran/Tip/Biaya Admin").
+  // Aplikasi ini tidak memungut tip/biaya apa pun, jadi baris yg
+  // ditampilkan hanya yg jujur mencerminkan itu (Rp0), bukan dikarang.
+  const nominalRows = [
+    ['Nominal Transaksi', fmtRupiah(t.amount)],
+    ['Biaya Admin', 'Rp0']
+  ];
+  const plannedNominalRows = [];
+  nominalRows.forEach(([label, value]) => {
+    plannedNominalRows.push({ label, value, y: cy });
+    cy += 26;
+  });
+  cy += 8;
+
+  const yDivider5 = cy + 8; cy += 28;
+
+  const footerLine1 = `Bukti transaksi dibuat otomatis oleh aplikasi ${appName}.`;
+  const footerLine2 = 'Simpan sebagai catatan keuangan pribadi Anda.';
+  const yFooter1 = cy; cy += 17;
+  const yFooter2 = cy; cy += 17;
+  cy += 22;
+
+  const cardH = cy - cardY;
+  const gapBelowCard = 26;
+  const copyrightY1 = cardY + cardH + gapBelowCard + 12;
+  const copyrightY2 = copyrightY1 + 16;
+  const canvasH = copyrightY2 + 22;
+
+  return {
+    isIn, appName, dateLabel, amountText, refText, catColor,
+    pageW, cardX, cardW, bandH, badgeR, cardY, cardH,
+    yStatusLabel, yAmount, yDate, yDivider1, yDetailHeading,
+    boxX, boxW, boxY, boxH, boxPad, rowH,
+    yDivider2, yNoRef, yDivider3,
+    plannedFieldRows,
+    yDivider4, plannedNominalRows, yDivider5,
+    footerLine1, footerLine2, yFooter1, yFooter2,
+    copyrightY1, copyrightY2, canvasH
+  };
+}
+
+// Ikon panah tren naik/turun (padanan iconArrow SVG dipakai popup
+// HTML utk baris kategori) -- digambar manual krn di kanvas ikon
+// tidak bisa langsung pakai markup SVG spt di DOM.
+function drawTrendArrowIcon(ctx, dir) {
+  const s = 1.5;
+  ctx.beginPath();
+  if (dir === 'up') {
+    ctx.moveTo(-5 * s, 5 * s); ctx.lineTo(5 * s, -5 * s); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(-4 * s, -5 * s); ctx.lineTo(5 * s, -5 * s); ctx.lineTo(5 * s, 4 * s); ctx.stroke();
+  } else {
+    ctx.moveTo(-5 * s, -5 * s); ctx.lineTo(5 * s, 5 * s); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(5 * s, -4 * s); ctx.lineTo(5 * s, 5 * s); ctx.lineTo(-4 * s, 5 * s); ctx.stroke();
+  }
+}
+// Ikon catatan/keterangan (padanan svg 3-garis dipakai popup HTML
+// utk baris "Keterangan").
+function drawNoteIcon(ctx) {
+  const s = 1.25;
+  ctx.beginPath(); ctx.moveTo(-8 * s, -6 * s); ctx.lineTo(4 * s, -6 * s); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(-8 * s, 0); ctx.lineTo(4 * s, 0); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(-8 * s, 6 * s); ctx.lineTo(-2 * s, 6 * s); ctx.stroke();
+}
+
+/* Gambar struk transaksi langsung ke <canvas> lalu unduh sebagai PNG
+   -- memakai Canvas API bawaan browser saja (tanpa library eksternal),
+   senada dengan grafik donat/batang di halaman lain, supaya tetap
+   bisa dipakai walau koneksi ke CDN pihak ketiga terblokir. Gaya
+   visualnya MENIRU referensi struk "Qita by BRI" yg diberikan
+   (pita header biru berlogo di atas, kartu putih melayang dgn lencana
+   centang menonjol di batas atasnya, bagian "Detail Transaksi" berisi
+   baris beridentitas ikon, No. Ref, daftar field datar, lalu rincian
+   nominal & footer) -- HANYA gaya visualnya yg ditiru, bukan data
+   bank/merchant sungguhan krn transaksi di aplikasi ini memang input
+   manual pengguna sendiri. */
+function drawAndDownloadReceipt(t) {
+  const plan = planReceipt(t);
+  const {
+    pageW: w, canvasH: h, cardX, cardW, cardY, cardH, bandH, badgeR,
+    isIn, appName, amountText, dateLabel, refText, catColor,
+    plannedFieldRows, plannedNominalRows
+  } = plan;
+
   const canvas = document.createElement('canvas');
   const dpr = window.devicePixelRatio || 1;
   canvas.width = w * dpr;
@@ -6564,53 +6761,45 @@ function drawAndDownloadReceipt(t) {
   const ctx = canvas.getContext('2d');
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-  // Latar halaman
-  ctx.fillStyle = '#F4F6F9';
+  // Latar halaman -- biru-lavender lembut, padanan latar lembut di
+  // belakang kartu pada referensi (bukan abu netral spt sebelumnya).
+  ctx.fillStyle = '#EEF2FC';
   ctx.fillRect(0, 0, w, h);
 
-  // Kartu (dibentuk lewat clip membulat, lalu diisi header gradasi
-  // oranye di atas + badan putih di bawahnya -- senada tampilan popup)
-  const cardX = pad, cardY = pad, cardW = w - pad * 2, cardH = h - pad * 2;
-  ctx.save();
-  roundRectPath(ctx, cardX, cardY, cardW, cardH, 26);
-  ctx.clip();
-
-  // Badan putih dulu sebagai dasar
-  ctx.fillStyle = '#FFFFFF';
-  ctx.fillRect(cardX, cardY, cardW, cardH);
-
-  // Header gradasi oranye (memudar ke bawah -- padanan warna biru pada
-  // referensi struk, diganti oranye sesuai identitas aplikasi ini)
-  const headerH = 190;
-  // Warna header disamakan dgn oranye banner Beranda (#FA8B1E, lihat
-  // .banner{background:#FA8B1E} & --banner-orange di popup struk),
-  // BUKAN lagi var(--primary)/#F2672B (oranye-merah, beda tone).
-  const headerGrad = ctx.createLinearGradient(0, cardY, 0, cardY + headerH);
-  headerGrad.addColorStop(0, '#D97706');
-  headerGrad.addColorStop(0.45, '#FA8B1E');
-  headerGrad.addColorStop(0.78, 'rgba(250,139,30,0.35)');
-  headerGrad.addColorStop(1, 'rgba(250,139,30,0)');
-  ctx.fillStyle = headerGrad;
-  ctx.fillRect(cardX, cardY, cardW, headerH);
-  ctx.restore();
-
-  let cy = cardY + 40;
+  // Pita header biru berlogo nama aplikasi, padanan "Qita by BRI".
+  const bandGrad = ctx.createLinearGradient(0, 0, 0, bandH);
+  bandGrad.addColorStop(0, '#3B7BFF');
+  bandGrad.addColorStop(1, '#2557E0');
+  ctx.fillStyle = bandGrad;
+  ctx.fillRect(0, 0, w, bandH);
   ctx.textAlign = 'center';
   ctx.fillStyle = '#FFFFFF';
-  ctx.font = '800 19px "Plus Jakarta Sans", sans-serif';
-  ctx.fillText(appName.toUpperCase(), w / 2, cy);
-  cy += 58;
+  ctx.font = '800 20px "Plus Jakarta Sans", sans-serif';
+  ctx.fillText(appName.toUpperCase(), w / 2, bandH / 2 + 7);
 
-  // Lencana sukses (lingkaran gradasi + centang), cincin putih supaya
-  // terlihat "menumpu" di garis peralihan header oranye -> badan putih
-  const r = 40;
+  // Kartu putih melayang (bayangan lembut) -- TANPA header gradasi
+  // internal lagi krn identitas warna sekarang dibawa oleh pita biru
+  // di atas kartu, bukan lagi di dalam kartu itu sendiri.
+  ctx.save();
+  ctx.shadowColor = 'rgba(30,41,59,0.16)';
+  ctx.shadowBlur = 30;
+  ctx.shadowOffsetY = 14;
+  roundRectPath(ctx, cardX, cardY, cardW, cardH, 26);
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fill();
+  ctx.restore();
+
+  // Lencana sukses -- pusatnya PERSIS di cardY, jadi separuh
+  // lingkaran nongol ke atas melewati tepi kartu (persis kesan
+  // "mengambang" pada referensi), separuh lagi duduk di dlm kartu.
+  const bcx = w / 2, bcy = cardY;
   ctx.beginPath();
-  ctx.arc(w / 2, cy + r, r + 5, 0, Math.PI * 2);
+  ctx.arc(bcx, bcy, badgeR + 5, 0, Math.PI * 2);
   ctx.fillStyle = '#FFFFFF';
   ctx.fill();
   ctx.beginPath();
-  ctx.arc(w / 2, cy + r, r, 0, Math.PI * 2);
-  const circGrad = ctx.createLinearGradient(w / 2 - r, cy, w / 2 + r, cy + r * 2);
+  ctx.arc(bcx, bcy, badgeR, 0, Math.PI * 2);
+  const circGrad = ctx.createLinearGradient(bcx - badgeR, bcy - badgeR, bcx + badgeR, bcy + badgeR);
   if (isIn) { circGrad.addColorStop(0, '#10B981'); circGrad.addColorStop(1, '#047857'); }
   else { circGrad.addColorStop(0, '#FB7185'); circGrad.addColorStop(1, '#BE123C'); }
   ctx.fillStyle = circGrad;
@@ -6620,95 +6809,140 @@ function drawAndDownloadReceipt(t) {
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
   ctx.beginPath();
-  ctx.moveTo(w / 2 - 16, cy + r + 1);
-  ctx.lineTo(w / 2 - 4, cy + r + 13);
-  ctx.lineTo(w / 2 + 18, cy + r - 12);
+  ctx.moveTo(bcx - badgeR * 0.4, bcy + badgeR * 0.03);
+  ctx.lineTo(bcx - badgeR * 0.1, bcy + badgeR * 0.32);
+  ctx.lineTo(bcx + badgeR * 0.45, bcy - badgeR * 0.3);
   ctx.stroke();
-  cy += r * 2 + 30;
 
+  ctx.textAlign = 'center';
   ctx.fillStyle = '#5B6472';
-  ctx.font = '600 17px "Plus Jakarta Sans", sans-serif';
-  ctx.fillText('Transaksi Berhasil', w / 2, cy);
-  cy += 44;
+  ctx.font = '600 15px "Plus Jakarta Sans", sans-serif';
+  ctx.fillText('Transaksi Berhasil', w / 2, plan.yStatusLabel);
 
   ctx.fillStyle = isIn ? '#047857' : '#E11D48';
-  ctx.font = '800 34px "IBM Plex Mono", monospace';
-  ctx.fillText(`${isIn ? '+' : '-'} ${fmtRupiah(t.amount)}`, w / 2, cy);
-  cy += 30;
+  ctx.font = '800 32px "IBM Plex Mono", monospace';
+  ctx.fillText(amountText, w / 2, plan.yAmount);
 
-  const dateLabel = new Date(t.date + 'T00:00:00').toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
   ctx.fillStyle = '#8A93A3';
-  ctx.font = '500 14px "Plus Jakarta Sans", sans-serif';
-  ctx.fillText(dateLabel, w / 2, cy);
-  cy += 32;
+  ctx.font = '500 13px "Plus Jakarta Sans", sans-serif';
+  ctx.fillText(dateLabel, w / 2, plan.yDate);
 
-  // Garis putus-putus pemisah
-  ctx.strokeStyle = '#E4E8EF';
-  ctx.lineWidth = 1.5;
-  ctx.setLineDash([7, 7]);
-  ctx.beginPath();
-  ctx.moveTo(cardX + 24, cy);
-  ctx.lineTo(cardX + cardW - 24, cy);
-  ctx.stroke();
-  ctx.setLineDash([]);
-  cy += 38;
+  function dashedDivider(y) {
+    ctx.strokeStyle = '#E4E8EF';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([7, 7]);
+    ctx.beginPath();
+    ctx.moveTo(cardX + 24, y);
+    ctx.lineTo(cardX + cardW - 24, y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+  dashedDivider(plan.yDivider1);
 
   ctx.textAlign = 'left';
+  ctx.fillStyle = '#131A2A';
+  ctx.font = '700 14.5px "Plus Jakarta Sans", sans-serif';
+  ctx.fillText('Detail Transaksi', cardX + 24, plan.yDetailHeading);
 
-  // Baris rincian digambar DI ATAS satu kartu abu-abu lembut (senada
-  // .receipt-detail-list "kartu" di popup HTML). Tinggi kartu sudah
-  // dihitung lebih dulu lewat measureReceiptCardHeight() di atas
-  // (dipakai juga utk menentukan tinggi kanvas keseluruhan), jadi di
-  // sini cukup dry-run ULANG dgn logika PERSIS SAMA supaya boxH-nya
-  // konsisten dgn yg sudah dipakai menghitung tinggi kanvas.
-  const boxPad = 18;
-  const boxX = cardX + 24, boxW = cardW - 48;
-  let dryCy = cy + boxPad;
-  ctx.save();
-  ctx.globalAlpha = 0.001; // "tinta tak terlihat" cuma utk mengukur baris
-  rows.forEach(([, value]) => {
-    ctx.font = '700 17px "Plus Jakarta Sans", sans-serif';
-    dryCy += 22;
-    const linesUsed = wrapCanvasText(ctx, String(value), boxX + 18, dryCy, boxW - 36, 22, 2);
-    dryCy += 22 * linesUsed + 16;
-  });
-  ctx.restore();
-  const boxH = dryCy - cy - 16 + boxPad;
-
-  roundRectPath(ctx, boxX, cy, boxW, boxH, 14);
-  ctx.fillStyle = '#F4F6F9';
+  // Kotak abu lembut berisi 2 baris beridentitas ikon.
+  roundRectPath(ctx, plan.boxX, plan.boxY, plan.boxW, plan.boxH, 14);
+  ctx.fillStyle = '#F7F8FC';
   ctx.fill();
-  ctx.strokeStyle = 'rgba(250,139,30,0.14)';
+  ctx.strokeStyle = 'rgba(15,23,42,0.06)';
   ctx.lineWidth = 1;
   ctx.stroke();
 
-  cy += boxPad;
-  rows.forEach(([label, value], idx) => {
-    if (idx > 0) {
-      ctx.strokeStyle = '#E4E8EF';
-      ctx.lineWidth = 1;
-      ctx.setLineDash([5, 5]);
-      ctx.beginPath();
-      ctx.moveTo(boxX + 18, cy - 8);
-      ctx.lineTo(boxX + boxW - 18, cy - 8);
-      ctx.stroke();
-      ctx.setLineDash([]);
-    }
-    ctx.fillStyle = '#8A93A3';
-    ctx.font = '700 11.5px "Plus Jakarta Sans", sans-serif';
-    ctx.fillText(label.toUpperCase(), boxX + 18, cy);
-    cy += 22;
+  function drawIconRow(rowIndex, iconBg, iconStroke, drawIconFn, title, subtitle) {
+    const rowTop = plan.boxY + plan.boxPad + rowIndex * plan.rowH;
+    const iconR = 17;
+    const iconCx = plan.boxX + plan.boxPad + iconR;
+    const iconCy = rowTop + plan.rowH / 2 - plan.boxPad / 2;
+    ctx.beginPath();
+    ctx.arc(iconCx, iconCy, iconR, 0, Math.PI * 2);
+    ctx.fillStyle = iconBg;
+    ctx.fill();
+    ctx.save();
+    ctx.translate(iconCx, iconCy);
+    ctx.strokeStyle = iconStroke;
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    drawIconFn(ctx);
+    ctx.restore();
+
+    const textX = iconCx + iconR + 12;
+    ctx.textAlign = 'left';
     ctx.fillStyle = '#131A2A';
-    ctx.font = '700 17px "Plus Jakarta Sans", sans-serif';
-    const linesUsed = wrapCanvasText(ctx, String(value), boxX + 18, cy, boxW - 36, 22, 2);
-    cy += 22 * linesUsed + 16;
+    ctx.font = '700 13.5px "Plus Jakarta Sans", sans-serif';
+    ctx.fillText(fitEllipsis(ctx, title, plan.boxW - (textX - plan.boxX) - plan.boxPad), textX, iconCy - 3);
+    ctx.fillStyle = '#8A93A3';
+    ctx.font = '500 11.5px "Plus Jakarta Sans", sans-serif';
+    ctx.fillText(fitEllipsis(ctx, subtitle, plan.boxW - (textX - plan.boxX) - plan.boxPad), textX, iconCy + 13);
+  }
+
+  drawIconRow(0, mixWithWhiteRgb(catColor, 15), catColor, (c) => drawTrendArrowIcon(c, isIn ? 'down' : 'up'), t.category, isIn ? 'Uang Masuk' : 'Uang Keluar');
+  ctx.strokeStyle = '#E4E8EF';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(plan.boxX + plan.boxPad, plan.boxY + plan.rowH);
+  ctx.lineTo(plan.boxX + plan.boxW - plan.boxPad, plan.boxY + plan.rowH);
+  ctx.stroke();
+  drawIconRow(1, '#FFF1E7', '#C2410C', drawNoteIcon, 'Keterangan', t.desc || 'Tanpa keterangan');
+
+  dashedDivider(plan.yDivider2);
+
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#8A93A3';
+  ctx.font = '600 12.5px "Plus Jakarta Sans", sans-serif';
+  ctx.fillText('No. Ref', cardX + 24, plan.yNoRef);
+  ctx.textAlign = 'right';
+  ctx.fillStyle = '#131A2A';
+  ctx.font = '700 14px "Plus Jakarta Sans", sans-serif';
+  ctx.fillText(refText, cardX + cardW - 24, plan.yNoRef);
+
+  dashedDivider(plan.yDivider3);
+
+  const fieldLineHeight = 19;
+  plannedFieldRows.forEach((row) => {
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#8A93A3';
+    ctx.font = '600 12.5px "Plus Jakarta Sans", sans-serif';
+    ctx.fillText(row.label, cardX + 24, row.y);
+    ctx.textAlign = 'right';
+    ctx.fillStyle = '#131A2A';
+    ctx.font = '700 13px "Plus Jakarta Sans", sans-serif';
+    row.lines.forEach((ln, i) => ctx.fillText(ln, cardX + cardW - 24, row.y + i * fieldLineHeight));
   });
-  cy += boxPad - 16;
+
+  dashedDivider(plan.yDivider4);
+
+  plannedNominalRows.forEach((row) => {
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#8A93A3';
+    ctx.font = '600 12.5px "Plus Jakarta Sans", sans-serif';
+    ctx.fillText(row.label, cardX + 24, row.y);
+    ctx.textAlign = 'right';
+    ctx.fillStyle = '#131A2A';
+    ctx.font = '700 13.5px "Plus Jakarta Sans", sans-serif';
+    ctx.fillText(row.value, cardX + cardW - 24, row.y);
+  });
+
+  dashedDivider(plan.yDivider5);
 
   ctx.textAlign = 'center';
   ctx.fillStyle = '#8A93A3';
-  ctx.font = '500 12px "Plus Jakarta Sans", sans-serif';
-  ctx.fillText(`Dibuat otomatis oleh aplikasi ${appName}`, w / 2, cardY + cardH - 20);
+  ctx.font = '500 11.5px "Plus Jakarta Sans", sans-serif';
+  ctx.fillText(plan.footerLine1, w / 2, plan.yFooter1);
+  ctx.fillText(plan.footerLine2, w / 2, plan.yFooter2);
+
+  // Teks hak cipta kecil di LUAR kartu, di atas latar halaman --
+  // padanan baris "© 2025 PT Bank..." pada referensi yg juga duduk
+  // di luar kartu putihnya, tapi diisi jujur (bukan klaim regulasi
+  // bank/OJK krn aplikasi ini bukan lembaga keuangan).
+  ctx.fillStyle = '#9AA3B2';
+  ctx.font = '500 11px "Plus Jakarta Sans", sans-serif';
+  ctx.fillText(`© ${new Date().getFullYear()} ${appName}`, w / 2, plan.copyrightY1);
+  ctx.fillText('Data transaksi tersimpan di perangkat Anda.', w / 2, plan.copyrightY2);
 
   canvas.toBlob((blob) => {
     if (!blob) return;
