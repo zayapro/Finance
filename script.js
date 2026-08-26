@@ -3745,22 +3745,20 @@ function renderTransactionList() {
   const visibleGroups = groups.slice(0, historyVisibleGroups);
   const remainingGroups = groups.length - visibleGroups.length;
 
+  // PERMINTAAN: baris "kepala grup" per tanggal (mis. "SELASA, 25
+  // AGUSTUS 2026" + total bersih hari itu) DIHILANGKAN dari daftar
+  // "Semua Transaksi" -- yang dulu digambar lewat .rw-group-head di
+  // atas kumpulan transaksi tiap tanggal/bulan. Sekarang cukup
+  // baris-baris transaksinya saja (rowsHtml) yang digabung langsung
+  // tanpa header pemisah tanggal. dayIn/dayOut/dayNet (dulu dipakai
+  // buat angka di header itu) juga sudah tidak perlu dihitung lagi.
   let delay = 0;
   tbody.innerHTML = visibleGroups.map(([key, items]) => {
-    const dayIn = items.filter(t => t.type === 'masuk').reduce((s, t) => s + Number(t.amount || 0), 0);
-    const dayOut = items.filter(t => t.type === 'keluar').reduce((s, t) => s + Number(t.amount || 0), 0);
-    const dayNet = dayIn - dayOut;
-    const rowsHtml = items.map(t => {
+    return items.map(t => {
       const html = renderHistoryRow(t, Math.min(delay, 12) * 30);
       delay++;
       return html;
     }).join('');
-    return `
-      <div class="rw-group-head">
-        <span>${escapeHtml(isYearly ? formatHistoryMonthLabel(key) : formatHistoryDateLabel(key))}</span>
-        <span class="rw-group-net ${dayNet >= 0 ? 'in' : 'out'}">${dayNet >= 0 ? '+' : '-'} ${fmtRupiah(Math.abs(dayNet))}</span>
-      </div>
-      ${rowsHtml}`;
   }).join('');
 
   if (remainingGroups > 0) {
