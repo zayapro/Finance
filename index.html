@@ -5042,7 +5042,10 @@ tbody tr:last-child td{border-bottom:none;}
 .modal-overlay.open .receipt-modal{transform:translateY(0);}
 
 /* Header cuma berisi tombol tutup + logo brand, TANPA background
-   sendiri (menyatu dgn gradasi penuh milik .receipt-modal). */
+   sendiri (menyatu dgn gradasi penuh milik .receipt-modal). SEKARANG
+   jadi bagian dari isi .receipt-card-wrap yg ikut discroll (bukan lagi
+   flex-shrink:0 yg diam di luar area scroll) -- supaya logo ini betul2
+   TERTUTUP oleh kartu putih .receipt-body begitu discroll ke bawah. */
 .receipt-header{
   position:relative;flex-shrink:0;text-align:center;
   padding:calc(env(safe-area-inset-top,0px) + 22px) 26px 16px;
@@ -5071,16 +5074,23 @@ tbody tr:last-child td{border-bottom:none;}
    bukan judul utama. */
 .receipt-brand-name{font-family:'Poppins',sans-serif;font-weight:500;font-size:10.5px;letter-spacing:0.01em;color:rgba(255,255,255,0.75);}
 
-/* Wadah scroll -- SEKARANG cuma membungkus kartu struk (.receipt-body)
-   saja, TIDAK lagi termasuk baris aksi (yg sudah dipindah keluar jadi
-   flex item tersendiri setelah wadah ini, lihat .receipt-actions di
-   bawah) -- diberi jarak/padding di kiri-kanan-bawah supaya gradasi
-   oranye tetap kelihatan mengelilingi kartu struknya. */
+/* Wadah scroll -- SEKARANG membungkus header logo (.receipt-header)
+   SEKALIGUS kartu struk (.receipt-body), jadi keduanya ikut discroll
+   bersama sbg satu wadah (TIDAK lagi termasuk baris aksi, yg sudah
+   dipindah keluar jadi flex item tersendiri setelah wadah ini, lihat
+   .receipt-actions di bawah) -- diberi jarak/padding di kiri-kanan-
+   bawah supaya gradasi oranye tetap kelihatan mengelilingi kartu
+   struknya, DAN supaya begitu discroll ke bawah, kartu putihnya naik
+   & menutupi logo/nama halaman yg ada di .receipt-header di atasnya. */
 .receipt-card-wrap{
   flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;
   display:flex;flex-direction:column;
   padding:0 14px calc(env(safe-area-inset-bottom,0px) + 14px);
 }
+/* .receipt-header diberi margin negatif kiri-kanan supaya lebar
+   logonya tetap penuh sama seperti dulu (menutup padding kiri-kanan
+   14px milik .receipt-card-wrap yg sekarang jadi induknya). */
+.receipt-card-wrap .receipt-header{margin:0 -14px;}
 
 /* Kartu struk (status, nominal, detail) -- kartu putih mengambang dgn
    sudut bulat & bayangan sendiri, ujung paling bawahnya memudar
@@ -5108,7 +5118,7 @@ tbody tr:last-child td{border-bottom:none;}
 .receipt-date{font-size:12.5px;color:var(--ink-faint);margin-bottom:20px;}
 
 .receipt-divider{
-  height:0;border-top:1.5px dashed var(--line);margin:0 -22px 18px;
+  height:0;margin:0 -22px 18px;
 }
 
 .receipt-detail-title{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-faint);text-align:left;margin-bottom:12px;}
@@ -9078,16 +9088,25 @@ body.is-scrolling *{
      walau penggunanya mengganti nama/logo itu kapan saja). ===== -->
 <div class="modal-overlay" id="txReceiptOverlay">
   <div class="modal receipt-modal">
-    <div class="receipt-header">
-      <div class="receipt-brand">
-        <span class="receipt-brand-mark" id="receiptBrandMarkIcon">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>
-        </span>
-        <span class="receipt-brand-name" id="receiptBrandNameText">ZAYAPRO</span>
-      </div>
-    </div>
-
+    <!-- Header logo brand SEKARANG dipindah masuk ke DALAM
+         .receipt-card-wrap (jadi ikut discroll bareng .receipt-body,
+         BUKAN lagi elemen tetap terpisah di luar area scroll) --
+         supaya saat user scroll ke bawah, kartu putih .receipt-body
+         benar2 "naik" & MENUTUPI logo/nama halaman ini persis kayak
+         referensi (struk QRIS BRI): logo & nama cuma kelihatan waktu
+         posisi scroll di paling atas, lalu tertutup kartu putih begitu
+         digeser ke bawah -- bukan cuma memudar/mengambang statis spt
+         sebelumnya. -->
     <div class="receipt-card-wrap">
+      <div class="receipt-header">
+        <div class="receipt-brand">
+          <span class="receipt-brand-mark" id="receiptBrandMarkIcon">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>
+          </span>
+          <span class="receipt-brand-name" id="receiptBrandNameText">ZAYAPRO</span>
+        </div>
+      </div>
+
       <!-- Kartu struk (.receipt-body) mengambang sendiri di sini,
            terpisah dari baris aksi Bagikan/Unduh/Selesai yg sekarang
            dipindah keluar jadi flex item tersendiri (lihat komentar
