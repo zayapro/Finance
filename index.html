@@ -5205,10 +5205,10 @@ tbody tr:last-child td{border-bottom:none;}
    Sudut cuma dibulatkan di ATAS (menyatu ke bawah, bukan lg kartu
    pil yg berdiri sendiri) & flex-shrink:0 spy tingginya tetap. */
 .receipt-actions{
-  display:flex;align-items:center;gap:10px;flex-shrink:0;
+  display:flex;align-items:center;gap:16px;flex-shrink:0;
   width:100%;background:#fff;
   border-radius:22px 22px 0 0;
-  padding:16px 22px calc(env(safe-area-inset-bottom,0px) + 16px);
+  padding:16px 16px calc(env(safe-area-inset-bottom,0px) + 16px);
   box-shadow:0 -10px 24px -16px rgba(15,23,42,0.35);
 }
 .receipt-icon-btn{
@@ -5229,7 +5229,15 @@ tbody tr:last-child td{border-bottom:none;}
 .receipt-icon-btn:hover{background:color-mix(in srgb, var(--banner-orange, var(--primary)) 22%, transparent);}
 .receipt-icon-btn:active{transform:scale(.92);}
 .receipt-done-btn{
-  flex:1;border-radius:999px;padding:14px;
+  flex:1;border-radius:999px;padding:18px 14px;
+  /* Tinggi pil DINAIKKAN (padding vertikal 14px->18px) supaya pil
+     "Selesai" terlihat LEBIH TINGGI drpd lingkaran ikon Bagikan/Unduh
+     di sampingnya (bukan sama tinggi persis) -- diukur langsung dari
+     gambar referensi terbaru pakai grid piksel: tinggi pil di sana
+     sekitar 1.25-1.3x diameter lingkaran ikonnya (bukan 1:1), jadi
+     padding vertikal pil ditambah supaya rasio itu ikut tercermin di
+     sini (lingkaran ikon tetap 42px, pil jadi ~54px = rasio ~0.78,
+     persis rasio pada referensi). */
   /* Teks "Selesai" DIPASTIKAN rata TENGAH persis gambar referensi --
      .btn dasar cuma inline-flex TANPA justify-content, jadi begitu
      lebar tombol dipaksa penuh lewat flex:1, teksnya numpuk ke kiri
@@ -8138,7 +8146,7 @@ body.is-scrolling *{
      border-radius:999px. Radius pil & padding tombol ditulis ulang
      di sini scoped ke .receipt-done-btn saja supaya menang telak
      tanpa mengubah tombol ".btn" lain di halaman manapun. */
-  .receipt-done-btn{border-radius:999px;padding:13px;}
+  .receipt-done-btn{border-radius:999px;padding:18px 14px;}
 
   /* ---- Modal tambah/edit & konfirmasi ---- */
   .modal{border-radius:16px;padding:16px;}
