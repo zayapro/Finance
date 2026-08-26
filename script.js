@@ -6338,6 +6338,10 @@ function openTxReceipt(id) {
   `;
 
   document.getElementById('receiptExpandBody').innerHTML = `
+    <div class="receipt-expand-row"><span>Jenis Transaksi</span><span>${isIn ? 'Pemasukan' : 'Pengeluaran'}</span></div>
+    <div class="receipt-expand-row"><span>Kategori</span><span>${escapeHtml(t.category)}</span></div>
+    <div class="receipt-expand-row"><span>Tanggal</span><span>${dayLabel}, ${dateLabel}</span></div>
+    <div class="receipt-expand-row"><span>Catatan</span><span>${escapeHtml(t.desc || '-')}</span></div>
     <div class="receipt-expand-row"><span>No. Referensi</span><span>${formatReceiptRef(t.id)}</span></div>
     <div class="receipt-expand-row"><span>ID Transaksi</span><span>${escapeHtml(t.id)}</span></div>
     <div class="receipt-expand-row"><span>Status</span><span>Tercatat</span></div>
@@ -6495,10 +6499,64 @@ function wrapCanvasText(ctx, text, x, y, maxWidth, lineHeight, maxLines = 2) {
   return lines + 1;
 }
 
+// Baris rincian struk (dipakai sama-sama oleh popup HTML & canvas
+// unduhan, supaya isinya selalu identik) -- HANYA field yg benar2
+// tercatat di data transaksi aplikasi ini sendiri (tidak ada data
+// bank/merchant/PAN sungguhan krn transaksi di sini input manual
+// pengguna).
+function receiptRows(t) {
+  const isIn = t.type === 'masuk';
+  const dateLabel = new Date(t.date + 'T00:00:00').toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+  return [
+    ['Jenis Transaksi', isIn ? 'Pemasukan' : 'Pengeluaran'],
+    ['Kategori', t.category],
+    ['Tanggal', dateLabel],
+    ['Catatan', t.desc || '-'],
+    ['No. Referensi', formatReceiptRef(t.id)],
+    ['ID Transaksi', t.id],
+    ['Status', 'Tercatat']
+  ];
+}
+
+// Tinggi kartu abu-abu rincian TIDAK lagi dipatok, jadi tinggi kanvas
+// keseluruhan juga perlu dihitung dulu (bukan angka tetap h:900 spt
+// sebelumnya) -- kalau tidak, saat baris rincian bertambah (dulu 3,
+// sekarang 7) badan kartu putih bisa lebih pendek drpd isinya & footer
+// "Dibuat otomatis..." jadi tertumpuk/terpotong. Dry-run pengukuran ini
+// pakai context sementara (ukuran font tidak bergantung ukuran kanvas).
+function measureReceiptCardHeight(rows) {
+  const measureCanvas = document.createElement('canvas');
+  const mctx = measureCanvas.getContext('2d');
+  const boxW = (640 - 64) - 48; // samakan dgn cardW - 48 di bawah (w=640, pad=32)
+  let dryCy = 0;
+  rows.forEach(([, value]) => {
+    mctx.font = '700 17px "Plus Jakarta Sans", sans-serif';
+    dryCy += 22;
+    const linesUsed = wrapCanvasText(mctx, String(value), 0, -99999, boxW - 36, 22, 2);
+    dryCy += 22 * linesUsed + 16;
+  });
+  const boxH = dryCy - 16 + 18 * 2; // + boxPad atas & bawah
+  // Offset tetap dari atas kartu sampai ke awal kotak rincian: nama
+  // app (40+58) + lencana sukses (r*2+30=110) + label "Transaksi
+  // Berhasil" (44) + nominal (30) + tanggal (32) + garis pemisah (38)
+  // -- HARUS disamakan persis kalau urutan/jarak elemen di atas box
+  // pada badan fungsi gambar sungguhan diubah nanti.
+  const fixedTopToBox = 40 + 58 + 110 + 44 + 30 + 32 + 38;
+  // Jarak setelah kotak rincian sampai ke footer "Dibuat otomatis..."
+  // (yg ditulis di posisi tetap cardY+cardH-20 pada badan fungsi
+  // gambar sungguhan) + tinggi teks footer itu sendiri.
+  const bottomGap = 70;
+  const cardH = fixedTopToBox + boxH + bottomGap;
+  return cardH;
+}
+
 function drawAndDownloadReceipt(t) {
   const isIn = t.type === 'masuk';
   const appName = currentAppName();
-  const w = 640, h = 900;
+  const rows = receiptRows(t);
+  const w = 640;
+  const pad = 32;
+  const h = measureReceiptCardHeight(rows) + pad * 2;
   const canvas = document.createElement('canvas');
   const dpr = window.devicePixelRatio || 1;
   canvas.width = w * dpr;
@@ -6512,7 +6570,6 @@ function drawAndDownloadReceipt(t) {
 
   // Kartu (dibentuk lewat clip membulat, lalu diisi header gradasi
   // oranye di atas + badan putih di bawahnya -- senada tampilan popup)
-  const pad = 32;
   const cardX = pad, cardY = pad, cardW = w - pad * 2, cardH = h - pad * 2;
   ctx.save();
   roundRectPath(ctx, cardX, cardY, cardW, cardH, 26);
@@ -6597,19 +6654,13 @@ function drawAndDownloadReceipt(t) {
   cy += 38;
 
   ctx.textAlign = 'left';
-  const rows = [
-    ['Kategori', t.category],
-    ['Keterangan', t.desc || 'Tanpa keterangan'],
-    ['No. Referensi', formatReceiptRef(t.id)]
-  ];
 
-  // Baris rincian kini digambar DI ATAS satu kartu abu-abu lembut
-  // (senada perubahan .receipt-detail-list jadi "kartu" di popup HTML)
-  // -- bukan lagi teks polos langsung di atas badan putih. Tinggi
-  // kartu dihitung dulu lewat "dry run" (teks digambar transparan
-  // cuma utk menghitung berapa baris yg dipakai wrapCanvasText),
-  // supaya kartunya pas membungkus 3 baris rincian ini persis,
-  // baru digambar ulang sungguhan di atasnya.
+  // Baris rincian digambar DI ATAS satu kartu abu-abu lembut (senada
+  // .receipt-detail-list "kartu" di popup HTML). Tinggi kartu sudah
+  // dihitung lebih dulu lewat measureReceiptCardHeight() di atas
+  // (dipakai juga utk menentukan tinggi kanvas keseluruhan), jadi di
+  // sini cukup dry-run ULANG dgn logika PERSIS SAMA supaya boxH-nya
+  // konsisten dgn yg sudah dipakai menghitung tinggi kanvas.
   const boxPad = 18;
   const boxX = cardX + 24, boxW = cardW - 48;
   let dryCy = cy + boxPad;
