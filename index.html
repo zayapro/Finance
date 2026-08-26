@@ -3885,7 +3885,24 @@ body.density-compact .income-cards-group{gap:10px;}
    Beranda, tidak disentuh) -- padding & jarak antar elemen di
    dalamnya tetap dipertahankan supaya rapi, cuma "kotak" luarnya yang
    dihilangkan supaya menyatu langsung dengan kartu putih di belakangnya. */
-#historySection{background:transparent;border:none;box-shadow:none;}
+/* ---- PERBAIKAN JARAK: header "Semua Transaksi" (.lap-aktifitas-head,
+   padding-bottom 14/12/10px) sudah diikuti .lap-page-body-rest yang
+   PUNYA padding-top sendiri (14px, lihat aturannya) sebagai jarak
+   menuju daftar transaksi -- persis pola yg sama dgn halaman Tagihan &
+   Hutang (.bd-page-body-rest, satu-satunya sumber jarak sebelum
+   .bd-list). Tapi #historySection di sini masih ikut warisan padding
+   ATAS bawaan .section-card (20px desktop / 16px / 14px di breakpoint
+   sempit) yang DULU perlu (waktu section ini masih kartu utuh dgn
+   border/shadow sendiri) -- sekarang jadi turut MENAMBAH jarak di atas
+   dobel/TRIPEL (14 + 14 + 20 = 48px sebelum baris transaksi pertama,
+   padahal baris itu sendiri sudah punya padding atas 13px sendiri
+   lewat .rw-item) sehingga jarak antara judul & datanya kelihatan
+   kosong/janggal. Padding kiri-kanan-bawahnya (masih dipakai utk jarak
+   internal .rw-list-wrap) TETAP dipertahankan -- cuma padding ATAS
+   yg dinolkan di sini, pakai selector ID supaya menang otomatis dari
+   SEMUA aturan responsif ".section-card{padding:...}" tanpa perlu
+   ditulis ulang di tiap breakpoint (spesifisitas ID > class). ---- */
+#historySection{background:transparent;border:none;box-shadow:none;padding-top:0;}
 #historySection:hover{box-shadow:none;transform:none;}
 /* ================================================================
    PERMINTAAN (screenshot acuan): banner "Laporan" + tab Aktifitas/
