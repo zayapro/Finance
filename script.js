@@ -3700,7 +3700,7 @@ function renderHistoryRow(t, delay) {
   const color = categoryColor(t.category);
   const dateLabel = new Date(t.date + 'T00:00:00').toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
   return `
-    <div class="rw-item fade-up" style="animation-delay:${delay}ms">
+    <div class="rw-item fade-up" style="animation-delay:${delay}ms" data-tx-id="${t.id}">
       <span class="rw-item-ic" style="background:color-mix(in srgb, ${color} 15%, transparent);color:${color}">
         ${iconArrow(isIn ? 'down' : 'up', 15)}
       </span>
@@ -6280,6 +6280,322 @@ document.querySelectorAll('#txForm .type-toggle button').forEach(btn => {
 document.getElementById('modalCloseBtn').addEventListener('click', () => closeModal(txModal));
 document.getElementById('btnCancel').addEventListener('click', () => closeModal(txModal));
 txModal.addEventListener('click', (e) => { if (e.target === txModal) closeModal(txModal); });
+
+/* ==========================================================
+   POPUP "BUKTI TRANSAKSI" — versi struk untuk SATU transaksi,
+   dibuka dgn tap kartu transaksi di tab Aktifitas (bukan tombol
+   edit/hapus). Meniru pola struk pembayaran pada umumnya (lencana
+   sukses, nominal besar, rincian, lalu Bagikan/Unduh/Selesai) tapi
+   warna & identitasnya memakai tema ZAYAPRO sendiri.
+========================================================== */
+const txReceiptOverlay = document.getElementById('txReceiptOverlay');
+let receiptTxId = null;
+
+// No. Referensi ditampilkan pendek (12 karakter terakhir dari id,
+// huruf besar) supaya terlihat seperti nomor referensi bank sungguhan,
+// tapi tetap bisa ditelusuri balik ke transaksi aslinya.
+function formatReceiptRef(id) {
+  return String(id || '').replace(/[^a-zA-Z0-9]/g, '').slice(-12).toUpperCase();
+}
+
+function openTxReceipt(id) {
+  const t = transactions.find(x => x.id === id);
+  if (!t) return;
+  receiptTxId = id;
+  const isIn = t.type === 'masuk';
+  const color = categoryColor(t.category);
+  const dateObj = new Date(t.date + 'T00:00:00');
+  const dateLabel = dateObj.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+  const dayLabel = dateObj.toLocaleDateString('id-ID', { weekday: 'long' });
+
+  document.getElementById('receiptStatusIcon').classList.toggle('out', !isIn);
+
+  const amountEl = document.getElementById('receiptAmount');
+  amountEl.textContent = `${isIn ? '+' : '-'} ${fmtRupiah(t.amount)}`;
+  amountEl.className = `receipt-amount ${isIn ? 'in' : 'out'}`;
+
+  document.getElementById('receiptDate').textContent = `${dayLabel}, ${dateLabel}`;
+
+  document.getElementById('receiptDetailList').innerHTML = `
+    <div class="receipt-detail-row">
+      <span class="receipt-detail-ic" style="background:color-mix(in srgb, ${color} 15%, transparent);color:${color}">
+        ${iconArrow(isIn ? 'down' : 'up', 15)}
+      </span>
+      <div class="receipt-detail-text">
+        <div class="receipt-detail-label">${escapeHtml(t.category)}</div>
+        <div class="receipt-detail-sub">${isIn ? 'Uang Masuk' : 'Uang Keluar'}</div>
+      </div>
+    </div>
+    <div class="receipt-detail-row">
+      <span class="receipt-detail-ic" style="background:var(--primary-soft);color:var(--primary-deep)">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+      </span>
+      <div class="receipt-detail-text">
+        <div class="receipt-detail-label">Keterangan</div>
+        <div class="receipt-detail-sub">${escapeHtml(t.desc || 'Tanpa keterangan')}</div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('receiptExpandBody').innerHTML = `
+    <div class="receipt-expand-row"><span>No. Referensi</span><span>${formatReceiptRef(t.id)}</span></div>
+    <div class="receipt-expand-row"><span>ID Transaksi</span><span>${escapeHtml(t.id)}</span></div>
+    <div class="receipt-expand-row"><span>Status</span><span>Tercatat</span></div>
+  `;
+  document.getElementById('receiptExpandBody').classList.remove('open');
+  document.getElementById('receiptExpandBtn').classList.remove('open');
+
+  openModal(txReceiptOverlay);
+}
+
+function closeTxReceipt() {
+  closeModal(txReceiptOverlay);
+  receiptTxId = null;
+}
+
+document.getElementById('receiptCloseBtn').addEventListener('click', closeTxReceipt);
+document.getElementById('receiptDoneBtn').addEventListener('click', closeTxReceipt);
+txReceiptOverlay.addEventListener('click', (e) => { if (e.target === txReceiptOverlay) closeTxReceipt(); });
+
+document.getElementById('receiptExpandBtn').addEventListener('click', () => {
+  document.getElementById('receiptExpandBody').classList.toggle('open');
+  document.getElementById('receiptExpandBtn').classList.toggle('open');
+});
+
+function currentAppName() {
+  return (document.getElementById('brandNameText')?.textContent || '').trim() || 'ZAYAPRO';
+}
+
+function receiptSummaryText(t) {
+  const isIn = t.type === 'masuk';
+  const dateLabel = new Date(t.date + 'T00:00:00').toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+  return [
+    `Bukti Transaksi — ${currentAppName()}`,
+    `${isIn ? '+' : '-'} ${fmtRupiah(t.amount)}`,
+    dateLabel,
+    `Kategori: ${t.category}`,
+    `Keterangan: ${t.desc || 'Tanpa keterangan'}`,
+    `No. Ref: ${formatReceiptRef(t.id)}`
+  ].join('\n');
+}
+
+document.getElementById('receiptShareBtn').addEventListener('click', async () => {
+  const t = transactions.find(x => x.id === receiptTxId);
+  if (!t) return;
+  const text = receiptSummaryText(t);
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: 'Bukti Transaksi', text });
+      return;
+    } catch (err) {
+      if (err && err.name === 'AbortError') return; // dibatalkan user, jangan tampilkan error
+      // lanjut ke fallback salin di bawah kalau share gagal karena sebab lain
+    }
+  }
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(text);
+    } else {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    }
+    showToast('Detail transaksi disalin ke clipboard.');
+  } catch (e2) {
+    showToast('Gagal membagikan transaksi.', 'err');
+  }
+});
+
+document.getElementById('receiptDownloadBtn').addEventListener('click', () => {
+  const t = transactions.find(x => x.id === receiptTxId);
+  if (!t) return;
+  try {
+    drawAndDownloadReceipt(t);
+    showToast('Bukti transaksi tersimpan.');
+  } catch (e) {
+    showToast('Gagal mengunduh bukti transaksi.', 'err');
+  }
+});
+
+/* Gambar struk transaksi langsung ke <canvas> lalu unduh sebagai PNG
+   -- memakai Canvas API bawaan browser saja (tanpa library eksternal),
+   senada dengan grafik donat/batang di halaman lain, supaya tetap
+   bisa dipakai walau koneksi ke CDN pihak ketiga terblokir. */
+function roundRectPath(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function wrapCanvasText(ctx, text, x, y, maxWidth, lineHeight, maxLines = 2) {
+  const words = String(text).split(' ');
+  let line = '';
+  let lines = 0;
+  for (let i = 0; i < words.length; i++) {
+    const test = line + words[i] + ' ';
+    if (ctx.measureText(test).width > maxWidth && line) {
+      ctx.fillText(line.trim(), x, y + lines * lineHeight);
+      line = words[i] + ' ';
+      lines++;
+      if (lines >= maxLines - 1) {
+        // baris terakhir yang tersisa, potong dgn elipsis kalau kepanjangan
+        let rest = words.slice(i + 1).join(' ');
+        let finalLine = (line + rest).trim();
+        while (ctx.measureText(finalLine + '…').width > maxWidth && finalLine.length > 1) {
+          finalLine = finalLine.slice(0, -1);
+        }
+        ctx.fillText(finalLine.length < (line + rest).trim().length ? finalLine + '…' : finalLine, x, y + lines * lineHeight);
+        return lines + 1;
+      }
+    } else {
+      line = test;
+    }
+  }
+  ctx.fillText(line.trim(), x, y + lines * lineHeight);
+  return lines + 1;
+}
+
+function drawAndDownloadReceipt(t) {
+  const isIn = t.type === 'masuk';
+  const appName = currentAppName();
+  const w = 640, h = 900;
+  const canvas = document.createElement('canvas');
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  // Latar halaman
+  ctx.fillStyle = '#F4F6F9';
+  ctx.fillRect(0, 0, w, h);
+
+  // Kartu (dibentuk lewat clip membulat, lalu diisi header gradasi
+  // oranye di atas + badan putih di bawahnya -- senada tampilan popup)
+  const pad = 32;
+  const cardX = pad, cardY = pad, cardW = w - pad * 2, cardH = h - pad * 2;
+  ctx.save();
+  roundRectPath(ctx, cardX, cardY, cardW, cardH, 26);
+  ctx.clip();
+
+  // Badan putih dulu sebagai dasar
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(cardX, cardY, cardW, cardH);
+
+  // Header gradasi oranye (memudar ke bawah -- padanan warna biru pada
+  // referensi struk, diganti oranye sesuai identitas aplikasi ini)
+  const headerH = 190;
+  const headerGrad = ctx.createLinearGradient(0, cardY, 0, cardY + headerH);
+  headerGrad.addColorStop(0, '#C2410C');
+  headerGrad.addColorStop(0.45, '#F2672B');
+  headerGrad.addColorStop(0.78, 'rgba(242,103,43,0.35)');
+  headerGrad.addColorStop(1, 'rgba(242,103,43,0)');
+  ctx.fillStyle = headerGrad;
+  ctx.fillRect(cardX, cardY, cardW, headerH);
+  ctx.restore();
+
+  let cy = cardY + 40;
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = '800 19px "Plus Jakarta Sans", sans-serif';
+  ctx.fillText(appName.toUpperCase(), w / 2, cy);
+  cy += 58;
+
+  // Lencana sukses (lingkaran gradasi + centang), cincin putih supaya
+  // terlihat "menumpu" di garis peralihan header oranye -> badan putih
+  const r = 40;
+  ctx.beginPath();
+  ctx.arc(w / 2, cy + r, r + 5, 0, Math.PI * 2);
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(w / 2, cy + r, r, 0, Math.PI * 2);
+  const circGrad = ctx.createLinearGradient(w / 2 - r, cy, w / 2 + r, cy + r * 2);
+  if (isIn) { circGrad.addColorStop(0, '#10B981'); circGrad.addColorStop(1, '#047857'); }
+  else { circGrad.addColorStop(0, '#FB7185'); circGrad.addColorStop(1, '#BE123C'); }
+  ctx.fillStyle = circGrad;
+  ctx.fill();
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 5.5;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  ctx.moveTo(w / 2 - 16, cy + r + 1);
+  ctx.lineTo(w / 2 - 4, cy + r + 13);
+  ctx.lineTo(w / 2 + 18, cy + r - 12);
+  ctx.stroke();
+  cy += r * 2 + 30;
+
+  ctx.fillStyle = '#5B6472';
+  ctx.font = '600 17px "Plus Jakarta Sans", sans-serif';
+  ctx.fillText('Transaksi Berhasil', w / 2, cy);
+  cy += 44;
+
+  ctx.fillStyle = isIn ? '#047857' : '#E11D48';
+  ctx.font = '800 34px "IBM Plex Mono", monospace';
+  ctx.fillText(`${isIn ? '+' : '-'} ${fmtRupiah(t.amount)}`, w / 2, cy);
+  cy += 30;
+
+  const dateLabel = new Date(t.date + 'T00:00:00').toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+  ctx.fillStyle = '#8A93A3';
+  ctx.font = '500 14px "Plus Jakarta Sans", sans-serif';
+  ctx.fillText(dateLabel, w / 2, cy);
+  cy += 32;
+
+  // Garis putus-putus pemisah
+  ctx.strokeStyle = '#E4E8EF';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([7, 7]);
+  ctx.beginPath();
+  ctx.moveTo(cardX + 24, cy);
+  ctx.lineTo(cardX + cardW - 24, cy);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  cy += 38;
+
+  ctx.textAlign = 'left';
+  const rows = [
+    ['Kategori', t.category],
+    ['Keterangan', t.desc || 'Tanpa keterangan'],
+    ['No. Referensi', formatReceiptRef(t.id)]
+  ];
+  rows.forEach(([label, value]) => {
+    ctx.fillStyle = '#8A93A3';
+    ctx.font = '700 11.5px "Plus Jakarta Sans", sans-serif';
+    ctx.fillText(label.toUpperCase(), cardX + 24, cy);
+    cy += 22;
+    ctx.fillStyle = '#131A2A';
+    ctx.font = '700 17px "Plus Jakarta Sans", sans-serif';
+    const linesUsed = wrapCanvasText(ctx, String(value), cardX + 24, cy, cardW - 48, 22, 2);
+    cy += 22 * linesUsed + 16;
+  });
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#8A93A3';
+  ctx.font = '500 12px "Plus Jakarta Sans", sans-serif';
+  ctx.fillText(`Dibuat otomatis oleh aplikasi ${appName}`, w / 2, cardY + cardH - 20);
+
+  canvas.toBlob((blob) => {
+    if (!blob) return;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Bukti-Transaksi-${formatReceiptRef(t.id)}.png`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+  }, 'image/png');
+}
 document.getElementById('btnAddDesktop')?.addEventListener('click', () => openAddModal());
 document.getElementById('btnAddMobile').addEventListener('click', () => openAddModal());
 
@@ -6966,6 +7282,11 @@ function applyAppSettings(settings) {
   if (footerCopyEl) footerCopyEl.textContent = name;
   const miniNameEl = document.getElementById('miniBrandNameText');
   if (miniNameEl) miniNameEl.textContent = name;
+  // Popup "Bukti Transaksi" (tab Aktifitas) -- nama brand di kepalanya
+  // ikut disinkronkan di sini juga, supaya SELALU sama dengan nama
+  // aplikasi yang sedang aktif walau penggunanya menggantinya kapan saja.
+  const receiptNameEl = document.getElementById('receiptBrandNameText');
+  if (receiptNameEl) receiptNameEl.textContent = name;
 
   const iconPreset = APP_ICON_PRESETS.find(i => i.key === settings.icon) || APP_ICON_PRESETS[0];
   const logoHtml = settings.logo ? `<img src="${settings.logo}" alt="Logo ${escapeHtml(name)}">` : iconPreset.svg;
@@ -6975,6 +7296,8 @@ function applyAppSettings(settings) {
   if (footerMarkEl) footerMarkEl.innerHTML = logoHtml;
   const miniMarkEl = document.getElementById('miniBrandMarkIcon');
   if (miniMarkEl) miniMarkEl.innerHTML = logoHtml;
+  const receiptMarkEl = document.getElementById('receiptBrandMarkIcon');
+  if (receiptMarkEl) receiptMarkEl.innerHTML = logoHtml;
 
   const preset = APP_THEME_PRESETS.find(p => p.key === settings.theme) || APP_THEME_PRESETS[0];
   document.documentElement.style.setProperty('--forest-glow', preset.color);
@@ -7556,8 +7879,12 @@ document.getElementById('btnConfirmDelete').addEventListener('click', () => {
 document.getElementById('txBody')?.addEventListener('click', (e) => {
   const editBtn = e.target.closest('[data-edit]');
   const delBtn = e.target.closest('[data-del]');
-  if (editBtn) openEditModal(editBtn.dataset.edit);
-  if (delBtn) openDeleteConfirm(delBtn.dataset.del);
+  if (editBtn) { openEditModal(editBtn.dataset.edit); return; }
+  if (delBtn) { openDeleteConfirm(delBtn.dataset.del); return; }
+  // Tap di area kartu selain tombol edit/hapus -> buka popup "Bukti
+  // Transaksi" (ala struk) untuk transaksi tsb.
+  const row = e.target.closest('[data-tx-id]');
+  if (row) openTxReceipt(row.dataset.txId);
 });
 
 /* ==========================================================
@@ -7582,6 +7909,10 @@ document.getElementById('detailBackBtn').addEventListener('click', closeDetailPa
 document.addEventListener('keydown', (e) => {
   if (e.key !== 'Escape') return;
   if (txModal.classList.contains('open') || confirmModal.classList.contains('open') || billModal.classList.contains('open')) return;
+  if (txReceiptOverlay.classList.contains('open')) {
+    closeTxReceipt();
+    return;
+  }
   if (document.getElementById('lapFilterOverlay').classList.contains('open')) {
     closeLapFilterOverlay();
     return;

@@ -4572,6 +4572,13 @@ input[type="number"].year-input{width:110px;font-family:'IBM Plex Mono',monospac
 .btn-primary:hover{background:var(--primary-deep);box-shadow:0 6px 18px rgba(194,65,12,0.32);}
 .btn-ghost{background:var(--paper);color:var(--ink);border:1px solid var(--line);}
 .btn-ghost:hover{background:#e6e9f5;border-color:#c9cee3;}
+/* ---- Khusus tombol "Muat Lebih Banyak" di halaman Laporan: font
+   DISAMAKAN dengan judul halaman (Poppins) -- di-scope ke
+   #historyLoadMoreWrap saja supaya tombol .btn-ghost lain (Batal, dll
+   di halaman/modal lain) tidak ikut berubah. Bobot diturunkan sedikit
+   (700->600) krn Poppins terlihat lebih tebal drpd Plus Jakarta Sans
+   pada bobot yang sama. ---- */
+#historyLoadMoreWrap .btn-ghost{font-family:'Poppins',sans-serif;font-weight:600;letter-spacing:-0.005em;}
 .btn-danger{background:var(--wine);color:#fff;}
 .btn-danger:hover{background:#c81852;}
 
@@ -4684,6 +4691,14 @@ input[type="number"].year-input{width:110px;font-family:'IBM Plex Mono',monospac
 .export-menu-item.emi-pdf .emi-ic{background:rgba(225,29,72,0.12); color:#E11D48;}
 .export-menu-item .emi-text{display:flex; flex-direction:column; gap:1px;}
 .export-menu-item .emi-text small{font-weight:500; color:var(--ink-faint); font-size:11px;}
+/* ---- Khusus menu Download di halaman Laporan: font item "Unduh
+   Excel/PDF" DISAMAKAN dengan font judul halaman (Poppins) -- di-scope
+   ke #lapHeaderActions saja supaya menu export lain (mis. di halaman
+   Pendapatan) tidak ikut berubah. Bobot diturunkan sedikit (600->500)
+   krn Poppins terlihat lebih tebal drpd Plus Jakarta Sans pada bobot
+   yang sama. ---- */
+#lapHeaderActions .export-menu-item{font-family:'Poppins',sans-serif;font-weight:500;letter-spacing:-0.005em;}
+#lapHeaderActions .export-menu-item .emi-text small{font-family:'Poppins',sans-serif;font-weight:400;letter-spacing:-0.005em;}
 .icon-btn{transition:background .15s ease, color .15s ease, border-color .15s ease;}
 button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible{
   outline:2px solid var(--forest-glow);outline-offset:2px;
@@ -4802,6 +4817,12 @@ tbody tr:last-child td{border-bottom:none;}
   display:flex;align-items:center;justify-content:space-between;gap:10px;
   padding:14px 2px 8px;font-weight:800;font-size:11px;text-transform:uppercase;
   letter-spacing:0.05em;color:var(--ink-soft);
+  /* Font DISAMAKAN dengan judul halaman Laporan (.page-banner h1, Poppins)
+     -- sebelumnya ikut font body default (Plus Jakarta Sans). Bobotnya
+     tetap dibuat tebal (800) karena ukurannya kecil & huruf kapital
+     semua, supaya label tanggal ini tetap kelihatan jelas sbg pemisah
+     kelompok transaksi. */
+  font-family:'Poppins',sans-serif;
 }
 .rw-list > .rw-group-head:first-child{padding-top:2px;}
 .rw-group-net{font-family:'IBM Plex Mono',monospace;font-weight:700;letter-spacing:0;text-transform:none;}
@@ -4818,15 +4839,25 @@ tbody tr:last-child td{border-bottom:none;}
   width:40px;height:40px;border-radius:13px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
 }
 .rw-item-body{flex:1;min-width:0;}
-.rw-item-name{font-size:13.5px;font-weight:700;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.rw-item-sub{font-size:12px;color:var(--ink-soft);font-weight:600;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.rw-item-date{font-size:11px;color:var(--ink-faint);font-weight:600;margin-top:3px;}
+/* ---- Font nama/keterangan/tanggal tiap baris transaksi DISAMAKAN dgn
+   font judul halaman Laporan (Poppins) -- sebelumnya ikut font body
+   default (Plus Jakarta Sans). Tebal & ukurannya TETAP dipertahankan
+   seperti semula (700/12/11 + ukuran masing-masing) supaya hirarki
+   nama > keterangan > tanggal yang sudah pas tidak berubah, cuma jenis
+   hurufnya yang diseragamkan. ---- */
+.rw-item-name{font-family:'Poppins',sans-serif;font-size:13.5px;font-weight:600;letter-spacing:-0.005em;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.rw-item-sub{font-family:'Poppins',sans-serif;font-size:12px;color:var(--ink-soft);font-weight:500;letter-spacing:-0.005em;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.rw-item-date{font-family:'Poppins',sans-serif;font-size:11px;color:var(--ink-faint);font-weight:500;letter-spacing:-0.005em;margin-top:3px;}
 .rw-item-right{flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:5px;position:relative;}
 .rw-item-amount{font-family:'IBM Plex Mono',monospace;font-size:13.5px;font-weight:700;letter-spacing:-0.01em;white-space:nowrap;}
 .rw-item-amount.in{color:#047857;}
 .rw-item-amount.out{color:var(--wine);}
 .rw-status-pill{
-  font-size:10px;font-weight:800;padding:2.5px 9px;border-radius:999px;
+  /* Font DISAMAKAN dengan judul halaman Laporan (Poppins) -- sebelumnya
+     ikut font body default. Bobot tetap tebal (700, sedikit diturunkan
+     dari 800) karena ukuran pil ini kecil, biar tetap jelas terbaca. */
+  font-family:'Poppins',sans-serif;
+  font-size:10px;font-weight:700;padding:2.5px 9px;border-radius:999px;
   background:rgba(5,150,105,0.14);color:#047857;display:inline-flex;align-items:center;gap:4px;
 }
 .rw-status-pill::before{content:"↓";font-size:9px;}
@@ -4937,6 +4968,120 @@ tbody tr:last-child td{border-bottom:none;}
 .modal-overlay.open .tx-modal #txForm .form-row:last-of-type{animation:txFieldIn .46s cubic-bezier(.22,1.4,.4,1) .34s forwards;}
 .modal-overlay.open .tx-modal .modal-actions{animation:txFieldIn .46s cubic-bezier(.22,1.4,.4,1) .41s forwards;}
 @keyframes txFieldIn{60%{opacity:1;transform:translateY(-2px) scale(1.015);}100%{opacity:1;transform:translateY(0) scale(1);}}
+
+/* ---- Popup "Bukti Transaksi" — dibuka dengan tap kartu transaksi di
+   tab Aktifitas (.rw-item), disusun ala struk pembayaran seperti pada
+   gambar referensi: header berwarna solid yang MEMUDAR (gradasi) ke
+   bawah, ditumpuk badan kartu putih membulat di bawahnya berisi
+   lencana sukses, nominal, rincian, lalu Bagikan/Unduh/Selesai.
+   Warna biru pada referensi diganti gradasi ORANYE (var(--primary))
+   senada identitas aplikasi ini. ---- */
+.receipt-modal{
+  position:relative;overflow:hidden;border-radius:26px;padding:0;
+  max-width:392px;
+  box-shadow:0 30px 70px -18px rgba(15,23,42,0.4), 0 6px 20px rgba(15,23,42,0.1);
+  transform:translateY(34px) scale(.9) rotate(-1deg);
+  transition:transform .55s cubic-bezier(.34,1.5,.5,1), opacity .32s ease;
+}
+.modal-overlay.open .receipt-modal{transform:translateY(0) scale(1) rotate(0);}
+
+/* Header gradasi oranye (padanan area biru "Qita by BRI" pada
+   referensi) -- memudar dari oranye pekat di atas menjadi transparan
+   di bawah, supaya menyatu mulus ke badan kartu putih (.receipt-body)
+   yang ditumpuk di atasnya lewat margin negatif. */
+.receipt-header{
+  position:relative;padding:22px 26px 58px;text-align:center;
+  background:linear-gradient(180deg, var(--primary-deep) 0%, var(--primary) 45%, color-mix(in srgb, var(--primary) 35%, transparent) 78%, transparent 100%);
+}
+.receipt-close-btn{
+  position:absolute;top:14px;right:14px;z-index:2;
+  width:28px;height:28px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(255,255,255,0.22);color:#fff;border:none;cursor:pointer;
+  transition:background .15s ease, transform .15s ease;
+}
+.receipt-close-btn:hover{background:rgba(255,255,255,0.34);}
+.receipt-close-btn:active{transform:scale(.9);}
+
+.receipt-brand{display:flex;align-items:center;justify-content:center;gap:7px;}
+.receipt-brand-mark{
+  width:22px;height:22px;border-radius:7px;flex-shrink:0;
+  background:rgba(255,255,255,0.22);color:#fff;
+  display:flex;align-items:center;justify-content:center;
+}
+.receipt-brand-mark img{width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block;}
+.receipt-brand-name{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:13.5px;letter-spacing:.02em;color:#fff;}
+
+/* Badan kartu putih -- ditarik naik menutupi ujung bawah header
+   gradasi (margin-top negatif), sudut atasnya dibulatkan supaya
+   terlihat seperti "kartu di atas kartu" persis gambar referensi. */
+.receipt-body{
+  position:relative;margin-top:-38px;background:#fff;
+  border-radius:22px 22px 0 0;padding:0 26px 24px;text-align:center;
+}
+
+.receipt-status{
+  width:60px;height:60px;border-radius:50%;margin:0 auto 14px;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  background:linear-gradient(155deg,#10B981,#047857);
+  box-shadow:0 0 0 5px #fff, 0 10px 22px -8px rgba(4,120,87,0.5);
+}
+.receipt-status.out{background:linear-gradient(155deg,#FB7185,var(--wine));box-shadow:0 0 0 5px #fff, 0 10px 22px -8px rgba(190,18,60,0.45);}
+.receipt-status-label{font-size:14.5px;color:var(--ink-soft);font-weight:600;margin-bottom:7px;}
+.receipt-amount{font-family:'IBM Plex Mono',monospace;font-size:27px;font-weight:800;letter-spacing:-0.01em;margin-bottom:5px;}
+.receipt-amount.in{color:#047857;}
+.receipt-amount.out{color:var(--wine);}
+.receipt-date{font-size:12.5px;color:var(--ink-faint);margin-bottom:20px;}
+
+.receipt-divider{
+  height:0;border-top:1.5px dashed var(--line);margin:0 -26px 18px;
+}
+
+.receipt-detail-title{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-faint);text-align:left;margin-bottom:12px;}
+.receipt-detail-list{display:flex;flex-direction:column;gap:14px;text-align:left;}
+.receipt-detail-row{display:flex;align-items:flex-start;gap:11px;}
+.receipt-detail-ic{
+  width:34px;height:34px;border-radius:10px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+}
+.receipt-detail-text{min-width:0;flex:1;}
+.receipt-detail-label{font-size:15px;font-weight:700;color:var(--ink);line-height:1.25;word-break:break-word;}
+.receipt-detail-sub{font-size:12.5px;color:var(--ink-soft);margin-top:1px;word-break:break-word;}
+
+.receipt-expand-btn{
+  display:flex;align-items:center;justify-content:center;gap:5px;
+  width:100%;margin:16px 0 0;padding:6px;background:none;border:none;
+  font-size:12.5px;font-weight:700;color:var(--primary-deep);cursor:pointer;
+}
+.receipt-expand-btn svg{transition:transform .2s ease;}
+.receipt-expand-btn.open svg{transform:rotate(180deg);}
+.receipt-expand-body{max-height:0;overflow:hidden;transition:max-height .25s ease;text-align:left;}
+.receipt-expand-body.open{max-height:220px;margin-top:8px;}
+.receipt-expand-row{display:flex;justify-content:space-between;gap:14px;padding:8px 0;font-size:12.5px;border-top:1px solid var(--line);}
+.receipt-expand-row span:first-child{color:var(--ink-faint);flex-shrink:0;}
+.receipt-expand-row span:last-child{color:var(--ink);font-weight:600;text-align:right;word-break:break-all;}
+
+.receipt-actions{display:flex;align-items:center;gap:10px;margin-top:22px;}
+.receipt-icon-btn{
+  width:46px;height:46px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--primary-soft);color:var(--primary-deep);border:none;cursor:pointer;
+  transition:transform .15s ease, background .15s ease;
+}
+.receipt-icon-btn:hover{background:#FFE4CE;}
+.receipt-icon-btn:active{transform:scale(.92);}
+.receipt-done-btn{flex:1;border-radius:999px;padding:13px;font-weight:700;}
+
+@media (max-width:480px){
+  .receipt-modal{max-width:100%;}
+  .receipt-amount{font-size:24px;}
+}
+
+/* Kartu transaksi di tab Aktifitas kini bisa di-tap utk buka bukti
+   transaksi ini -- kursor pointer supaya jelas seluruh kartu bisa
+   diklik, bukan cuma tombol edit/hapus di kanan. */
+.rw-item{cursor:pointer;}
+.rw-item-actions{cursor:default;}
 
 .tx-modal .modal-head h3{
   font-size:24px;letter-spacing:-0.01em;
@@ -5945,6 +6090,13 @@ tbody tr:last-child td{border-bottom:none;}
 }
 .bd-search-row input[type="search"]:focus{outline:none;}
 .bd-search-row input[type="search"]::-webkit-search-cancel-button{display:none;}
+/* ---- Khusus baris pencarian di halaman Laporan: font teks/placeholder
+   DISAMAKAN dengan judul halaman (Poppins) -- di-scope ke #lapSearchRow
+   saja supaya baris pencarian di Beranda (#bdSearchRow) tidak ikut
+   berubah. Ukuran TETAP 16px (tidak diturunkan) supaya Safari iOS
+   tidak auto-zoom saat field ini disentuh di HP. ---- */
+#lapSearchRow input[type="search"]{font-family:'Poppins',sans-serif;letter-spacing:-0.005em;}
+#lapSearchRow input[type="search"]::placeholder{font-family:'Poppins',sans-serif;letter-spacing:-0.005em;}
 .bd-date-row{flex-wrap:nowrap;}
 .bd-date-field{
   flex:1;min-width:0;display:flex;flex-direction:column;gap:1px;
@@ -6095,6 +6247,13 @@ tbody tr:last-child td{border-bottom:none;}
   margin:0 auto 14px;color:var(--ink-faint);
 }
 .bd-empty p{font-weight:600;color:var(--ink-soft);font-size:13px;max-width:280px;margin:0 auto;}
+/* ---- Khusus di halaman Laporan: font teks kosong ("Belum ada
+   transaksi...", placeholder Tabungan/Aset) DISAMAKAN dengan font
+   judul halaman (Poppins) -- di-scope ke #page-laporan saja supaya
+   .bd-empty p di halaman Beranda/Dompet/Pengaturan tidak ikut berubah.
+   Bobot diturunkan sedikit (600->500) krn Poppins terlihat lebih tebal
+   dibanding Plus Jakarta Sans pada bobot yang sama. ---- */
+#page-laporan .bd-empty p{font-family:'Poppins',sans-serif;font-weight:500;letter-spacing:-0.005em;}
 
 /* ---- Skeleton loading untuk kartu Tagihan & Hutang ----
    Dipakai selagi #bdAllList belum diisi data ASLI oleh
@@ -8755,6 +8914,62 @@ body.is-scrolling *{
     </form>
   </div>
 </div>
+
+<!-- ===== POPUP: BUKTI TRANSAKSI (gaya struk, dibuka dgn tap kartu transaksi
+     di tab Aktifitas -- Bagikan/Unduh/Selesai sama seperti struk pembayaran
+     pada umumnya. Header gradasi oranye di atas (menggantikan biru pada
+     referensi) lalu memudar ke badan kartu putih di bawahnya, senada
+     dengan warna aksen & identitas ZAYAPRO yang bisa diganti pengguna
+     lewat Pengaturan Aplikasi -- lihat #receiptBrandNameText/#receiptBrandMarkIcon
+     yang ikut disinkronkan oleh applyAppSettings() supaya nama & logo di
+     popup ini SELALU sama dengan nama/logo aplikasi yang sedang aktif,
+     walau penggunanya mengganti nama/logo itu kapan saja). ===== -->
+<div class="modal-overlay" id="txReceiptOverlay">
+  <div class="modal receipt-modal">
+    <div class="receipt-header">
+      <button class="receipt-close-btn" id="receiptCloseBtn" type="button" aria-label="Tutup">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+      <div class="receipt-brand">
+        <span class="receipt-brand-mark" id="receiptBrandMarkIcon">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>
+        </span>
+        <span class="receipt-brand-name" id="receiptBrandNameText">ZAYAPRO</span>
+      </div>
+    </div>
+
+    <div class="receipt-body">
+      <div class="receipt-status" id="receiptStatusIcon">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+      </div>
+      <div class="receipt-status-label">Transaksi Berhasil</div>
+      <div class="receipt-amount" id="receiptAmount">Rp0</div>
+      <div class="receipt-date" id="receiptDate">-</div>
+
+      <div class="receipt-divider"></div>
+
+      <div class="receipt-detail-title">Detail Transaksi</div>
+      <div class="receipt-detail-list" id="receiptDetailList"></div>
+
+      <button type="button" class="receipt-expand-btn" id="receiptExpandBtn">
+        <span>Lihat Detail</span>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="receipt-expand-body" id="receiptExpandBody"></div>
+
+      <div class="receipt-actions">
+        <button type="button" class="receipt-icon-btn" id="receiptShareBtn" title="Bagikan" aria-label="Bagikan bukti transaksi">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="10.6" x2="15.4" y2="6.4"/><line x1="8.6" y1="13.4" x2="15.4" y2="17.6"/></svg>
+        </button>
+        <button type="button" class="receipt-icon-btn" id="receiptDownloadBtn" title="Unduh" aria-label="Unduh bukti transaksi">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13m0 0-4.5-4.5M12 16l4.5-4.5"/><path d="M4 19.5h16"/></svg>
+        </button>
+        <button type="button" class="btn btn-primary receipt-done-btn" id="receiptDoneBtn">Selesai</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- ===== /POPUP: BUKTI TRANSAKSI ===== -->
 
 <!-- ===== MODAL TAMBAH/EDIT TAGIHAN & HUTANG (terpisah dari transaksi) ===== -->
 <div class="modal-overlay" id="billModalOverlay">
