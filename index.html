@@ -3902,16 +3902,31 @@ body.density-compact .income-cards-group{gap:10px;}
    ================================================================ */
 .lap-sticky-top{
   position:sticky;
-  /* top pakai var(--mini-topbar-h) -- variabel yg sama jg dipakai di
-     scroll-margin-top #historySection/#txTableWrap -- supaya di HP dia
-     berhenti tepat DI BAWAH mini-topbar (bukan ketutup olehnya), dan
-     otomatis jadi 0 sendiri di desktop/tablet krn mini-topbar memang
-     disembunyikan (display:none) di sana. */
-  top:var(--mini-topbar-h,0px);
-  /* z-index satu tingkat di bawah mini-topbar (var(--z-mini-topbar) - 1),
-     pola yg sama dipakai .tabs-sticky-wrap -- supaya kalau dua-duanya
-     sama-sama nempel di HP, mini-topbar selalu tetap di lapisan
-     paling atas. */
+  /* BUG FIX: sebelumnya top pakai var(--mini-topbar-h), pola yg
+     di-copy dari .tabs-sticky-wrap milik halaman Beranda. Bedanya,
+     #miniTopbar itu elemen GLOBAL (position:fixed, selalu ada di DOM
+     dgn tinggi asli ~80px lewat display:flex, cuma digeser keluar
+     layar via transform saat tidak aktif -- BUKAN display:none),
+     jadi ResizeObserver di initMiniTopbar() (script.js) tetap
+     mengukur & mengisi --mini-topbar-h (mis. 82px) walau halaman yg
+     aktif BUKAN Beranda. Mini-topbar sendiri CUMA pernah benar-benar
+     muncul (class .mtb-active) saat tab Beranda yg aktif (lihat
+     updateMiniTopbarVisibility -- bannerFullyPassed selalu false di
+     halaman lain), jadi di Laporan mini-topbar itu tidak pernah
+     kelihatan sama sekali -- tapi header sticky di sini tetap ikut
+     "dipaksa turun" sejauh --mini-topbar-h tsb tanpa alasan. Akibatnya
+     banner+tab+header "Semua Transaksi" nyangkut MENGAMBANG di
+     tengah layar (bukan nempel rapi di top:0) begitu discroll, dan
+     baris transaksi yg seharusnya sudah lewat masih sempat kelihatan
+     tumpang-tindih di celah kosong di atasnya. Diganti top:0 tetap
+     -- beda dgn .tabs-sticky-wrap (Beranda) yg MEMANG perlu offset
+     itu krn mini-topbar bisa betulan aktif di halaman itu. */
+  top:0;
+  /* z-index tetap disamakan dgn pola sticky-header halaman lain
+     (.bd-sticky-head) -- var(--z-mini-topbar) - 1 supaya tetap di
+     bawah mini-topbar KALAU SEANDAINYA suatu saat mini-topbar dibuat
+     ikut tampil lintas halaman, tapi nilainya sendiri sudah tidak
+     lagi dipakai untuk offset top di atas. */
   z-index:calc(var(--z-mini-topbar) - 1);
 }
 /* Bagian atas (banner+tab+header) TIDAK butuh padding-bottom lagi di
