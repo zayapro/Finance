@@ -4976,21 +4976,30 @@ tbody tr:last-child td{border-bottom:none;}
    lencana sukses, nominal, rincian, lalu Bagikan/Unduh/Selesai.
    Warna biru pada referensi diganti gradasi ORANYE (var(--primary))
    senada identitas aplikasi ini. ---- */
+/* Popup dibuka FULL LAYAR (menutupi seluruh viewport persis gambar
+   referensi Qita by BRI), bukan kartu mengambang di tengah -- overlay
+   khusus ini tak perlu padding/backdrop-blur krn kontennya sendiri
+   sudah menutupi semuanya. */
+#txReceiptOverlay{padding:0;background:rgba(11,29,22,0.001);}
+#txReceiptOverlay.open{backdrop-filter:none;}
 .receipt-modal{
-  position:relative;overflow:hidden;border-radius:26px;padding:0;
-  max-width:392px;
-  box-shadow:0 30px 70px -18px rgba(15,23,42,0.4), 0 6px 20px rgba(15,23,42,0.1);
-  transform:translateY(34px) scale(.9) rotate(-1deg);
-  transition:transform .55s cubic-bezier(.34,1.5,.5,1), opacity .32s ease;
+  position:relative;overflow:hidden;border-radius:0;padding:0;
+  width:100%;max-width:100%;height:100%;max-height:100%;
+  display:flex;flex-direction:column;
+  box-shadow:none;
+  transform:translateY(100%);
+  transition:transform .4s cubic-bezier(.22,1,.36,1), opacity .32s ease;
 }
-.modal-overlay.open .receipt-modal{transform:translateY(0) scale(1) rotate(0);}
+.modal-overlay.open .receipt-modal{transform:translateY(0);}
 
 /* Header gradasi oranye (padanan area biru "Qita by BRI" pada
    referensi) -- memudar dari oranye pekat di atas menjadi transparan
    di bawah, supaya menyatu mulus ke badan kartu putih (.receipt-body)
-   yang ditumpuk di atasnya lewat margin negatif. */
+   yang ditumpuk di atasnya lewat margin negatif. Ikut menghormati
+   safe-area status bar di HP berponi/notch. */
 .receipt-header{
-  position:relative;padding:22px 26px 58px;text-align:center;
+  position:relative;flex-shrink:0;text-align:center;
+  padding:calc(env(safe-area-inset-top,0px) + 22px) 26px 58px;
   background:linear-gradient(180deg, var(--primary-deep) 0%, var(--primary) 45%, color-mix(in srgb, var(--primary) 35%, transparent) 78%, transparent 100%);
 }
 .receipt-close-btn{
@@ -5016,15 +5025,17 @@ tbody tr:last-child td{border-bottom:none;}
    gradasi (margin-top negatif), sudut atasnya dibulatkan supaya
    terlihat seperti "kartu di atas kartu" persis gambar referensi. */
 .receipt-body{
-  position:relative;margin-top:-38px;background:#fff;
+  position:relative;flex:1 1 auto;min-height:0;overflow-y:auto;
+  margin-top:-38px;background:#fff;
   border-radius:22px 22px 0 0;padding:0 26px 24px;text-align:center;
+  overscroll-behavior:contain;
 }
 
 .receipt-status{
-  width:60px;height:60px;border-radius:50%;margin:0 auto 14px;
+  width:76px;height:76px;border-radius:50%;margin:0 auto 16px;
   display:flex;align-items:center;justify-content:center;flex-shrink:0;
-  background:linear-gradient(155deg,#10B981,#047857);
-  box-shadow:0 0 0 5px #fff, 0 10px 22px -8px rgba(4,120,87,0.5);
+  background:linear-gradient(155deg,#4ADE80,#16A34A 55%,#15803D);
+  box-shadow:0 0 0 5px #fff, 0 10px 22px -8px rgba(21,128,61,0.5);
 }
 .receipt-status.out{background:linear-gradient(155deg,#FB7185,var(--wine));box-shadow:0 0 0 5px #fff, 0 10px 22px -8px rgba(190,18,60,0.45);}
 .receipt-status-label{font-size:14.5px;color:var(--ink-soft);font-weight:600;margin-bottom:7px;}
@@ -5061,7 +5072,11 @@ tbody tr:last-child td{border-bottom:none;}
 .receipt-expand-row span:first-child{color:var(--ink-faint);flex-shrink:0;}
 .receipt-expand-row span:last-child{color:var(--ink);font-weight:600;text-align:right;word-break:break-all;}
 
-.receipt-actions{display:flex;align-items:center;gap:10px;margin-top:22px;}
+.receipt-actions{
+  display:flex;align-items:center;gap:10px;flex-shrink:0;
+  background:#fff;padding:14px 26px calc(env(safe-area-inset-bottom,0px) + 16px);
+  box-shadow:0 -8px 20px -14px rgba(15,23,42,0.18);
+}
 .receipt-icon-btn{
   width:46px;height:46px;border-radius:50%;flex-shrink:0;
   display:flex;align-items:center;justify-content:center;
@@ -5073,7 +5088,6 @@ tbody tr:last-child td{border-bottom:none;}
 .receipt-done-btn{flex:1;border-radius:999px;padding:13px;font-weight:700;}
 
 @media (max-width:480px){
-  .receipt-modal{max-width:100%;}
   .receipt-amount{font-size:24px;}
 }
 
@@ -7936,6 +7950,7 @@ body.is-scrolling *{
 
   /* ---- Modal tambah/edit & konfirmasi ---- */
   .modal{border-radius:16px;padding:16px;}
+  .receipt-modal{border-radius:0;padding:0;}
   .modal-head{margin-bottom:12px;}
   .modal-head h3{font-size:16px;}
   .modal-head-sub{font-size:10px;}
@@ -7994,6 +8009,7 @@ body.is-scrolling *{
   .stat-card{padding:12px 12px 11px;}
   .section-card{padding:12px;}
   .modal{padding:14px;}
+  .receipt-modal{padding:0;}
   .btn{font-size:12px;padding:8px 11px;}
 }
 /* ============ CLOUD SYNC — LOGIN/AUTH OVERLAY ============ */
@@ -8940,7 +8956,7 @@ body.is-scrolling *{
 
     <div class="receipt-body">
       <div class="receipt-status" id="receiptStatusIcon">
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
       </div>
       <div class="receipt-status-label">Transaksi Berhasil</div>
       <div class="receipt-amount" id="receiptAmount">Rp0</div>
@@ -8956,16 +8972,16 @@ body.is-scrolling *{
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg>
       </button>
       <div class="receipt-expand-body" id="receiptExpandBody"></div>
+    </div>
 
-      <div class="receipt-actions">
-        <button type="button" class="receipt-icon-btn" id="receiptShareBtn" title="Bagikan" aria-label="Bagikan bukti transaksi">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="10.6" x2="15.4" y2="6.4"/><line x1="8.6" y1="13.4" x2="15.4" y2="17.6"/></svg>
-        </button>
-        <button type="button" class="receipt-icon-btn" id="receiptDownloadBtn" title="Unduh" aria-label="Unduh bukti transaksi">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13m0 0-4.5-4.5M12 16l4.5-4.5"/><path d="M4 19.5h16"/></svg>
-        </button>
-        <button type="button" class="btn btn-primary receipt-done-btn" id="receiptDoneBtn">Selesai</button>
-      </div>
+    <div class="receipt-actions">
+      <button type="button" class="receipt-icon-btn" id="receiptShareBtn" title="Bagikan" aria-label="Bagikan bukti transaksi">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="10.6" x2="15.4" y2="6.4"/><line x1="8.6" y1="13.4" x2="15.4" y2="17.6"/></svg>
+      </button>
+      <button type="button" class="receipt-icon-btn" id="receiptDownloadBtn" title="Unduh" aria-label="Unduh bukti transaksi">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13m0 0-4.5-4.5M12 16l4.5-4.5"/><path d="M4 19.5h16"/></svg>
+      </button>
+      <button type="button" class="btn btn-primary receipt-done-btn" id="receiptDoneBtn">Selesai</button>
     </div>
   </div>
 </div>
