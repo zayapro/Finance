@@ -5251,8 +5251,13 @@ tbody tr:last-child td{border-bottom:none;}
      putihnya. Bayangannya DIUBAH jadi oranye lembut (bukan lagi hitam
      pekat) krn sekarang duduk di atas putih, bukan di atas gradasi
      gelap lagi. */
-  background:var(--banner-orange-deep, var(--primary-deep));color:#fff;
-  box-shadow:0 10px 22px -10px color-mix(in srgb, var(--banner-orange-deep, var(--primary-deep)) 55%, transparent);
+  /* Warna pil DISESUAIKAN persis sampel piksel dari gambar referensi
+     terbaru (pil coklat-oranye keemasan #C47B2F, BUKAN lagi oranye
+     amber --banner-orange-deep #D97706 yg lebih terang/menyala) --
+     hover & shadow diturunkan dari warna dasar yg sama supaya tetap
+     senada. */
+  background:#C47B2F;color:#fff;
+  box-shadow:0 10px 22px -10px color-mix(in srgb, #C47B2F 55%, transparent);
   /* Hilangkan kotak bayangan focus/tap-highlight bawaan browser saat
      tombol ini ditekan (sama seperti .receipt-icon-btn &
      .receipt-expand-btn) -- box-shadow oranye lembut di atas tetap
@@ -5260,7 +5265,7 @@ tbody tr:last-child td{border-bottom:none;}
      bukan efek klik. */
   outline:none;
 }
-.receipt-done-btn:hover{background:#B45F04;}
+.receipt-done-btn:hover{background:#A8661F;}
 
 @media (max-width:480px){
   .receipt-amount{font-size:24px;}
