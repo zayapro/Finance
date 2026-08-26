@@ -4989,20 +4989,20 @@ tbody tr:last-child td{border-bottom:none;}
   width:100%;max-width:100%;height:100%;max-height:100%;
   display:flex;flex-direction:column;
   box-shadow:none;
+  /* Gradasi oranye MENUTUPI SELURUH layar (bukan cuma area header) --
+     supaya kartu putih yg diberi margin di bawah tetap "dikelilingi"
+     warna di kiri/kanan/bawahnya, bukan berakhir putih kosong. */
+  background:linear-gradient(180deg, var(--primary-deep) 0%, var(--primary) 40%, var(--primary) 100%);
   transform:translateY(100%);
   transition:transform .4s cubic-bezier(.22,1,.36,1), opacity .32s ease;
 }
 .modal-overlay.open .receipt-modal{transform:translateY(0);}
 
-/* Header gradasi oranye (padanan area biru "Qita by BRI" pada foto
-   referensi) -- badan kartu putih di bawahnya DITARIK NAIK menutupi
-   ujung bawah gradasi ini (margin negatif di .receipt-body), bukan
-   mengambang terpisah dgn jarak, PERSIS seperti pada foto: kartu
-   nempel rata kiri-kanan-bawah layar, cuma sudut ATAS yg membulat. */
+/* Header cuma berisi tombol tutup + logo brand, TANPA background
+   sendiri (menyatu dgn gradasi penuh milik .receipt-modal). */
 .receipt-header{
   position:relative;flex-shrink:0;text-align:center;
-  padding:calc(env(safe-area-inset-top,0px) + 22px) 26px 56px;
-  background:linear-gradient(180deg, var(--primary-deep) 0%, var(--primary) 55%, var(--primary) 100%);
+  padding:calc(env(safe-area-inset-top,0px) + 22px) 26px 16px;
 }
 .receipt-close-btn{
   position:absolute;top:calc(env(safe-area-inset-top,0px) + 14px);right:14px;z-index:2;
@@ -5021,22 +5021,33 @@ tbody tr:last-child td{border-bottom:none;}
   display:flex;align-items:center;justify-content:center;
 }
 .receipt-brand-mark img{width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block;}
-.receipt-brand-name{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:13.5px;letter-spacing:.02em;color:#fff;}
+/* Nama brand di header popup -- font DISAMAKAN dgn judul halaman
+   "Laporan" (.page-banner h1: Poppins weight 500, letter-spacing
+   -0.005em), sebelumnya Plus Jakarta Sans weight 800. */
+.receipt-brand-name{font-family:'Poppins',sans-serif;font-weight:500;font-size:14.5px;letter-spacing:-0.005em;color:#fff;}
 
-/* Kartu putih -- RATA sampai pinggir kiri/kanan/bawah layar (tanpa
-   margin), cuma sudut ATAS yg membulat, ditarik naik menutupi ujung
-   bawah gradasi (margin-top negatif) supaya menyatu mulus jadi satu
-   permukaan "kartu di atas kartu" -- PERSIS foto referensi. Mengisi
-   sisa tinggi layar (flex:1) & bisa discroll jika detail panjang. */
+/* Wadah scroll utk kartu putih -- diberi jarak/margin di
+   kiri-kanan-bawah supaya gradasi oranye tetap kelihatan
+   mengelilingi kartu (kartu TIDAK nempel ke pinggir layar), persis
+   gambar referensi. */
+.receipt-card-wrap{
+  flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;
+  display:flex;flex-direction:column;
+  padding:0 14px calc(env(safe-area-inset-bottom,0px) + 16px);
+}
+
+/* Kartu putih -- sudut dibulatkan PENUH di keempat sisi & punya
+   bayangan sendiri, supaya benar-benar terlihat "mengambang" di atas
+   gradasi (BUKAN rata ke pinggir layar). */
 .receipt-body{
-  position:relative;flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;
-  margin-top:-40px;background:#fff;
-  border-radius:22px 22px 0 0;padding:0 26px 20px;text-align:center;
+  position:relative;flex:1 1 auto;background:#fff;
+  border-radius:24px;padding:26px 22px 20px;text-align:center;
+  box-shadow:0 20px 45px -14px rgba(15,23,42,0.35);
   display:flex;flex-direction:column;
 }
 
 .receipt-status{
-  width:70px;height:70px;border-radius:50%;margin:-35px auto 14px;
+  width:70px;height:70px;border-radius:50%;margin:0 auto 14px;
   display:flex;align-items:center;justify-content:center;flex-shrink:0;
   background:#22C55E;
   box-shadow:0 0 0 5px #fff, 0 10px 22px -8px rgba(21,128,61,0.5);
@@ -5087,7 +5098,15 @@ tbody tr:last-child td{border-bottom:none;}
 }
 .receipt-icon-btn:hover{background:#FFE4CE;}
 .receipt-icon-btn:active{transform:scale(.92);}
-.receipt-done-btn{flex:1;border-radius:999px;padding:13px;font-weight:700;}
+.receipt-done-btn{
+  flex:1;border-radius:999px;padding:13px;
+  /* Font & bobot DISAMAKAN dgn gaya judul halaman "Laporan"
+     (.page-banner h1 / .lap-pill-btn) -- Poppins weight 600 (bukan
+     700 spt .btn bawaan, krn Poppins terlihat lebih tebal drpd
+     Plus Jakarta Sans di bobot yg sama, pola yg sama persis dgn
+     override #historyLoadMoreWrap .btn-ghost di halaman Laporan). */
+  font-family:'Poppins',sans-serif;font-weight:600;letter-spacing:-0.005em;
+}
 
 @media (max-width:480px){
   .receipt-amount{font-size:24px;}
@@ -8956,6 +8975,7 @@ body.is-scrolling *{
       </div>
     </div>
 
+    <div class="receipt-card-wrap">
     <div class="receipt-body">
         <div class="receipt-status" id="receiptStatusIcon">
           <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
@@ -8985,6 +9005,7 @@ body.is-scrolling *{
           <button type="button" class="btn btn-primary receipt-done-btn" id="receiptDoneBtn">Selesai</button>
         </div>
       </div>
+    </div>
   </div>
 </div>
 <!-- ===== /POPUP: BUKTI TRANSAKSI ===== -->
