@@ -6353,13 +6353,44 @@ function closeTxReceipt() {
   receiptTxId = null;
 }
 
-document.getElementById('receiptCloseBtn').addEventListener('click', closeTxReceipt);
+// Tombol X (receiptCloseBtn) sudah dihapus dari header popup struk --
+// menyamai gambar referensi yg tidak punya tombol tutup di pojok atas,
+// cukup tombol "Selesai" di footer & tap area luar kartu utk menutup.
 document.getElementById('receiptDoneBtn').addEventListener('click', closeTxReceipt);
 txReceiptOverlay.addEventListener('click', (e) => { if (e.target === txReceiptOverlay) closeTxReceipt(); });
 
+// Dulu tinggi kotak "Lihat Detail" dipatok max-height:220px lewat CSS
+// (overflow:hidden) -- kalau rinciannya panjang (spt referensi Qita:
+// Jenis Transaksi, Nama Merchant, Lokasi, PAN, dll), isinya kepotong
+// & butuh scroll internal sendiri, beda dgn gambar referensi yg
+// scroll-nya nyatu ke SATU wadah (seluruh kartu struk ikut tergulung).
+// Sekarang tingginya dihitung dari scrollHeight ASLI kontennya via JS,
+// jadi kartu ini bisa memanjang sepenuhnya & yg discroll tetap cuma
+// .receipt-card-wrap di luarnya -- persis gaya scroll popup referensi.
 document.getElementById('receiptExpandBtn').addEventListener('click', () => {
-  document.getElementById('receiptExpandBody').classList.toggle('open');
-  document.getElementById('receiptExpandBtn').classList.toggle('open');
+  const body = document.getElementById('receiptExpandBody');
+  const btn = document.getElementById('receiptExpandBtn');
+  const isOpen = body.classList.contains('open');
+  if (isOpen) {
+    // Tutup: turunkan dari tinggi aslinya balik ke 0 supaya transisi
+    // tetap mulus (bukan langsung "meng-clip" tanpa animasi).
+    body.style.maxHeight = body.scrollHeight + 'px';
+    requestAnimationFrame(() => { body.style.maxHeight = '0px'; });
+    body.classList.remove('open');
+  } else {
+    body.classList.add('open');
+    body.style.maxHeight = body.scrollHeight + 'px';
+  }
+  btn.classList.toggle('open');
+});
+
+// Setelah animasi buka selesai, lepas nilai px tetap jadi 'none' supaya
+// kalau isinya berubah (mis. tambah baris rincian lain nanti) tetap ikut
+// menyesuaikan tinggi otomatis, tidak kepaku ke scrollHeight lama.
+document.getElementById('receiptExpandBody').addEventListener('transitionend', (e) => {
+  if (e.propertyName !== 'max-height') return;
+  const body = e.currentTarget;
+  if (body.classList.contains('open')) body.style.maxHeight = 'none';
 });
 
 function currentAppName() {

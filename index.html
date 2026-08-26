@@ -5020,14 +5020,21 @@ tbody tr:last-child td{border-bottom:none;}
      cuma area header) supaya kartu putih yg diberi margin di bawah
      tetap "dikelilingi" warna di kiri/kanan/bawahnya, bukan berakhir
      putih kosong. */
+  /* Header DIUBAH jadi oranye SOLID/RATA dulu di bagian atas (bukan
+     lagi dimulai dari banner-orange-deep yg gelap di 0%) -- persis
+     gambar referensi Qita: biru di kepala popupnya rata/flat satu
+     tone, TIDAK ada gradasi gelap->terang di area itu. Gelap/pekatnya
+     (banner-orange-deep) sekarang HANYA dipakai di tombol "Selesai"
+     (.receipt-done-btn) sbg satu2nya elemen yg sengaja dibuat lebih
+     pekat drpd latar, sama seperti pil "Selesai" biru tua referensi
+     yg jauh lebih gelap drpd biru kepalanya. */
   background:linear-gradient(180deg,
-    var(--banner-orange-deep) 0%,
-    var(--banner-orange) 20%,
-    var(--banner-orange) 34%,
-    color-mix(in srgb, var(--banner-orange) 72%, white) 50%,
-    color-mix(in srgb, var(--banner-orange) 38%, white) 64%,
-    color-mix(in srgb, var(--banner-orange) 14%, white) 76%,
-    #FEFFF9 88%,
+    var(--banner-orange) 0%,
+    var(--banner-orange) 30%,
+    color-mix(in srgb, var(--banner-orange) 72%, white) 48%,
+    color-mix(in srgb, var(--banner-orange) 38%, white) 62%,
+    color-mix(in srgb, var(--banner-orange) 14%, white) 74%,
+    #FEFFF9 86%,
     #FEFFF9 100%);
   transform:translateY(100%);
   transition:transform .4s cubic-bezier(.22,1,.36,1), opacity .32s ease;
@@ -5040,15 +5047,6 @@ tbody tr:last-child td{border-bottom:none;}
   position:relative;flex-shrink:0;text-align:center;
   padding:calc(env(safe-area-inset-top,0px) + 22px) 26px 16px;
 }
-.receipt-close-btn{
-  position:absolute;top:calc(env(safe-area-inset-top,0px) + 14px);right:14px;z-index:2;
-  width:28px;height:28px;border-radius:50%;flex-shrink:0;
-  display:flex;align-items:center;justify-content:center;
-  background:rgba(255,255,255,0.22);color:#fff;border:none;cursor:pointer;
-  transition:background .15s ease, transform .15s ease;
-}
-.receipt-close-btn:hover{background:rgba(255,255,255,0.34);}
-.receipt-close-btn:active{transform:scale(.9);}
 
 /* Logo brand diubah SUSUNANNYA jadi VERTIKAL (gambar/lambang di atas,
    nama aplikasi kecil di bawahnya) -- persis gambar referensi "Qita
@@ -5152,8 +5150,17 @@ tbody tr:last-child td{border-bottom:none;}
 .receipt-expand-btn:active{transform:scale(.96);}
 .receipt-expand-btn svg{transition:transform .2s ease;}
 .receipt-expand-btn.open svg{transform:rotate(180deg);}
-.receipt-expand-body{max-height:0;overflow:hidden;transition:max-height .25s ease;text-align:left;}
-.receipt-expand-body.open{max-height:220px;margin-top:8px;}
+/* Tinggi expand-body TIDAK lagi dipatok angka tetap (220px) yg bikin
+   detail panjang (spt referensi Qita: Jenis Transaksi, Nama Merchant,
+   PAN, dll) terpotong & butuh scroll internal terpisah. Sekarang
+   tingginya diset via JS ke scrollHeight aslinya (lihat toggleReceipt
+   ExpandBody() di script.js) supaya kartu struk MEMANJANG mengikuti
+   isi, lalu yg discroll tetap SATU wadah scroll saja -- .receipt-
+   card-wrap di luarnya -- persis gaya scroll gambar referensi (seluruh
+   struk ikut tergulung bareng, bukan kotak kecil ber-scroll sendiri
+   di dalam kartu). */
+.receipt-expand-body{max-height:0;overflow:hidden;transition:max-height .3s ease;text-align:left;}
+.receipt-expand-body.open{margin-top:8px;}
 .receipt-expand-row{display:flex;justify-content:space-between;gap:14px;padding:8px 0;font-size:12.5px;border-top:1px solid var(--line);}
 .receipt-expand-row span:first-child{color:var(--ink-faint);flex-shrink:0;}
 .receipt-expand-row span:last-child{color:var(--ink);font-weight:600;text-align:right;word-break:break-all;}
@@ -5189,7 +5196,14 @@ tbody tr:last-child td{border-bottom:none;}
 .receipt-icon-btn:hover{background:color-mix(in srgb, var(--banner-orange, var(--primary)) 20%, transparent);}
 .receipt-icon-btn:active{transform:scale(.92);}
 .receipt-done-btn{
-  flex:1;border-radius:999px;padding:13px;
+  flex:1;border-radius:999px;padding:14px;
+  /* Teks "Selesai" DIPASTIKAN rata TENGAH persis gambar referensi --
+     .btn dasar cuma inline-flex TANPA justify-content, jadi begitu
+     lebar tombol dipaksa penuh lewat flex:1, teksnya numpuk ke kiri
+     (mepet ikon share/unduh) alih-alih duduk di tengah pil spt pada
+     referensi. justify-content:center di sini yg memperbaikinya. */
+  justify-content:center;
+  font-size:14.5px;
   /* Font & bobot DISAMAKAN dgn gaya judul halaman "Laporan"
      (.page-banner h1 / .lap-pill-btn) -- Poppins weight 600 (bukan
      700 spt .btn bawaan, krn Poppins terlihat lebih tebal drpd
@@ -9065,9 +9079,6 @@ body.is-scrolling *{
 <div class="modal-overlay" id="txReceiptOverlay">
   <div class="modal receipt-modal">
     <div class="receipt-header">
-      <button class="receipt-close-btn" id="receiptCloseBtn" type="button" aria-label="Tutup">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M18 6 6 18M6 6l12 12"/></svg>
-      </button>
       <div class="receipt-brand">
         <span class="receipt-brand-mark" id="receiptBrandMarkIcon">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>
