@@ -373,15 +373,15 @@ body{
      lalu memudar mengikuti kurva warna asli (peach hangat -> krem ->
      nyaris putih, tone-nya ikut disesuaikan lebih dalam/pekat supaya
      perpaduannya tetap senada dengan oranye barunya) dan sudah putih
-     bersih (#FEFFF9) di ±252px, tetap flat setelah itu. */
+     bersih (#f5f7fe) di ±252px, tetap flat setelah itu. */
   background:linear-gradient(180deg,
     var(--banner-orange) 0px,
     var(--banner-orange) 155px,
     color-mix(in srgb, var(--banner-orange) 78%, white) 180px,
     color-mix(in srgb, var(--banner-orange) 47%, white) 205px,
     color-mix(in srgb, var(--banner-orange) 21%, white) 228px,
-    #FEFFF9 252px,
-    #FEFFF9 100%);
+    #f5f7fe 252px,
+    #f5f7fe 100%);
   color:var(--ink);
   font-family:var(--font-body);
   -webkit-font-smoothing:antialiased;
@@ -5034,8 +5034,8 @@ tbody tr:last-child td{border-bottom:none;}
     color-mix(in srgb, var(--banner-orange) 72%, white) 48%,
     color-mix(in srgb, var(--banner-orange) 38%, white) 62%,
     color-mix(in srgb, var(--banner-orange) 14%, white) 74%,
-    #FEFFF9 86%,
-    #FEFFF9 100%);
+    #f5f7fe 86%,
+    #f5f7fe 100%);
   transform:translateY(100%);
   transition:transform .4s cubic-bezier(.22,1,.36,1), opacity .32s ease;
 }
@@ -5049,6 +5049,15 @@ tbody tr:last-child td{border-bottom:none;}
 .receipt-header{
   position:relative;flex-shrink:0;text-align:center;
   padding:calc(env(safe-area-inset-top,0px) + 22px) 26px 16px;
+}
+
+/* Klaster ikon Bagikan/Unduh, mengambang di pojok kiri-atas kepala
+   popup & ditumpuk vertikal -- persis posisi ikon share + kembali pd
+   gambar referensi Qita (dua lingkaran kecil menumpuk di pojok
+   kiri-atas, terpisah sendiri dari pil "Selesai" di footer). */
+.receipt-header-actions{
+  position:absolute;top:calc(env(safe-area-inset-top,0px) + 14px);left:14px;
+  display:flex;flex-direction:column;gap:10px;z-index:2;
 }
 
 /* Logo brand diubah SUSUNANNYA jadi VERTIKAL (gambar/lambang di atas,
@@ -5129,7 +5138,7 @@ tbody tr:last-child td{border-bottom:none;}
    baris ke-2 dst saja) supaya terlihat seperti daftar struk. */
 .receipt-detail-list{
   display:flex;flex-direction:column;gap:14px;text-align:left;
-  background:color-mix(in srgb, var(--banner-orange, var(--primary)) 5%, var(--paper));
+  background:color-mix(in srgb, var(--banner-orange, var(--primary)) 5%, #f5f7fe);
   border:1px solid color-mix(in srgb, var(--banner-orange, var(--primary)) 10%, var(--line));
   border-radius:16px;padding:14px 15px;
 }
@@ -5191,19 +5200,19 @@ tbody tr:last-child td{border-bottom:none;}
   box-shadow:0 -10px 24px -16px rgba(15,23,42,0.35);
 }
 .receipt-icon-btn{
-  width:46px;height:46px;border-radius:50%;flex-shrink:0;
+  width:38px;height:38px;border-radius:50%;flex-shrink:0;
   display:flex;align-items:center;justify-content:center;
-  /* Latar tombol bulat DIUBAH lagi krn sekarang duduk di atas PUTIH
-     (bukan lagi di atas gradasi oranye solid) -- putih transparan
-     "glass" yg dulu dipakai jadi nyaris tak kelihatan di atas latar
-     putih kartu, jadi diganti oranye lembut (senada .receipt-detail-
-     list & .receipt-expand-btn) supaya tetap kelihatan jelas & senada
-     tema oranye ZAYAPRO. */
-  background:color-mix(in srgb, var(--banner-orange, var(--primary)) 12%, transparent);
-  color:var(--banner-orange-deep, var(--primary-deep));border:none;cursor:pointer;
+  /* Ikon ini sekarang pindah balik ke atas kepala popup (gradasi
+     warna solid), BUKAN lagi di footer putih -- jadi latarnya balik
+     jadi "glass" putih transparan lembut, persis dua lingkaran kecil
+     semi-transparan pd gambar referensi yg mengambang di atas biru,
+     bukan lagi oranye lembut yg dulu dipakai khusus utk duduk di atas
+     footer putih. */
+  background:rgba(255,255,255,0.22);
+  color:#fff;border:none;cursor:pointer;
   transition:transform .15s ease, background .15s ease;
 }
-.receipt-icon-btn:hover{background:color-mix(in srgb, var(--banner-orange, var(--primary)) 20%, transparent);}
+.receipt-icon-btn:hover{background:rgba(255,255,255,0.32);}
 .receipt-icon-btn:active{transform:scale(.92);}
 .receipt-done-btn{
   flex:1;border-radius:999px;padding:14px;
@@ -9099,6 +9108,21 @@ body.is-scrolling *{
          sebelumnya. -->
     <div class="receipt-card-wrap">
       <div class="receipt-header">
+        <!-- Ikon Bagikan/Unduh DIPINDAH ke sini (mengambang di pojok
+             kiri-atas kepala popup, ditumpuk vertikal) -- persis
+             posisi ikon share + kembali pada gambar referensi Qita,
+             yg mengambang sendiri di atas gradasi biru, TERPISAH dari
+             pil "Selesai" di footer. Sebelumnya kedua ikon ini duduk
+             berdempetan dgn pil Selesai di .receipt-actions, bikin
+             pil itu tidak bisa selebar penuh spt referensi. -->
+        <div class="receipt-header-actions">
+          <button type="button" class="receipt-icon-btn" id="receiptShareBtn" title="Bagikan" aria-label="Bagikan bukti transaksi">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="10.6" x2="15.4" y2="6.4"/><line x1="8.6" y1="13.4" x2="15.4" y2="17.6"/></svg>
+          </button>
+          <button type="button" class="receipt-icon-btn" id="receiptDownloadBtn" title="Unduh" aria-label="Unduh bukti transaksi">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13m0 0-4.5-4.5M12 16l4.5-4.5"/><path d="M4 19.5h16"/></svg>
+          </button>
+        </div>
         <div class="receipt-brand">
           <span class="receipt-brand-mark" id="receiptBrandMarkIcon">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>
@@ -9132,22 +9156,21 @@ body.is-scrolling *{
       </div>
     </div>
 
-    <!-- Baris aksi (Bagikan/Unduh/Selesai) SEKARANG dipindah KELUAR
-         dari .receipt-card-wrap (yg diberi jarak/padding di kiri-
-         kanan) supaya latar putihnya bisa FULL selebar layar (nempel
-         ke pinggir kiri-kanan, TIDAK ada jarak lagi di sisi itu) --
-         & posisinya diam permanen di dasar popup (bukan lagi ikut
-         discroll bareng .receipt-card-wrap di atasnya, krn sekarang
-         jadi flex item TERSENDIRI setelah wadah scroll itu, bukan lg
-         anak di dalamnya), persis baris "sticky" yg selalu kelihatan
-         di paling bawah. -->
+    <!-- Baris aksi SEKARANG cuma berisi pil "Selesai" sendirian (ikon
+         Bagikan/Unduh sudah dipindah ke .receipt-header-actions di
+         pojok kiri-atas, lihat komentar di sana) supaya pil-nya bisa
+         selebar penuh baris ini, persis pil biru solid pada gambar
+         referensi yg berdiri sendiri tanpa berdempetan dgn ikon lain.
+         Baris ini sendiri masih dipindah KELUAR dari .receipt-card-
+         wrap (yg diberi jarak/padding di kiri-kanan) supaya latar
+         putihnya bisa FULL selebar layar (nempel ke pinggir kiri-
+         kanan, TIDAK ada jarak lagi di sisi itu) -- & posisinya diam
+         permanen di dasar popup (bukan lagi ikut discroll bareng
+         .receipt-card-wrap di atasnya, krn sekarang jadi flex item
+         TERSENDIRI setelah wadah scroll itu, bukan lg anak di
+         dalamnya), persis baris "sticky" yg selalu kelihatan di
+         paling bawah. -->
     <div class="receipt-actions">
-      <button type="button" class="receipt-icon-btn" id="receiptShareBtn" title="Bagikan" aria-label="Bagikan bukti transaksi">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="10.6" x2="15.4" y2="6.4"/><line x1="8.6" y1="13.4" x2="15.4" y2="17.6"/></svg>
-      </button>
-      <button type="button" class="receipt-icon-btn" id="receiptDownloadBtn" title="Unduh" aria-label="Unduh bukti transaksi">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13m0 0-4.5-4.5M12 16l4.5-4.5"/><path d="M4 19.5h16"/></svg>
-      </button>
       <button type="button" class="btn btn-primary receipt-done-btn" id="receiptDoneBtn">Selesai</button>
     </div>
   </div>
