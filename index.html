@@ -5002,6 +5002,15 @@ tbody tr:last-child td{border-bottom:none;}
   width:100%;max-width:100%;height:100%;max-height:100%;
   display:flex;flex-direction:column;
   box-shadow:none;
+  /* Semua teks di dalam popup struk ini SEKARANG disamakan pakai satu
+     jenis huruf yang sama persis dengan judul halaman "Laporan"
+     (.page-banner h1 -- Poppins). Sebelumnya tiap elemen (label status,
+     nominal, rincian, dll) masing-masing jatuh ke font default yang
+     beda-beda (--font-body / IBM Plex Mono utk nominal) sehingga
+     tampilannya tidak seragam. Dipasang di root .receipt-modal supaya
+     seluruh anak elemen ikut mewarisi tanpa perlu diulang satu-satu,
+     kecuali yang memang sengaja di-override lagi di bawah. */
+  font-family:'Poppins',sans-serif;
   /* Oranye disamakan PERSIS dengan oranye banner Beranda -- pakai
      var(--banner-orange)/var(--banner-orange-deep) yang didefinisikan
      SATU KALI di :root (lihat TOKENS di atas), BUKAN lagi dihardcode
@@ -5051,14 +5060,13 @@ tbody tr:last-child td{border-bottom:none;}
   padding:calc(env(safe-area-inset-top,0px) + 22px) 26px 16px;
 }
 
-/* Klaster ikon Bagikan/Unduh, mengambang di pojok kiri-atas kepala
-   popup & ditumpuk vertikal -- persis posisi ikon share + kembali pd
-   gambar referensi Qita (dua lingkaran kecil menumpuk di pojok
-   kiri-atas, terpisah sendiri dari pil "Selesai" di footer). */
-.receipt-header-actions{
-  position:absolute;top:calc(env(safe-area-inset-top,0px) + 14px);left:14px;
-  display:flex;flex-direction:column;gap:10px;z-index:2;
-}
+/* Klaster ikon Bagikan/Unduh SEKARANG dipindah turun ke baris aksi
+   bawah (.receipt-actions), berjejer di SAMPING pil "Selesai" --
+   persis posisi ikon share + unduh pada gambar referensi terbaru
+   (dua lingkaran kecil duduk sejajar horizontal di kiri pil "Selesai"
+   pada baris paling bawah, BUKAN lagi mengambang sendiri di pojok
+   kiri-atas kepala popup seperti versi sebelumnya). */
+.receipt-header-actions{display:flex;align-items:center;gap:10px;flex-shrink:0;}
 
 /* Logo brand diubah SUSUNANNYA jadi VERTIKAL (gambar/lambang di atas,
    nama aplikasi kecil di bawahnya) -- persis gambar referensi "Qita
@@ -5121,7 +5129,7 @@ tbody tr:last-child td{border-bottom:none;}
 }
 .receipt-status.out{background:var(--wine);box-shadow:0 0 0 5px #fff, 0 10px 22px -8px rgba(190,18,60,0.45);}
 .receipt-status-label{font-size:14.5px;color:var(--ink-soft);font-weight:600;margin-bottom:7px;}
-.receipt-amount{font-family:'IBM Plex Mono',monospace;font-size:27px;font-weight:800;letter-spacing:-0.01em;margin-bottom:5px;}
+.receipt-amount{font-family:'Poppins',sans-serif;font-size:27px;font-weight:700;letter-spacing:-0.01em;margin-bottom:5px;}
 .receipt-amount.in{color:#047857;}
 .receipt-amount.out{color:var(--wine);}
 .receipt-date{font-size:12.5px;color:var(--ink-faint);margin-bottom:20px;}
@@ -5139,7 +5147,6 @@ tbody tr:last-child td{border-bottom:none;}
 .receipt-detail-list{
   display:flex;flex-direction:column;gap:14px;text-align:left;
   background:color-mix(in srgb, var(--banner-orange, var(--primary)) 5%, #f5f7fe);
-  border:1px solid color-mix(in srgb, var(--banner-orange, var(--primary)) 10%, var(--line));
   border-radius:16px;padding:14px 15px;
 }
 .receipt-detail-row{display:flex;align-items:flex-start;gap:11px;}
@@ -5164,6 +5171,11 @@ tbody tr:last-child td{border-bottom:none;}
   border:none;
   font-size:12.5px;font-weight:700;color:var(--banner-orange-deep, var(--primary-deep));cursor:pointer;
   transition:background .15s ease, transform .15s ease;
+  /* Menghilangkan kotak bayangan abu-abu bawaan browser yg suka
+     muncul sesaat saat tombol disentuh/diklik di HP (tap highlight)
+     maupun saat tombol dalam keadaan focus (outline default) --
+     dipola sama seperti .btn di tempat lain pada file ini. */
+  touch-action:manipulation;-webkit-tap-highlight-color:transparent;outline:none;
 }
 .receipt-expand-btn:hover{background:color-mix(in srgb, var(--banner-orange, var(--primary)) 20%, transparent);}
 .receipt-expand-btn:active{transform:scale(.96);}
@@ -5200,19 +5212,21 @@ tbody tr:last-child td{border-bottom:none;}
   box-shadow:0 -10px 24px -16px rgba(15,23,42,0.35);
 }
 .receipt-icon-btn{
-  width:38px;height:38px;border-radius:50%;flex-shrink:0;
+  width:42px;height:42px;border-radius:50%;flex-shrink:0;
   display:flex;align-items:center;justify-content:center;
-  /* Ikon ini sekarang pindah balik ke atas kepala popup (gradasi
-     warna solid), BUKAN lagi di footer putih -- jadi latarnya balik
-     jadi "glass" putih transparan lembut, persis dua lingkaran kecil
-     semi-transparan pd gambar referensi yg mengambang di atas biru,
-     bukan lagi oranye lembut yg dulu dipakai khusus utk duduk di atas
-     footer putih. */
-  background:rgba(255,255,255,0.22);
-  color:#fff;border:none;cursor:pointer;
+  /* Ikon ini sekarang duduk di baris footer PUTIH bersama pil
+     "Selesai" (bukan lagi di atas gradasi oranye kepala popup), jadi
+     latarnya diganti oranye lembut senada gradasi banner -- persis
+     gaya lingkaran soft pada .receipt-expand-btn -- supaya tetap
+     kontras & terlihat sbg tombol yg bisa ditekan di atas latar putih. */
+  background:color-mix(in srgb, var(--banner-orange, var(--primary)) 13%, transparent);
+  color:var(--banner-orange-deep, var(--primary-deep));border:none;cursor:pointer;
   transition:transform .15s ease, background .15s ease;
+  /* Sama seperti .receipt-expand-btn -- hilangkan kotak bayangan
+     bawaan browser (tap highlight/focus outline) saat disentuh. */
+  touch-action:manipulation;-webkit-tap-highlight-color:transparent;outline:none;
 }
-.receipt-icon-btn:hover{background:rgba(255,255,255,0.32);}
+.receipt-icon-btn:hover{background:color-mix(in srgb, var(--banner-orange, var(--primary)) 22%, transparent);}
 .receipt-icon-btn:active{transform:scale(.92);}
 .receipt-done-btn{
   flex:1;border-radius:999px;padding:14px;
@@ -5239,6 +5253,12 @@ tbody tr:last-child td{border-bottom:none;}
      gelap lagi. */
   background:var(--banner-orange-deep, var(--primary-deep));color:#fff;
   box-shadow:0 10px 22px -10px color-mix(in srgb, var(--banner-orange-deep, var(--primary-deep)) 55%, transparent);
+  /* Hilangkan kotak bayangan focus/tap-highlight bawaan browser saat
+     tombol ini ditekan (sama seperti .receipt-icon-btn &
+     .receipt-expand-btn) -- box-shadow oranye lembut di atas tetap
+     dipertahankan krn itu bayangan pil yg memang disengaja/permanen,
+     bukan efek klik. */
+  outline:none;
 }
 .receipt-done-btn:hover{background:#B45F04;}
 
@@ -9108,21 +9128,6 @@ body.is-scrolling *{
          sebelumnya. -->
     <div class="receipt-card-wrap">
       <div class="receipt-header">
-        <!-- Ikon Bagikan/Unduh DIPINDAH ke sini (mengambang di pojok
-             kiri-atas kepala popup, ditumpuk vertikal) -- persis
-             posisi ikon share + kembali pada gambar referensi Qita,
-             yg mengambang sendiri di atas gradasi biru, TERPISAH dari
-             pil "Selesai" di footer. Sebelumnya kedua ikon ini duduk
-             berdempetan dgn pil Selesai di .receipt-actions, bikin
-             pil itu tidak bisa selebar penuh spt referensi. -->
-        <div class="receipt-header-actions">
-          <button type="button" class="receipt-icon-btn" id="receiptShareBtn" title="Bagikan" aria-label="Bagikan bukti transaksi">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="10.6" x2="15.4" y2="6.4"/><line x1="8.6" y1="13.4" x2="15.4" y2="17.6"/></svg>
-          </button>
-          <button type="button" class="receipt-icon-btn" id="receiptDownloadBtn" title="Unduh" aria-label="Unduh bukti transaksi">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13m0 0-4.5-4.5M12 16l4.5-4.5"/><path d="M4 19.5h16"/></svg>
-          </button>
-        </div>
         <div class="receipt-brand">
           <span class="receipt-brand-mark" id="receiptBrandMarkIcon">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>
@@ -9156,21 +9161,33 @@ body.is-scrolling *{
       </div>
     </div>
 
-    <!-- Baris aksi SEKARANG cuma berisi pil "Selesai" sendirian (ikon
-         Bagikan/Unduh sudah dipindah ke .receipt-header-actions di
-         pojok kiri-atas, lihat komentar di sana) supaya pil-nya bisa
-         selebar penuh baris ini, persis pil biru solid pada gambar
-         referensi yg berdiri sendiri tanpa berdempetan dgn ikon lain.
-         Baris ini sendiri masih dipindah KELUAR dari .receipt-card-
-         wrap (yg diberi jarak/padding di kiri-kanan) supaya latar
-         putihnya bisa FULL selebar layar (nempel ke pinggir kiri-
-         kanan, TIDAK ada jarak lagi di sisi itu) -- & posisinya diam
-         permanen di dasar popup (bukan lagi ikut discroll bareng
-         .receipt-card-wrap di atasnya, krn sekarang jadi flex item
-         TERSENDIRI setelah wadah scroll itu, bukan lg anak di
-         dalamnya), persis baris "sticky" yg selalu kelihatan di
-         paling bawah. -->
+    <!-- Baris aksi berisi ikon Bagikan/Unduh berjejer di kiri, lalu pil
+         "Selesai" mengisi sisa lebar di kanannya (flex:1) -- persis
+         posisi & tata letak pada gambar referensi terbaru: dua
+         lingkaran ikon + satu pil panjang berjejer horizontal dalam
+         SATU baris di dasar layar. Baris ini sendiri dipindah KELUAR
+         dari .receipt-card-wrap (yg diberi jarak/padding di kiri-
+         kanan) supaya latar putihnya bisa FULL selebar layar (nempel
+         ke pinggir kiri-kanan, TIDAK ada jarak lagi di sisi itu) -- &
+         posisinya diam permanen di dasar popup (bukan lagi ikut
+         discroll bareng .receipt-card-wrap di atasnya, krn sekarang
+         jadi flex item TERSENDIRI setelah wadah scroll itu, bukan lg
+         anak di dalamnya), persis baris "sticky" yg selalu kelihatan
+         di paling bawah. -->
     <div class="receipt-actions">
+      <!-- Ikon Bagikan/Unduh SEKARANG duduk di baris ini, sejajar
+           horizontal di sebelah kiri pil "Selesai" -- persis posisi
+           pada gambar referensi terbaru (dua lingkaran ikon + pil
+           panjang berjejer dalam satu baris di dasar layar), bukan
+           lagi mengambang sendiri di pojok kiri-atas kepala popup. -->
+      <div class="receipt-header-actions">
+        <button type="button" class="receipt-icon-btn" id="receiptShareBtn" title="Bagikan" aria-label="Bagikan bukti transaksi">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="10.6" x2="15.4" y2="6.4"/><line x1="8.6" y1="13.4" x2="15.4" y2="17.6"/></svg>
+        </button>
+        <button type="button" class="receipt-icon-btn" id="receiptDownloadBtn" title="Unduh" aria-label="Unduh bukti transaksi">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13m0 0-4.5-4.5M12 16l4.5-4.5"/><path d="M4 19.5h16"/></svg>
+        </button>
+      </div>
       <button type="button" class="btn btn-primary receipt-done-btn" id="receiptDoneBtn">Selesai</button>
     </div>
   </div>
