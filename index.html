@@ -8127,6 +8127,18 @@ body.is-scrolling *{
   .btn{padding:8px 13px;font-size:12.5px;border-radius:8px;gap:6px;}
   .btn-sm{padding:7px 11px;font-size:11px;}
   .icon-btn{width:28px;height:28px;border-radius:7px;}
+  /* Pil "Selesai" pada popup struk TIDAK ikut aturan umum ".btn" di
+     atas -- tanpa baris ini, radius 8px & padding di atas menang
+     (sama-sama satu class, tapi ".btn" versi mobile ini ditulis
+     BELAKANGAN di file, jadi urutannya menang atas .receipt-done-btn
+     yg didefinisikan lebih awal) sehingga pil oranye besar berubah
+     jadi kotak kecil bersudut tumpul begitu dibuka di layar HP --
+     persis bug yg bikin tombol "Selesai" TIDAK terlihat sbg pil bulat
+     penuh spt gambar referensi walau di CSS aslinya sudah diberi
+     border-radius:999px. Radius pil & padding tombol ditulis ulang
+     di sini scoped ke .receipt-done-btn saja supaya menang telak
+     tanpa mengubah tombol ".btn" lain di halaman manapun. */
+  .receipt-done-btn{border-radius:999px;padding:13px;}
 
   /* ---- Modal tambah/edit & konfirmasi ---- */
   .modal{border-radius:16px;padding:16px;}
