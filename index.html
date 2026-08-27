@@ -6553,17 +6553,23 @@ html.zp-app-loading .page-body > .settings-list{display:none;}
      menang tampil di lapisan paling atas, bukan baris menunya. */
   z-index:calc(var(--z-mini-topbar) - 1);
 }
-/* Blok daftar menu (.settings-list) jadi .page-body TERPISAH di bawah
-   wrapper sticky di atas -- margin negatif/radius/shadow "kartu
-   menumpang di atas banner" (lengkungan dkk) DIMATIKAN TOTAL di sini,
-   SAMA PERSIS dgn .lap-page-body-rest (halaman Laporan): transisi
-   oren->putihnya jadi rata/lurus, tidak melengkung sama sekali, biar
-   tampilan & perilaku saat discroll benar-benar identik dgn Laporan. */
-.page-body.saya-page-body-rest{margin-top:0;border-radius:0;box-shadow:none;padding-top:14px;}
-.page-body.saya-page-body-rest::before{display:none;}
-@media (max-width:640px){
-  .page-body.saya-page-body-rest{margin-top:0;border-radius:0;box-shadow:none;}
-}
+/* ---- PERBAIKAN: sebelumnya margin negatif/radius/shadow "kartu
+   menumpang di atas banner" DIMATIKAN TOTAL di sini dgn alasan
+   "disamakan dgn .lap-page-body-rest (halaman Laporan)" -- tapi itu
+   keliru. Di halaman Laporan, efek kartu melengkung itu TETAP ADA,
+   cuma dipindah ke potongan pertama (.lap-page-body-top) yang duduk
+   di dalam wrapper sticky bareng bannernya; .lap-page-body-rest cuma
+   meratakan SISANYA (lanjutan di bawah potongan pertama itu), bukan
+   meniadakan lengkungannya sama sekali.
+   Di halaman Pengaturan ini, wrapper sticky (.saya-sticky-top) HANYA
+   membungkus banner -- tidak ada potongan "page-body-top" lain yang
+   menampung efek lengkung itu duluan. Jadi kalau elemen .page-body
+   satu-satunya di sini (.saya-page-body-rest) ikut diratakan total,
+   efek kartu melengkungnya jadi hilang SAMA SEKALI, bukannya sama
+   dgn Laporan. Diperbaiki: elemen ini sekarang dibiarkan pakai gaya
+   ".page-body" bawaan (margin -24px, radius 28px di atas, shadow
+   tipis via ::before) SAMA PERSIS dgn kartu di halaman Laporan &
+   Dompet, jadi transisi oren->putihnya melengkung juga di sini. ---- */
 .settings-list{display:flex;flex-direction:column;gap:26px;}
 .settings-section{display:flex;flex-direction:column;gap:10px;}
 /* Label seksi ("Informasi Pribadi", "Keamanan", dst) & judul tiap
