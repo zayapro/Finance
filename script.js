@@ -7689,7 +7689,7 @@ const APP_BANNER_ANIM_PRESETS = [
   { key: 'shimmer', label: 'Kilau Lembut', svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5l1.9 5.6 5.6 1.9-5.6 1.9-1.9 5.6-1.9-5.6-5.6-1.9 5.6-1.9L12 2.5Z"/></svg>' },
   { key: 'static', label: 'Statis', svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12h8"/></svg>' },
 ];
-const APP_SETTINGS_DEFAULTS = { appName: 'ZAYAPRO', logo: null, icon: 'pulse', theme: 'blue', font: 'modern', bannerAnim: 'wave', density: 'comfortable', language: 'id', favicon: null, metaDescription: '', metaKeywords: '' };
+const APP_SETTINGS_DEFAULTS = { appName: 'ZAYAPRO', logo: null, icon: 'pulse', theme: 'blue', font: 'playful', bannerAnim: 'wave', density: 'comfortable', language: 'id', favicon: null, metaDescription: '', metaKeywords: '' };
 const APP_META_DESC_MAXLEN = 160;
 
 function loadAppSettings() {
