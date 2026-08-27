@@ -7865,8 +7865,18 @@ function renderTemaColorGrid(state) {
   `;
   grid.innerHTML = presetHtml + customHtml;
 }
+/* ---- State sementara halaman Tema: dipakai supaya pilihan warna
+   cuma PRATINJAU (live preview) dulu selagi popup terbuka -- baru
+   benar-benar tersimpan ke storage kalau tombol "Selesai" ditekan.
+   temaOriginalState = warna tersimpan sblm popup dibuka (dipakai utk
+   kembali kalau tombol "Batal"/tombol kembali/Escape ditekan).
+   temaPendingState = pilihan yg sedang dipratinjau saat ini. ---- */
+let temaOriginalState = null;
+let temaPendingState = null;
 function refreshTemaPage() {
   const state = loadGlobalTheme();
+  temaOriginalState = state;
+  temaPendingState = state;
   renderTemaColorGrid(state);
   const nameEl = document.getElementById('temaPreviewName');
   if (nameEl) {
@@ -7882,22 +7892,20 @@ document.getElementById('temaColorGrid')?.addEventListener('click', (e) => {
     document.getElementById('temaCustomInput')?.click();
     return;
   }
-  const state = { ...loadGlobalTheme(), mode };
-  saveGlobalTheme(state);
+  const state = { ...temaPendingState, mode };
+  temaPendingState = state;
   applyGlobalTheme(state);
   renderTemaColorGrid(state);
-  showToast('Warna tema diperbarui.');
 });
 document.getElementById('temaColorGrid')?.addEventListener('input', (e) => {
   if (e.target.id !== 'temaCustomInput') return;
   const state = { mode: 'custom', custom: e.target.value.toUpperCase() };
-  saveGlobalTheme(state);
+  temaPendingState = state;
   applyGlobalTheme(state);
 });
 document.getElementById('temaColorGrid')?.addEventListener('change', (e) => {
   if (e.target.id !== 'temaCustomInput') return;
-  renderTemaColorGrid(loadGlobalTheme());
-  showToast('Warna tema diperbarui.');
+  renderTemaColorGrid(temaPendingState);
 });
 // Terapkan warna tema tersimpan sesegera mungkin supaya sudah benar
 // sejak render pertama (senada dgn applyAppSettings(loadAppSettings())
@@ -9023,12 +9031,33 @@ function openTemaOverlay() {
   document.getElementById('temaOverlay').classList.add('open');
   lockBodyScroll();
 }
+/* ---- Tutup TANPA menyimpan: dipakai oleh tombol kembali, tombol
+   "Batal", & Escape -- warna kembali ke temaOriginalState (yg
+   tersimpan sblm popup dibuka) supaya pratinjau yg belum "Selesai"
+   tidak ikut menempel. ---- */
 function closeTemaOverlay() {
+  if (temaOriginalState) applyGlobalTheme(temaOriginalState);
+  document.getElementById('temaOverlay').classList.remove('open');
+  unlockBodyScroll();
+}
+/* ---- Tombol "Selesai": baru di titik inilah pilihan warna
+   benar-benar disimpan ke storage (persis pola tombol "Selesai" pd
+   sheet Kategori Transaksi -- pilih dulu = pratinjau, "Selesai" baru
+   menerapkan). ---- */
+function confirmTemaOverlay() {
+  if (temaPendingState) {
+    saveGlobalTheme(temaPendingState);
+    applyGlobalTheme(temaPendingState);
+    temaOriginalState = temaPendingState;
+    showToast('Warna tema disimpan.');
+  }
   document.getElementById('temaOverlay').classList.remove('open');
   unlockBodyScroll();
 }
 document.getElementById('temaOpenBtn')?.addEventListener('click', openTemaOverlay);
 document.getElementById('temaBackBtn')?.addEventListener('click', closeTemaOverlay);
+document.getElementById('temaCancelBtn')?.addEventListener('click', closeTemaOverlay);
+document.getElementById('temaDoneBtn')?.addEventListener('click', confirmTemaOverlay);
 
 document.getElementById('lapFilterTypeRow')?.addEventListener('click', (e) => {
   const btn = e.target.closest('.lap-pill-btn');

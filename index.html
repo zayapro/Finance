@@ -7267,6 +7267,19 @@ select#categoryFilter[hidden]{display:none;}
    8px kotak, bukan pil 999px). Sekarang bentuk pil INI yang selalu
    menang di semua ukuran layar, sesuai referensi. */
 .btn.lap-filter-save-btn{width:100%;justify-content:center;padding:15px;border-radius:999px;font-size:14.5px;font-family:'Poppins',sans-serif;font-weight:500;letter-spacing:-0.005em;}
+/* ---- Varian footer 2 tombol (Batal + Selesai) -- dipakai di halaman
+   Tema supaya pilihan warna bisa dibatalkan (kembali ke warna semula)
+   atau dikonfirmasi, gaya pil bulat penuh SAMA PERSIS dgn tombol
+   "Simpan" di footer Filter di atas, cuma dibagi 2 berdampingan. ---- */
+.lap-filter-footer--split{display:flex;gap:10px;}
+.lap-filter-footer--split .btn.lap-filter-save-btn,
+.lap-filter-footer--split .btn.lap-filter-cancel-btn{width:auto;flex:1 1 0;}
+.btn.lap-filter-cancel-btn{
+  justify-content:center;padding:15px;border-radius:999px;
+  font-size:14.5px;font-family:'Poppins',sans-serif;font-weight:500;letter-spacing:-0.005em;
+  background:var(--paper);color:var(--ink);border:1.5px solid var(--line);box-shadow:none;
+}
+.btn.lap-filter-cancel-btn:hover{background:#e6e9f5;border-color:#c9cee3;}
 @media (max-width:400px){
   .lap-filter-head{padding-left:14px;padding-right:14px;}
   .lap-filter-card{padding-left:14px;padding-right:14px;}
@@ -9306,6 +9319,18 @@ body.is-scrolling *{
           <strong id="temaPreviewName">ZAYAPRO</strong>
           <button type="button" class="tema-preview-btn" tabindex="-1">Tombol Contoh</button>
         </div>
+      </div>
+
+      <!-- ---- Footer Batal/Selesai: gaya pil bulat penuh SAMA PERSIS
+           dgn tombol "Simpan" di footer popup Filter di atas (2 class
+           .btn.lap-filter-save-btn), cuma dibagi 2 tombol berdampingan
+           lewat wrapper .lap-filter-footer--split. Pilih warna kini
+           cuma pratinjau sementara (live preview) -- "Batal" mengembalikan
+           ke warna semula, "Selesai" baru benar-benar menyimpannya
+           (persis pola tombol "Selesai" pada sheet Kategori Transaksi). ---- -->
+      <div class="lap-filter-footer lap-filter-footer--split">
+        <button type="button" class="btn btn-ghost lap-filter-cancel-btn" id="temaCancelBtn">Batal</button>
+        <button type="button" class="btn btn-primary lap-filter-save-btn" id="temaDoneBtn">Selesai</button>
       </div>
     </div>
   </div>
