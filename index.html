@@ -1387,7 +1387,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   .fc-collapse-btn{padding:9px;}
 }
 .saldo-label-row{display:flex;align-items:center;justify-content:space-between;gap:10px;}
-.saldo-label{font-size:14px;color:var(--ink-faint);font-weight:700;letter-spacing:0.02em;}
+.saldo-label{font-size:13.5px;color:var(--ink-soft);font-weight:600;letter-spacing:0.02em;}
 .currency-toggle{
   position:relative;flex-shrink:0;
   display:flex;align-items:center;
@@ -1454,10 +1454,18 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 .saldo-row{display:flex;align-items:center;gap:10px;margin-top:4px;min-width:0;}
 .saldo-value{
   font-family:'Poppins',sans-serif;
-  font-size:clamp(24px, 6.8vw, 44px);
-  font-weight:800;
+  /* Sebelumnya font-weight 800 (ExtraBold) di ukuran sebesar ini bikin
+     angka saldo kelihatan terlalu "berat"/padat dibanding label &
+     baris Pemasukan-Pengeluaran di bawahnya (kontras ketebalannya
+     terlalu jauh, jadi kurang enak dipandang). Diturunkan ke 700
+     (Bold) -- tetap tegas & jadi fokus utama kartu, tapi tidak lagi
+     terasa terlalu tebal/gepeng. Ukuran maksimalnya juga sedikit
+     diperkecil (44px -> 38px) supaya proporsinya lebih seimbang
+     dengan elemen lain di kartu, terutama di layar lebar. */
+  font-size:clamp(24px, 6vw, 38px);
+  font-weight:700;
   color:var(--ink);
-  letter-spacing:-0.02em;
+  letter-spacing:-0.01em;
   transition:filter .15s ease;
   /* flex:0 1 auto (bukan 1 1 auto): SEBELUMNYA nilai ini memaksa
      saldo-value melebar mengisi SELURUH sisa lebar baris, sehingga
@@ -1484,14 +1492,20 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   flex-shrink:0;
   width:34px;height:34px;border-radius:11px;
   display:flex;align-items:center;justify-content:center;
-  background:var(--paper);
-  border:1px solid var(--line);
-  color:var(--ink-soft);
-  transition:background .15s ease, color .15s ease;
+  /* Sebelumnya abu netral polos (var(--paper)/var(--line)) yang terasa
+     lepas dari warna aksen kartu ini. Diganti jadi tint oranye lembut
+     senada dengan pill IDR/USD di atasnya (sama-sama var(--primary-soft)
+     + border oranye tipis) supaya tombol mata ini kelihatan "satu
+     keluarga" dengan aksen kartu, bukan elemen abu-abu yang nyempil
+     sendiri. */
+  background:var(--primary-soft);
+  border:1px solid rgba(242,103,43,0.18);
+  color:var(--primary-deep);
+  transition:background .15s ease, color .15s ease, border-color .15s ease;
   -webkit-tap-highlight-color:transparent;
   touch-action:manipulation;
 }
-.saldo-toggle:hover{background:var(--line);color:var(--ink);}
+.saldo-toggle:hover{background:rgba(242,103,43,0.16);border-color:rgba(242,103,43,0.32);color:var(--primary-deep);}
 /* Baris Pemasukan/Pengeluaran bulan ini: SENGAJA justify-content:flex-start
    (bukan space-between) supaya di layar lebar (desktop/tablet) kedua item
    ini tetap NEMPEL rapat & mengelompok tepat di bawah "Saldo Total",
@@ -1501,7 +1515,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
    pojok). Di HP (≤600px) tetap dikembalikan ke space-between lewat
    media query di bawah, karena di lebar sempit itu justru bikin kedua
    item mengisi rata lebar layar dengan rapi. */
-.saldo-sub{display:flex;gap:26px;margin-top:20px;padding-top:18px;border-top:1px solid var(--line);flex-wrap:wrap;justify-content:flex-start;position:relative;z-index:3;}
+.saldo-sub{display:flex;gap:26px;margin-top:20px;padding-top:18px;border-top:1px solid rgba(242,103,43,0.14);flex-wrap:wrap;justify-content:flex-start;position:relative;z-index:3;}
 .saldo-sub-item{display:flex;align-items:center;gap:10px;min-width:0;}
 /* Item kanan (Pengeluaran) rata KANAN teksnya begitu baris ini melebar
    penuh (mis. mode 2-kolom di HP lewat media query di bawah), biar
@@ -1554,11 +1568,11 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   width:30px;height:30px;flex-shrink:0;border-radius:10px;
   display:flex;align-items:center;justify-content:center;
 }
-.saldo-sub-item .ic.income{color:var(--brass);background:rgba(5,150,105,0.12);}
-.saldo-sub-item .ic.expense{color:var(--wine);background:rgba(225,29,72,0.12);}
+.saldo-sub-item .ic.income{color:var(--brass);background:rgba(5,150,105,0.16);}
+.saldo-sub-item .ic.expense{color:var(--wine);background:rgba(225,29,72,0.16);}
 .saldo-sub-text{min-width:0;}
-.saldo-sub-text .k{font-size:12px;color:var(--ink-faint);font-weight:600;}
-.saldo-sub-text .v{font-family:'Poppins',sans-serif;font-size:16px;font-weight:800;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.saldo-sub-text .k{font-size:12.5px;color:var(--ink-soft);font-weight:600;}
+.saldo-sub-text .v{font-family:'Poppins',sans-serif;font-size:16.5px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
 /* ---- HP sempit (≤480px): Pemasukan & Pengeluaran TETAP SATU BARIS ----
    Dulu di lebar ini kedua item ditumpuk vertikal karena labelnya
