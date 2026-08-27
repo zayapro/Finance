@@ -8398,6 +8398,10 @@ document.addEventListener('keydown', (e) => {
     closeLapFilterOverlay();
     return;
   }
+  if (document.getElementById('temaOverlay').classList.contains('open')) {
+    closeTemaOverlay();
+    return;
+  }
   if (document.getElementById('leaderboardOverlay').classList.contains('open')) {
     closeLeaderboardPage();
     return;
@@ -8844,6 +8848,23 @@ function closeLapFilterOverlay() {
 document.getElementById('lapFilterOpenBtn')?.addEventListener('click', openLapFilterOverlay);
 document.getElementById('lapFilterBackBtn')?.addEventListener('click', closeLapFilterOverlay);
 document.getElementById('lapFilterSaveBtn')?.addEventListener('click', closeLapFilterOverlay);
+
+/* ==========================================================
+   POPUP TEMA (halaman penuh, placeholder KOSONG)
+   Baris "Tema" di halaman Pengaturan (#temaOpenBtn) membuka popup
+   #temaOverlay -- gaya & perilaku buka/tutupnya SENGAJA disamakan
+   persis dgn popup Filter Laporan di atas (dipakai ulang class
+   .lap-filter-overlay yg sama), cuma isinya masih kosong dulu. ---- */
+function openTemaOverlay() {
+  document.getElementById('temaOverlay').classList.add('open');
+  lockBodyScroll();
+}
+function closeTemaOverlay() {
+  document.getElementById('temaOverlay').classList.remove('open');
+  unlockBodyScroll();
+}
+document.getElementById('temaOpenBtn')?.addEventListener('click', openTemaOverlay);
+document.getElementById('temaBackBtn')?.addEventListener('click', closeTemaOverlay);
 
 document.getElementById('lapFilterTypeRow')?.addEventListener('click', (e) => {
   const btn = e.target.closest('.lap-pill-btn');
