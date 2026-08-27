@@ -647,7 +647,7 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
   z-index:3;
 }
 .brand-wrap{position:relative;min-width:0;}
-.brand{display:flex;align-items:center;gap:10px;background:none;border:none;padding:6px 8px;margin:-6px -8px;border-radius:10px;color:inherit;cursor:pointer;min-width:0;transition:background .15s ease, transform .15s ease;}
+.brand{display:flex;align-items:center;gap:12px;background:none;border:none;padding:6px 8px;margin:-6px -8px;border-radius:10px;color:inherit;cursor:pointer;min-width:0;transition:background .15s ease, transform .15s ease;}
 .brand:hover{background:rgba(244,247,243,0.10);}
 .brand:active{transform:scale(0.97);}
 .brand-mark img{width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block;}
@@ -667,35 +667,39 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
 @media (prefers-reduced-motion:reduce){
   .brand-mark{animation:none;box-shadow:none;}
 }
-.brand-name{font-family:'Poppins',sans-serif;font-weight:800;font-size:19px;letter-spacing:-0.01em;white-space:nowrap;line-height:1.15;}
+.brand-name{font-family:'Poppins',sans-serif;font-weight:800;font-size:21px;letter-spacing:-0.01em;white-space:nowrap;line-height:1.2;}
 /* ---- Gaya "avatar profil premium": bingkai emas melingkar + lencana
-   mahkota kecil menempel di sudut bawah, terinspirasi kartu sambutan
-   ala member VIP (lingkaran foto + cincin emas + label PREMIUM). Hanya
-   dipakai di logo banner beranda -- logo di footer/mini-topbar/popup
-   struk tetap pakai gaya kotak putih polos seperti semula. ---- */
-.brand-mark-wrap{position:relative;flex-shrink:0;width:42px;height:42px;}
+   PREMIUM (mahkota + teks) menggantung di bawah avatar, terinspirasi
+   kartu sambutan ala member VIP (lingkaran foto + cincin emas + label
+   PREMIUM + sapaan jam di atas nama). Hanya dipakai di logo banner
+   beranda -- logo di footer/mini-topbar/popup struk tetap pakai gaya
+   kotak putih polos seperti semula. ---- */
+.brand-mark-wrap{position:relative;flex-shrink:0;width:56px;height:56px;margin-bottom:11px;}
 .brand-mark-badge{
-  position:absolute;right:-3px;bottom:-3px;z-index:2;
-  width:17px;height:17px;border-radius:50%;
-  display:flex;align-items:center;justify-content:center;
-  font-size:9.5px;line-height:1;
-  background:linear-gradient(135deg,#FDE68A,#F59E0B 65%,#D97706);
-  border:2px solid #fff;
-  box-shadow:0 2px 6px -1px rgba(124,45,18,0.5);
+  position:absolute;left:50%;bottom:-11px;z-index:2;
+  transform:translateX(-50%);
+  display:flex;align-items:center;gap:3px;
+  padding:2.5px 8px 2.5px 6px;border-radius:20px;
+  font-family:'Poppins',sans-serif;font-size:9.5px;font-weight:800;letter-spacing:.02em;
+  color:#7C2D12;white-space:nowrap;
+  background:linear-gradient(135deg,#FDE68A,#FBBF24 60%,#F59E0B);
+  border:1.5px solid rgba(255,255,255,0.85);
+  box-shadow:0 3px 8px -1px rgba(124,45,18,0.5);
   animation:brandBadgeFloat 2.6s ease-in-out infinite;
 }
-@keyframes brandBadgeFloat{0%,100%{transform:translateY(0) rotate(-4deg);}50%{transform:translateY(-1.5px) rotate(4deg);}}
+.brand-mark-badge .badge-ic{font-size:10px;line-height:1;}
+@keyframes brandBadgeFloat{0%,100%{transform:translateX(-50%) translateY(0);}50%{transform:translateX(-50%) translateY(-1.5px);}}
 @media (prefers-reduced-motion:reduce){.brand-mark-badge{animation:none;}}
-.brand-text-col{display:flex;flex-direction:column;justify-content:center;min-width:0;gap:1px;}
+.brand-text-col{display:flex;flex-direction:column;justify-content:center;min-width:0;gap:2px;}
 .brand-greeting{
-  font-family:'Poppins',sans-serif;font-weight:600;font-size:10.5px;
-  color:rgba(244,247,243,0.72);letter-spacing:.01em;white-space:nowrap;
+  font-family:'Poppins',sans-serif;font-weight:500;font-size:14px;
+  color:rgba(255,248,241,0.88);letter-spacing:.005em;white-space:nowrap;
 }
 /* Versi logo brand di dalam banner "Saldo Total": lingkaran foto dengan
    cincin emas berpendar (ala avatar member premium), tanpa mengubah
    logo di mini-topbar/footer yang tetap pakai warna aslinya. */
 .banner .brand-mark-wrap .brand-mark{
-  width:42px;height:42px;border-radius:50%;
+  width:56px;height:56px;border-radius:50%;
   background:#FFFFFF;
   color:var(--primary-deep);
   border:2.5px solid #FBBF24;
@@ -1479,18 +1483,16 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 .saldo-row{display:flex;align-items:center;gap:10px;margin-top:4px;min-width:0;}
 .saldo-value{
   font-family:'Poppins',sans-serif;
-  /* Sebelumnya font-weight 800 (ExtraBold) di ukuran sebesar ini bikin
-     angka saldo kelihatan terlalu "berat"/padat dibanding label &
-     baris Pemasukan-Pengeluaran di bawahnya (kontras ketebalannya
-     terlalu jauh, jadi kurang enak dipandang). Diturunkan ke 700
-     (Bold) -- tetap tegas & jadi fokus utama kartu, tapi tidak lagi
-     terasa terlalu tebal/gepeng. Ukuran maksimalnya juga sedikit
-     diperkecil (44px -> 38px) supaya proporsinya lebih seimbang
-     dengan elemen lain di kartu, terutama di layar lebar. */
-  font-size:clamp(24px, 6vw, 38px);
-  font-weight:700;
+  /* Disesuaikan lagi supaya senada gaya angka nominal pada referensi
+     desain (tebal & besar, mengambil porsi utama kartu): bobot
+     dinaikkan dari 700 (Bold) ke 800 (ExtraBold), ukuran maksimalnya
+     juga sedikit ditambah (38px -> 40px) supaya terasa lebih menonjol
+     sebagai fokus utama kartu, tanpa membuatnya jadi terlalu berat
+     untuk layar sempit (batas bawah clamp tetap dijaga wajar). */
+  font-size:clamp(26px, 6.6vw, 40px);
+  font-weight:800;
   color:var(--ink);
-  letter-spacing:-0.01em;
+  letter-spacing:-0.015em;
   transition:filter .15s ease;
   /* flex:0 1 auto (bukan 1 1 auto): SEBELUMNYA nilai ini memaksa
      saldo-value melebar mengisi SELURUH sisa lebar baris, sehingga
@@ -8534,7 +8536,7 @@ body.is-scrolling *{
      memakan lebar yang harusnya buat angka. white-space:nowrap +
      ellipsis di .saldo-value (aturan dasar) tetap dipertahankan
      sebagai jaring pengaman kalau saldo-nya sangat besar. */
-  .saldo-value{font-size:clamp(26px, 8.6vw, 36px);}
+  .saldo-value{font-size:clamp(26px, 8.6vw, 38px);}
   .saldo-toggle{width:30px;height:30px;border-radius:10px;}
   /* Margin horizontal 0 (samakan dengan .saldo-card di atas, yang
      sekarang ikut lebar konten .app) supaya kartu "Uang Masuk &
@@ -8897,7 +8899,7 @@ body.is-scrolling *{
             <span class="brand-mark" id="brandMarkIcon">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>
             </span>
-            <span class="brand-mark-badge" aria-hidden="true">👑</span>
+            <span class="brand-mark-badge" aria-hidden="true"><span class="badge-ic">👑</span>PREMIUM</span>
           </span>
           <span class="brand-text-col">
             <span class="brand-greeting" id="brandGreetingText">Selamat pagi 👋</span>
