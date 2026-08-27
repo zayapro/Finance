@@ -647,7 +647,7 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
   z-index:3;
 }
 .brand-wrap{position:relative;min-width:0;}
-.brand{display:flex;align-items:center;gap:12px;background:none;border:none;padding:6px 8px;margin:-6px -8px;border-radius:10px;color:inherit;cursor:pointer;min-width:0;transition:background .15s ease, transform .15s ease;}
+.brand{display:flex;align-items:center;gap:10px;background:none;border:none;padding:6px 8px;margin:-6px -8px;border-radius:10px;color:inherit;cursor:pointer;min-width:0;transition:background .15s ease, transform .15s ease;}
 .brand:hover{background:rgba(244,247,243,0.10);}
 .brand:active{transform:scale(0.97);}
 .brand-mark img{width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block;}
@@ -667,42 +667,45 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
 @media (prefers-reduced-motion:reduce){
   .brand-mark{animation:none;box-shadow:none;}
 }
-.brand-name{font-family:'Poppins',sans-serif;font-weight:800;font-size:21px;letter-spacing:-0.01em;white-space:nowrap;line-height:1.2;}
+.brand-name{font-family:'Poppins',sans-serif;font-weight:800;font-size:18px;letter-spacing:-0.01em;white-space:nowrap;line-height:1.2;}
 /* ---- Gaya "avatar profil premium": bingkai emas melingkar + lencana
    PREMIUM (mahkota + teks) menggantung di bawah avatar, terinspirasi
    kartu sambutan ala member VIP (lingkaran foto + cincin emas + label
-   PREMIUM + sapaan jam di atas nama). Hanya dipakai di logo banner
-   beranda -- logo di footer/mini-topbar/popup struk tetap pakai gaya
-   kotak putih polos seperti semula. ---- */
-.brand-mark-wrap{position:relative;flex-shrink:0;width:56px;height:56px;margin-bottom:11px;}
+   PREMIUM + sapaan jam di atas nama). Ukuran SENGAJA dijaga kompak
+   (bukan sebesar referensi aslinya) supaya masih muat rapi di dalam
+   banner oranye yang pendek ini tanpa bertabrakan/kepotong oleh kartu
+   Saldo Total putih yang menyelip tepat di bawahnya. Hanya dipakai di
+   logo banner beranda -- logo di footer/mini-topbar/popup struk tetap
+   pakai gaya kotak putih polos seperti semula. ---- */
+.brand-mark-wrap{position:relative;flex-shrink:0;width:44px;height:44px;margin-bottom:8px;}
 .brand-mark-badge{
-  position:absolute;left:50%;bottom:-11px;z-index:2;
+  position:absolute;left:50%;bottom:-8px;z-index:2;
   transform:translateX(-50%);
-  display:flex;align-items:center;gap:3px;
-  padding:2.5px 8px 2.5px 6px;border-radius:20px;
-  font-family:'Poppins',sans-serif;font-size:9.5px;font-weight:800;letter-spacing:.02em;
+  display:flex;align-items:center;gap:2px;
+  padding:2px 6px 2px 5px;border-radius:20px;
+  font-family:'Poppins',sans-serif;font-size:8px;font-weight:800;letter-spacing:.02em;
   color:#7C2D12;white-space:nowrap;
   background:linear-gradient(135deg,#FDE68A,#FBBF24 60%,#F59E0B);
-  border:1.5px solid rgba(255,255,255,0.85);
-  box-shadow:0 3px 8px -1px rgba(124,45,18,0.5);
+  border:1.3px solid rgba(255,255,255,0.85);
+  box-shadow:0 2px 6px -1px rgba(124,45,18,0.5);
   animation:brandBadgeFloat 2.6s ease-in-out infinite;
 }
-.brand-mark-badge .badge-ic{font-size:10px;line-height:1;}
+.brand-mark-badge .badge-ic{font-size:8.5px;line-height:1;}
 @keyframes brandBadgeFloat{0%,100%{transform:translateX(-50%) translateY(0);}50%{transform:translateX(-50%) translateY(-1.5px);}}
 @media (prefers-reduced-motion:reduce){.brand-mark-badge{animation:none;}}
-.brand-text-col{display:flex;flex-direction:column;justify-content:center;min-width:0;gap:2px;}
+.brand-text-col{display:flex;flex-direction:column;justify-content:center;min-width:0;gap:1px;}
 .brand-greeting{
-  font-family:'Poppins',sans-serif;font-weight:500;font-size:14px;
+  font-family:'Poppins',sans-serif;font-weight:500;font-size:11.5px;
   color:rgba(255,248,241,0.88);letter-spacing:.005em;white-space:nowrap;
 }
 /* Versi logo brand di dalam banner "Saldo Total": lingkaran foto dengan
    cincin emas berpendar (ala avatar member premium), tanpa mengubah
    logo di mini-topbar/footer yang tetap pakai warna aslinya. */
 .banner .brand-mark-wrap .brand-mark{
-  width:56px;height:56px;border-radius:50%;
+  width:44px;height:44px;border-radius:50%;
   background:#FFFFFF;
   color:var(--primary-deep);
-  border:2.5px solid #FBBF24;
+  border:2px solid #FBBF24;
   animation:bannerBrandMarkPulse 2.6s ease-in-out infinite;
 }
 @keyframes bannerBrandMarkPulse{
