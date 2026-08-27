@@ -647,7 +647,7 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
   z-index:3;
 }
 .brand-wrap{position:relative;min-width:0;}
-.brand{display:flex;align-items:center;gap:9px;background:none;border:none;padding:6px 8px;margin:-6px -8px;border-radius:10px;color:inherit;cursor:pointer;min-width:0;transition:background .15s ease, transform .15s ease;}
+.brand{display:flex;align-items:center;gap:10px;background:none;border:none;padding:6px 8px;margin:-6px -8px;border-radius:10px;color:inherit;cursor:pointer;min-width:0;transition:background .15s ease, transform .15s ease;}
 .brand:hover{background:rgba(244,247,243,0.10);}
 .brand:active{transform:scale(0.97);}
 .brand-mark img{width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block;}
@@ -667,22 +667,47 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
 @media (prefers-reduced-motion:reduce){
   .brand-mark{animation:none;box-shadow:none;}
 }
-.brand-name{font-family:'Poppins',sans-serif;font-weight:800;font-size:19px;letter-spacing:-0.01em;white-space:nowrap;}
-/* Versi logo brand di dalam banner "Saldo Total": kotak putih solid
-   dengan ikon oranye di dalamnya (senada referensi desain), tanpa
-   mengubah logo di mini-topbar/footer yang tetap pakai warna aslinya. */
-.banner .brand-mark{
+.brand-name{font-family:'Poppins',sans-serif;font-weight:800;font-size:19px;letter-spacing:-0.01em;white-space:nowrap;line-height:1.15;}
+/* ---- Gaya "avatar profil premium": bingkai emas melingkar + lencana
+   mahkota kecil menempel di sudut bawah, terinspirasi kartu sambutan
+   ala member VIP (lingkaran foto + cincin emas + label PREMIUM). Hanya
+   dipakai di logo banner beranda -- logo di footer/mini-topbar/popup
+   struk tetap pakai gaya kotak putih polos seperti semula. ---- */
+.brand-mark-wrap{position:relative;flex-shrink:0;width:42px;height:42px;}
+.brand-mark-badge{
+  position:absolute;right:-3px;bottom:-3px;z-index:2;
+  width:17px;height:17px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:9.5px;line-height:1;
+  background:linear-gradient(135deg,#FDE68A,#F59E0B 65%,#D97706);
+  border:2px solid #fff;
+  box-shadow:0 2px 6px -1px rgba(124,45,18,0.5);
+  animation:brandBadgeFloat 2.6s ease-in-out infinite;
+}
+@keyframes brandBadgeFloat{0%,100%{transform:translateY(0) rotate(-4deg);}50%{transform:translateY(-1.5px) rotate(4deg);}}
+@media (prefers-reduced-motion:reduce){.brand-mark-badge{animation:none;}}
+.brand-text-col{display:flex;flex-direction:column;justify-content:center;min-width:0;gap:1px;}
+.brand-greeting{
+  font-family:'Poppins',sans-serif;font-weight:600;font-size:10.5px;
+  color:rgba(244,247,243,0.72);letter-spacing:.01em;white-space:nowrap;
+}
+/* Versi logo brand di dalam banner "Saldo Total": lingkaran foto dengan
+   cincin emas berpendar (ala avatar member premium), tanpa mengubah
+   logo di mini-topbar/footer yang tetap pakai warna aslinya. */
+.banner .brand-mark-wrap .brand-mark{
+  width:42px;height:42px;border-radius:50%;
   background:#FFFFFF;
   color:var(--primary-deep);
+  border:2.5px solid #FBBF24;
   animation:bannerBrandMarkPulse 2.6s ease-in-out infinite;
 }
 @keyframes bannerBrandMarkPulse{
-  0%{box-shadow:0 0 0 0 rgba(255,122,61,0.45);}
-  70%{box-shadow:0 0 0 10px rgba(255,122,61,0);}
-  100%{box-shadow:0 0 0 0 rgba(255,122,61,0);}
+  0%{box-shadow:0 0 0 0 rgba(251,191,36,0.55), 0 0 10px rgba(251,191,36,0.35);}
+  70%{box-shadow:0 0 0 8px rgba(251,191,36,0), 0 0 10px rgba(251,191,36,0.35);}
+  100%{box-shadow:0 0 0 0 rgba(251,191,36,0), 0 0 10px rgba(251,191,36,0.35);}
 }
 @media (prefers-reduced-motion:reduce){
-  .banner .brand-mark{animation:none;box-shadow:none;}
+  .banner .brand-mark-wrap .brand-mark{animation:none;box-shadow:0 0 0 4px rgba(251,191,36,0.18);}
 }
 .banner-date-col{display:flex;flex-direction:column;align-items:flex-end;gap:4px;min-width:0;}
 .banner-date{font-size:12.5px;color:rgba(244,247,243,0.72);white-space:nowrap;
@@ -8868,10 +8893,16 @@ body.is-scrolling *{
     <div class="banner-top">
       <div class="brand-wrap">
         <div class="brand" id="brandBtn" title="Pengaturan Aplikasi" role="button" tabindex="0" aria-label="Buka pengaturan aplikasi">
-          <span class="brand-mark" id="brandMarkIcon">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>
+          <span class="brand-mark-wrap">
+            <span class="brand-mark" id="brandMarkIcon">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>
+            </span>
+            <span class="brand-mark-badge" aria-hidden="true">👑</span>
           </span>
-          <span class="brand-name" id="brandNameText">ZAYAPRO</span>
+          <span class="brand-text-col">
+            <span class="brand-greeting" id="brandGreetingText">Selamat pagi 👋</span>
+            <span class="brand-name" id="brandNameText">ZAYAPRO</span>
+          </span>
         </div>
       </div>
       <div class="banner-top-right">
@@ -8887,6 +8918,22 @@ body.is-scrolling *{
                jalan setelahnya sebagai penyegaran, hasilnya identik. */
             document.getElementById('bannerDate').textContent =
               new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+          </script>
+          <script>
+            /* Sapaan "Selamat pagi/siang/sore/malam" di atas nama brand --
+               diisi SEGERA di sini juga (senada catatan tanggal di atas)
+               supaya tidak sempat kelihatan kosong/salah sebelum
+               script.js selesai dimuat. renderBrandGreeting() di
+               script.js tetap jalan setelahnya sebagai penyegaran. */
+            (function(){
+              var h = new Date().getHours();
+              var g = (h >= 4 && h < 11) ? 'Selamat pagi 👋'
+                     : (h >= 11 && h < 15) ? 'Selamat siang 👋'
+                     : (h >= 15 && h < 18) ? 'Selamat sore 👋'
+                     : 'Selamat malam 👋';
+              var el = document.getElementById('brandGreetingText');
+              if (el) el.textContent = g;
+            })();
           </script>
           <div class="banner-fx" id="bannerFx" title="Kurs indikatif, bisa berbeda dari kurs bank/money changer">
             <span class="fx-dot"></span>

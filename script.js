@@ -870,6 +870,22 @@ function renderBannerDate() {
   el.textContent = new Date().toLocaleDateString('id-ID', opts);
 }
 
+/* Sapaan dinamis di atas nama brand pada logo banner, menyesuaikan jam
+   perangkat saat ini: 04:00-10:59 pagi, 11:00-14:59 siang,
+   15:00-17:59 sore, selain itu (18:00-03:59) malam. Dipanggil sekali
+   saat init() lalu disegarkan tiap menit lewat setInterval supaya tetap
+   akurat kalau aplikasi dibiarkan terbuka melewati batas jam. */
+function renderBrandGreeting() {
+  const el = document.getElementById('brandGreetingText');
+  if (!el) return;
+  const hour = new Date().getHours();
+  const greeting = (hour >= 4 && hour < 11) ? 'Selamat pagi 👋'
+    : (hour >= 11 && hour < 15) ? 'Selamat siang 👋'
+    : (hour >= 15 && hour < 18) ? 'Selamat sore 👋'
+    : 'Selamat malam 👋';
+  el.textContent = greeting;
+}
+
 /* ---------- Kurs mata uang: data asli diambil berkala dari API (basis USD),
    kurs USD/IDR utama ditampilkan "berdetak" tiap detik dengan fluktuasi kecil
    di sekitar nilai asli (bukan klaim data per-detik asli dari sumber). ---------- */
@@ -11124,6 +11140,8 @@ function initTelegramWebApp() {
 function init() {
   initTelegramWebApp();
   renderBannerDate();
+  renderBrandGreeting();
+  setInterval(renderBrandGreeting, 60 * 1000);
   initBannerFx();
   initNews();
   applySaldoVisibility();
