@@ -4895,12 +4895,15 @@ tbody tr:last-child td{border-bottom:none;}
      ikut font body default. Bobot tetap tebal (700, sedikit diturunkan
      dari 800) karena ukuran pil ini kecil, biar tetap jelas terbaca. */
   font-family:'Poppins',sans-serif;
-  font-size:10px;font-weight:700;padding:2.5px 9px;border-radius:999px;
+  font-size:10px;font-weight:700;padding:2.5px 9px 2.5px 6px;border-radius:999px;
   background:rgba(5,150,105,0.14);color:#047857;display:inline-flex;align-items:center;gap:4px;
 }
-.rw-status-pill::before{content:"↓";font-size:9px;}
+/* ---- Ikon lingkaran panah (lihat statusPillIcon() di script.js) --
+   ukurannya SEDIKIT lebih besar dari ukuran font teksnya (12px vs
+   10px) supaya bulatannya kelihatan jelas & tidak gepeng, dan
+   flex-shrink:0 supaya tidak ikut terkompres saat pil sempit. ---- */
+.rw-status-pill-ic{flex-shrink:0;}
 .rw-status-pill.out{background:rgba(190,18,60,0.12);color:var(--wine);}
-.rw-status-pill.out::before{content:"↑";}
 .rw-item-actions{display:flex;gap:5px;opacity:0;max-height:0;overflow:hidden;transition:opacity .15s ease;}
 .rw-item:hover .rw-item-actions,.rw-item:focus-within .rw-item-actions{opacity:1;max-height:none;}
 .rw-item-actions .icon-btn{width:25px;height:25px;border-radius:8px;}

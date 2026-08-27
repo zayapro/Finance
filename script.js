@@ -2949,6 +2949,23 @@ function iconArrow(dir, size = 15) {
   return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="7" x2="17" y2="17"/><polyline points="17 8 17 17 8 17"/></svg>`;
 }
 
+/* ---- Ikon panah pada pil status "Masuk"/"Keluar" di tiap baris riwayat
+   transaksi (.rw-status-pill) -- SEBELUMNYA cuma karakter unicode "↓"/"↑"
+   polos lewat CSS ::before (lihat komentar di index.html dekat
+   .rw-status-pill), yang tampilannya tipis & gepeng, kurang senada
+   dengan bentuk pil bulat di sekelilingnya. Diganti jadi ikon panah
+   BULAT DALAM LINGKARAN kecil (bulatan solid + panah putih di
+   dalamnya) yang senada dgn gaya "badge" pil, bukan cuma tanda panah
+   mengambang seperti sebelumnya. Warnanya otomatis ikut warna teks pil
+   (currentColor) via fill="currentColor" pada lingkarannya, dan panah
+   putih tetap kontras di dalamnya. ---- */
+function statusPillIcon(isIn) {
+  const arrow = isIn
+    ? '<line x1="8.6" y1="8.6" x2="15.4" y2="15.4"/><polyline points="15.4 9.4 15.4 15.4 9.4 15.4"/>'
+    : '<line x1="8.6" y1="15.4" x2="15.4" y2="8.6"/><polyline points="9.4 8.6 15.4 8.6 15.4 14.6"/>';
+  return `<svg class="rw-status-pill-ic" width="12" height="12" viewBox="0 0 24 24"><circle cx="12" cy="12" r="12" fill="currentColor"/><g stroke="#fff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">${arrow}</g></svg>`;
+}
+
 /* ==========================================================
    CHART — komposisi transaksi bulan ini (grafik donat)
    Digambar langsung dengan Canvas API bawaan browser (tanpa
@@ -3711,7 +3728,7 @@ function renderHistoryRow(t, delay) {
       </div>
       <div class="rw-item-right">
         <div class="rw-item-amount ${isIn ? 'in' : 'out'}">${isIn ? '+' : '-'} ${fmtRupiah(t.amount)}</div>
-        <span class="rw-status-pill ${isIn ? '' : 'out'}">${isIn ? 'Masuk' : 'Keluar'}</span>
+        <span class="rw-status-pill ${isIn ? '' : 'out'}">${statusPillIcon(isIn)}${isIn ? 'Masuk' : 'Keluar'}</span>
         <div class="rw-item-actions">
           <button class="icon-btn edit" data-edit="${t.id}" title="Edit">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
