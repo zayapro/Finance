@@ -6543,41 +6543,23 @@ html.zp-app-loading .page-body > .settings-list{display:none;}
    konsisten dgn halaman lain yg sudah pakai sticky-header. ---- */
 .saya-sticky-top{
   position:sticky;top:0;
-  /* z-index dinaikkan SATU tingkat DI ATAS .page-body (yg nilainya 2)
-     -- KHUSUS lewat wrapper ini (bukan mengubah .page-banner global,
-     supaya Laporan/Dompet tetap tidak berubah) -- ini kuncinya supaya
-     daftar menu di bawah TIDAK PERNAH kelihatan "melewati"/menutupi
-     warna oren saat discroll: begitu baris menu ikut tergulung naik
-     sampai ke posisi banner, banner-nya yg selalu menang tampil di
-     lapisan paling atas, bukan baris menunya. */
-  z-index:3;
-}
-/* "Topi" lengkungan putih -- ditarik naik (margin negatif) supaya
-   sudut atasnya yang melengkung (28px, SAMA PERSIS dgn radius bawaan
-   .page-body di halaman lain) menumpang/memotong warna oren PERSIS
-   di bagian BAWAH banner yang SAMA (satu wrapper sticky), sehingga
-   warna oren yang "tersingkap" di balik lengkungannya dijamin identik
-   dengan oren banner, bukan warna lain. z-index lebih tinggi dari
-   .page-banner (yg 2) supaya lengkungannya kelihatan MENUTUPI ujung
-   bawah oren, bukan malah ketutup balik oleh oren itu sendiri. */
-.saya-sticky-cap{
-  height:24px;margin-top:-24px;
-  background:var(--card,#fff);
-  border-radius:28px 28px 0 0;
-  position:relative;z-index:4;
-  pointer-events:none;
+  /* z-index DISAMAKAN PERSIS dgn .lap-sticky-top (halaman Laporan) --
+     var(--z-mini-topbar) - 1 -- supaya perilakunya (termasuk urusan
+     menang/kalah tumpukan dgn elemen sticky lain, mis. mini-topbar)
+     benar-benar identik, bukan cuma "asal lebih tinggi dari 2". Ini
+     jugalah kunci supaya daftar menu di bawah TIDAK PERNAH kelihatan
+     "melewati"/menutupi warna oren saat discroll: begitu baris menu
+     ikut tergulung naik sampai ke posisi banner, banner-nya yg selalu
+     menang tampil di lapisan paling atas, bukan baris menunya. */
+  z-index:calc(var(--z-mini-topbar) - 1);
 }
 /* Blok daftar menu (.settings-list) jadi .page-body TERPISAH di bawah
-   wrapper sticky di atas. Lengkungannya SUDAH disediakan oleh
-   .saya-sticky-cap di dalam wrapper sticky (lihat di atas), jadi di
-   sini radiusnya DIMATIKAN (rata/flat) supaya tidak dobel dgn
-   lengkungan cap -- persis pola .lap-page-body-rest/.bd-page-body-rest
-   yang juga flat di bagian "sisa" yang scroll normal, cuma di sini
-   lengkungannya dipindah ke cap yang sticky, bukan dihilangkan sama
-   sekali, supaya gaya lengkungannya tetap kelihatan & senada dengan
-   halaman lain. Margin-atas negatif juga dimatikan (cukup 1x di cap)
-   supaya tidak numpuk dobel dengan overlap yang sudah dipakai cap. */
-.page-body.saya-page-body-rest{margin-top:0;border-radius:0;box-shadow:none;padding-top:16px;}
+   wrapper sticky di atas -- margin negatif/radius/shadow "kartu
+   menumpang di atas banner" (lengkungan dkk) DIMATIKAN TOTAL di sini,
+   SAMA PERSIS dgn .lap-page-body-rest (halaman Laporan): transisi
+   oren->putihnya jadi rata/lurus, tidak melengkung sama sekali, biar
+   tampilan & perilaku saat discroll benar-benar identik dgn Laporan. */
+.page-body.saya-page-body-rest{margin-top:0;border-radius:0;box-shadow:none;padding-top:14px;}
 .page-body.saya-page-body-rest::before{display:none;}
 @media (max-width:640px){
   .page-body.saya-page-body-rest{margin-top:0;border-radius:0;box-shadow:none;}
@@ -9253,18 +9235,6 @@ body.is-scrolling *{
         <h1 id="sayaAppName">Pengaturan</h1>
         <p>Akun &amp; pengaturan aplikasi</p>
       </div>
-      <!-- ---- "Topi" lengkungan putih ini SENGAJA ditaruh DI DALAM
-           wrapper sticky yang sama dengan banner (bukan di .page-body
-           di bawahnya) -- supaya sudut lengkungnya "memotong" warna
-           oren dari BANNER YANG SAMA PERSIS (satu elemen, satu warna),
-           jadi warnanya dijamin selalu SAMA/senada dengan oren banner
-           di halaman lain, tidak mungkin beda/kelihatan "belang".
-           Kalau lengkungannya ditaruh di .page-body (elemen terpisah
-           yang scroll normal), sudut lengkungnya akan menyingkap warna
-           LATAR DI BELAKANGNYA (bukan oren si banner) begitu banner
-           jadi sticky -- itulah sumber "warna orennya beda" yang
-           dilaporkan. ---- -->
-      <div class="saya-sticky-cap" aria-hidden="true"></div>
     </div>
     <div class="page-body saya-page-body-rest">
       <div class="zp-page-skel" aria-hidden="true">
