@@ -6553,15 +6553,22 @@ html.zp-app-loading .page-body > .settings-list{display:none;}
   z-index:3;
 }
 /* Blok daftar menu (.settings-list) jadi .page-body TERPISAH di bawah
-   wrapper sticky di atas -- margin negatif/radius/shadow "kartu
-   menumpang di atas banner" (dipakai halaman lain yg BUKAN sticky)
-   dimatikan di sini, sama persis polanya dgn .lap-page-body-rest /
-   .bd-page-body-rest, supaya sambungan oren->putihnya rata/lurus
-   (bukan melengkung) & tidak numpuk dobel dengan efek sticky di atas. */
-.page-body.saya-page-body-rest{margin-top:0;border-radius:0;box-shadow:none;padding-top:18px;}
+   wrapper sticky di atas. PERMINTAAN TERBARU: lengkungan kartu putih
+   di bagian atas TETAP DIPERTAHANKAN (28px 28px 0 0 -- SAMA PERSIS
+   dgn nilai border-radius bawaan .page-body yg dipakai halaman lain),
+   supaya gaya lengkungannya konsisten/senada dgn Laporan & Dompet,
+   BUKAN kotak lurus. Yang dimatikan cuma margin-atas negatif (efek
+   "menumpang tumpang-tindih" di atas banner) -- soalnya sekarang
+   bannernya sticky, jadi kartu putih ini cukup mulai PAS di bawah
+   banner (tanpa tumpang tindih) supaya lengkungannya kelihatan penuh/
+   tidak "kepotong" ketutup banner, dan tetap tidak numpuk dobel
+   dgn efek sticky di atas. Shadow tetap dimatikan (box-shadow:none)
+   sama seperti pola .lap-page-body-rest/.bd-page-body-rest supaya
+   tidak ada bayangan oren yg "bocor" ke footer di halaman pendek. */
+.page-body.saya-page-body-rest{margin-top:0;border-radius:28px 28px 0 0;box-shadow:none;padding-top:18px;}
 .page-body.saya-page-body-rest::before{display:none;}
 @media (max-width:640px){
-  .page-body.saya-page-body-rest{margin-top:0;border-radius:0;box-shadow:none;}
+  .page-body.saya-page-body-rest{margin-top:0;border-radius:28px 28px 0 0;box-shadow:none;}
 }
 .settings-list{display:flex;flex-direction:column;gap:26px;}
 .settings-section{display:flex;flex-direction:column;gap:10px;}
@@ -6583,20 +6590,24 @@ html.zp-app-loading .page-body > .settings-list{display:none;}
 .settings-group{
   background:transparent;
 }
+/* ---- PERMINTAAN: garis pembatas antar baris JANGAN sampai mepet ke
+   pinggir layar (sebelumnya border-bottom polos di .settings-row jadi
+   penuh selebar layar krn .page-body tidak punya padding kiri-kanan).
+   Diganti jadi pseudo-elemen (::after) yg posisinya BISA diberi jarak
+   (inset) kiri-kanan -- disamakan persis dgn padding baris sendiri
+   (16px) supaya ujung garis sejajar rapi dgn tepi konten baris (ikon &
+   judul), bukan menempel ke ujung layar. Garis HANYA dipasang di
+   ANTARA baris dalam satu grup (tidak di baris terakhir tiap grup),
+   krn jarak antar grup sudah cukup dibedakan lewat gap seksi. ---- */
 .settings-row{
-  width:100%;display:flex;align-items:center;gap:12px;
-  padding:15px 16px;background:transparent;border:none;border-bottom:1px solid var(--line);
+  width:100%;display:flex;align-items:center;gap:12px;position:relative;
+  padding:15px 16px;background:transparent;border:none;
   text-align:left;cursor:default;
 }
-/* Garis pembatas antar baris DISAMAKAN supaya konsisten di SEMUA baris
-   dalam satu grup, termasuk baris terakhir -- sebelumnya baris
-   terakhir tiap grup sengaja tidak diberi garis bawah (krn dulu garis
-   bingkai kartu di sekeliling grup sudah jadi "penutup" visualnya).
-   Sekarang setelah bingkai kartu itu dihapus, baris terakhir tiap
-   grup JUGA diberi garis bawah yg sama (kecuali baris paling akhir di
-   seluruh daftar) supaya jarak ke seksi berikutnya tetap rapi & tidak
-   kelihatan "menggantung" tanpa batas. */
-.settings-section:last-child .settings-row:last-child{border-bottom:none;}
+.settings-group .settings-row:not(:last-child)::after{
+  content:"";position:absolute;left:16px;right:16px;bottom:0;height:1px;
+  background:var(--line);pointer-events:none;
+}
 .settings-row-icon{
   width:34px;height:34px;flex-shrink:0;border-radius:10px;background:var(--paper);
   display:flex;align-items:center;justify-content:center;color:var(--ink-soft);
