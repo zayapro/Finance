@@ -7865,25 +7865,67 @@ function renderTemaColorGrid(state) {
   `;
   grid.innerHTML = presetHtml + customHtml;
 }
+/* ---- Grid pemilih "Gaya Font" di halaman Tema -- pakai APP_FONT_PRESETS
+   & disimpan di key APP_SETTINGS_KEY yg SAMA dgn font di modal
+   "Pengaturan Aplikasi" (1 sumber data, bukan sistem/penyimpanan baru
+   yg terpisah), supaya pilihan di 2 tempat itu selalu sinkron. ---- */
+function renderTemaFontGrid(selectedFont) {
+  const grid = document.getElementById('temaFontGrid');
+  if (!grid) return;
+  const checkSvg = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
+  grid.innerHTML = APP_FONT_PRESETS.map(f => `
+    <button type="button" class="tema-font-btn${selectedFont === f.key ? ' active' : ''}" data-temafont="${f.key}" aria-label="Font ${f.label}">
+      <span class="tfb-check">${checkSvg}</span>
+      <span class="tfb-preview" style="font-family:${f.display}">Aa</span>
+      <span class="tfb-label">${f.label}</span>
+    </button>
+  `).join('');
+}
+// Terapkan cuma 2 variabel font (body/display) -- dipakai utk pratinjau
+// sementara di halaman Tema, beda dgn applyAppSettings() yg sekaligus
+// menimpa banyak hal lain (nama brand, ikon, favicon, dst) yg tidak
+// relevan sedang dipratinjau di sini.
+function applyFontPreview(fontKey) {
+  const fontPreset = APP_FONT_PRESETS.find(f => f.key === fontKey) || APP_FONT_PRESETS[0];
+  document.documentElement.style.setProperty('--font-body', fontPreset.body);
+  document.documentElement.style.setProperty('--font-display', fontPreset.display);
+}
 /* ---- State sementara halaman Tema: dipakai supaya pilihan warna
    cuma PRATINJAU (live preview) dulu selagi popup terbuka -- baru
    benar-benar tersimpan ke storage kalau tombol "Selesai" ditekan.
    temaOriginalState = warna tersimpan sblm popup dibuka (dipakai utk
    kembali kalau tombol "Batal"/tombol kembali/Escape ditekan).
-   temaPendingState = pilihan yg sedang dipratinjau saat ini. ---- */
+   temaPendingState = pilihan yg sedang dipratinjau saat ini.
+   temaFontOriginalKey/temaFontPendingKey = pasangan yg sama tapi utk
+   pilihan Gaya Font, mengikuti pola yg identik. ---- */
 let temaOriginalState = null;
 let temaPendingState = null;
+let temaFontOriginalKey = null;
+let temaFontPendingKey = null;
 function refreshTemaPage() {
   const state = loadGlobalTheme();
   temaOriginalState = state;
   temaPendingState = state;
   renderTemaColorGrid(state);
+  const settings = loadAppSettings();
+  const fontKey = APP_FONT_PRESETS.some(f => f.key === settings.font) ? settings.font : APP_FONT_PRESETS[0].key;
+  temaFontOriginalKey = fontKey;
+  temaFontPendingKey = fontKey;
+  renderTemaFontGrid(fontKey);
   const nameEl = document.getElementById('temaPreviewName');
   if (nameEl) {
-    const settings = loadAppSettings();
     nameEl.textContent = (settings.appName || '').trim() || APP_SETTINGS_DEFAULTS.appName;
   }
 }
+document.getElementById('temaFontGrid')?.addEventListener('click', (e) => {
+  const btn = e.target.closest('.tema-font-btn');
+  if (!btn) return;
+  const key = btn.dataset.temafont;
+  if (key === temaFontPendingKey) return;
+  temaFontPendingKey = key;
+  applyFontPreview(key);
+  renderTemaFontGrid(key);
+});
 document.getElementById('temaColorGrid')?.addEventListener('click', (e) => {
   const btn = e.target.closest('.tema-color-btn');
   if (!btn || e.target.tagName === 'INPUT') return;
@@ -9037,20 +9079,32 @@ function openTemaOverlay() {
    tidak ikut menempel. ---- */
 function closeTemaOverlay() {
   if (temaOriginalState) applyGlobalTheme(temaOriginalState);
+  if (temaFontOriginalKey) applyFontPreview(temaFontOriginalKey);
   document.getElementById('temaOverlay').classList.remove('open');
   unlockBodyScroll();
 }
-/* ---- Tombol "Selesai": baru di titik inilah pilihan warna
+/* ---- Tombol "Selesai": baru di titik inilah pilihan warna & font
    benar-benar disimpan ke storage (persis pola tombol "Selesai" pd
    sheet Kategori Transaksi -- pilih dulu = pratinjau, "Selesai" baru
-   menerapkan). ---- */
+   menerapkan). Font disimpan lewat saveAppSettings() -- key yg SAMA
+   dgn font di modal "Pengaturan Aplikasi" -- supaya keduanya tetap 1
+   sumber data yg sinkron, bukan disimpan terpisah sendiri. ---- */
 function confirmTemaOverlay() {
+  let changed = false;
   if (temaPendingState) {
     saveGlobalTheme(temaPendingState);
     applyGlobalTheme(temaPendingState);
     temaOriginalState = temaPendingState;
-    showToast('Warna tema disimpan.');
+    changed = true;
   }
+  if (temaFontPendingKey && temaFontPendingKey !== temaFontOriginalKey) {
+    const settings = { ...loadAppSettings(), font: temaFontPendingKey };
+    saveAppSettings(settings);
+    applyFontPreview(temaFontPendingKey);
+    temaFontOriginalKey = temaFontPendingKey;
+    changed = true;
+  }
+  if (changed) showToast('Tema disimpan.');
   document.getElementById('temaOverlay').classList.remove('open');
   unlockBodyScroll();
 }

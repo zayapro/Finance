@@ -3596,6 +3596,30 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 .tema-color-custom input[type="color"]{
   position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;border:none;padding:0;
 }
+/* ---- Grid pemilih "Gaya Font" -- niru bahasa desain .tema-color-btn
+   di atasnya (kartu rounded, border+background aktif pakai var(--primary),
+   centang di pojok saat aktif), TAPI 2 kolom & isinya huruf "Aa" besar
+   sbg pratinjau tiap gaya font (bukan lingkaran warna) + label nama
+   gaya di bawahnya. ---- */
+.tema-font-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+.tema-font-btn{
+  position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  border:1.5px solid var(--line);border-radius:16px;background:var(--paper);
+  padding:14px 8px 11px;cursor:pointer;font-family:inherit;
+  transition:transform .15s cubic-bezier(.3,1.6,.4,1), border-color .15s ease, background .15s ease;
+}
+.tema-font-btn:hover{transform:translateY(-2px);}
+.tema-font-btn.active{border-color:var(--primary);background:color-mix(in srgb, var(--primary) 9%, var(--card));}
+.tema-font-btn .tfb-check{
+  position:absolute;top:8px;right:8px;width:18px;height:18px;border-radius:50%;
+  background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;
+  opacity:0;transform:scale(0.6);transition:opacity .15s ease, transform .15s ease;
+}
+.tema-font-btn.active .tfb-check{opacity:1;transform:scale(1);}
+.tema-font-btn .tfb-preview{font-size:22px;font-weight:600;color:var(--ink);line-height:1.15;}
+.tema-font-btn.active .tfb-preview{color:var(--primary);}
+.tema-font-btn .tfb-label{font-size:11.5px;font-weight:700;color:var(--ink);text-align:center;line-height:1.25;}
+.tema-font-btn.active .tfb-label{color:var(--primary);}
 .tema-preview-card{
   margin-top:14px;border-radius:18px;padding:16px 16px 14px;color:#fff;
   background:linear-gradient(135deg,var(--primary),var(--primary-deep));
@@ -7271,7 +7295,24 @@ select#categoryFilter[hidden]{display:none;}
    Tema supaya pilihan warna bisa dibatalkan (kembali ke warna semula)
    atau dikonfirmasi, gaya pil bulat penuh SAMA PERSIS dgn tombol
    "Simpan" di footer Filter di atas, cuma dibagi 2 berdampingan. ---- */
-.lap-filter-footer--split{display:flex;gap:10px;}
+/* ---- Footer Batal/Selesai halaman Tema dibuat STICKY di dasar layar
+   (position:sticky, bukan cuma flex:0 0 auto biasa spt footer Filter) --
+   supaya persis spt pola tombol pil "Selesai" pada popup Kategori
+   Transaksi: walau daftar warna aksen di atasnya panjang & halaman
+   di-scroll, 2 tombol pil ini TETAP menempel di bawah layar, tidak ikut
+   ter-scroll keluar. Dikasih background var(--paper) (senada latar
+   halaman Tema) + garis tipis di atasnya supaya tetap kebaca jelas saat
+   konten di baliknya lewat, meski scroll container-nya bukan sheet
+   melainkan .detail-page-overlay (halaman penuh). Selektor ini KHUSUS
+   scoped ke .lap-filter-footer--split (cuma dipakai halaman Tema) supaya
+   footer popup Filter/Bulan/Tanggal yg lain tidak ikut berubah jadi
+   sticky. ---- */
+.lap-filter-footer--split{
+  display:flex;gap:10px;
+  position:sticky;bottom:0;z-index:3;
+  background:var(--paper);border-top:1px solid var(--line);
+  margin-top:auto;
+}
 .lap-filter-footer--split .btn.lap-filter-save-btn,
 .lap-filter-footer--split .btn.lap-filter-cancel-btn{width:auto;flex:1 1 0;}
 .btn.lap-filter-cancel-btn{
@@ -9313,6 +9354,29 @@ body.is-scrolling *{
           <h3>Warna Aksen</h3>
           <p>Pilih warna utama aplikasi. Warna ini berlaku di semua halaman — banner, tombol, badge, hingga grafik.</p>
           <div class="tema-color-grid" id="temaColorGrid"></div>
+        </div>
+        <!-- ---- Fitur BARU: ganti gaya font, ditaruh persis di bawah
+             section "Warna Aksen" sesuai permintaan. Pakai sistem font
+             yang SUDAH ADA (APP_FONT_PRESETS, --font-body/--font-display,
+             tersimpan di APP_SETTINGS_KEY yang sama dgn modal "Pengaturan
+             Aplikasi") -- bukan bikin sistem/penyimpanan font baru --
+             supaya pilihan font di halaman Tema & di modal Pengaturan
+             tetap 1 sumber data yg sama & selalu sinkron. Gaya kartunya
+             (grid 2 kolom, huruf "Aa" jadi pratinjau tiap font) niru
+             .as-font-swatch di modal Pengaturan, TAPI dikasih class baru
+             .tema-font-btn dgn warna aksen var(--primary) (bukan
+             var(--forest-glow)) supaya senada dgn bahasa desain kartu
+             warna .tema-color-btn di atasnya, bukan malah kayak 2 style
+             beda arah. Sama spt warna, pilihan font di sini juga cuma
+             PRATINJAU dulu (live preview lewat --font-body/--font-display)
+             selama popup terbuka -- baru benar-benar tersimpan kalau
+             tombol "Selesai" ditekan, & kembali ke font semula kalau
+             "Batal"/kembali/Escape (pola sama persis dgn temaPendingState
+             utk warna). ---- -->
+        <div class="tema-section">
+          <h3>Gaya Font</h3>
+          <p>Pilih gaya huruf aplikasi. Ikut berubah di judul, angka saldo, hingga label tombol di semua halaman.</p>
+          <div class="tema-font-grid" id="temaFontGrid"></div>
         </div>
         <div class="tema-preview-card" id="temaPreviewCard">
           <small>Pratinjau</small>
