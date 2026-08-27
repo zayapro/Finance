@@ -7967,13 +7967,6 @@ body.is-scrolling *{
      sebagai padding-top halaman supaya konten di bawahnya tidak
      ketutup elemen fixed ini. */
 .mini-topbar{display:none;}
-/* Tombol "Keluar" mengambang (dibuat lewat JS, lihat initCloudLogoutButton
-   di script.js) hanya untuk desktop/tablet -- di HP dipindah ke dalam
-   mini-topbar (#miniLogoutBtn) supaya tidak menutupi logo/nama app yang
-   posisinya sama-sama di pojok kiri atas layar. */
-@media (max-width:600px){
-  .cloud-logout-btn-desktop{display:none !important;}
-}
 @media (max-width:600px){
   .mini-topbar{
     display:flex;
