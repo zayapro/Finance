@@ -4966,49 +4966,74 @@ tbody tr:last-child td{border-bottom:none;}
 .modal-overlay.open .wallet-modal #walletForm > *:nth-child(7){animation:walletFieldIn .38s ease .47s forwards;}
 @keyframes walletFieldIn{to{opacity:1;transform:translateY(0);}}
 
-/* ---- Popup "Tambah Transaksi" — versi redesign: ukuran lebih lega,
-   input jumlah bergaya kalkulator besar, tombol jenis transaksi jadi
-   kartu ikon dengan badge centang, dan animasi masuk spring bertingkat
-   (setiap elemen "melompat" masuk satu demi satu). ---- */
-.tx-modal{
-  position:relative;overflow:hidden;border-radius:26px;
-  max-width:480px;padding:0 30px 28px;
-  box-shadow:0 30px 70px -18px rgba(15,23,42,0.4), 0 6px 20px rgba(15,23,42,0.1);
-  transform:translateY(34px) scale(.9) rotate(-1deg);
-  transition:transform .55s cubic-bezier(.34,1.5,.5,1), opacity .32s ease;
-}
-.modal-overlay.open .tx-modal{transform:translateY(0) scale(1) rotate(0);}
-.tx-modal::before{
-  content:'';position:absolute;top:0;left:0;right:0;height:6px;
-  background:linear-gradient(90deg,var(--forest-glow),var(--brass-light),var(--wine-light),var(--violet-light));
-  background-size:280% 100%;
-  animation:txModalSheen 6s linear infinite;
-}
-.tx-modal::after{
-  content:'';position:absolute;top:-90px;right:-70px;width:220px;height:220px;border-radius:50%;
-  background:radial-gradient(circle,rgba(37,99,235,0.16),transparent 70%);
-  pointer-events:none;z-index:0;
-}
-@keyframes txModalSheen{0%{background-position:0% 0;}100%{background-position:280% 0;}}
+/* ============================================================
+   POPUP "TAMBAH TRANSAKSI" & "TAMBAH/EDIT TAGIHAN & HUTANG" —
+   REDESIGN (versi baru, menggantikan gaya lama yg penuh gradient
+   teks warna-warni, sheen berjalan, & animasi spring bertingkat
+   per elemen). Filosofi baru: TENANG & RAPI, satu bahasa visual
+   dengan popup lain di app ini yg sudah bergaya bersih (mis.
+   .wallet-modal): kepala popup pakai lencana ikon bulat/kotak +
+   judul & subjudul (pola .modal-head-icon/.modal-head-titles yg
+   sudah ada), TANPA teks gradient/transparent lagi.
 
-.tx-modal .modal-head{
-  position:relative;z-index:1;padding:26px 0 18px;margin-bottom:6px;
+   FONT judul (h3) di kedua popup ini SEKARANG disamakan PERSIS
+   dengan font nama halaman menu (.bd-page-banner-title / h1 di
+   Laporan-Dompet-Pengaturan): Poppins, weight 500 (bukan 600/700
+   spt sebelumnya), letter-spacing -0.005em -- bukan lagi -0.01em
+   ala judul besar dekoratif. Ukurannya sedikit lebih besar (18px)
+   drpd banner halaman (16-19px fluid) krn konteksnya popup, tapi
+   BOBOT & GAYA hurufnya kini identik, supaya terasa satu keluarga
+   tipografi di seluruh aplikasi -- bukan sekedar sama-sama Poppins
+   tapi beda bobot/tracking spt sebelumnya. ---- */
+.tx-modal,
+.bill-modal{
+  position:relative;border-radius:22px;
+  max-width:440px;padding:22px 22px 22px;
+  box-shadow:0 24px 56px -16px rgba(15,23,42,0.28), 0 4px 14px rgba(15,23,42,0.08);
+  transform:translateY(10px) scale(.98);
+  transition:transform .28s cubic-bezier(.22,1,.36,1), opacity .22s ease;
 }
+.modal-overlay.open .tx-modal,
+.modal-overlay.open .bill-modal{transform:translateY(0) scale(1);}
+
 .tx-modal .modal-head,
-.tx-modal .type-toggle,
-.tx-modal #txForm .amount-row,
-.tx-modal #txForm .form-grid-2,
-.tx-modal #txForm .form-row:last-of-type,
-.tx-modal .modal-actions{
-  opacity:0;transform:translateY(14px) scale(.97);
+.bill-modal .modal-head{
+  margin-bottom:20px;padding:0;align-items:flex-start;
 }
-.modal-overlay.open .tx-modal .modal-head{animation:txFieldIn .46s cubic-bezier(.22,1.4,.4,1) .06s forwards;}
-.modal-overlay.open .tx-modal .type-toggle{animation:txFieldIn .46s cubic-bezier(.22,1.4,.4,1) .13s forwards;}
-.modal-overlay.open .tx-modal #txForm .amount-row{animation:txFieldIn .46s cubic-bezier(.22,1.4,.4,1) .2s forwards;}
-.modal-overlay.open .tx-modal #txForm .form-grid-2{animation:txFieldIn .46s cubic-bezier(.22,1.4,.4,1) .27s forwards;}
-.modal-overlay.open .tx-modal #txForm .form-row:last-of-type{animation:txFieldIn .46s cubic-bezier(.22,1.4,.4,1) .34s forwards;}
-.modal-overlay.open .tx-modal .modal-actions{animation:txFieldIn .46s cubic-bezier(.22,1.4,.4,1) .41s forwards;}
-@keyframes txFieldIn{60%{opacity:1;transform:translateY(-2px) scale(1.015);}100%{opacity:1;transform:translateY(0) scale(1);}}
+.tx-modal .modal-head-icon,
+.bill-modal .modal-head-icon{
+  width:42px;height:42px;border-radius:13px;
+  background:linear-gradient(140deg,var(--brass),color-mix(in srgb, var(--brass) 55%, #000));
+  box-shadow:0 6px 14px -4px color-mix(in srgb, var(--brass) 55%, transparent);
+}
+.tx-modal.type-out .modal-head-icon{
+  background:linear-gradient(140deg,var(--wine),color-mix(in srgb, var(--wine) 55%, #000));
+  box-shadow:0 6px 14px -4px color-mix(in srgb, var(--wine) 55%, transparent);
+}
+.bill-modal .modal-head-icon{
+  background:linear-gradient(140deg,var(--banner-orange-deep),color-mix(in srgb, var(--banner-orange-deep) 55%, #000));
+  box-shadow:0 6px 14px -4px color-mix(in srgb, var(--banner-orange-deep) 55%, transparent);
+}
+.bill-modal.kind-hutang .modal-head-icon{
+  background:linear-gradient(140deg,var(--violet),color-mix(in srgb, var(--violet) 55%, #000));
+  box-shadow:0 6px 14px -4px color-mix(in srgb, var(--violet) 55%, transparent);
+}
+/* ---- Font judul popup DISAMAKAN dgn font nama halaman menu ---- */
+.tx-modal .modal-head-titles h3,
+.bill-modal .modal-head-titles h3{
+  font-family:'Poppins',sans-serif;font-weight:500;font-size:18px;
+  letter-spacing:-0.005em;line-height:1.25;color:var(--ink);
+}
+.tx-modal .modal-head-sub,
+.bill-modal .modal-head-sub{font-family:var(--font-body);}
+.tx-modal .modal-close,
+.bill-modal .modal-close{
+  width:32px;height:32px;border-radius:50%;background:var(--paper);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  transition:background .16s ease, color .16s ease;
+}
+.tx-modal .modal-close:hover,
+.bill-modal .modal-close:hover{background:var(--line);color:var(--ink);}
 
 /* ---- Popup "Bukti Transaksi" — dibuka dengan tap kartu transaksi di
    tab Aktifitas (.rw-item), disusun ala struk pembayaran seperti pada
@@ -5317,283 +5342,126 @@ tbody tr:last-child td{border-bottom:none;}
 .rw-item{cursor:pointer;}
 .rw-item-actions{cursor:default;}
 
-.tx-modal .modal-head h3{
-  font-size:24px;letter-spacing:-0.01em;
-  background:linear-gradient(120deg,var(--ink) 35%,var(--forest-glow));
-  -webkit-background-clip:text;background-clip:text;color:transparent;
+/* ---- Toggle jenis (Uang Masuk/Keluar) -- segmented control datar,
+   dua pil bersebelahan dalam satu wadah abu-abu, bukan lagi dua kartu
+   besar terpisah dgn ikon bulat + badge centang. Lebih ringkas &
+   senada dgn gaya pil segmented yg dipakai di halaman lain (mis. tab
+   Semua/Tagihan/Hutang). ---- */
+.tx-modal .type-toggle,
+.bill-modal .type-toggle{
+  position:relative;z-index:1;gap:4px;margin-bottom:18px;
+  background:var(--paper);border-radius:14px;padding:4px;
 }
-.tx-modal .modal-close{
-  width:34px;height:34px;border-radius:50%;background:var(--paper);
-  display:flex;align-items:center;justify-content:center;
-  transition:background .18s ease, transform .3s cubic-bezier(.34,1.56,.64,1), color .18s ease;
+.tx-modal .type-toggle button,
+.bill-modal .type-toggle button{
+  padding:11px 10px;border-radius:11px;border:none;
+  flex-direction:row;gap:7px;position:relative;
+  font-size:13.5px;font-weight:600;color:var(--ink-soft);
+  transition:background .18s ease, color .18s ease, box-shadow .18s ease;
 }
-.tx-modal .modal-close:hover{background:var(--wine);color:#fff;transform:rotate(90deg) scale(1.08);}
-
-.tx-modal .type-toggle{position:relative;z-index:1;gap:12px;margin-bottom:20px;}
-.tx-modal .type-toggle button{
-  padding:18px 12px;border-radius:16px;border:1.5px solid var(--line);
-  flex-direction:column;gap:10px;position:relative;overflow:hidden;
-  font-size:14px;transition:border-color .2s ease, background .2s ease, box-shadow .2s ease, transform .2s cubic-bezier(.34,1.56,.64,1);
-}
-.tx-modal .type-toggle button svg{
-  width:34px;height:34px;padding:9px;border-radius:50%;
-  background:var(--paper);color:var(--ink-faint);transition:all .2s ease;
-}
-.tx-modal .type-toggle button::after{
-  content:'✓';position:absolute;top:8px;right:8px;width:18px;height:18px;border-radius:50%;
-  font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;color:#fff;
-  opacity:0;transform:scale(.4);transition:all .22s cubic-bezier(.34,1.56,.64,1);
-}
-.tx-modal .type-toggle button.active::after{opacity:1;transform:scale(1);}
+.tx-modal .type-toggle button svg,
+.bill-modal .type-toggle button svg{width:15px;height:15px;flex-shrink:0;}
+.tx-modal .type-toggle button::after,
+.bill-modal .type-toggle button::after{content:none;}
 .tx-modal .type-toggle button.sel-in.active{
-  border-color:var(--brass);background:linear-gradient(160deg,rgba(5,150,105,0.14),rgba(110,231,183,0.08));
-  color:#047857;box-shadow:0 8px 20px -8px rgba(5,150,105,0.4);transform:translateY(-2px);
+  background:#fff;color:#047857;box-shadow:0 2px 8px -2px rgba(15,23,42,0.16);
 }
-.tx-modal .type-toggle button.sel-in.active svg{background:var(--brass);color:#fff;}
-.tx-modal .type-toggle button.sel-in.active::after{background:var(--brass);}
 .tx-modal .type-toggle button.sel-out.active{
-  border-color:var(--wine);background:linear-gradient(160deg,rgba(225,29,72,0.12),rgba(253,164,175,0.08));
-  color:var(--wine);box-shadow:0 8px 20px -8px rgba(225,29,72,0.35);transform:translateY(-2px);
+  background:#fff;color:var(--wine);box-shadow:0 2px 8px -2px rgba(15,23,42,0.16);
 }
-.tx-modal .type-toggle button.sel-out.active svg{background:var(--wine);color:#fff;}
-.tx-modal .type-toggle button.sel-out.active::after{background:var(--wine);}
-.tx-modal .type-toggle button:not(.active):hover{transform:translateY(-2px);border-color:var(--forest-glow);}
+.tx-modal .type-toggle button:not(.active):hover,
+.bill-modal .type-toggle button:not(.active):hover{color:var(--ink);}
 
-.tx-modal .amount-row label{font-size:12.5px;}
+/* ---- Input Jumlah -- kotak bersih dgn prefix "Rp", tanpa gradient
+   latar/glow lebar spt sebelumnya. ---- */
+.tx-modal .amount-row label{font-size:12.5px;font-weight:600;color:var(--ink-soft);}
 .tx-modal .amount-input-wrap{
   display:flex;align-items:baseline;gap:8px;
-  background:linear-gradient(160deg,var(--paper),#EEF1F6);
-  border:1.5px solid var(--line);border-radius:16px;padding:14px 18px;
-  transition:border-color .18s ease, box-shadow .18s ease, background .18s ease;
+  background:var(--paper);border:1.5px solid var(--line);border-radius:14px;padding:13px 16px;
+  transition:border-color .16s ease, box-shadow .16s ease, background .16s ease;
 }
 .tx-modal .amount-input-wrap:focus-within{
-  border-color:var(--forest-glow);background:#fff;
-  box-shadow:0 0 0 5px rgba(37,99,235,0.13);
+  border-color:var(--ink);background:#fff;box-shadow:0 0 0 4px rgba(19,26,42,0.06);
 }
-.tx-modal .amount-prefix{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:19px;color:var(--ink-faint);}
+.tx-modal .amount-prefix{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:17px;color:var(--ink-faint);}
 .tx-modal #txAmount{
   border:none;background:transparent;padding:0;font-family:'IBM Plex Mono',monospace;
-  font-size:30px;font-weight:700;color:var(--ink);width:100%;
+  font-size:24px;font-weight:700;color:var(--ink);width:100%;
 }
 .tx-modal #txAmount:focus{box-shadow:none;background:transparent;}
 
-.tx-modal .form-grid-2{gap:14px;position:relative;z-index:1;}
+.tx-modal .form-grid-2,
+.bill-modal .form-grid-2{gap:12px;position:relative;z-index:1;}
 .tx-modal .form-row input,
 .tx-modal .form-row select,
-.tx-modal .form-row textarea{
-  border-radius:13px;border-color:var(--line);padding:11px 13px;
+.tx-modal .form-row textarea,
+.bill-modal .form-row input,
+.bill-modal .form-row select,
+.bill-modal .form-row textarea{
+  border-radius:12px;border-color:var(--line);padding:11px 13px;background:var(--paper);
   transition:border-color .16s ease, box-shadow .16s ease, background .16s ease;
 }
-.tx-modal .form-row select{padding-right:38px;}
+.tx-modal .form-row select,
+.bill-modal .form-row select{padding-right:38px;}
 .tx-modal .form-row input:focus,
 .tx-modal .form-row select:focus,
-.tx-modal .form-row textarea:focus{
-  background:#fff;border-color:var(--forest-glow);box-shadow:0 0 0 4px rgba(37,99,235,0.12);
+.tx-modal .form-row textarea:focus,
+.bill-modal .form-row input:focus,
+.bill-modal .form-row textarea:focus{
+  background:#fff;border-color:var(--ink);box-shadow:0 0 0 4px rgba(19,26,42,0.06);
 }
 
-.tx-modal .modal-actions{position:relative;z-index:1;margin-top:12px;}
-.tx-modal .modal-actions .btn{padding:13px;border-radius:14px;font-size:14.5px;}
+/* ---- Tombol aksi -- flat, tanpa efek kilau/sweep. Warna primer
+   tetap ikut identitas app (--primary), cukup dgn hover halus. ---- */
+.tx-modal .modal-actions,
+.bill-modal .modal-actions{position:relative;z-index:1;margin-top:14px;}
+.tx-modal .modal-actions .btn,
+.bill-modal .modal-actions .btn{padding:13px;border-radius:13px;font-size:14.5px;font-weight:600;}
 .tx-modal .modal-actions .btn-primary{
-  position:relative;overflow:hidden;
-  background:linear-gradient(135deg,var(--primary),var(--primary-deep));
-  box-shadow:0 10px 26px -8px rgba(194,65,12,0.55);
-  transition:transform .18s ease, box-shadow .18s ease;
+  background:var(--primary);box-shadow:0 8px 18px -8px rgba(194,65,12,0.5);
+  transition:background .16s ease, box-shadow .16s ease;
 }
-.tx-modal .modal-actions .btn-primary::before{
-  content:'';position:absolute;top:0;left:-60%;width:40%;height:100%;
-  background:linear-gradient(120deg,transparent,rgba(255,255,255,0.35),transparent);
-  transform:skewX(-20deg);transition:left .55s ease;
-}
-.tx-modal .modal-actions .btn-primary:hover{transform:translateY(-2px);box-shadow:0 16px 32px -8px rgba(15,23,42,0.55);}
-.tx-modal .modal-actions .btn-primary:hover::before{left:130%;}
-.tx-modal .modal-actions .btn-ghost{transition:background .16s ease, border-color .16s ease, transform .16s ease;}
-.tx-modal .modal-actions .btn-ghost:hover{background:#fff;border-color:var(--ink-faint);transform:translateY(-2px);}
-@media (max-width:640px), (prefers-reduced-motion:reduce){
-  .tx-modal::before{animation:none;}
-}
+.tx-modal .modal-actions .btn-primary:hover{background:var(--primary-deep);}
+.tx-modal .modal-actions .btn-ghost,
+.bill-modal .modal-actions .btn-ghost{transition:background .16s ease, border-color .16s ease;}
+.tx-modal .modal-actions .btn-ghost:hover,
+.bill-modal .modal-actions .btn-ghost:hover{background:var(--paper);border-color:var(--ink-faint);}
 @media (max-width:600px){
-  /* Sama seperti banner: animasi background-position yang jalan terus
-     (garis sheen di atas modal) mahal untuk di-repaint terus-menerus,
-     apalagi selagi user mengetik nominal (keyboard HP terbuka = browser
-     sudah sibuk reflow). Dimatikan khusus di layar HP supaya popup
-     Tambah Transaksi tetap terasa ringan/smooth; warna garisnya tetap
-     kelihatan (statis di posisi awal), cuma tidak bergeser-geser. */
-  .tx-modal::before{animation:none;}
-  .tx-modal{padding:0 20px 22px;border-radius:22px;}
-  .tx-modal .modal-head{padding:20px 0 14px;}
-  .tx-modal #txAmount{font-size:25px;}
+  .tx-modal,.bill-modal{padding:18px 18px 18px;border-radius:20px;}
+  .tx-modal #txAmount{font-size:21px;}
 }
 
-/* ---- Popup "Tambah/Edit Tagihan & Hutang" — REDESIGN: dulu modal
-   polos standar (.modal biasa tanpa dekorasi apa pun, lihat screenshot
-   permintaan). Sekarang DISAMAKAN gayanya dgn popup "Tambah Transaksi"
-   (.tx-modal di atas) -- sheen gradasi di tepi atas, dekorasi lingkaran
-   radial di pojok, kartu jenis (Tagihan/Hutang) dgn ikon bulat +
-   centang saat aktif, input Jumlah bergaya besar dgn prefix "Rp", tombol
-   Simpan dgn efek kilau saat hover, dan animasi masuk "melompat"
-   bertingkat per elemen -- SEMUA pola & keyframes-nya DIPAKAI ULANG
-   dari .tx-modal (txModalSheen, txFieldIn) supaya konsisten satu bahasa
-   desain, bukan dibuat dari nol.
-   BEDA dari tx-modal: warna dekorasi (sheen & radial pojok) OTOMATIS
-   ikut jenis yg sedang aktif -- oranye utk Tagihan (default), berubah
-   ke ungu saat Hutang dipilih lewat class .kind-hutang yg ditoggle di
-   setBillKind() (script.js), supaya popup ini terasa "merespons"
-   pilihan penggunanya, bukan warna tetap yg sama utk keduanya. ---- */
-.bill-modal{
-  position:relative;overflow:hidden;border-radius:26px;
-  max-width:460px;padding:0 28px 26px;
-  box-shadow:0 30px 70px -18px rgba(15,23,42,0.4), 0 6px 20px rgba(15,23,42,0.1);
-  transform:translateY(34px) scale(.9) rotate(-1deg);
-  transition:transform .55s cubic-bezier(.34,1.5,.5,1), opacity .32s ease;
-}
-.modal-overlay.open .bill-modal{transform:translateY(0) scale(1) rotate(0);}
-.bill-modal::before{
-  content:'';position:absolute;top:0;left:0;right:0;height:6px;
-  background:linear-gradient(90deg,#D97706,#F59E0B,#FBBF24,#D97706);
-  background-size:280% 100%;
-  animation:txModalSheen 6s linear infinite;
-  transition:background .4s ease;
-}
-.bill-modal.kind-hutang::before{
-  background:linear-gradient(90deg,#7C3AED,#A78BFA,#C4B5FD,#7C3AED);
-  background-size:280% 100%;
-}
-.bill-modal::after{
-  content:'';position:absolute;top:-90px;right:-70px;width:220px;height:220px;border-radius:50%;
-  background:radial-gradient(circle,rgba(217,119,6,0.16),transparent 70%);
-  pointer-events:none;z-index:0;transition:background .4s ease;
-}
-.bill-modal.kind-hutang::after{background:radial-gradient(circle,rgba(124,58,237,0.16),transparent 70%);}
-@media (max-width:640px),(prefers-reduced-motion:reduce){.bill-modal::before{animation:none;}}
-@media (max-width:600px){.bill-modal::before{animation:none;}.bill-modal{padding:0 20px 22px;border-radius:22px;}.bill-modal .modal-head{padding:20px 0 14px;}}
+/* ---- Popup "Tambah/Edit Tagihan & Hutang" (.bill-modal) -- pakai
+   struktur & warna aksen yg SAMA dgn .tx-modal di atas (lihat blok
+   gabungan .tx-modal,.bill-modal), cuma warna aksennya oranye
+   (Tagihan, default) / ungu (Hutang, class .kind-hutang) mengikuti
+   jenis yg dipilih -- bukan lagi sheen berjalan & kartu ikon besar. */
+.bill-modal .type-toggle button.sel-bill.active{background:#fff;color:#B45309;box-shadow:0 2px 8px -2px rgba(15,23,42,0.16);}
+.bill-modal .type-toggle button.sel-debt.active{background:#fff;color:#7C3AED;box-shadow:0 2px 8px -2px rgba(15,23,42,0.16);}
 
-.bill-modal .modal-head{position:relative;z-index:1;padding:26px 0 18px;margin-bottom:6px;}
-.bill-modal .modal-head h3{
-  font-size:22px;letter-spacing:-0.01em;
-  background:linear-gradient(120deg,var(--ink) 35%,#D97706);
-  -webkit-background-clip:text;background-clip:text;color:transparent;
-  transition:background .4s ease;
-}
-.bill-modal.kind-hutang .modal-head h3{background:linear-gradient(120deg,var(--ink) 35%,#7C3AED);-webkit-background-clip:text;background-clip:text;}
-.bill-modal .modal-close{
-  width:34px;height:34px;border-radius:50%;background:var(--paper);
-  display:flex;align-items:center;justify-content:center;
-  transition:background .18s ease, transform .3s cubic-bezier(.34,1.56,.64,1), color .18s ease;
-}
-.bill-modal .modal-close:hover{background:var(--wine);color:#fff;transform:rotate(90deg) scale(1.08);}
-
-/* Kartu jenis Tagihan/Hutang -- ikon bulat di atas + label di bawah
-   (flex-direction:column membalik urutan svg+teks yg di HTML tetap
-   sebaris, tanpa perlu ubah markupnya), badge centang muncul saat
-   aktif, persis pola sel-in/sel-out pada tx-modal. */
-.bill-modal .type-toggle{position:relative;z-index:1;gap:12px;margin-bottom:20px;}
-.bill-modal .type-toggle button{
-  padding:16px 12px;border-radius:16px;border:1.5px solid var(--line);
-  flex-direction:column;gap:9px;position:relative;overflow:hidden;
-  font-size:13.5px;transition:border-color .2s ease, background .2s ease, box-shadow .2s ease, transform .2s cubic-bezier(.34,1.56,.64,1);
-}
-.bill-modal .type-toggle button svg{
-  width:32px;height:32px;padding:8px;border-radius:50%;
-  background:var(--paper);color:var(--ink-faint);transition:all .2s ease;
-}
-.bill-modal .type-toggle button::after{
-  content:'✓';position:absolute;top:8px;right:8px;width:18px;height:18px;border-radius:50%;
-  font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;color:#fff;
-  opacity:0;transform:scale(.4);transition:all .22s cubic-bezier(.34,1.56,.64,1);
-}
-.bill-modal .type-toggle button.active::after{opacity:1;transform:scale(1);}
-.bill-modal .type-toggle button.sel-bill.active{
-  border-color:#D97706;background:linear-gradient(160deg,rgba(217,119,6,0.14),rgba(251,191,36,0.08));
-  color:#B45309;box-shadow:0 8px 20px -8px rgba(217,119,6,0.4);transform:translateY(-2px);
-}
-.bill-modal .type-toggle button.sel-bill.active svg{background:#D97706;color:#fff;}
-.bill-modal .type-toggle button.sel-bill.active::after{background:#D97706;}
-.bill-modal .type-toggle button.sel-debt.active{
-  border-color:#7C3AED;background:linear-gradient(160deg,rgba(124,58,237,0.14),rgba(196,181,253,0.08));
-  color:#7C3AED;box-shadow:0 8px 20px -8px rgba(124,58,237,0.35);transform:translateY(-2px);
-}
-.bill-modal .type-toggle button.sel-debt.active svg{background:#7C3AED;color:#fff;}
-.bill-modal .type-toggle button.sel-debt.active::after{background:#7C3AED;}
-.bill-modal .type-toggle button:not(.active):hover{transform:translateY(-2px);border-color:var(--forest-glow);}
-
-/* Input "Jumlah (Rp)" bergaya sama seperti nominal di popup Tambah
-   Transaksi -- prefix "Rp" abu-abu + angka besar bold, dibuat sedikit
-   lebih ringkas (padding & font lebih kecil dari tx-modal) supaya
-   tetap muat berdampingan dgn "Jatuh Tempo" di grid 2 kolom. */
 .bill-modal .bill-amount-wrap{
   display:flex;align-items:baseline;gap:6px;
-  background:linear-gradient(160deg,var(--paper),#EEF1F6);
-  border:1.5px solid var(--line);border-radius:13px;padding:10px 13px;
-  transition:border-color .18s ease, box-shadow .18s ease, background .18s ease;
+  background:var(--paper);border:1.5px solid var(--line);border-radius:12px;padding:11px 13px;
+  transition:border-color .16s ease, box-shadow .16s ease, background .16s ease;
 }
-.bill-modal .bill-amount-wrap:focus-within{
-  border-color:#D97706;background:#fff;box-shadow:0 0 0 4px rgba(217,119,6,0.12);
-}
-.bill-modal.kind-hutang .bill-amount-wrap:focus-within{border-color:#7C3AED;box-shadow:0 0 0 4px rgba(124,58,237,0.12);}
+.bill-modal .bill-amount-wrap:focus-within{border-color:#D97706;background:#fff;box-shadow:0 0 0 4px rgba(217,119,6,0.1);}
+.bill-modal.kind-hutang .bill-amount-wrap:focus-within{border-color:#7C3AED;box-shadow:0 0 0 4px rgba(124,58,237,0.1);}
 .bill-modal .bill-amount-wrap .amount-prefix{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:15px;color:var(--ink-faint);}
 .bill-modal .bill-amount-wrap #billAmount{
   border:none;background:transparent;padding:0;font-family:'IBM Plex Mono',monospace;
   font-size:19px;font-weight:700;color:var(--ink);width:100%;
 }
 .bill-modal .bill-amount-wrap #billAmount:focus{box-shadow:none;background:transparent;}
-
-.bill-modal .form-grid-2{gap:14px;position:relative;z-index:1;}
-.bill-modal .form-row input,
-.bill-modal .form-row select,
-.bill-modal .form-row textarea{
-  border-radius:13px;border-color:var(--line);padding:11px 13px;
-  transition:border-color .16s ease, box-shadow .16s ease, background .16s ease;
-}
 .bill-modal .form-row input:focus,
-.bill-modal .form-row textarea:focus{
-  background:#fff;border-color:#D97706;box-shadow:0 0 0 4px rgba(217,119,6,0.12);
-}
+.bill-modal .form-row textarea:focus{border-color:#D97706;box-shadow:0 0 0 4px rgba(217,119,6,0.1);}
 .bill-modal.kind-hutang .form-row input:focus,
-.bill-modal.kind-hutang .form-row textarea:focus{border-color:#7C3AED;box-shadow:0 0 0 4px rgba(124,58,237,0.12);}
+.bill-modal.kind-hutang .form-row textarea:focus{border-color:#7C3AED;box-shadow:0 0 0 4px rgba(124,58,237,0.1);}
 
-.bill-modal .bill-recurring-row{position:relative;z-index:1;}
+.bill-modal .modal-actions .btn-primary{background:#D97706;box-shadow:0 8px 18px -8px rgba(180,83,9,0.5);transition:background .16s ease;}
+.bill-modal .modal-actions .btn-primary:hover{background:#B45309;}
+.bill-modal.kind-hutang .modal-actions .btn-primary{background:#7C3AED;box-shadow:0 8px 18px -8px rgba(109,40,217,0.45);}
+.bill-modal.kind-hutang .modal-actions .btn-primary:hover{background:#6D28D9;}
 
-.bill-modal .modal-actions{position:relative;z-index:1;margin-top:12px;}
-.bill-modal .modal-actions .btn{padding:13px;border-radius:14px;font-size:14.5px;}
-.bill-modal .modal-actions .btn-primary{
-  position:relative;overflow:hidden;
-  background:linear-gradient(135deg,#D97706,#B45309);
-  box-shadow:0 10px 26px -8px rgba(180,83,9,0.55);
-  transition:transform .18s ease, box-shadow .18s ease, background .4s ease;
-}
-.bill-modal.kind-hutang .modal-actions .btn-primary{
-  background:linear-gradient(135deg,#7C3AED,#6D28D9);
-  box-shadow:0 10px 26px -8px rgba(109,40,217,0.5);
-}
-.bill-modal .modal-actions .btn-primary::before{
-  content:'';position:absolute;top:0;left:-60%;width:40%;height:100%;
-  background:linear-gradient(120deg,transparent,rgba(255,255,255,0.35),transparent);
-  transform:skewX(-20deg);transition:left .55s ease;
-}
-.bill-modal .modal-actions .btn-primary:hover{transform:translateY(-2px);box-shadow:0 16px 32px -8px rgba(15,23,42,0.55);}
-.bill-modal .modal-actions .btn-primary:hover::before{left:130%;}
-.bill-modal .modal-actions .btn-ghost{transition:background .16s ease, border-color .16s ease, transform .16s ease;}
-.bill-modal .modal-actions .btn-ghost:hover{background:#fff;border-color:var(--ink-faint);transform:translateY(-2px);}
-
-/* Animasi masuk bertingkat -- pola & timing PERSIS disamakan dgn
-   .wallet-modal (#walletForm > *:nth-child(N)) yg sudah ada di file
-   ini, cuma keyframes-nya pakai txFieldIn (efek "melompat" pegas)
-   supaya senada dgn tx-modal, bukan fade datar spt wallet-modal. */
-.bill-modal #billForm > *:nth-child(3),
-.bill-modal #billForm > *:nth-child(4),
-.bill-modal #billForm > *:nth-child(5),
-.bill-modal #billForm > *:nth-child(6),
-.bill-modal #billForm > *:nth-child(7),
-.bill-modal #billForm > *:nth-child(8){
-  opacity:0;transform:translateY(14px) scale(.97);
-}
-.modal-overlay.open .bill-modal .modal-head{animation:txFieldIn .46s cubic-bezier(.22,1.4,.4,1) .06s forwards;}
-.modal-overlay.open .bill-modal #billForm > *:nth-child(3){animation:txFieldIn .46s cubic-bezier(.22,1.4,.4,1) .13s forwards;}
-.modal-overlay.open .bill-modal #billForm > *:nth-child(4){animation:txFieldIn .46s cubic-bezier(.22,1.4,.4,1) .2s forwards;}
-.modal-overlay.open .bill-modal #billForm > *:nth-child(5){animation:txFieldIn .46s cubic-bezier(.22,1.4,.4,1) .27s forwards;}
-.modal-overlay.open .bill-modal #billForm > *:nth-child(6){animation:txFieldIn .46s cubic-bezier(.22,1.4,.4,1) .34s forwards;}
-.modal-overlay.open .bill-modal #billForm > *:nth-child(7){animation:txFieldIn .46s cubic-bezier(.22,1.4,.4,1) .39s forwards;}
-.modal-overlay.open .bill-modal #billForm > *:nth-child(8){animation:txFieldIn .46s cubic-bezier(.22,1.4,.4,1) .44s forwards;}
 .wallet-preview-card{transition:box-shadow .25s ease;}
 .wallet-modal .wallet-category-toggle button{transition:all .2s cubic-bezier(.22,.9,.3,1);}
 .wallet-modal .wallet-category-toggle button:active{transform:scale(.95);}
@@ -9331,7 +9199,15 @@ body.is-scrolling *{
 <div class="modal-overlay" id="txModalOverlay">
   <div class="modal tx-modal">
     <div class="modal-head">
-      <h3 id="modalTitle">Tambah Transaksi</h3>
+      <div class="modal-head-left">
+        <span class="modal-head-icon">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>
+        </span>
+        <div class="modal-head-titles">
+          <h3 id="modalTitle">Tambah Transaksi</h3>
+          <span class="modal-head-sub">Catat uang masuk atau keluar</span>
+        </div>
+      </div>
       <button class="modal-close" id="modalCloseBtn">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6 6 18M6 6l12 12"/></svg>
       </button>
@@ -9479,7 +9355,15 @@ body.is-scrolling *{
 <div class="modal-overlay" id="billModalOverlay">
   <div class="modal bill-modal">
     <div class="modal-head">
-      <h3 id="billModalTitle">Tambah Tagihan</h3>
+      <div class="modal-head-left">
+        <span class="modal-head-icon">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
+        </span>
+        <div class="modal-head-titles">
+          <h3 id="billModalTitle">Tambah Tagihan</h3>
+          <span class="modal-head-sub" id="billModalSub">Kelola tagihan &amp; hutang kamu</span>
+        </div>
+      </div>
       <button class="modal-close" id="billModalCloseBtn" type="button">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6 6 18M6 6l12 12"/></svg>
       </button>

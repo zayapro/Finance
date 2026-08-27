@@ -6220,6 +6220,11 @@ function setSelectedType(type) {
   document.querySelectorAll('#txForm .type-toggle button').forEach(b => {
     b.classList.toggle('active', b.dataset.type === type);
   });
+  // Ikon di kepala popup (.tx-modal .modal-head-icon) ikut berubah warna
+  // sesuai jenis yg aktif (hijau=masuk/merah=keluar) -- pola yg sama
+  // persis dgn .bill-modal.kind-hutang di setBillKind() di bawah, supaya
+  // kedua popup ini konsisten satu bahasa desain.
+  txModal.querySelector('.tx-modal').classList.toggle('type-out', type === 'keluar');
   populateCategorySelect();
 }
 
@@ -7035,6 +7040,19 @@ function setBillKind(kind) {
   document.getElementById('btnSubmitBill').textContent = editingBillId
     ? 'Simpan Perubahan'
     : (kind === 'tagihan' ? 'Simpan Tagihan' : 'Simpan Hutang');
+  // Subtitle & ikon kepala popup ikut berubah sesuai jenis yg aktif,
+  // senada dgn pola .modal-head-icon/.modal-head-sub yg sudah dipakai
+  // di popup Bank & E-Wallet (.wallet-modal) supaya kedua popup ini
+  // benar-benar konsisten satu bahasa desain.
+  document.getElementById('billModalSub').textContent = kind === 'tagihan'
+    ? 'Atur pengingat tagihan kamu'
+    : 'Catat hutang yang perlu dibayar';
+  const billHeadIcon = billModal.querySelector('.modal-head-icon');
+  if (billHeadIcon) {
+    billHeadIcon.innerHTML = kind === 'tagihan'
+      ? '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>'
+      : '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 15.5c0 1.1 1 2 2.5 2s2.5-.9 2.5-2-1-1.7-2.5-2.1S9.5 12.6 9.5 11.5s1-2 2.5-2 2.5.9 2.5 2"/></svg>';
+  }
 }
 
 function openBillModal(kind) {
