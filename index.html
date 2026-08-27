@@ -1470,8 +1470,14 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   min-width:0;flex:0 1 auto;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
+/* Gaya sembunyikan saldo ala bank/e-wallet: bukan blur, tapi digit
+   angkanya sungguhan diganti karakter bulatan (•) lewat JS (lihat
+   maskCurrencyString di script.js) sambil tetap mempertahankan format
+   pemisah ribuan aslinya (mis. "Rp ••.•••.•••"). Class ini cuma
+   nambahin sedikit jarak antar-titik & non-selectable supaya baris
+   titik-titiknya kelihatan rapi & tidak bisa ke-copy sembarangan. */
 .saldo-value.is-hidden{
-  filter:blur(11px);
+  letter-spacing:0.04em;
   user-select:none;
 }
 .saldo-toggle{

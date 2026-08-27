@@ -1413,6 +1413,17 @@ function isSaldoHidden() {
   return stored === null ? true : stored === '1';
 }
 
+/* Gaya "sembunyikan saldo" ala aplikasi bank/e-wallet pada umumnya:
+   digit angka diganti bulatan titik (•) TAPI format pemisah ribuan &
+   prefix mata uangnya tetap dipertahankan apa adanya (mis. "Rp
+   ••.•••.•••"), bukan cuma di-blur seperti sebelumnya. Selain lebih
+   mirip pola yang sudah familiar buat pengguna, ini juga sedikit lebih
+   privat karena teks aslinya memang tidak lagi ada di layar (blur CSS
+   masih menyisakan angka asli di balik piksel yang kabur). */
+function maskCurrencyString(str) {
+  return String(str).replace(/[0-9]/g, '•');
+}
+
 function applySaldoVisibility() {
   const hidden = isSaldoHidden();
   const valueEl = document.getElementById('saldoValue');
@@ -1420,6 +1431,13 @@ function applySaldoVisibility() {
   const btn = document.getElementById('saldoToggle');
   if (!valueEl || !iconEl) return;
   valueEl.classList.toggle('is-hidden', hidden);
+  const raw = parseFloat(valueEl.dataset.raw || '0');
+  // Ganti tampilan langsung (tanpa animasi hitung-naik) begitu toggle
+  // diklik -- baik saat disembunyikan (langsung jadi titik-titik) maupun
+  // saat ditampilkan lagi (langsung jadi angka final), sama seperti pola
+  // reveal instan di aplikasi bank/e-wallet.
+  cancelAnimationFrame(saldoAnimFrame);
+  valueEl.textContent = hidden ? maskCurrencyString(fmtRupiah(raw)) : fmtRupiah(raw);
   iconEl.innerHTML = hidden ? EYE_OFF_SVG : EYE_OPEN_SVG;
   if (btn) btn.title = hidden ? 'Tampilkan saldo' : 'Sembunyikan saldo';
 }
@@ -1442,6 +1460,18 @@ let saldoAnimFrame = null;
 let saldoFirstRenderDone = false;
 function animateSaldo(target) {
   const el = document.getElementById('saldoValue');
+  // Kalau lagi disembunyikan, tidak perlu animasi hitung-naik sama
+  // sekali -- toh yang tampil cuma titik-titik mask, bukan angkanya.
+  // dataset.raw tetap disimpan sebagai nilai asli terkini supaya begitu
+  // tombol mata diklik (lihat applySaldoVisibility), angka yang
+  // langsung muncul sudah yang paling baru/akurat.
+  if (isSaldoHidden()) {
+    cancelAnimationFrame(saldoAnimFrame);
+    el.textContent = maskCurrencyString(fmtRupiah(target));
+    el.dataset.raw = target;
+    saldoFirstRenderDone = true;
+    return;
+  }
   if (!saldoFirstRenderDone) {
     saldoFirstRenderDone = true;
     cancelAnimationFrame(saldoAnimFrame);
