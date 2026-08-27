@@ -7010,7 +7010,26 @@ function drawAndDownloadReceipt(t) {
   }, 'image/png');
 }
 document.getElementById('btnAddDesktop')?.addEventListener('click', () => openAddModal());
-document.getElementById('btnAddMobile').addEventListener('click', () => openAddModal());
+// Tombol "+" pada banner mobile SEBELUMNYA membuka modal Tambah
+// Transaksi -- sekarang difungsikan ulang jadi tombol Keluar/Masuk
+// akun (login-logout), supaya kontrol akun juga tersedia langsung
+// dari banner utama, tidak cuma dari mini-topbar (#miniLogoutBtn)
+// atau tombol mengambang desktop (#cloudLogoutBtn). Karena script.js
+// ini SENDIRI baru dimuat SETELAH login berhasil (lihat alur boot()
+// di cloud-sync.js), tombol ini pada praktiknya selalu tampil dalam
+// kondisi sudah login -- jadi aksinya adalah logout. Fallback ke
+// overlay login tetap disertakan untuk jaga-jaga jika suatu saat
+// tombol ini bisa diakses sebelum login.
+document.getElementById('btnAddMobile').addEventListener('click', () => {
+  if (typeof window.cloudSignOut === 'function') {
+    if (confirm('Keluar dari akun ini?')) {
+      window.cloudSignOut();
+    }
+  } else {
+    const overlay = document.getElementById('cloudAuthOverlay');
+    if (overlay) overlay.classList.remove('hidden');
+  }
+});
 // Tombol "+" di header "Semua Transaksi" halaman Laporan -- buka modal
 // Tambah Transaksi yang sama (lihat komentar di markupnya, index.html).
 document.getElementById('lapAddTxBtn')?.addEventListener('click', () => openAddModal());
