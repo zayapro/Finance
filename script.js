@@ -7704,13 +7704,17 @@ document.getElementById('btnEditSocial')?.addEventListener('click', () => openSo
 ========================================================== */
 const APP_SETTINGS_KEY = 'alirin_app_settings_v1';
 const DEFAULT_BRAND_ICON_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>';
+/* Disamakan dgn GLOBAL_THEME_PRESETS di atas (6 warna & urutan yang
+   sama persis) supaya 2 pemilih warna di app ini (halaman "Tema" &
+   aksen di modal Pengaturan) tidak lagi terasa jadi 2 palet yang
+   berbeda arah -- sebelumnya set warna & defaultnya beda sendiri. */
 const APP_THEME_PRESETS = [
-  { key: 'blue', label: 'Biru', color: '#2563EB' },
-  { key: 'teal', label: 'Teal', color: '#0D9488' },
-  { key: 'violet', label: 'Ungu', color: '#7C3AED' },
-  { key: 'pink', label: 'Merah Muda', color: '#DB2777' },
-  { key: 'orange', label: 'Oranye', color: '#D97706' },
-  { key: 'green', label: 'Hijau', color: '#059669' },
+  { key: 'orange', label: 'Oren', color: '#F2672B' },
+  { key: 'emerald', label: 'Zamrud', color: '#10B981' },
+  { key: 'sapphire', label: 'Safir', color: '#2563EB' },
+  { key: 'teal', label: 'Toska', color: '#0D9488' },
+  { key: 'amethyst', label: 'Ametis', color: '#7C3AED' },
+  { key: 'gold', label: 'Emas', color: '#D97706' },
 ];
 // Pustaka ikon SVG bawaan untuk brand mark — dipakai bila pengguna
 // tidak mengunggah logo gambar sendiri.
@@ -7738,7 +7742,7 @@ const APP_BANNER_ANIM_PRESETS = [
   { key: 'shimmer', label: 'Kilau Lembut', svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5l1.9 5.6 5.6 1.9-5.6 1.9-1.9 5.6-1.9-5.6-5.6-1.9 5.6-1.9L12 2.5Z"/></svg>' },
   { key: 'static', label: 'Statis', svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12h8"/></svg>' },
 ];
-const APP_SETTINGS_DEFAULTS = { appName: 'ZAYAPRO', logo: null, icon: 'pulse', theme: 'blue', font: 'playful', bannerAnim: 'wave', density: 'comfortable', language: 'id', favicon: null, metaDescription: '', metaKeywords: '' };
+const APP_SETTINGS_DEFAULTS = { appName: 'ZAYAPRO', logo: null, icon: 'pulse', theme: 'orange', font: 'playful', bannerAnim: 'wave', density: 'comfortable', language: 'id', favicon: null, metaDescription: '', metaKeywords: '' };
 const APP_META_DESC_MAXLEN = 160;
 
 /* ==========================================================
@@ -7748,19 +7752,29 @@ const APP_META_DESC_MAXLEN = 160;
    halaman ini menimpa --primary/--primary-deep/--primary-light/
    --primary-soft SEKALIGUS --banner-orange/--banner-orange-deep --
    yaitu SEMUA variabel warna yang dipakai banner Beranda, tombol,
-   badge, & elemen brand lain di seluruh app. 4 pilihan siap pakai
-   (Oren = bawaan, Merah, Hijau, Biru) + 1 pilihan warna bebas lewat
-   color picker bawaan browser, yang shade turunannya (gelap/terang/
-   lembut) dihitung otomatis lewat HSL supaya tetap enak dilihat utk
-   warna apa pun yang dipilih pengguna. ---- */
+   badge, & elemen brand lain di seluruh app. 6 pilihan siap pakai,
+   dikurasi supaya senada dengan identitas ZAYAPRO (aksen hangat di
+   atas latar navy gelap + kartu putih): Oren (bawaan, warna brand
+   asli), Zamrud & Toska (kesan uang/pertumbuhan finansial), Safir
+   (kepercayaan), Ametis (premium), Emas (kesan kekayaan/tabungan).
+   "Merah" versi lama sengaja dilepas dari daftar siap-pakai karena
+   di UI finance warna merah sudah dipakai khusus utk saldo/nominal
+   minus (rugi/pengeluaran), jadi kurang pas dipakai sebagai warna
+   brand -- pengguna yang tetap mau merah masih bisa lewat pilihan
+   "Sendiri" (color picker bebas). 1 pilihan warna bebas lewat color
+   picker bawaan browser, yang shade turunannya (gelap/terang/lembut)
+   dihitung otomatis lewat HSL supaya tetap enak dilihat utk warna
+   apa pun yang dipilih pengguna. ---- */
 const GLOBAL_THEME_KEY = 'alirin_global_theme_v1';
 const GLOBAL_THEME_PRESETS = [
   { key: 'orange', label: 'Oren', primary: '#F2672B', deep: '#C2410C', light: '#FFB088', soft: '#FFF1E7', banner: '#FA8B1E', bannerDeep: '#D97706' },
-  { key: 'red', label: 'Merah', primary: '#E11D48', deep: '#9F1239', light: '#FDA4AF', soft: '#FFF1F2', banner: '#F43F5E', bannerDeep: '#BE123C' },
-  { key: 'green', label: 'Hijau', primary: '#059669', deep: '#047857', light: '#6EE7B7', soft: '#ECFDF5', banner: '#10B981', bannerDeep: '#047857' },
-  { key: 'blue', label: 'Biru', primary: '#2563EB', deep: '#1D4ED8', light: '#93C5FD', soft: '#EFF6FF', banner: '#3B82F6', bannerDeep: '#1D4ED8' },
+  { key: 'emerald', label: 'Zamrud', primary: '#10B981', deep: '#047857', light: '#6EE7B7', soft: '#ECFDF5', banner: '#34D399', bannerDeep: '#059669' },
+  { key: 'sapphire', label: 'Safir', primary: '#2563EB', deep: '#1D4ED8', light: '#93C5FD', soft: '#EFF6FF', banner: '#3B82F6', bannerDeep: '#1D4ED8' },
+  { key: 'teal', label: 'Toska', primary: '#0D9488', deep: '#0F766E', light: '#5EEAD4', soft: '#F0FDFA', banner: '#14B8A6', bannerDeep: '#0F766E' },
+  { key: 'amethyst', label: 'Ametis', primary: '#7C3AED', deep: '#5B21B6', light: '#C4B5FD', soft: '#F5F3FF', banner: '#8B5CF6', bannerDeep: '#6D28D9' },
+  { key: 'gold', label: 'Emas', primary: '#D97706', deep: '#92400E', light: '#FCD34D', soft: '#FFFBEB', banner: '#F59E0B', bannerDeep: '#B45309' },
 ];
-const GLOBAL_THEME_DEFAULTS = { mode: 'orange', custom: '#7C3AED' };
+const GLOBAL_THEME_DEFAULTS = { mode: 'orange', custom: '#EC4899' };
 
 function hexToHsl(hex) {
   const m = (hex || '').replace('#', '');
