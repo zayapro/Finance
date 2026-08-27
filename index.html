@@ -4013,6 +4013,13 @@ body.density-compact .income-cards-group{gap:10px;}
      ikut tampil lintas halaman, tapi nilainya sendiri sudah tidak
      lagi dipakai untuk offset top di atas. */
   z-index:calc(var(--z-mini-topbar) - 1);
+  /* ---- FIX tonjolan runcing di sudut lengkung oren->putih saat
+     discroll: wrapper INI-lah yang position:sticky (elemen yg benar2
+     dipaksa browser re-composite tiap scroll), jadi paling perlu
+     dipaku ke compositor layer sendiri -- pasangan dari fix yang sama
+     di .page-banner & .page-body (lihat catatan lengkap di sana). */
+  transform:translateZ(0);-webkit-transform:translateZ(0);
+  backface-visibility:hidden;-webkit-backface-visibility:hidden;
 }
 /* Bagian atas (banner+tab+header) TIDAK butuh padding-bottom lagi di
    ujung bawahnya -- .lap-aktifitas-head di dalamnya sudah punya
@@ -6092,6 +6099,11 @@ tbody tr:last-child td{border-bottom:none;}
      supaya tidak terjadi tumpukan efek kartu dua kali. ================================================================ */
 .bd-sticky-head{
   position:sticky;top:0;z-index:6;
+  /* ---- FIX tonjolan runcing di sudut lengkung oren->putih saat
+     discroll -- pasangan dari fix yang sama di .lap-sticky-top,
+     .page-banner & .page-body (lihat catatan lengkap di sana). ---- */
+  transform:translateZ(0);-webkit-transform:translateZ(0);
+  backface-visibility:hidden;-webkit-backface-visibility:hidden;
   /* Sebelumnya ada box-shadow abu-gelap netral (rgba(15,23,42,...)) di
      sini untuk menandai batas bawah header sticky supaya tidak
      "menabrak" tiba-tiba pas discroll. Sekarang setelah latar halaman
@@ -6582,6 +6594,11 @@ html.zp-app-loading .page-body > .settings-list{display:none;}
      ikut tergulung naik sampai ke posisi banner, banner-nya yg selalu
      menang tampil di lapisan paling atas, bukan baris menunya. */
   z-index:calc(var(--z-mini-topbar) - 1);
+  /* ---- FIX tonjolan runcing di sudut lengkung oren->putih saat
+     discroll -- pasangan dari fix yang sama di .lap-sticky-top,
+     .page-banner & .page-body (lihat catatan lengkap di sana). ---- */
+  transform:translateZ(0);-webkit-transform:translateZ(0);
+  backface-visibility:hidden;-webkit-backface-visibility:hidden;
 }
 /* ---- Cap kosong (lihat catatan panjang di HTML #page-saya) -- anak
    .saya-sticky-top, satu stacking context dgn banner, jadi sudut
@@ -6594,6 +6611,17 @@ html.zp-app-loading .page-body > .settings-list{display:none;}
    di antara cap ini dgn daftar menu asli (.saya-page-body-rest) di
    bawahnya. ---- */
 .page-body.saya-page-body-cap{padding-bottom:0;}
+/* ---- Potongan KEDUA (.saya-page-body-rest, daftar menu asli) HARUS
+   diratakan -- sebelumnya tidak ada override sama sekali di sini
+   sehingga masih ikut style dasar .page-body (margin-top:-24px +
+   border-radius 28px di atas), jadi ikut "menumpang" sendiri persis
+   seperti cap di atasnya -> muncul sbg kartu putih KEDUA yang
+   terpisah/tidak menyatu (lengkungan dobel). Disamakan PERSIS dengan
+   pola .lap-page-body-rest (halaman Laporan): margin & radius
+   dimatikan total, shadow "menumpang" dimatikan (efeknya sudah
+   dipakai oleh cap), padding-top diberi sedikit jarak pengganti. */
+.page-body.saya-page-body-rest{margin-top:0;border-radius:0;box-shadow:none;padding-top:14px;}
+.page-body.saya-page-body-rest::before{display:none;}
 /* Blok daftar menu (.settings-list) jadi .page-body TERPISAH DI LUAR
    wrapper sticky di atas -- margin negatif/radius/shadow "kartu
    menumpang di atas banner" (lengkungan dkk) DIMATIKAN TOTAL di sini
@@ -7582,6 +7610,13 @@ select#categoryFilter[hidden]{display:none;}
   margin-left:calc(-1 * var(--app-x));margin-right:calc(-1 * var(--app-x));
   padding:clamp(30px,6vw,44px) clamp(16px,3vw,20px) clamp(44px,9vw,68px);
   box-sizing:border-box;
+  /* ---- FIX pasangan dari .page-body (lihat catatan panjang di sana):
+     banner oren ini juga dipaksa ke compositor layer sendiri supaya
+     tepinya tidak ikut "goyang" sepersekian pixel relatif terhadap
+     kartu putih .page-body yang menumpang di atasnya saat discroll --
+     sumber tonjolan runcing di sudut kiri/kanan lengkungan. ---- */
+  transform:translateZ(0);-webkit-transform:translateZ(0);
+  backface-visibility:hidden;-webkit-backface-visibility:hidden;
   /* Judul di-tengah-kan (text-align:center) supaya PERSIS sama posisi
      dengan judul halaman Tagihan & Hutang (.bd-page-banner-title-center)
      dan dengan referensi desain -- sebelumnya rata kiri, beda posisi
@@ -7636,6 +7671,21 @@ select#categoryFilter[hidden]{display:none;}
   margin:-24px calc(-1 * var(--app-x)) 0;
   border-radius:28px 28px 0 0;
   padding:24px 0 4px;
+  /* ---- FIX: sudut lengkung kiri/kanan (tempat oren ketemu putih)
+     kadang "bocor" jadi tonjolan runcing sesaat pas discroll (khusus
+     di WebKit/Safari mobile) -- ini bug rendering yang muncul saat
+     kartu putih rounded ini duduk MENUMPANG di atas .page-banner
+     lewat margin negatif + sticky wrapper (.lap-sticky-top dkk):
+     browser kadang menggambar ulang lengkungannya di layer/pixel yang
+     sedikit meleset saat halaman ikut bergerak, jadi sepersekian
+     pixel warna oren di baliknya "nongol" lewat sudut lengkung
+     (paling kelihatan di sudut kiri). Dipaksa naik ke compositor
+     layer-nya sendiri (translateZ) + backface-visibility:hidden supaya
+     lengkungnya digambar SEKALI di layer stabil sendiri, tidak ikut
+     digambar ulang tiap frame scroll -> tonjolan runcing itu hilang. */
+  transform:translateZ(0);-webkit-transform:translateZ(0);
+  backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  isolation:isolate;
 }
 /* PENTING: shadow "kartu menumpang di atas banner" TIDAK ditaruh
    langsung sebagai box-shadow di .page-body itu sendiri -- box-shadow
@@ -7860,6 +7910,12 @@ select#categoryFilter[hidden]{display:none;}
   .page-body::before{
     box-shadow:none;
   }
+  /* Ditulis ulang secara eksplisit di layar HP (walau secara
+     spesifisitas CSS harusnya sudah otomatis menang) -- SAMA PERSIS
+     pola defensif .lap-page-body-rest, supaya potongan kedua ini
+     tetap rata & tidak numpang lagi walau nilai margin/radius dasar
+     .page-body berubah khusus di breakpoint ini (-16px/26px). */
+  .page-body.saya-page-body-rest{margin-top:0;border-radius:0;box-shadow:none;}
 }
 /* ---- Rapikan header banner di HP ----
    Sebelumnya kolom tanggal+kurs (banner-date-col) ikut di-center
