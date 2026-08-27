@@ -2980,6 +2980,37 @@ function categoryColor(cat) {
   for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
   return CHART_PALETTE[Math.abs(hash) % CHART_PALETTE.length];
 }
+
+/* ---- Ikon per kategori transaksi (dipakai di ikon kiri tiap baris
+   riwayat/struk -- .rw-item-ic & .receipt-detail-ic -- yg SEBELUMNYA
+   cuma panah naik/turun generik lewat iconArrow(), jadi semua kategori
+   Makanan/Transportasi/Gaji/dst kelihatan sama persis, cuma beda warna.
+   Sekarang tiap kategori bawaan (lihat daftar CATEGORIES di atas) dpt
+   ikon line-svg sendiri yg mewakili maknanya (dompet gaji, keranjang
+   belanja, dst), gaya (stroke bulat, tanpa isi) DISAMAKAN dgn iconArrow
+   & ikon lain di app spy senada. Kategori custom/tak dikenal (di luar
+   daftar) tetap jatuh ke panah naik/turun lama sbg fallback aman. ---- */
+const CATEGORY_ICON_PATHS = {
+  'gaji': '<rect x="3" y="7" width="18" height="13" rx="2.4"/><path d="M8 7V5.6A2.6 2.6 0 0 1 10.6 3h2.8A2.6 2.6 0 0 1 16 5.6V7"/><path d="M3 12h18"/>',
+  'bonus': '<path d="M12 3v18M7.5 6.2c-1.7 0-3-1-3-2.4S6 1.4 8 2.4c1.8 1 3 3.4 4 4.4 1-1 2.2-3.4 4-4.4 2-1 3.5.4 3.5 1.4s-1.3 2.4-3 2.4"/><path d="M4 11h16v3.5a5.5 5.5 0 0 1-5.5 5.5h-5A5.5 5.5 0 0 1 4 14.5V11Z"/>',
+  'penjualan': '<path d="M3 7h18l-1.6 11.2a2 2 0 0 1-2 1.8H6.6a2 2 0 0 1-2-1.8L3 7Z"/><path d="M8 7V6a4 4 0 0 1 8 0v1"/>',
+  'investasi': '<path d="M4 19V9M10 19V5M16 19v-7M4 19h16"/><path d="M13 5.5 16 4l2 2.5"/>',
+  'hadiah': '<rect x="3.5" y="9.5" width="17" height="11" rx="1.6"/><path d="M3.5 9.5h17M12 9.5V21M12 9.5c-1.3-3-3-4.6-4.7-4.6a2 2 0 1 0 0 4.6M12 9.5c1.3-3 3-4.6 4.7-4.6a2 2 0 1 1 0 4.6"/>',
+  'makanan': '<path d="M6 3v7a2 2 0 0 0 2 2v9M6 3v9M9 3v7M9 12v9"/><path d="M16 3c-1.4 0-2.5 2-2.5 5.4 0 2 .7 3.2 1.7 3.8V21"/>',
+  'transportasi': '<path d="M5 16V9.4a2 2 0 0 1 1.3-1.9L8 6.8a2 2 0 0 1 .7-.13h6.6a2 2 0 0 1 .7.13l1.7.7A2 2 0 0 1 19 9.4V16"/><path d="M5 16h14v2.4a1.1 1.1 0 0 1-1.1 1.1H16a1.1 1.1 0 0 1-1.1-1.1V17H9.1v1.4A1.1 1.1 0 0 1 8 19.5H6.1A1.1 1.1 0 0 1 5 18.4V16Z"/><circle cx="8" cy="16" r="0.01"/><circle cx="16" cy="16" r="0.01"/>',
+  'belanja': '<path d="M6.5 8h11l1 12.2a1.8 1.8 0 0 1-1.8 2H7.3a1.8 1.8 0 0 1-1.8-2L6.5 8Z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/>',
+  'tagihan': '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3Z"/><path d="M9 8h6M9 12h6M9 16h3"/>',
+  'hiburan': '<rect x="3" y="5" width="18" height="13" rx="2.2"/><path d="M10.2 8.7v4.6l4-2.3-4-2.3Z"/>',
+  'kesehatan': '<path d="M20.8 8.6c0 5-8.8 10.4-8.8 10.4S3.2 13.6 3.2 8.6a4.4 4.4 0 0 1 8-2.6h1.6a4.4 4.4 0 0 1 8 2.6Z"/><path d="M9 11h2l1-2 2 4 1-2h2"/>',
+  'pendidikan': '<path d="M12 4 2 8.4l10 4.4 10-4.4L12 4Z"/><path d="M6.4 10.6v4.7c0 1.4 2.5 3.1 5.6 3.1s5.6-1.7 5.6-3.1v-4.7"/><path d="M22 8.4v6"/>',
+  'lainnya': '<circle cx="6" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="18" cy="12" r="1.4"/>',
+};
+function categoryIcon(cat, isIn, size = 15) {
+  const key = String(cat || '').trim().toLowerCase();
+  const paths = CATEGORY_ICON_PATHS[key];
+  if (!paths) return iconArrow(isIn ? 'down' : 'up', size);
+  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${paths}</svg>`;
+}
 let chartResizeBound = false;
 let lastChartDataset = null; // { labels, values, colors, total }
 let chartAnimFrame = null;
@@ -3719,7 +3750,7 @@ function renderHistoryRow(t, delay) {
   return `
     <div class="rw-item fade-up" style="animation-delay:${delay}ms" data-tx-id="${t.id}">
       <span class="rw-item-ic" style="background:color-mix(in srgb, ${color} 15%, transparent);color:${color}">
-        ${iconArrow(isIn ? 'down' : 'up', 15)}
+        ${categoryIcon(t.category, isIn, 16)}
       </span>
       <div class="rw-item-body">
         <div class="rw-item-name">${escapeHtml(t.category)}</div>
@@ -6336,7 +6367,7 @@ function openTxReceipt(id) {
   document.getElementById('receiptDetailList').innerHTML = `
     <div class="receipt-detail-row">
       <span class="receipt-detail-ic" style="background:color-mix(in srgb, ${color} 15%, transparent);color:${color}">
-        ${iconArrow(isIn ? 'down' : 'up', 15)}
+        ${categoryIcon(t.category, isIn, 16)}
       </span>
       <div class="receipt-detail-text">
         <div class="receipt-detail-label">${escapeHtml(t.category)}</div>
@@ -6975,6 +7006,9 @@ function drawAndDownloadReceipt(t) {
 }
 document.getElementById('btnAddDesktop')?.addEventListener('click', () => openAddModal());
 document.getElementById('btnAddMobile').addEventListener('click', () => openAddModal());
+// Tombol "+" di header "Semua Transaksi" halaman Laporan -- buka modal
+// Tambah Transaksi yang sama (lihat komentar di markupnya, index.html).
+document.getElementById('lapAddTxBtn')?.addEventListener('click', () => openAddModal());
 
 /* ==========================================================
    MODAL TAMBAH / EDIT TAGIHAN & HUTANG (form terpisah,
@@ -6990,6 +7024,9 @@ function setBillKind(kind) {
     b.classList.toggle('active', b.dataset.billkind === kind);
   });
   document.getElementById('billKind').value = kind;
+  // Warna dekorasi popup (sheen atas, radial pojok, judul, tombol Simpan)
+  // OTOMATIS ikut jenis yg aktif -- lihat .bill-modal.kind-hutang di CSS.
+  billModal.querySelector('.bill-modal').classList.toggle('kind-hutang', kind === 'hutang');
   document.getElementById('billNameLabel').textContent = kind === 'tagihan' ? 'Nama Tagihan' : 'Nama Hutang / Kepada Siapa';
   document.getElementById('billName').placeholder = kind === 'tagihan' ? 'Contoh: Tagihan Listrik PLN' : 'Contoh: Pinjaman ke Budi';
   document.getElementById('billModalTitle').textContent = editingBillId
