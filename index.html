@@ -3553,6 +3553,62 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 }
 .as-theme-swatch svg{position:relative;z-index:1;color:#fff;filter:drop-shadow(0 1px 2px rgba(0,0,0,0.35));}
 
+/* ---- Halaman "Tema": pilih warna aksen GLOBAL aplikasi (dipakai di
+   halaman penuh #temaOverlay, beda dgn .as-theme-row di atas yg cuma
+   warna aksen sekunder pada modal Pengaturan Aplikasi). Swatch besar
+   supaya nyaman disentuh di HP, dilengkapi label nama warna & preview
+   kartu kecil yg langsung ikut berubah begitu warna dipilih. ---- */
+.tema-section{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  padding:16px;box-shadow:var(--shadow-sm);
+}
+.tema-section h3{
+  margin:0 0 3px;font-size:12.5px;color:var(--ink);
+  text-transform:uppercase;letter-spacing:0.04em;
+  font-family:'Poppins',sans-serif;font-weight:600;
+}
+.tema-section p{margin:0 0 14px;font-size:12.5px;color:var(--ink-soft);line-height:1.5;}
+.tema-color-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:10px;}
+.tema-color-btn{
+  position:relative;display:flex;flex-direction:column;align-items:center;gap:7px;
+  border:1.5px solid var(--line);border-radius:16px;background:var(--paper);
+  padding:12px 6px 10px;cursor:pointer;font-family:inherit;
+  transition:transform .15s cubic-bezier(.3,1.6,.4,1), border-color .15s ease, background .15s ease;
+}
+.tema-color-btn:hover{transform:translateY(-2px);}
+.tema-color-btn.active{border-color:var(--tc-color,var(--primary));background:color-mix(in srgb, var(--tc-color,var(--primary)) 9%, var(--card));}
+.tema-color-dot{
+  position:relative;width:36px;height:36px;border-radius:50%;flex-shrink:0;
+  background:var(--tc-color,var(--primary));
+  box-shadow:0 4px 10px -3px color-mix(in srgb, var(--tc-color,var(--primary)) 55%, transparent);
+}
+.tema-color-btn.active .tema-color-dot::after{
+  content:'';position:absolute;inset:0;border-radius:50%;
+  background:rgba(255,255,255,0.18);box-shadow:0 0 0 3px #fff inset;
+}
+.tema-color-dot svg{position:absolute;inset:0;margin:auto;color:#fff;filter:drop-shadow(0 1px 2px rgba(0,0,0,0.35));}
+.tema-color-label{font-size:11.5px;font-weight:700;color:var(--ink);text-align:center;line-height:1.25;}
+.tema-color-btn.active .tema-color-label{color:var(--tc-color,var(--primary));}
+.tema-color-btn.tema-color-custom .tema-color-dot{
+  background:conic-gradient(from 180deg, #F2672B, #E11D48, #7C3AED, #2563EB, #059669, #F2672B);
+}
+.tema-color-btn.tema-color-custom.active .tema-color-dot{background:var(--tc-color,var(--primary));}
+.tema-color-custom input[type="color"]{
+  position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;border:none;padding:0;
+}
+.tema-preview-card{
+  margin-top:14px;border-radius:18px;padding:16px 16px 14px;color:#fff;
+  background:linear-gradient(135deg,var(--primary),var(--primary-deep));
+  box-shadow:0 10px 20px -8px color-mix(in srgb, var(--primary) 55%, transparent);
+  display:flex;flex-direction:column;gap:6px;
+}
+.tema-preview-card small{font-size:10.5px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;opacity:0.85;}
+.tema-preview-card strong{font-size:19px;font-family:var(--font-display,'Poppins',sans-serif);}
+.tema-preview-btn{
+  align-self:flex-start;margin-top:6px;padding:7px 14px;border-radius:999px;border:none;
+  background:rgba(255,255,255,0.22);color:#fff;font-size:12px;font-weight:700;cursor:default;
+}
+
 /* ---- Kepadatan tampilan ---- */
 .as-density-toggle{display:flex;gap:6px;background:var(--paper);border:1px solid var(--line);border-radius:11px;padding:4px;}
 .as-density-toggle button{
@@ -9240,7 +9296,16 @@ body.is-scrolling *{
       </div>
 
       <div class="lap-filter-card" id="temaCard">
-        <!-- Konten pilihan tema menyusul di sini. -->
+        <div class="tema-section">
+          <h3>Warna Aksen</h3>
+          <p>Pilih warna utama aplikasi. Warna ini berlaku di semua halaman — banner, tombol, badge, hingga grafik.</p>
+          <div class="tema-color-grid" id="temaColorGrid"></div>
+        </div>
+        <div class="tema-preview-card" id="temaPreviewCard">
+          <small>Pratinjau</small>
+          <strong id="temaPreviewName">ZAYAPRO</strong>
+          <button type="button" class="tema-preview-btn" tabindex="-1">Tombol Contoh</button>
+        </div>
       </div>
     </div>
   </div>

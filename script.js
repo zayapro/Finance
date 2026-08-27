@@ -7741,6 +7741,155 @@ const APP_BANNER_ANIM_PRESETS = [
 const APP_SETTINGS_DEFAULTS = { appName: 'ZAYAPRO', logo: null, icon: 'pulse', theme: 'blue', font: 'playful', bannerAnim: 'wave', density: 'comfortable', language: 'id', favicon: null, metaDescription: '', metaKeywords: '' };
 const APP_META_DESC_MAXLEN = 160;
 
+/* ==========================================================
+   HALAMAN "TEMA" (#temaOverlay) — ganti warna aksen GLOBAL aplikasi.
+   Beda dengan "Warna aksen" di modal Pengaturan Aplikasi (yang cuma
+   menimpa --forest-glow, dipakai di beberapa aksen sekunder saja),
+   halaman ini menimpa --primary/--primary-deep/--primary-light/
+   --primary-soft SEKALIGUS --banner-orange/--banner-orange-deep --
+   yaitu SEMUA variabel warna yang dipakai banner Beranda, tombol,
+   badge, & elemen brand lain di seluruh app. 4 pilihan siap pakai
+   (Oren = bawaan, Merah, Hijau, Biru) + 1 pilihan warna bebas lewat
+   color picker bawaan browser, yang shade turunannya (gelap/terang/
+   lembut) dihitung otomatis lewat HSL supaya tetap enak dilihat utk
+   warna apa pun yang dipilih pengguna. ---- */
+const GLOBAL_THEME_KEY = 'alirin_global_theme_v1';
+const GLOBAL_THEME_PRESETS = [
+  { key: 'orange', label: 'Oren', primary: '#F2672B', deep: '#C2410C', light: '#FFB088', soft: '#FFF1E7', banner: '#FA8B1E', bannerDeep: '#D97706' },
+  { key: 'red', label: 'Merah', primary: '#E11D48', deep: '#9F1239', light: '#FDA4AF', soft: '#FFF1F2', banner: '#F43F5E', bannerDeep: '#BE123C' },
+  { key: 'green', label: 'Hijau', primary: '#059669', deep: '#047857', light: '#6EE7B7', soft: '#ECFDF5', banner: '#10B981', bannerDeep: '#047857' },
+  { key: 'blue', label: 'Biru', primary: '#2563EB', deep: '#1D4ED8', light: '#93C5FD', soft: '#EFF6FF', banner: '#3B82F6', bannerDeep: '#1D4ED8' },
+];
+const GLOBAL_THEME_DEFAULTS = { mode: 'orange', custom: '#7C3AED' };
+
+function hexToHsl(hex) {
+  const m = (hex || '').replace('#', '');
+  const full = m.length === 3 ? m.split('').map(c => c + c).join('') : m;
+  const r = parseInt(full.substring(0, 2), 16) / 255;
+  const g = parseInt(full.substring(2, 4), 16) / 255;
+  const b = parseInt(full.substring(4, 6), 16) / 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h = 0, s = 0; const l = (max + min) / 2;
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+      case g: h = (b - r) / d + 2; break;
+      case b: h = (r - g) / d + 4; break;
+    }
+    h /= 6;
+  }
+  return { h: h * 360, s: s * 100, l: l * 100 };
+}
+function hslToHex(h, s, l) {
+  h = ((h % 360) + 360) % 360; s = Math.min(100, Math.max(0, s)) / 100; l = Math.min(100, Math.max(0, l)) / 100;
+  const c = (1 - Math.abs(2 * l - 1)) * s;
+  const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+  const m = l - c / 2;
+  let r = 0, g = 0, b = 0;
+  if (h < 60) { r = c; g = x; b = 0; } else if (h < 120) { r = x; g = c; b = 0; }
+  else if (h < 180) { r = 0; g = c; b = x; } else if (h < 240) { r = 0; g = x; b = c; }
+  else if (h < 300) { r = x; g = 0; b = c; } else { r = c; g = 0; b = x; }
+  const toHex = v => Math.round((v + m) * 255).toString(16).padStart(2, '0');
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`.toUpperCase();
+}
+// Turunkan shade gelap/terang/lembut & warna banner dari 1 warna dasar
+// bebas (dipakai utk pilihan "warna sendiri"), pakai manipulasi HSL
+// supaya proporsinya konsisten dgn preset siap pakai di atas.
+function deriveGlobalThemeShades(baseHex) {
+  const { h, s, l } = hexToHsl(baseHex);
+  return {
+    primary: baseHex,
+    deep: hslToHex(h, Math.min(100, s + 4), Math.max(18, l - 16)),
+    light: hslToHex(h, Math.max(35, s - 15), Math.min(88, l + 24)),
+    soft: hslToHex(h, Math.max(30, s - 25), Math.min(96, l + 40)),
+    banner: hslToHex(h + 6, Math.min(100, s + 8), Math.min(70, l + 4)),
+    bannerDeep: hslToHex(h + 3, Math.min(100, s + 6), Math.max(30, l - 12)),
+  };
+}
+function resolveGlobalThemeShades(state) {
+  if (state.mode === 'custom') return deriveGlobalThemeShades(state.custom || GLOBAL_THEME_DEFAULTS.custom);
+  return GLOBAL_THEME_PRESETS.find(p => p.key === state.mode) || GLOBAL_THEME_PRESETS[0];
+}
+function loadGlobalTheme() {
+  try {
+    const raw = cloudStorage.getItem(GLOBAL_THEME_KEY);
+    return raw ? { ...GLOBAL_THEME_DEFAULTS, ...JSON.parse(raw) } : { ...GLOBAL_THEME_DEFAULTS };
+  } catch (e) { return { ...GLOBAL_THEME_DEFAULTS }; }
+}
+function saveGlobalTheme(state) {
+  try { cloudStorage.setItem(GLOBAL_THEME_KEY, JSON.stringify(state)); }
+  catch (e) { showToast('Gagal menyimpan warna tema.', 'err'); }
+}
+function applyGlobalTheme(state) {
+  const shades = resolveGlobalThemeShades(state);
+  const root = document.documentElement.style;
+  root.setProperty('--primary', shades.primary);
+  root.setProperty('--primary-deep', shades.deep);
+  root.setProperty('--primary-light', shades.light);
+  root.setProperty('--primary-soft', shades.soft);
+  root.setProperty('--banner-orange', shades.banner);
+  root.setProperty('--banner-orange-deep', shades.bannerDeep);
+}
+function renderTemaColorGrid(state) {
+  const grid = document.getElementById('temaColorGrid');
+  if (!grid) return;
+  const checkSvg = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
+  const presetHtml = GLOBAL_THEME_PRESETS.map(p => `
+    <button type="button" class="tema-color-btn${state.mode === p.key ? ' active' : ''}" data-temamode="${p.key}" style="--tc-color:${p.primary}">
+      <span class="tema-color-dot">${state.mode === p.key ? checkSvg : ''}</span>
+      <span class="tema-color-label">${p.label}</span>
+    </button>
+  `).join('');
+  const customColor = state.custom || GLOBAL_THEME_DEFAULTS.custom;
+  const customHtml = `
+    <button type="button" class="tema-color-btn tema-color-custom${state.mode === 'custom' ? ' active' : ''}" data-temamode="custom" style="--tc-color:${customColor}">
+      <span class="tema-color-dot">${state.mode === 'custom' ? checkSvg : ''}<input type="color" id="temaCustomInput" value="${customColor}" aria-label="Pilih warna sendiri"></span>
+      <span class="tema-color-label">Sendiri</span>
+    </button>
+  `;
+  grid.innerHTML = presetHtml + customHtml;
+}
+function refreshTemaPage() {
+  const state = loadGlobalTheme();
+  renderTemaColorGrid(state);
+  const nameEl = document.getElementById('temaPreviewName');
+  if (nameEl) {
+    const settings = loadAppSettings();
+    nameEl.textContent = (settings.appName || '').trim() || APP_SETTINGS_DEFAULTS.appName;
+  }
+}
+document.getElementById('temaColorGrid')?.addEventListener('click', (e) => {
+  const btn = e.target.closest('.tema-color-btn');
+  if (!btn || e.target.tagName === 'INPUT') return;
+  const mode = btn.dataset.temamode;
+  if (mode === 'custom') {
+    document.getElementById('temaCustomInput')?.click();
+    return;
+  }
+  const state = { ...loadGlobalTheme(), mode };
+  saveGlobalTheme(state);
+  applyGlobalTheme(state);
+  renderTemaColorGrid(state);
+  showToast('Warna tema diperbarui.');
+});
+document.getElementById('temaColorGrid')?.addEventListener('input', (e) => {
+  if (e.target.id !== 'temaCustomInput') return;
+  const state = { mode: 'custom', custom: e.target.value.toUpperCase() };
+  saveGlobalTheme(state);
+  applyGlobalTheme(state);
+});
+document.getElementById('temaColorGrid')?.addEventListener('change', (e) => {
+  if (e.target.id !== 'temaCustomInput') return;
+  renderTemaColorGrid(loadGlobalTheme());
+  showToast('Warna tema diperbarui.');
+});
+// Terapkan warna tema tersimpan sesegera mungkin supaya sudah benar
+// sejak render pertama (senada dgn applyAppSettings(loadAppSettings())
+// di bawah nanti).
+applyGlobalTheme(loadGlobalTheme());
+
 function loadAppSettings() {
   try {
     const raw = cloudStorage.getItem(APP_SETTINGS_KEY);
@@ -8856,6 +9005,7 @@ document.getElementById('lapFilterSaveBtn')?.addEventListener('click', closeLapF
    persis dgn popup Filter Laporan di atas (dipakai ulang class
    .lap-filter-overlay yg sama), cuma isinya masih kosong dulu. ---- */
 function openTemaOverlay() {
+  refreshTemaPage();
   document.getElementById('temaOverlay').classList.add('open');
   lockBodyScroll();
 }
