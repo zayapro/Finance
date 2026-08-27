@@ -668,53 +668,81 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
   .brand-mark{animation:none;box-shadow:none;}
 }
 .brand-name{font-family:'Poppins',sans-serif;font-weight:800;font-size:18px;letter-spacing:-0.01em;white-space:nowrap;line-height:1.2;}
-/* ---- Gaya "avatar profil premium": bingkai emas melingkar + lencana
+/* ---- Gaya "avatar profil premium": bingkai melingkar + lencana
    PREMIUM (mahkota + teks) menggantung di bawah avatar, terinspirasi
-   kartu sambutan ala member VIP (lingkaran foto + cincin emas + label
-   PREMIUM + sapaan jam di atas nama). Ukuran SENGAJA dijaga kompak
-   (bukan sebesar referensi aslinya) supaya masih muat rapi di dalam
-   banner oranye yang pendek ini tanpa bertabrakan/kepotong oleh kartu
-   Saldo Total putih yang menyelip tepat di bawahnya. Hanya dipakai di
-   logo banner beranda -- logo di footer/mini-topbar/popup struk tetap
-   pakai gaya kotak putih polos seperti semula. ---- */
-.brand-mark-wrap{position:relative;flex-shrink:0;width:44px;height:44px;margin-bottom:8px;}
+   kartu sambutan ala member VIP (lingkaran foto + cincin + label
+   PREMIUM + sapaan jam di atas nama). Warnanya SENGAJA dibuat ikut
+   var(--forest-glow) -- variabel warna tema yang sama dipakai di
+   seluruh app (leaderboard, badge berulang, dll) -- lewat color-mix(),
+   supaya lencana & cincin avatar ini otomatis berubah warna kalau
+   pengguna ganti tema di Pengaturan Aplikasi (bukan selalu emas
+   tetap). Ukuran SENGAJA dijaga kompak (bukan sebesar referensi
+   aslinya) supaya masih muat rapi di dalam banner oranye yang pendek
+   ini tanpa bertabrakan/kepotong oleh kartu Saldo Total putih yang
+   menyelip tepat di bawahnya. Hanya dipakai di logo banner beranda --
+   logo di footer/mini-topbar/popup struk tetap pakai gaya kotak putih
+   polos seperti semula. ---- */
+.brand-mark-wrap{position:relative;flex-shrink:0;width:44px;height:44px;margin-bottom:6px;}
 .brand-mark-badge{
-  position:absolute;left:50%;bottom:-8px;z-index:2;
+  position:absolute;left:50%;bottom:-6px;z-index:2;
   transform:translateX(-50%);
-  display:flex;align-items:center;gap:2px;
-  padding:2px 6px 2px 5px;border-radius:20px;
-  font-family:'Poppins',sans-serif;font-size:8px;font-weight:800;letter-spacing:.02em;
-  color:#7C2D12;white-space:nowrap;
-  background:linear-gradient(135deg,#FDE68A,#FBBF24 60%,#F59E0B);
-  border:1.3px solid rgba(255,255,255,0.85);
-  box-shadow:0 2px 6px -1px rgba(124,45,18,0.5);
+  display:flex;align-items:center;gap:1.5px;
+  padding:1.5px 5px 1.5px 4px;border-radius:16px;
+  font-family:'Poppins',sans-serif;font-size:7px;font-weight:800;letter-spacing:.02em;
+  color:color-mix(in srgb, var(--forest-glow) 65%, black 35%);white-space:nowrap;
+  background:linear-gradient(135deg,
+    color-mix(in srgb, var(--forest-glow) 32%, white 68%),
+    color-mix(in srgb, var(--forest-glow) 88%, white 12%) 60%,
+    var(--forest-glow));
+  border:1.1px solid rgba(255,255,255,0.85);
+  box-shadow:0 2px 5px -1px color-mix(in srgb, var(--forest-glow) 55%, black 25%);
   animation:brandBadgeFloat 2.6s ease-in-out infinite;
 }
-.brand-mark-badge .badge-ic{font-size:8.5px;line-height:1;}
+.brand-mark-badge .badge-ic{font-size:7px;line-height:1;}
 @keyframes brandBadgeFloat{0%,100%{transform:translateX(-50%) translateY(0);}50%{transform:translateX(-50%) translateY(-1.5px);}}
 @media (prefers-reduced-motion:reduce){.brand-mark-badge{animation:none;}}
-.brand-text-col{display:flex;flex-direction:column;justify-content:center;min-width:0;gap:1px;}
+.brand-text-col{
+  display:flex;flex-direction:column;justify-content:center;min-width:0;gap:1px;
+  /* Batasi lebar kolom teks supaya nama aplikasi yang PANJANG (diisi
+     pengguna lewat Pengaturan Aplikasi) tidak mendorong ikon-ikon di
+     kanan banner (jam kurs/notifikasi) atau meluber keluar layar --
+     alih-alih dipotong (ellipsis), nama dibiarkan patah ke baris
+     berikutnya (lihat white-space:normal di .brand-text-col
+     .brand-name) supaya nama panjang tetap terbaca utuh. */
+  max-width:clamp(120px, 42vw, 190px);
+}
 .brand-greeting{
   font-family:'Poppins',sans-serif;font-weight:500;font-size:11.5px;
   color:rgba(255,248,241,0.88);letter-spacing:.005em;white-space:nowrap;
 }
+/* Nama brand di banner: bobotnya diturunkan sedikit (800 -> 700) supaya
+   tidak terlalu "berat" dibanding sapaan & lencana PREMIUM yang lebih
+   ringan di sekitarnya, dan dibolehkan patah baris (bukan nowrap+
+   ellipsis seperti .brand-name dasar di mini-topbar/footer) supaya
+   nama aplikasi yang panjang tetap rapi terbaca, tidak terpotong. */
+.brand-text-col .brand-name{
+  font-weight:700;
+  white-space:normal;
+  overflow-wrap:break-word;word-break:break-word;
+  line-height:1.15;
+}
 /* Versi logo brand di dalam banner "Saldo Total": lingkaran foto dengan
-   cincin emas berpendar (ala avatar member premium), tanpa mengubah
-   logo di mini-topbar/footer yang tetap pakai warna aslinya. */
+   cincin berpendar warna tema aktif (ala avatar member premium), tanpa
+   mengubah logo di mini-topbar/footer yang tetap pakai warna aslinya. */
 .banner .brand-mark-wrap .brand-mark{
   width:44px;height:44px;border-radius:50%;
   background:#FFFFFF;
   color:var(--primary-deep);
-  border:2px solid #FBBF24;
+  border:2px solid var(--forest-glow);
   animation:bannerBrandMarkPulse 2.6s ease-in-out infinite;
 }
 @keyframes bannerBrandMarkPulse{
-  0%{box-shadow:0 0 0 0 rgba(251,191,36,0.55), 0 0 10px rgba(251,191,36,0.35);}
-  70%{box-shadow:0 0 0 8px rgba(251,191,36,0), 0 0 10px rgba(251,191,36,0.35);}
-  100%{box-shadow:0 0 0 0 rgba(251,191,36,0), 0 0 10px rgba(251,191,36,0.35);}
+  0%{box-shadow:0 0 0 0 color-mix(in srgb, var(--forest-glow) 55%, transparent), 0 0 10px color-mix(in srgb, var(--forest-glow) 35%, transparent);}
+  70%{box-shadow:0 0 0 8px color-mix(in srgb, var(--forest-glow) 0%, transparent), 0 0 10px color-mix(in srgb, var(--forest-glow) 35%, transparent);}
+  100%{box-shadow:0 0 0 0 color-mix(in srgb, var(--forest-glow) 0%, transparent), 0 0 10px color-mix(in srgb, var(--forest-glow) 35%, transparent);}
 }
 @media (prefers-reduced-motion:reduce){
-  .banner .brand-mark-wrap .brand-mark{animation:none;box-shadow:0 0 0 4px rgba(251,191,36,0.18);}
+  .banner .brand-mark-wrap .brand-mark{animation:none;box-shadow:0 0 0 4px color-mix(in srgb, var(--forest-glow) 18%, transparent);}
 }
 .banner-date-col{display:flex;flex-direction:column;align-items:flex-end;gap:4px;min-width:0;}
 .banner-date{font-size:12.5px;color:rgba(244,247,243,0.72);white-space:nowrap;
@@ -1486,16 +1514,17 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 .saldo-row{display:flex;align-items:center;gap:10px;margin-top:4px;min-width:0;}
 .saldo-value{
   font-family:'Poppins',sans-serif;
-  /* Disesuaikan lagi supaya senada gaya angka nominal pada referensi
-     desain (tebal & besar, mengambil porsi utama kartu): bobot
-     dinaikkan dari 700 (Bold) ke 800 (ExtraBold), ukuran maksimalnya
-     juga sedikit ditambah (38px -> 40px) supaya terasa lebih menonjol
-     sebagai fokus utama kartu, tanpa membuatnya jadi terlalu berat
-     untuk layar sempit (batas bawah clamp tetap dijaga wajar). */
+  /* Bobot dikembalikan ke 700 (Bold, bukan 800/ExtraBold) -- di ukuran
+     besar begini 800 kelihatan terlalu "padat"/berat dan kurang
+     seimbang dibanding angka Pemasukan/Pengeluaran di bawahnya yang
+     juga 700 (lihat .saldo-sub-text .v). Hierarki tetap kerasa lewat
+     BEDA UKURAN (angka saldo jauh lebih besar), bukan lewat numpuk
+     beda ukuran + beda bobot sekaligus -- hasilnya lebih rapi & pas
+     dipandang, seluruh angka di kartu jadi senada satu keluarga bobot. */
   font-size:clamp(26px, 6.6vw, 40px);
-  font-weight:800;
+  font-weight:700;
   color:var(--ink);
-  letter-spacing:-0.015em;
+  letter-spacing:-0.01em;
   transition:filter .15s ease;
   /* flex:0 1 auto (bukan 1 1 auto): SEBELUMNYA nilai ini memaksa
      saldo-value melebar mengisi SELURUH sisa lebar baris, sehingga
