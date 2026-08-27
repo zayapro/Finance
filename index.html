@@ -6536,25 +6536,67 @@ tbody tr:last-child td{border-bottom:none;}
    Sama seperti .zp-page-skel, disembunyikan dulu selagi
    html.zp-app-loading aktif supaya tidak numpuk dgn skeleton. */
 html.zp-app-loading .page-body > .settings-list{display:none;}
-.settings-list{display:flex;flex-direction:column;gap:22px;}
-.settings-section{display:flex;flex-direction:column;gap:8px;}
+/* ---- PERMINTAAN: banner "Pengaturan" dibuat sticky (menempel) di
+   atas layar. Wrapper ini HANYA membungkus .page-banner (lihat HTML
+   #page-saya) -- pola & nilai top/z-index-nya SAMA PERSIS dengan
+   .lap-sticky-top (halaman Laporan), supaya perilaku menempelnya
+   konsisten dgn halaman lain yg sudah pakai sticky-header. ---- */
+.saya-sticky-top{
+  position:sticky;top:0;
+  /* z-index dinaikkan SATU tingkat DI ATAS .page-body (yg nilainya 2)
+     -- KHUSUS lewat wrapper ini (bukan mengubah .page-banner global,
+     supaya Laporan/Dompet tetap tidak berubah) -- ini kuncinya supaya
+     daftar menu di bawah TIDAK PERNAH kelihatan "melewati"/menutupi
+     warna oren saat discroll: begitu baris menu ikut tergulung naik
+     sampai ke posisi banner, banner-nya yg selalu menang tampil di
+     lapisan paling atas, bukan baris menunya. */
+  z-index:3;
+}
+/* Blok daftar menu (.settings-list) jadi .page-body TERPISAH di bawah
+   wrapper sticky di atas -- margin negatif/radius/shadow "kartu
+   menumpang di atas banner" (dipakai halaman lain yg BUKAN sticky)
+   dimatikan di sini, sama persis polanya dgn .lap-page-body-rest /
+   .bd-page-body-rest, supaya sambungan oren->putihnya rata/lurus
+   (bukan melengkung) & tidak numpuk dobel dengan efek sticky di atas. */
+.page-body.saya-page-body-rest{margin-top:0;border-radius:0;box-shadow:none;padding-top:18px;}
+.page-body.saya-page-body-rest::before{display:none;}
+@media (max-width:640px){
+  .page-body.saya-page-body-rest{margin-top:0;border-radius:0;box-shadow:none;}
+}
+.settings-list{display:flex;flex-direction:column;gap:26px;}
+.settings-section{display:flex;flex-direction:column;gap:10px;}
 /* Label seksi ("Informasi Pribadi", "Keamanan", dst) & judul tiap
    baris menu DISAMAKAN PERSIS dengan font nama halaman (.page-banner
    h1 -- "Pengaturan"): Poppins, weight 500, letter-spacing -0.005em.
    Body/subteks lain tetap ikut --font-body seperti biasa. */
 .settings-section-label{
   font-family:'Poppins',sans-serif;font-weight:500;letter-spacing:-0.005em;
-  font-size:12.5px;color:var(--ink-faint);padding:0 4px;text-transform:uppercase;letter-spacing:0.04em;
+  font-size:12.5px;color:var(--ink-faint);padding:0 16px;text-transform:uppercase;letter-spacing:0.04em;
 }
+/* ---- PERMINTAAN: daftar menu dibuat TIDAK berbentuk kotak/kartu lagi
+   (border+radius kartu di sekeliling grup DIHAPUS) -- jadi rata polos
+   menyatu dgn latar putih .page-body, PERSIS seperti gambar referensi.
+   Satu-satunya garis pembatas antar baris cukup dari .settings-row
+   (border-bottom tipis di bawah), TIDAK ada lagi garis bingkai kedua
+   (outer border kartu) yg sebelumnya bikin tampilannya kelihatan
+   "berkotak-kotak" -- sekarang cuma SATU jenis garis yg konsisten. */
 .settings-group{
-  background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden;
+  background:transparent;
 }
 .settings-row{
   width:100%;display:flex;align-items:center;gap:12px;
-  padding:14px 16px;background:transparent;border:none;border-bottom:1px solid var(--line);
+  padding:15px 16px;background:transparent;border:none;border-bottom:1px solid var(--line);
   text-align:left;cursor:default;
 }
-.settings-group .settings-row:last-child{border-bottom:none;}
+/* Garis pembatas antar baris DISAMAKAN supaya konsisten di SEMUA baris
+   dalam satu grup, termasuk baris terakhir -- sebelumnya baris
+   terakhir tiap grup sengaja tidak diberi garis bawah (krn dulu garis
+   bingkai kartu di sekeliling grup sudah jadi "penutup" visualnya).
+   Sekarang setelah bingkai kartu itu dihapus, baris terakhir tiap
+   grup JUGA diberi garis bawah yg sama (kecuali baris paling akhir di
+   seluruh daftar) supaya jarak ke seksi berikutnya tetap rapi & tidak
+   kelihatan "menggantung" tanpa batas. */
+.settings-section:last-child .settings-row:last-child{border-bottom:none;}
 .settings-row-icon{
   width:34px;height:34px;flex-shrink:0;border-radius:10px;background:var(--paper);
   display:flex;align-items:center;justify-content:center;color:var(--ink-soft);
@@ -9172,11 +9214,24 @@ body.is-scrolling *{
 
   <!-- ===== HALAMAN: SAYA ===== -->
   <div class="app-page" id="page-saya" data-page="saya">
-    <div class="page-banner">
-      <h1 id="sayaAppName">Pengaturan</h1>
-      <p>Akun &amp; pengaturan aplikasi</p>
+    <!-- ---- PERMINTAAN: banner oren "Pengaturan" dibuat MENEMPEL
+         (position:sticky) di atas layar saat daftar menu di bawahnya
+         discroll -- persis pola yang sudah dipakai di halaman Laporan
+         (.lap-sticky-top) & Tagihan/Hutang (.bd-sticky-head): banner
+         dibungkus wrapper sticky TERSENDIRI (.saya-sticky-top), lalu
+         daftar menunya jadi blok .page-body TERPISAH di bawah
+         (.saya-page-body-rest) yang scroll normal seperti biasa.
+         z-index wrapper ini juga DINAIKKAN di atas .page-body (lihat
+         CSS-nya) supaya daftar menu TIDAK PERNAH "melewati"/menutupi
+         warna oren saat discroll -- warna orennya selalu ada di
+         lapisan paling atas. ---- -->
+    <div class="saya-sticky-top" id="sayaStickyTop">
+      <div class="page-banner">
+        <h1 id="sayaAppName">Pengaturan</h1>
+        <p>Akun &amp; pengaturan aplikasi</p>
+      </div>
     </div>
-    <div class="page-body">
+    <div class="page-body saya-page-body-rest">
       <div class="zp-page-skel" aria-hidden="true">
         <div class="zp-skel-card">
           <div class="bd-skel-bar" style="width:42%;height:14px;"></div>
