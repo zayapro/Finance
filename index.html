@@ -257,9 +257,9 @@ try {
      lalu begitu selesai (onload) baru statusnya diubah jadi stylesheet
      aktif. <noscript> di bawah jadi fallback kalau JS/onload tidak
      jalan (browser lama / JS dimatikan), supaya font tetap termuat. -->
-<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&family=Libre+Baskerville:wght@400;700&family=Source+Sans+3:wght@400;500;600;700;800&display=swap">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&family=Libre+Baskerville:wght@400;700&family=Source+Sans+3:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
-<noscript><link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&family=Libre+Baskerville:wght@400;700&family=Source+Sans+3:wght@400;500;600;700;800&display=swap" rel="stylesheet"></noscript>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet"></noscript>
 <style>
 /* ============ TOKENS ============ */
 :root{
@@ -319,7 +319,17 @@ try {
   --shadow-sm: 0 2px 10px rgba(15,23,42,0.06);
   --shadow-md: 0 14px 36px rgba(15,23,42,0.14);
   --radius: 14px;
-  --font-body:'Plus Jakarta Sans', sans-serif;
+  /* --font-body SEBELUMNYA 'Plus Jakarta Sans', sans-serif -- diganti
+     ke 'Poppins' juga (PERMINTAAN: satukan SEMUA font di seluruh web,
+     termasuk teks body/paragraf & angka nominal yang sebelumnya masih
+     pakai font lain, supaya benar-benar seragam dgn font judul halaman
+     -- bukan cuma judul & label saja). Semua font-family lain yang
+     sebelumnya literal 'IBM Plex Mono' (angka/nominal), 'Plus Jakarta
+     Sans' (teks body & nama brand ZAYAPRO), 'Fraunces' (highlight
+     kartu pertumbuhan tabungan), dan tumpukan -apple-system (satu
+     komponen notifikasi) SUDAH ikut diganti ke 'Poppins' juga di
+     seluruh file ini -- tidak ada lagi font kedua/ketiga yg tersisa. */
+  --font-body:'Poppins', sans-serif;
   /* --font-display SEBELUMNYA 'Fraunces', serif (font serif/klasik
      bergaya "Playfair") -- diganti ke 'Poppins', sans-serif (bulat,
      tegas, rounded) supaya SEMUA judul halaman (h1/h2/h3, termasuk
@@ -430,7 +440,7 @@ h1,h2,h3,.display{
   letter-spacing:-0.01em;
   margin:0;
 }
-.mono{font-family:'IBM Plex Mono', monospace;}
+.mono{font-family:'Poppins',sans-serif;}
 button{font-family:inherit;cursor:pointer;}
 input,select{font-family:inherit;}
 a{color:inherit;}
@@ -657,7 +667,7 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
 @media (prefers-reduced-motion:reduce){
   .brand-mark{animation:none;box-shadow:none;}
 }
-.brand-name{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:19px;letter-spacing:-0.01em;white-space:nowrap;}
+.brand-name{font-family:'Poppins',sans-serif;font-weight:800;font-size:19px;letter-spacing:-0.01em;white-space:nowrap;}
 /* Versi logo brand di dalam banner "Saldo Total": kotak putih solid
    dengan ikon oranye di dalamnya (senada referensi desain), tanpa
    mengubah logo di mini-topbar/footer yang tetap pakai warna aslinya. */
@@ -685,7 +695,7 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
 .banner-fx{
   display:flex;align-items:center;gap:6px;
   font-size:10.5px;color:rgba(244,247,243,0.6);
-  font-family:'IBM Plex Mono',monospace;letter-spacing:0.01em;
+  font-family:'Poppins',sans-serif;letter-spacing:0.01em;
   cursor:default;white-space:nowrap;
 }
 .banner-fx .fx-dot{
@@ -755,7 +765,7 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
   background:#FF3B30;color:#fff;font-size:11px;font-weight:700;
   display:flex;align-items:center;justify-content:center;
   box-shadow:0 1px 2px rgba(0,0,0,0.25);
-  font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;
+  font-family:'Poppins',sans-serif;
   letter-spacing:-0.02em;
   line-height:1;
 }
@@ -839,7 +849,7 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
 }
 .notif-summary-chip.warn::after{background:rgba(225,29,72,0.12);}
 .notif-summary-chip .k{position:relative;z-index:1;display:flex;align-items:center;gap:5px;font-size:10.5px;color:var(--ink-soft);font-weight:700;text-transform:uppercase;letter-spacing:0.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.notif-summary-chip .v{position:relative;z-index:1;font-family:'IBM Plex Mono',monospace;font-size:16.5px;font-weight:800;letter-spacing:-0.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.notif-summary-chip .v{position:relative;z-index:1;font-family:'Poppins',sans-serif;font-size:16.5px;font-weight:800;letter-spacing:-0.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .notif-summary-chip.warn .v{color:var(--wine);}
 .notif-summary-chip .cnt{
   font-size:10px;font-weight:700;color:var(--ink-faint);
@@ -865,7 +875,7 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
   display:inline-flex;align-items:center;justify-content:center;
   min-width:17px;height:17px;padding:0 5px;border-radius:999px;
   background:var(--paper);color:var(--ink-faint);font-size:10px;font-weight:800;
-  font-family:'IBM Plex Mono',monospace;
+  font-family:'Poppins',sans-serif;
 }
 .notif-tab-btn[data-notiftab="tagihan"].active .cnt{background:rgba(217,119,6,0.16);color:#B45309;}
 .notif-tab-btn[data-notiftab="hutang"].active .cnt{background:rgba(124,58,237,0.16);color:#6D28D9;}
@@ -901,7 +911,7 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
    yang sama, dan pil dibatasi max-width:100% + boleh membungkus
    supaya tidak pernah mendorong lebar popup di HP. */
 .notif-item-body .meta{display:flex;flex-direction:column;align-items:flex-start;gap:4px;margin-top:4px;min-width:0;}
-.notif-item-body .amt{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;color:var(--ink-soft);}
+.notif-item-body .amt{font-family:'Poppins',sans-serif;font-size:12px;font-weight:700;color:var(--ink-soft);}
 .notif-item-body .due{font-size:10.5px;color:var(--ink-faint);font-weight:700;display:inline-flex;align-items:center;gap:4px;max-width:100%;box-sizing:border-box;white-space:nowrap;}
 .notif-item-body .due::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--ink-faint);flex-shrink:0;}
 .bill-recurring-row{
@@ -1310,7 +1320,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 .fc-peek-text{min-width:0;display:flex;flex-direction:column;gap:2px;}
 .fc-peek-handle-label{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink);font-weight:800;font-size:13px;}
 .fc-peek-mini{display:flex;align-items:center;gap:6px;font-size:10.5px;color:var(--ink-faint);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.fc-peek-mini b{font-family:'IBM Plex Mono',monospace;font-weight:700;letter-spacing:-0.01em;}
+.fc-peek-mini b{font-family:'Poppins',sans-serif;font-weight:700;letter-spacing:-0.01em;}
 .fc-peek-mini .fc-peek-mini-in b{color:var(--brass);}
 .fc-peek-mini .fc-peek-mini-out b{color:var(--wine);}
 .fc-peek-mini-dot{opacity:0.45;}
@@ -1443,7 +1453,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 }
 .saldo-row{display:flex;align-items:center;gap:10px;margin-top:4px;min-width:0;}
 .saldo-value{
-  font-family:'Plus Jakarta Sans',sans-serif;
+  font-family:'Poppins',sans-serif;
   font-size:clamp(24px, 6.8vw, 44px);
   font-weight:800;
   color:var(--ink);
@@ -1542,7 +1552,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 .saldo-sub-item .ic.expense{color:var(--wine);background:rgba(225,29,72,0.12);}
 .saldo-sub-text{min-width:0;}
 .saldo-sub-text .k{font-size:12px;color:var(--ink-faint);font-weight:600;}
-.saldo-sub-text .v{font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;font-weight:800;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.saldo-sub-text .v{font-family:'Poppins',sans-serif;font-size:16px;font-weight:800;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
 /* ---- HP sempit (≤480px): Pemasukan & Pengeluaran TETAP SATU BARIS ----
    Dulu di lebar ini kedua item ditumpuk vertikal karena labelnya
@@ -1610,7 +1620,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 .saldo-target-fill{height:100%;border-radius:999px;width:0%;transition:width 1s cubic-bezier(.22,.9,.3,1);}
 .saldo-target-fill.in{background:linear-gradient(90deg,#059669,#6EE7B7);}
 .saldo-target-fill.out{background:linear-gradient(90deg,#E11D48,#FDA4AF);}
-.saldo-target-nums{display:flex;flex-wrap:wrap;justify-content:space-between;column-gap:8px;row-gap:2px;margin-top:5px;font-size:11px;color:var(--ink-faint);font-family:'IBM Plex Mono',monospace;}
+.saldo-target-nums{display:flex;flex-wrap:wrap;justify-content:space-between;column-gap:8px;row-gap:2px;margin-top:5px;font-size:11px;color:var(--ink-faint);font-family:'Poppins',sans-serif;}
 .saldo-target-nums span{white-space:nowrap;}
 .saldo-target-nums .cur{color:var(--ink);font-weight:600;}
 
@@ -1850,7 +1860,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 .icon-badge.special{background:linear-gradient(140deg,#9F75F0,#6D28D9);box-shadow:0 8px 16px -4px rgba(124,58,237,0.45);}
 .stat-card .amount{
   position:relative;z-index:1;
-  font-family:'IBM Plex Mono',monospace;font-size:23px;font-weight:700;
+  font-family:'Poppins',sans-serif;font-size:23px;font-weight:700;
   letter-spacing:-0.02em;color:var(--ink);
   font-variant-numeric:tabular-nums;word-break:break-word;
 }
@@ -2006,7 +2016,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 .flow-timer-unit{display:flex;flex-direction:column;align-items:center;gap:3px;}
 .flow-timer-unit .wcc-box{
   min-width:32px;height:30px;padding:0 6px;border-radius:9px;
-  background:transparent;color:var(--ink);font-family:'IBM Plex Mono',monospace;
+  background:transparent;color:var(--ink);font-family:'Poppins',sans-serif;
   border:none;
   font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:center;
   box-shadow:none;
@@ -2112,7 +2122,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
    (kata/angka pendek, tidak perlu — dan tidak elok — dipenggal). */
 .ftc-tt-row{display:flex;align-items:baseline;flex-wrap:wrap;justify-content:space-between;column-gap:14px;row-gap:1px;font-weight:600;line-height:1.55;}
 .ftc-tt-row .lbl{color:rgba(255,255,255,0.6);font-size:10px;white-space:nowrap;}
-.ftc-tt-row .val{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;white-space:nowrap;}
+.ftc-tt-row .val{font-family:'Poppins',sans-serif;font-size:11px;font-weight:700;white-space:nowrap;}
 .ftc-tt-row .val.in{color:#6EE7B7;}
 .ftc-tt-row .val.out{color:#FDA4AF;}
 
@@ -2124,7 +2134,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 .ftc-chip .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
 .ftc-chip.in .dot{background:var(--brass);}
 .ftc-chip.out .dot{background:var(--wine);}
-.ftc-chip b{font-family:'IBM Plex Mono',monospace;font-weight:800;color:var(--ink);}
+.ftc-chip b{font-family:'Poppins',sans-serif;font-weight:800;color:var(--ink);}
 .ftc-chip{transition:opacity .15s ease;}
 .ftc-chip:hover{opacity:0.65;}
 
@@ -2423,7 +2433,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 .isc-growth-banner.trend-up .igb-icon{background:#10B981;color:#04231A;}
 .isc-growth-banner.trend-down .igb-icon{background:#FB7185;color:#3A0A12;}
 .isc-growth-banner .igb-text{font-size:11.5px;color:rgba(244,247,251,0.65);line-height:1.35;}
-.isc-growth-banner .igb-text strong{color:#F4F7FB;font-size:15px;font-family:'Fraunces',serif;}
+.isc-growth-banner .igb-text strong{color:#F4F7FB;font-size:15px;font-family:'Poppins',sans-serif;}
 
 /* Panggung gelembung — statis, TANPA animasi latar apa pun. Sekadar
    kontainer flex-wrap dengan latar lembut & konsisten dengan tema
@@ -2684,7 +2694,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
    supaya tetap gampang dikenali sekilas walau kecil. */
 .isc-initial-badge{
   width:100%;height:100%;display:flex;align-items:center;justify-content:center;
-  font-family:'Fraunces',serif;font-weight:700;color:#fff;line-height:1;
+  font-family:'Poppins',sans-serif;font-weight:700;color:#fff;line-height:1;
   font-size:15px;
 }
 .isc-bubble-body:hover .isc-bubble-face, .isc-bubble-body:focus-visible .isc-bubble-face{
@@ -2705,7 +2715,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   text-shadow:0 1px 3px rgba(0,0,0,.35);
 }
 .isc-bubble-info .ibi-amount{
-  font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:800;line-height:1.25;
+  font-family:'Poppins',sans-serif;font-size:9px;font-weight:800;line-height:1.25;
   text-shadow:0 1px 3px rgba(0,0,0,.35);
 }
 .isc-bubble-body:hover .isc-bubble-info, .isc-bubble-body:focus-visible .isc-bubble-info{
@@ -2824,7 +2834,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   width:17px;height:17px;border-radius:50%;flex-shrink:0;
   display:flex;align-items:center;justify-content:center;
   font-size:9px;font-weight:800;color:#fff;
-  font-family:'IBM Plex Mono',monospace;
+  font-family:'Poppins',sans-serif;
   background:var(--src-color);
 }
 .isl-icon{
@@ -2860,7 +2870,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 .isl-amount{font-size:12px;font-weight:700;color:var(--ink);flex-shrink:0;}
 .isl-bar-track{height:5px;border-radius:999px;background:color-mix(in srgb, var(--src-color) 14%, var(--line));overflow:hidden;}
 .isl-bar-fill{display:block;height:100%;border-radius:999px;background:var(--src-color);transition:width .5s cubic-bezier(.22,.9,.3,1);}
-.isl-pct{font-size:10.5px;font-weight:800;color:var(--ink-faint);width:30px;text-align:right;flex-shrink:0;font-family:'IBM Plex Mono',monospace;}
+.isl-pct{font-size:10.5px;font-weight:800;color:var(--ink-faint);width:30px;text-align:right;flex-shrink:0;font-family:'Poppins',sans-serif;}
 .isl-edit-btn{
   position:absolute;top:50%;right:8px;z-index:2;
   transform:translateY(-50%) scale(.7);
@@ -2948,7 +2958,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 .isc-recent-item .iri-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px;}
 .isc-recent-item .iri-name{font-size:12.5px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .isc-recent-item .iri-date{font-size:10.5px;color:var(--ink-faint);font-weight:600;}
-.isc-recent-item .iri-amount{font-size:12.5px;font-weight:700;color:#059669;flex-shrink:0;white-space:nowrap;font-family:'IBM Plex Mono',monospace;}
+.isc-recent-item .iri-amount{font-size:12.5px;font-weight:700;color:#059669;flex-shrink:0;white-space:nowrap;font-family:'Poppins',sans-serif;}
 .isc-recent-item.is-new::after{
   content:'BARU';position:absolute;top:-7px;right:10px;
   font-size:8px;font-weight:800;letter-spacing:.05em;color:#fff;
@@ -2996,7 +3006,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 .wallet-count-chip{display:flex;flex-direction:column;align-items:center;gap:3px;flex-shrink:0;}
 .wallet-count-chip .wcc-box{
   min-width:34px;height:30px;padding:0 7px;border-radius:9px;
-  background:#1C1917;color:#fff;font-family:'IBM Plex Mono',monospace;
+  background:#1C1917;color:#fff;font-family:'Poppins',sans-serif;
   font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:center;
   box-shadow:0 4px 10px -3px rgba(28,25,23,0.45);
 }
@@ -3009,7 +3019,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 .wallet-total-line .wtl-flame{flex-shrink:0;color:var(--fc-accent, #EA580C);}
 .wallet-total-stat{cursor:pointer;user-select:none;display:flex;flex-direction:column;gap:1px;min-width:0;flex:1;}
 .wallet-total-stat .wts-label{font-size:11px;font-weight:700;color:var(--ink);}
-.wallet-total-value{font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:800;color:var(--fc-accent-strong, #C2410C);filter:blur(6px);transition:filter .3s cubic-bezier(.22,.9,.3,1);}
+.wallet-total-value{font-family:'Poppins',sans-serif;font-size:16px;font-weight:800;color:var(--fc-accent-strong, #C2410C);filter:blur(6px);transition:filter .3s cubic-bezier(.22,.9,.3,1);}
 .wallet-total-stat:hover .wallet-total-value,
 .wallet-total-stat.is-revealed .wallet-total-value{filter:none;}
 .wts-hint{font-size:9px;color:var(--ink-faint);font-weight:600;}
@@ -3096,7 +3106,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 .wdc-name{font-size:13px;font-weight:800;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .wdc-balance-wrap{display:flex;flex-direction:column;gap:2px;min-height:32px;justify-content:center;}
 .wdc-balance{
-  font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:800;color:var(--ink);
+  font-family:'Poppins',sans-serif;font-size:14px;font-weight:800;color:var(--ink);
   filter:blur(6px);
   transition:filter .35s cubic-bezier(.22,.9,.3,1), transform .35s cubic-bezier(.34,1.56,.64,1);
 }
@@ -3501,7 +3511,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 }
 .as-char-count{
   position:absolute;right:11px;bottom:9px;font-size:10.5px;font-weight:700;
-  color:var(--ink-faint);pointer-events:none;font-family:'IBM Plex Mono',monospace;
+  color:var(--ink-faint);pointer-events:none;font-family:'Poppins',sans-serif;
 }
 .as-char-count.warn{color:#B45309;}
 .as-char-count.over{color:var(--wine);}
@@ -3668,7 +3678,7 @@ body.density-compact .income-cards-group{gap:10px;}
 .bar-legend-pill:hover{transform:translateY(-1px);box-shadow:var(--shadow-sm);}
 .bar-legend-pill .legend-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
 .bar-legend-pill .bl-label{color:var(--ink);margin-right:1px;}
-.bar-legend-pill .bl-amount{font-family:'IBM Plex Mono',monospace;font-weight:700;white-space:nowrap;}
+.bar-legend-pill .bl-amount{font-family:'Poppins',sans-serif;font-weight:700;white-space:nowrap;}
 .bar-legend-pill.in{border-color:rgba(5,150,105,0.22);background:rgba(5,150,105,0.06);}
 .bar-legend-pill.in .bl-amount{color:#047857;}
 .bar-legend-pill.out{border-color:rgba(225,29,72,0.2);background:rgba(225,29,72,0.06);}
@@ -3806,7 +3816,7 @@ body.density-compact .income-cards-group{gap:10px;}
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
 .device-price{
-  font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:600;color:var(--ink-soft);
+  font-family:'Poppins',sans-serif;font-size:11.5px;font-weight:600;color:var(--ink-soft);
   white-space:nowrap;
 }
 .device-card.is-sold .device-price{color:var(--wine);text-decoration:line-through;text-decoration-color:rgba(225,29,72,0.5);}
@@ -4048,7 +4058,7 @@ body.density-compact .income-cards-group{gap:10px;}
 .section-subtitle{display:block;font-size:11px;color:var(--ink-faint);font-weight:600;margin-top:3px;letter-spacing:0.01em;}
 .chip-total{
   display:inline-flex;align-items:center;gap:6px;
-  font-family:'IBM Plex Mono',monospace;font-size:12.5px;font-weight:700;color:var(--forest-glow);
+  font-family:'Poppins',sans-serif;font-size:12.5px;font-weight:700;color:var(--forest-glow);
   background:rgba(37,99,235,0.08);border:1px solid rgba(37,99,235,0.18);
   padding:6px 13px;border-radius:999px;white-space:nowrap;
   flex-shrink:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;
@@ -4244,7 +4254,7 @@ body.density-compact .income-cards-group{gap:10px;}
   gap:3px;text-align:center;pointer-events:none;
 }
 .chart-center .cc-label{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--ink-faint);}
-.chart-center .cc-value{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;color:var(--ink);line-height:1.25;word-break:break-word;}
+.chart-center .cc-value{font-family:'Poppins',sans-serif;font-size:13px;font-weight:700;color:var(--ink);line-height:1.25;word-break:break-word;}
 
 /* ---- Legend: daftar kategori dengan scroll custom + fade hint ---- */
 .chart-legend-wrap{flex:1;min-width:230px;position:relative;min-width:0;}
@@ -4425,7 +4435,7 @@ body.density-compact .income-cards-group{gap:10px;}
 .isc-spot-ring::before{content:'';position:absolute;inset:8px;border-radius:50%;background:var(--card);box-shadow:inset 0 0 0 1px rgba(19,26,42,0.05), 0 1px 4px rgba(15,23,42,0.08);}
 .isc-spot-ring-val{
   position:absolute;inset:0;z-index:1;display:flex;align-items:center;justify-content:center;
-  font-family:'IBM Plex Mono',monospace;font-weight:800;font-size:16.5px;color:var(--ink);letter-spacing:-0.02em;
+  font-family:'Poppins',sans-serif;font-weight:800;font-size:16.5px;color:var(--ink);letter-spacing:-0.02em;
 }
 .isc-spot-medal{
   position:absolute;right:-4px;bottom:-4px;z-index:2;
@@ -4437,7 +4447,7 @@ body.density-compact .income-cards-group{gap:10px;}
 .isc-spot-body{position:relative;z-index:1;min-width:0;flex:1;display:flex;flex-direction:column;gap:4px;}
 .isc-spot-eyebrow{display:flex;align-items:center;gap:5px;text-transform:uppercase;font-size:10.5px;letter-spacing:0.09em;font-weight:800;color:var(--spot-color,var(--forest-glow));}
 .isc-spot-name{font-family:var(--font-display);font-weight:600;font-size:18px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px;}
-.isc-spot-amount{font-family:'IBM Plex Mono',monospace;font-weight:800;font-size:19px;color:var(--ink);margin-top:3px;letter-spacing:-0.01em;}
+.isc-spot-amount{font-family:'Poppins',sans-serif;font-weight:800;font-size:19px;color:var(--ink);margin-top:3px;letter-spacing:-0.01em;}
 .isc-spot-sub{font-size:11.5px;font-weight:600;color:var(--ink-faint);}
 
 .isc-comp-list{display:flex;flex-direction:column;gap:8px;}
@@ -4459,7 +4469,7 @@ body.density-compact .income-cards-group{gap:10px;}
 .isc-comp-pct{font-size:11.5px;font-weight:800;color:var(--ink-soft);flex-shrink:0;}
 .isc-comp-track{height:6px;border-radius:999px;background:rgba(19,26,42,0.06);overflow:hidden;}
 .isc-comp-fill{height:100%;border-radius:999px;width:0;background:var(--row-color,var(--forest-glow));transition:width .7s cubic-bezier(.22,1,.36,1);}
-.isc-comp-amount{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:13px;color:var(--ink);white-space:nowrap;text-align:right;}
+.isc-comp-amount{font-family:'Poppins',sans-serif;font-weight:700;font-size:13px;color:var(--ink);white-space:nowrap;text-align:right;}
 
 @media (max-width:560px){
   .isc-spot{padding:14px 14px;gap:12px;}
@@ -4596,7 +4606,7 @@ select, input[type="date"], input[type="month"], input[type="week"], input[type=
   max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
 }
 select:focus,input[type="date"]:focus,input[type="month"]:focus,input[type="week"]:focus,input[type="number"]:focus{border-color:var(--forest-glow);}
-input[type="number"].year-input{width:110px;font-family:'IBM Plex Mono',monospace;}
+input[type="number"].year-input{width:110px;font-family:'Poppins',sans-serif;}
 
 .btn{
   display:inline-flex;align-items:center;gap:7px;
@@ -4769,7 +4779,7 @@ tbody tr:last-child td{border-bottom:none;}
 .type-pill{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;padding:4px 9px;border-radius:999px;}
 .type-pill.in{color:#047857;background:rgba(5,150,105,0.10);}
 .type-pill.out{color:var(--wine);background:rgba(225,29,72,0.08);}
-.amount-cell{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:13.5px;letter-spacing:-0.01em;}
+.amount-cell{font-family:'Poppins',sans-serif;font-weight:700;font-size:13.5px;letter-spacing:-0.01em;}
 .amount-cell.in{color:#047857;}
 .amount-cell.out{color:var(--wine);}
 .row-actions{display:flex;gap:6px;}
@@ -4812,7 +4822,7 @@ tbody tr:last-child td{border-bottom:none;}
 .history-head-text{display:flex;flex-direction:column;gap:5px;min-width:0;}
 .hh-title-row{display:flex;align-items:center;justify-content:space-between;gap:12px;}
 .history-head-text h2{
-  font-family:'Plus Jakarta Sans', sans-serif;
+  font-family:'Poppins',sans-serif;
   font-weight:700;
   text-transform:uppercase;
   letter-spacing:0.05em;
@@ -4863,7 +4873,7 @@ tbody tr:last-child td{border-bottom:none;}
   font-family:'Poppins',sans-serif;
 }
 .rw-list > .rw-group-head:first-child{padding-top:2px;}
-.rw-group-net{font-family:'IBM Plex Mono',monospace;font-weight:700;letter-spacing:0;text-transform:none;}
+.rw-group-net{font-family:'Poppins',sans-serif;font-weight:700;letter-spacing:0;text-transform:none;}
 .rw-group-net.in{color:#047857;}
 .rw-group-net.out{color:var(--wine);}
 .rw-item{
@@ -4887,7 +4897,7 @@ tbody tr:last-child td{border-bottom:none;}
 .rw-item-sub{font-family:'Poppins',sans-serif;font-size:12px;color:var(--ink-soft);font-weight:500;letter-spacing:-0.005em;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .rw-item-date{font-family:'Poppins',sans-serif;font-size:11px;color:var(--ink-faint);font-weight:500;letter-spacing:-0.005em;margin-top:3px;}
 .rw-item-right{flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:5px;position:relative;}
-.rw-item-amount{font-family:'IBM Plex Mono',monospace;font-size:13.5px;font-weight:700;letter-spacing:-0.01em;white-space:nowrap;}
+.rw-item-amount{font-family:'Poppins',sans-serif;font-size:13.5px;font-weight:700;letter-spacing:-0.01em;white-space:nowrap;}
 .rw-item-amount.in{color:#047857;}
 .rw-item-amount.out{color:var(--wine);}
 .rw-status-pill{
@@ -5383,9 +5393,9 @@ tbody tr:last-child td{border-bottom:none;}
 .tx-modal .amount-input-wrap:focus-within{
   border-color:var(--ink);background:#fff;box-shadow:0 0 0 4px rgba(19,26,42,0.06);
 }
-.tx-modal .amount-prefix{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:17px;color:var(--ink-faint);}
+.tx-modal .amount-prefix{font-family:'Poppins',sans-serif;font-weight:700;font-size:17px;color:var(--ink-faint);}
 .tx-modal #txAmount{
-  border:none;background:transparent;padding:0;font-family:'IBM Plex Mono',monospace;
+  border:none;background:transparent;padding:0;font-family:'Poppins',sans-serif;
   font-size:24px;font-weight:700;color:var(--ink);width:100%;
 }
 .tx-modal #txAmount:focus{box-shadow:none;background:transparent;}
@@ -5446,9 +5456,9 @@ tbody tr:last-child td{border-bottom:none;}
 }
 .bill-modal .bill-amount-wrap:focus-within{border-color:#D97706;background:#fff;box-shadow:0 0 0 4px rgba(217,119,6,0.1);}
 .bill-modal.kind-hutang .bill-amount-wrap:focus-within{border-color:#7C3AED;box-shadow:0 0 0 4px rgba(124,58,237,0.1);}
-.bill-modal .bill-amount-wrap .amount-prefix{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:15px;color:var(--ink-faint);}
+.bill-modal .bill-amount-wrap .amount-prefix{font-family:'Poppins',sans-serif;font-weight:700;font-size:15px;color:var(--ink-faint);}
 .bill-modal .bill-amount-wrap #billAmount{
-  border:none;background:transparent;padding:0;font-family:'IBM Plex Mono',monospace;
+  border:none;background:transparent;padding:0;font-family:'Poppins',sans-serif;
   font-size:19px;font-weight:700;color:var(--ink);width:100%;
 }
 .bill-modal .bill-amount-wrap #billAmount:focus{box-shadow:none;background:transparent;}
@@ -5511,7 +5521,7 @@ tbody tr:last-child td{border-bottom:none;}
   display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;
 }
 .detail-total-label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:var(--ink-soft);}
-.detail-total-amount{font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:700;letter-spacing:-0.01em;margin-top:4px;}
+.detail-total-amount{font-family:'Poppins',sans-serif;font-size:26px;font-weight:700;letter-spacing:-0.01em;margin-top:4px;}
 .detail-total-amount.in{color:#059669;}
 .detail-total-amount.out{color:var(--wine);}
 .detail-total-amount.special{color:var(--violet);}
@@ -5644,10 +5654,10 @@ tbody tr:last-child td{border-bottom:none;}
 
 /* ---- Medali kiri: pita biru + koin angka untuk 3 besar, "#N" polos untuk sisanya ---- */
 .lb-medal-slot{flex-shrink:0;width:26px;display:flex;align-items:center;justify-content:center;}
-.lb-medal-rank-plain{font-family:'IBM Plex Mono',monospace;font-size:12.5px;font-weight:700;color:var(--ink-faint);}
+.lb-medal-rank-plain{font-family:'Poppins',sans-serif;font-size:12.5px;font-weight:700;color:var(--ink-faint);}
 .lb-medal{
   position:relative;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-  font-family:'IBM Plex Mono',monospace;font-weight:800;font-size:11px;line-height:1;
+  font-family:'Poppins',sans-serif;font-weight:800;font-size:11px;line-height:1;
   box-shadow:0 3px 8px rgba(15,23,42,0.22);z-index:1;
   animation:lbMedalSway 2.6s ease-in-out infinite;
 }
@@ -5755,7 +5765,7 @@ tbody tr:last-child td{border-bottom:none;}
 }
 .lb-row.r1 .lb-row-name{font-size:16px;}
 .lb-row-amt{
-  flex-shrink:0;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:800;
+  flex-shrink:0;font-family:'Poppins',sans-serif;font-size:12px;font-weight:800;
   padding:4px 11px;border-radius:8px;white-space:nowrap;font-variant-numeric:tabular-nums;
 }
 .lb-row.r1 .lb-row-amt{font-size:13px;padding:5px 12px;}
@@ -6225,7 +6235,7 @@ tbody tr:last-child td{border-bottom:none;}
 .bd-summary-card.notes{background:linear-gradient(180deg, rgba(37,99,235,0.08), rgba(37,99,235,0.015));border-color:rgba(37,99,235,0.20);}
 .bd-summary-card.notes::after{background:rgba(37,99,235,0.10);}
 .bd-summary-card .k{position:relative;z-index:1;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.bd-summary-card .v{position:relative;z-index:1;font-family:'IBM Plex Mono',monospace;font-size:17.5px;font-weight:800;margin-top:3px;letter-spacing:-0.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink);}
+.bd-summary-card .v{position:relative;z-index:1;font-family:'Poppins',sans-serif;font-size:17.5px;font-weight:800;margin-top:3px;letter-spacing:-0.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink);}
 .bd-summary-card.overdue .v{color:var(--wine);}
 .bd-summary-card .sub{position:relative;z-index:1;font-size:11px;color:var(--ink-faint);font-weight:600;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
@@ -6503,7 +6513,7 @@ tbody tr:last-child td{border-bottom:none;}
       (bukan lagi dipaksa satu baris tanpa batas), jadi tidak akan
       pernah mendorong lebar kartu/halaman di layar sempit lagi. ---- */
 .bd-item-body .meta{display:flex;flex-direction:column;align-items:flex-start;gap:4px;margin-top:4px;min-width:0;}
-.bd-item-body .amt{font-family:'IBM Plex Mono',monospace;font-size:12.5px;font-weight:700;color:var(--ink-soft);}
+.bd-item-body .amt{font-family:'Poppins',sans-serif;font-size:12.5px;font-weight:700;color:var(--ink-soft);}
 .bd-item-body .due{font-size:10.5px;color:var(--ink-faint);font-weight:700;display:inline-flex;align-items:center;gap:4px;white-space:nowrap;max-width:100%;box-sizing:border-box;}
 .bd-item-body .due::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--ink-faint);flex-shrink:0;}
 .bd-item-body .due.due-pill,.bd-item-body .due.due-soon{max-width:100%;box-sizing:border-box;white-space:normal;word-break:break-word;padding:2.5px 8px 2.5px 6px;border-radius:999px;line-height:1.35;}
@@ -7351,7 +7361,7 @@ select#categoryFilter[hidden]{display:none;}
   display:flex;align-items:center;justify-content:space-between;padding:10px 8px 6px;
   font-size:11px;text-transform:uppercase;letter-spacing:0.06em;font-weight:800;color:var(--ink-faint);
 }
-.isp-date-group-total{font-family:'IBM Plex Mono',monospace;color:#047857;font-weight:700;text-transform:none;letter-spacing:0;font-size:12px;}
+.isp-date-group-total{font-family:'Poppins',sans-serif;color:#047857;font-weight:700;text-transform:none;letter-spacing:0;font-size:12px;}
 .isp-entry-row{
   display:flex;align-items:center;gap:12px;padding:11px 8px;border-radius:12px;
   transition:background .15s ease;
@@ -7370,7 +7380,7 @@ select#categoryFilter[hidden]{display:none;}
 .isp-entry-note{font-size:12px;color:var(--ink-faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;}
 .isp-entry-right{display:flex;align-items:center;gap:10px;flex-shrink:0;}
 .isp-entry-amount-wrap{text-align:right;}
-.isp-entry-amount{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:13.5px;color:#047857;white-space:nowrap;}
+.isp-entry-amount{font-family:'Poppins',sans-serif;font-weight:700;font-size:13.5px;color:#047857;white-space:nowrap;}
 .isp-entry-date-mobile{display:none;font-size:10.5px;color:var(--ink-faint);}
 @media (max-width:600px){
   .isp-toolbar{flex-direction:column;align-items:stretch;}
@@ -7478,7 +7488,7 @@ select#categoryFilter[hidden]{display:none;}
   70%{box-shadow:0 0 0 10px rgba(37,99,235,0);}
   100%{box-shadow:0 0 0 0 rgba(37,99,235,0);}
 }
-.footer-brand-name{display:block;font-family:'Fraunces',serif;font-weight:600;font-size:18px;letter-spacing:-0.01em;}
+.footer-brand-name{display:block;font-family:'Poppins',sans-serif;font-weight:600;font-size:18px;letter-spacing:-0.01em;}
 .footer-brand-tag{display:block;font-size:12px;color:rgba(244,247,251,0.6);margin-top:2px;}
 .footer-nav{display:flex;flex-wrap:wrap;gap:8px;}
 .footer-link{
@@ -8058,7 +8068,7 @@ body.is-scrolling *{
   .mtb-item .ic.expense{color:var(--wine);}
   .mtb-text{min-width:0;}
   .mtb-text .k{font-size:9px;color:var(--ink-faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .mtb-text .v{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .mtb-text .v{font-family:'Poppins',sans-serif;font-size:12px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   @media (max-width:380px){
     .mtb-brand .brand-name{font-size:13px;}
     .mtb-item .ic{width:19px;height:19px;}
@@ -8206,7 +8216,7 @@ body.is-scrolling *{
 .ai-msg-content li{margin-bottom:4px;}
 .ai-msg-content li:last-child{margin-bottom:0;}
 .ai-msg-content strong{font-weight:800;}
-.ai-msg-content code{font-family:'IBM Plex Mono',monospace;font-size:12px;background:rgba(15,23,42,0.07);padding:1.5px 5px;border-radius:5px;}
+.ai-msg-content code{font-family:'Poppins',sans-serif;font-size:12px;background:rgba(15,23,42,0.07);padding:1.5px 5px;border-radius:5px;}
 .ai-msg-content pre{background:var(--forest-deep);color:#E7ECF5;padding:11px 13px;border-radius:12px;overflow-x:auto;margin:8px 0;}
 .ai-msg-content pre:last-child{margin-bottom:0;}
 .ai-msg-content pre code{background:none;padding:0;color:inherit;font-size:12px;line-height:1.55;}
@@ -8476,7 +8486,7 @@ body.is-scrolling *{
 }
 .cloud-auth-card p.cloud-auth-tagline{
   margin:0 0 22px; font-size:13px; opacity:.6; font-style:italic;
-  font-family:var(--font-display,'Fraunces',serif);
+  font-family:var(--font-display,'Poppins',sans-serif);
 }
 .cloud-auth-card .cloud-auth-field{
   position:relative; margin-bottom:12px; text-align:left;
@@ -8594,7 +8604,7 @@ body.is-scrolling *{
       </button>
       <div class="notif-wrap">
         <button class="notif-btn" id="miniNotifBtn" type="button" title="Tagihan &amp; Hutang" aria-label="Lihat tagihan dan hutang">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="11" height="9" rx="1.4"/><path d="M5 3v3.5M10 3v3.5M2 8.3h11"/><path d="M10 6.3a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v14.7l-1.6-1.1l-1.6 1.1l-1.6-1.1l-1.6 1.1l-1.6-1.1l-1.6 1.1z"/><path d="M13.3 16.3h4" stroke-width="1.6"/><text x="14" y="12.9" font-size="6.4" font-weight="700" fill="currentColor" stroke="none" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">$</text></svg>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="11" height="9" rx="1.4"/><path d="M5 3v3.5M10 3v3.5M2 8.3h11"/><path d="M10 6.3a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v14.7l-1.6-1.1l-1.6 1.1l-1.6-1.1l-1.6 1.1l-1.6-1.1l-1.6 1.1z"/><path d="M13.3 16.3h4" stroke-width="1.6"/><text x="14" y="12.9" font-size="6.4" font-weight="700" fill="currentColor" stroke="none" text-anchor="middle" font-family="Poppins, sans-serif">$</text></svg>
           <span class="notif-badge" id="miniNotifBadge" style="display:none;">0</span>
         </button>
       </div>
@@ -8683,7 +8693,7 @@ body.is-scrolling *{
         </button>
         <div class="notif-wrap">
           <button class="notif-btn" id="notifBtn" type="button" title="Tagihan &amp; Hutang" aria-label="Lihat tagihan dan hutang">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="11" height="9" rx="1.4"/><path d="M5 3v3.5M10 3v3.5M2 8.3h11"/><path d="M10 6.3a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v14.7l-1.6-1.1l-1.6 1.1l-1.6-1.1l-1.6 1.1l-1.6-1.1l-1.6 1.1z"/><path d="M13.3 16.3h4" stroke-width="1.6"/><text x="14" y="12.9" font-size="6.4" font-weight="700" fill="currentColor" stroke="none" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">$</text></svg>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="11" height="9" rx="1.4"/><path d="M5 3v3.5M10 3v3.5M2 8.3h11"/><path d="M10 6.3a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v14.7l-1.6-1.1l-1.6 1.1l-1.6-1.1l-1.6 1.1l-1.6-1.1l-1.6 1.1z"/><path d="M13.3 16.3h4" stroke-width="1.6"/><text x="14" y="12.9" font-size="6.4" font-weight="700" fill="currentColor" stroke="none" text-anchor="middle" font-family="Poppins, sans-serif">$</text></svg>
             <span class="notif-badge" id="notifBadge" style="display:none;">0</span>
           </button>
         </div>
