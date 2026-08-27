@@ -6553,23 +6553,26 @@ html.zp-app-loading .page-body > .settings-list{display:none;}
      menang tampil di lapisan paling atas, bukan baris menunya. */
   z-index:calc(var(--z-mini-topbar) - 1);
 }
-/* ---- PERBAIKAN: sebelumnya margin negatif/radius/shadow "kartu
-   menumpang di atas banner" DIMATIKAN TOTAL di sini dgn alasan
-   "disamakan dgn .lap-page-body-rest (halaman Laporan)" -- tapi itu
-   keliru. Di halaman Laporan, efek kartu melengkung itu TETAP ADA,
-   cuma dipindah ke potongan pertama (.lap-page-body-top) yang duduk
-   di dalam wrapper sticky bareng bannernya; .lap-page-body-rest cuma
-   meratakan SISANYA (lanjutan di bawah potongan pertama itu), bukan
-   meniadakan lengkungannya sama sekali.
-   Di halaman Pengaturan ini, wrapper sticky (.saya-sticky-top) HANYA
-   membungkus banner -- tidak ada potongan "page-body-top" lain yang
-   menampung efek lengkung itu duluan. Jadi kalau elemen .page-body
-   satu-satunya di sini (.saya-page-body-rest) ikut diratakan total,
-   efek kartu melengkungnya jadi hilang SAMA SEKALI, bukannya sama
-   dgn Laporan. Diperbaiki: elemen ini sekarang dibiarkan pakai gaya
-   ".page-body" bawaan (margin -24px, radius 28px di atas, shadow
-   tipis via ::before) SAMA PERSIS dgn kartu di halaman Laporan &
-   Dompet, jadi transisi oren->putihnya melengkung juga di sini. ---- */
+/* ---- Cap kosong (lihat catatan panjang di HTML #page-saya) -- anak
+   .saya-sticky-top, satu stacking context dgn banner, jadi sudut
+   melengkungnya TIDAK ketutup balik oleh z-index tinggi milik wrapper
+   sticky. Tidak perlu konten/tinggi minimum khusus: padding bawaan
+   ".page-body" (24px atas) + radius 26-28px sudah cukup menampilkan
+   lengkungnya secara penuh, persis seperti sudut atas kartu di
+   Laporan/Dompet. padding-bottom dinolkan krn cap ini tidak punya
+   konten apa pun -- kalau tidak, akan ada celah putih kosong tambahan
+   di antara cap ini dgn daftar menu asli (.saya-page-body-rest) di
+   bawahnya. ---- */
+.page-body.saya-page-body-cap{padding-bottom:0;}
+/* Blok daftar menu (.settings-list) jadi .page-body TERPISAH DI LUAR
+   wrapper sticky di atas -- margin negatif/radius/shadow "kartu
+   menumpang di atas banner" (lengkungan dkk) DIMATIKAN TOTAL di sini
+   krn efek lengkungnya sudah "dipakai" oleh cap di atas (lihat
+   .saya-page-body-cap) -- SAMA PERSIS pola .lap-page-body-rest
+   (halaman Laporan) terhadap .lap-page-body-top: transisi oren->putih
+   yg melengkung ada di potongan pertama (dalam wrapper sticky),
+   potongan/kartu KEDUA ini menyambung rata/lurus di bawahnya tanpa
+   sambungan terlihat. */
 .settings-list{display:flex;flex-direction:column;gap:26px;}
 .settings-section{display:flex;flex-direction:column;gap:10px;}
 /* Label seksi ("Informasi Pribadi", "Keamanan", dst) & judul tiap
@@ -9241,6 +9244,31 @@ body.is-scrolling *{
         <h1 id="sayaAppName">Pengaturan</h1>
         <p>Akun &amp; pengaturan aplikasi</p>
       </div>
+      <!-- ---- BUG FIX: sudut kartu putih melengkung ("menumpang" di atas
+           banner oren) sebelumnya ketutup balik oleh banner-nya sendiri,
+           gara-gara .saya-sticky-top (z-index tinggi, 39, spy selalu
+           menang saat daftar menu discroll naik) HANYA membungkus
+           .page-banner -- sedangkan kartu putihnya (dgn margin negatif
+           yg menumpang ke ATAS ke dalam area banner) ada DI LUAR wrapper
+           itu, z-index-nya cuma 2. Karena .saya-sticky-top itu sendiri
+           bikin stacking context baru dgn z-index 39, SELURUH isinya
+           (termasuk 16px paling bawah banner tempat kartu seharusnya
+           menumpang) tetap tergambar PALING ATAS -- kartu yg ada di
+           LUAR wrapper itu tidak akan pernah menang menimpanya walau
+           urutan DOM-nya belakangan, sehingga sudut melengkungnya
+           kepotong/ketutup rata oleh oren, banner jadi kelihatan ~16px
+           lebih tinggi dari halaman Laporan/Dompet.
+           Polanya SAMA PERSIS dgn Laporan (.lap-sticky-top membungkus
+           BUKAN cuma banner, tapi juga potongan pertama kartunya --
+           .lap-page-body-top -- supaya keduanya satu stacking context):
+           cap kosong ini ditaruh SEBAGAI ANAK .saya-sticky-top, memakai
+           gaya ".page-body" default (margin negatif+radius+shadow tipis
+           yg menumpang ke banner), TANPA konten apa pun -- cuma
+           secukupnya tinggi utk menampilkan lengkungnya. Daftar menu
+           asli (.saya-page-body-rest di bawahnya, DI LUAR wrapper sticky)
+           tetap flat/rata seperti sebelumnya supaya nyambung rata tanpa
+           sambungan terlihat, sama persis pola .lap-page-body-rest. ---- -->
+      <div class="page-body saya-page-body-cap" aria-hidden="true"></div>
     </div>
     <div class="page-body saya-page-body-rest">
       <div class="zp-page-skel" aria-hidden="true">
