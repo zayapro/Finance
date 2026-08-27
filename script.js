@@ -7742,8 +7742,37 @@ const APP_BANNER_ANIM_PRESETS = [
   { key: 'shimmer', label: 'Kilau Lembut', svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5l1.9 5.6 5.6 1.9-5.6 1.9-1.9 5.6-1.9-5.6-5.6-1.9 5.6-1.9L12 2.5Z"/></svg>' },
   { key: 'static', label: 'Statis', svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12h8"/></svg>' },
 ];
-const APP_SETTINGS_DEFAULTS = { appName: 'ZAYAPRO', logo: null, icon: 'pulse', theme: 'orange', font: 'playful', bannerAnim: 'wave', density: 'comfortable', language: 'id', favicon: null, metaDescription: '', metaKeywords: '' };
+const APP_SETTINGS_DEFAULTS = { appName: '', logo: null, icon: 'pulse', theme: 'orange', font: 'playful', bannerAnim: 'wave', density: 'comfortable', language: 'id', favicon: null, metaDescription: '', metaKeywords: '' };
 const APP_META_DESC_MAXLEN = 160;
+/* ---- "Nama Web" bawaan = nama akun saat mendaftar. Form daftar/masuk
+   cuma minta email+password (tidak ada kolom "nama" terpisah -- lihat
+   cloud-sync.js), jadi diambil dari bagian sebelum "@" pada email akun
+   yang sedang login (window.zayaproAccountEmail, diekspos oleh
+   cloud-sync.js SEBELUM script.js ini disisipkan/dijalankan). Titik &
+   underscore diubah jadi spasi lalu tiap kata dikapitalisasi supaya
+   terbaca rapi sbg nama, bukan mentah2 "budi.santoso99" -- dipakai di
+   mana pun aplikasi butuh nama aplikasi tapi pengguna belum pernah
+   mengganti "Nama Web" sendiri (appName kosong). APP_SETTINGS_DEFAULTS.appName
+   SENGAJA dikosongkan ('') -- bukan lagi hardcode 'ZAYAPRO' -- supaya
+   status "belum pernah diisi pengguna" bisa dibedakan dari "sudah
+   pernah diisi", dan getDefaultAppName() di bawah inilah yg
+   menentukan tampilannya selama appName masih kosong. 'ZAYAPRO' cuma
+   dipakai sbg jaring pengaman paling akhir kalau emailnya sendiri
+   entah kenapa tidak tersedia. ---- */
+function deriveAccountNameFromEmail(email) {
+  const local = (email || '').split('@')[0];
+  if (!local) return '';
+  return local
+    .replace(/[._]+/g, ' ')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
+}
+function getDefaultAppName() {
+  return deriveAccountNameFromEmail(window.zayaproAccountEmail) || 'ZAYAPRO';
+}
 
 /* ==========================================================
    HALAMAN "TEMA" (#temaOverlay) — ganti warna aksen GLOBAL aplikasi.
@@ -7914,7 +7943,7 @@ function refreshTemaPage() {
   renderTemaFontGrid(fontKey);
   const nameEl = document.getElementById('temaPreviewName');
   if (nameEl) {
-    nameEl.textContent = (settings.appName || '').trim() || APP_SETTINGS_DEFAULTS.appName;
+    nameEl.textContent = (settings.appName || '').trim() || getDefaultAppName();
   }
 }
 document.getElementById('temaFontGrid')?.addEventListener('click', (e) => {
@@ -7966,7 +7995,7 @@ function saveAppSettings(settings) {
 }
 
 function applyAppSettings(settings) {
-  const name = (settings.appName || '').trim() || APP_SETTINGS_DEFAULTS.appName;
+  const name = (settings.appName || '').trim() || getDefaultAppName();
   document.title = `${name} — Kelola Uang Masuk & Keluar`;
   const brandNameEl = document.getElementById('brandNameText');
   if (brandNameEl) brandNameEl.textContent = name;
@@ -8194,7 +8223,7 @@ const appSettingsModal = document.getElementById('appSettingsModalOverlay');
 
 function openAppSettingsModal() {
   const settings = loadAppSettings();
-  document.getElementById('asAppName').value = settings.appName;
+  document.getElementById('asAppName').value = settings.appName || getDefaultAppName();
   document.getElementById('asLanguage').value = settings.language === 'en' ? 'en' : 'id';
   document.getElementById('asLogoInput').value = '';
   document.getElementById('asFaviconInput').value = '';
@@ -8305,7 +8334,7 @@ document.getElementById('asLanguage').addEventListener('change', (e) => {
 document.getElementById('appSettingsForm').addEventListener('submit', (e) => {
   e.preventDefault();
   const settings = {
-    appName: document.getElementById('asAppName').value.trim() || APP_SETTINGS_DEFAULTS.appName,
+    appName: document.getElementById('asAppName').value.trim() || getDefaultAppName(),
     logo: asLogoData,
     icon: asSelectedIcon,
     theme: asSelectedTheme,
@@ -8325,7 +8354,7 @@ document.getElementById('appSettingsForm').addEventListener('submit', (e) => {
 document.getElementById('btnAsReset').addEventListener('click', () => {
   saveAppSettings({ ...APP_SETTINGS_DEFAULTS });
   applyAppSettings({ ...APP_SETTINGS_DEFAULTS });
-  document.getElementById('asAppName').value = APP_SETTINGS_DEFAULTS.appName;
+  document.getElementById('asAppName').value = getDefaultAppName();
   document.getElementById('asLanguage').value = 'id';
   document.getElementById('asLogoInput').value = '';
   document.getElementById('asFaviconInput').value = '';
@@ -8613,6 +8642,10 @@ document.addEventListener('keydown', (e) => {
   }
   if (document.getElementById('temaOverlay').classList.contains('open')) {
     closeTemaOverlay();
+    return;
+  }
+  if (document.getElementById('dataDiriOverlay').classList.contains('open')) {
+    closeDataDiriOverlay();
     return;
   }
   if (document.getElementById('leaderboardOverlay').classList.contains('open')) {
@@ -9112,6 +9145,148 @@ document.getElementById('temaOpenBtn')?.addEventListener('click', openTemaOverla
 document.getElementById('temaBackBtn')?.addEventListener('click', closeTemaOverlay);
 document.getElementById('temaCancelBtn')?.addEventListener('click', closeTemaOverlay);
 document.getElementById('temaDoneBtn')?.addEventListener('click', confirmTemaOverlay);
+
+/* ==========================================================
+   HALAMAN "DATA DIRI" (#dataDiriOverlay) — Nama Web, Logo, Favicon.
+   3 field ini nulis ke APP_SETTINGS_KEY yg SAMA dgn modal "Pengaturan
+   Aplikasi" (asAppName/asLogoDrop/asFaviconDrop di atas), jadi
+   fungsi baca-tulis file gambarnya (FileReader -> data URL) SENGAJA
+   dibuat ulang dgn nama ddLogoData/ddFaviconData/dst yg terpisah dari
+   asLogoData/asFaviconData -- supaya membuka halaman ini tidak
+   menimpa draft yg sedang diedit di modal lama kalau kebetulan lagi
+   sama2 terbuka -- tapi keduanya SELALU membaca & menyimpan ke
+   settings.logo/settings.favicon yg sama, jadi otomatis sinkron.
+   Beda dgn halaman Tema (yg live-preview + bisa "Batal" ke kondisi
+   semula), halaman ini SENGAJA baru menerapkan perubahan saat
+   "Selesai" ditekan (sama spt pola modal "Pengaturan Aplikasi" yg
+   sudah ada -- appName/logo/favicon di sana juga baru berlaku pas
+   form di-submit, bukan sambil diketik/dipilih) -- jadi "Batal" di
+   sini cukup menutup halaman tanpa perlu mengembalikan apa pun. ---- */
+let ddLogoData = null;
+let ddFaviconData = null;
+
+function setDdLogoPreview(dataUrl) {
+  ddLogoData = dataUrl || null;
+  const preview = document.getElementById('ddLogoPreview');
+  const removeBtn = document.getElementById('btnRemoveDdLogo');
+  if (!preview) return;
+  const settings = loadAppSettings();
+  const iconPreset = APP_ICON_PRESETS.find(i => i.key === settings.icon) || APP_ICON_PRESETS[0];
+  preview.innerHTML = ddLogoData ? `<img src="${ddLogoData}" alt="Pratinjau logo aplikasi">` : iconPreset.svg;
+  if (removeBtn) removeBtn.style.display = ddLogoData ? 'inline-flex' : 'none';
+}
+function handleDdLogoFile(file) {
+  if (!file) return;
+  if (!file.type.startsWith('image/')) { showToast('File harus berupa gambar.', 'err'); return; }
+  if (file.size > 2 * 1024 * 1024) { showToast('Ukuran logo maksimal 2MB.', 'err'); return; }
+  const reader = new FileReader();
+  reader.onload = () => setDdLogoPreview(reader.result);
+  reader.onerror = () => showToast('Gagal membaca logo.', 'err');
+  reader.readAsDataURL(file);
+}
+function setDdFaviconPreview(dataUrl) {
+  ddFaviconData = dataUrl || null;
+  const preview = document.getElementById('ddFaviconPreview');
+  const removeBtn = document.getElementById('btnRemoveDdFavicon');
+  if (!preview) return;
+  preview.innerHTML = ddFaviconData
+    ? `<img src="${ddFaviconData}" alt="Pratinjau favicon aplikasi">`
+    : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>';
+  if (removeBtn) removeBtn.style.display = ddFaviconData ? 'inline-flex' : 'none';
+}
+function handleDdFaviconFile(file) {
+  if (!file) return;
+  if (!file.type.startsWith('image/')) { showToast('File harus berupa gambar.', 'err'); return; }
+  if (file.size > 1 * 1024 * 1024) { showToast('Ukuran favicon maksimal 1MB.', 'err'); return; }
+  const reader = new FileReader();
+  reader.onload = () => setDdFaviconPreview(reader.result);
+  reader.onerror = () => showToast('Gagal membaca favicon.', 'err');
+  reader.readAsDataURL(file);
+}
+
+function openDataDiriOverlay() {
+  const settings = loadAppSettings();
+  const nameInput = document.getElementById('ddAppNameInput');
+  if (nameInput) {
+    nameInput.value = settings.appName || '';
+    nameInput.placeholder = getDefaultAppName();
+  }
+  document.getElementById('ddLogoInput').value = '';
+  document.getElementById('ddFaviconInput').value = '';
+  setDdLogoPreview(settings.logo);
+  setDdFaviconPreview(settings.favicon);
+  document.getElementById('dataDiriOverlay').classList.add('open');
+  lockBodyScroll();
+}
+function closeDataDiriOverlay() {
+  document.getElementById('dataDiriOverlay').classList.remove('open');
+  unlockBodyScroll();
+}
+function confirmDataDiriOverlay() {
+  const nameInput = document.getElementById('ddAppNameInput');
+  const typedName = (nameInput ? nameInput.value : '').trim();
+  const settings = {
+    ...loadAppSettings(),
+    appName: typedName || getDefaultAppName(),
+    logo: ddLogoData,
+    favicon: ddFaviconData,
+  };
+  saveAppSettings(settings);
+  applyAppSettings(settings);
+  showToast('Data diri disimpan.');
+  closeDataDiriOverlay();
+}
+document.getElementById('dataDiriOpenBtn')?.addEventListener('click', openDataDiriOverlay);
+document.getElementById('dataDiriBackBtn')?.addEventListener('click', closeDataDiriOverlay);
+document.getElementById('dataDiriCancelBtn')?.addEventListener('click', closeDataDiriOverlay);
+document.getElementById('dataDiriDoneBtn')?.addEventListener('click', confirmDataDiriOverlay);
+
+document.getElementById('ddLogoInput')?.addEventListener('change', (e) => {
+  const file = e.target.files && e.target.files[0];
+  handleDdLogoFile(file);
+});
+document.getElementById('btnRemoveDdLogo')?.addEventListener('click', () => {
+  setDdLogoPreview(null);
+  document.getElementById('ddLogoInput').value = '';
+});
+const ddLogoDrop = document.getElementById('ddLogoDrop');
+if (ddLogoDrop) {
+  ['dragenter', 'dragover'].forEach(evt => {
+    ddLogoDrop.addEventListener(evt, (e) => { e.preventDefault(); e.stopPropagation(); ddLogoDrop.classList.add('is-dragover'); });
+  });
+  ['dragleave', 'dragend'].forEach(evt => {
+    ddLogoDrop.addEventListener(evt, (e) => { e.preventDefault(); e.stopPropagation(); ddLogoDrop.classList.remove('is-dragover'); });
+  });
+  ddLogoDrop.addEventListener('drop', (e) => {
+    e.preventDefault(); e.stopPropagation();
+    ddLogoDrop.classList.remove('is-dragover');
+    const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    handleDdLogoFile(file);
+  });
+}
+document.getElementById('ddFaviconInput')?.addEventListener('change', (e) => {
+  const file = e.target.files && e.target.files[0];
+  handleDdFaviconFile(file);
+});
+document.getElementById('btnRemoveDdFavicon')?.addEventListener('click', () => {
+  setDdFaviconPreview(null);
+  document.getElementById('ddFaviconInput').value = '';
+});
+const ddFaviconDrop = document.getElementById('ddFaviconDrop');
+if (ddFaviconDrop) {
+  ['dragenter', 'dragover'].forEach(evt => {
+    ddFaviconDrop.addEventListener(evt, (e) => { e.preventDefault(); e.stopPropagation(); ddFaviconDrop.classList.add('is-dragover'); });
+  });
+  ['dragleave', 'dragend'].forEach(evt => {
+    ddFaviconDrop.addEventListener(evt, (e) => { e.preventDefault(); e.stopPropagation(); ddFaviconDrop.classList.remove('is-dragover'); });
+  });
+  ddFaviconDrop.addEventListener('drop', (e) => {
+    e.preventDefault(); e.stopPropagation();
+    ddFaviconDrop.classList.remove('is-dragover');
+    const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    handleDdFaviconFile(file);
+  });
+}
 
 document.getElementById('lapFilterTypeRow')?.addEventListener('click', (e) => {
   const btn = e.target.closest('.lap-pill-btn');

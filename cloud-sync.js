@@ -302,6 +302,15 @@
 
   async function onLoggedIn(user) {
     currentUser = user;
+    // Diekspos ke `window` (bukan cuma variabel lokal di dalam IIFE ini)
+    // supaya script.js BISA membacanya secara sinkron -- dipakai sbg
+    // bawaan "Nama Web" di halaman Data Diri (nama sebelum "@" pada
+    // email yang dipakai saat mendaftar), krn form daftar/masuk cuma
+    // minta email+password, tidak ada kolom "nama" terpisah. Sengaja
+    // diisi di sini SEBELUM startAppOnce() menyisipkan <script
+    // src="script.js">, jadi begitu script.js jalan, nilai ini sudah
+    // pasti tersedia (bukan race condition/masih kosong).
+    window.zayaproAccountEmail = user.email || null;
     subscribeResetChannel(user.id);
     showMsg('Menarik data dari cloud...', 'ok');
     await pullAllFromCloud();
@@ -331,6 +340,10 @@
     const { data } = await sb.auth.getSession();
     if (data && data.session && data.session.user) {
       currentUser = data.session.user;
+      // Sama spt di onLoggedIn() di atas -- lihat komentarnya -- supaya
+      // jalur "sudah login sebelumnya, sesi masih ada" ini pun tetap
+      // mengeskpos email akun ke script.js.
+      window.zayaproAccountEmail = currentUser.email || null;
       subscribeResetChannel(currentUser.id);
 
       // Kalau halaman ini dimuat ulang SETELAH reset database

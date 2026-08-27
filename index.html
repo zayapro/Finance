@@ -3568,6 +3568,12 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   font-family:'Poppins',sans-serif;font-weight:600;
 }
 .tema-section p{margin:0 0 14px;font-size:12.5px;color:var(--ink-soft);line-height:1.5;}
+/* ---- Input teks "Nama Web" di halaman Data Diri: numpang gaya
+   .form-row (sudah ada, dipakai jg oleh modal2 transaksi) supaya tidak
+   perlu bikin gaya input baru -- cuma margin bawah bawaannya (13px)
+   DIHILANGKAN krn di sini dia ada DI DALAM .tema-section yg sudah
+   punya padding-bottom sendiri, supaya tidak dobel jarak. ---- */
+.tema-section .form-row{margin-bottom:0;}
 .tema-color-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:10px;}
 .tema-color-btn{
   position:relative;display:flex;flex-direction:column;align-items:center;gap:7px;
@@ -7307,10 +7313,22 @@ select#categoryFilter[hidden]{display:none;}
    scoped ke .lap-filter-footer--split (cuma dipakai halaman Tema) supaya
    footer popup Filter/Bulan/Tanggal yg lain tidak ikut berubah jadi
    sticky. ---- */
+/* ---- Footer Batal/Selesai halaman Tema dibuat STICKY di dasar layar
+   (position:sticky, bukan cuma flex:0 0 auto biasa spt footer Filter) --
+   supaya persis spt pola tombol pil "Selesai" pada popup Kategori
+   Transaksi: walau daftar warna aksen di atasnya panjang & halaman
+   di-scroll, 2 tombol pil ini TETAP menempel di bawah layar, tidak ikut
+   ter-scroll keluar. Background DIGANTI dari var(--paper) (abu-abu) jadi
+   var(--card) (putih) -- SAMA PERSIS dgn warna kartu .lap-filter-card di
+   atasnya -- supaya pas konten discroll & lewat di baliknya, footer ini
+   MENYATU jadi 1 area putih polos, bukan malah kelihatan sbg pita abu2
+   terpisah nempel di ujung kartu putih. Garis pembatas atas ikut
+   dilepas (border-top dihapus) krn skrg background-nya sudah sama persis
+   dgn kartu di atasnya, jadi tidak perlu garis pemisah lagi. ---- */
 .lap-filter-footer--split{
   display:flex;gap:10px;
   position:sticky;bottom:0;z-index:3;
-  background:var(--paper);border-top:1px solid var(--line);
+  background:var(--card);
   margin-top:auto;
 }
 .lap-filter-footer--split .btn.lap-filter-save-btn,
@@ -9400,6 +9418,85 @@ body.is-scrolling *{
   </div>
   <!-- ===== /POPUP TEMA ===== -->
 
+  <!-- ===== HALAMAN "DATA DIRI" (halaman penuh) -- dibuka dari baris
+       "Data Diri & Pekerjaan" di halaman Pengaturan (yg sebelumnya
+       masih placeholder/disabled). Struktur, gaya kartu, & footer
+       Batal/Selesai sticky-nya PERSIS niru #temaOverlay di atas
+       (dipakai ulang class .lap-filter-overlay/.lap-filter-page/
+       .lap-filter-card/.lap-filter-footer--split yg sama) sesuai
+       permintaan "seperti halaman tema". Isinya 3 hal: Nama Web
+       (bawaannya otomatis nama akun saat mendaftar -- lihat
+       getDefaultAppName() di script.js), Logo, & Favicon -- 3 field
+       ini SEBENARNYA field yg sama dgn yg ada di modal "Pengaturan
+       Aplikasi" (sama2 nulis ke APP_SETTINGS_KEY), CUMA ditaruh di
+       halaman penuh terpisah ini juga sesuai permintaan; modal lama
+       sengaja TIDAK dihapus/diubah supaya tetap ada aksesnya dari
+       banner spt sebelumnya, & keduanya otomatis selalu sinkron krn
+       baca-tulis ke tempat penyimpanan yg sama. ===== -->
+  <div class="detail-page-overlay lap-filter-overlay" id="dataDiriOverlay">
+    <div class="lap-filter-page">
+      <div class="lap-filter-head">
+        <button class="lap-filter-back-btn" id="dataDiriBackBtn" type="button" aria-label="Tutup Data Diri">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <h2>Data Diri</h2>
+        <span class="lap-filter-back-btn" style="visibility:hidden" aria-hidden="true"></span>
+      </div>
+
+      <div class="lap-filter-card" id="dataDiriCard">
+        <div class="tema-section">
+          <h3>Nama Web</h3>
+          <p>Nama ini tampil di banner, judul tab, hingga footer aplikasi. Bawaannya otomatis memakai nama akun kamu saat mendaftar, tapi bisa diganti bebas kapan saja.</p>
+          <div class="form-row">
+            <input type="text" id="ddAppNameInput" maxlength="24" placeholder="Nama akun saat mendaftar">
+          </div>
+        </div>
+
+        <div class="tema-section">
+          <h3>Logo</h3>
+          <p>Dipakai di banner &amp; footer aplikasi. Kosongkan untuk pakai ikon bawaan.</p>
+          <div class="wallet-photo-picker as-logo-picker" id="ddLogoDrop">
+            <div class="wallet-photo-preview" id="ddLogoPreview">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>
+            </div>
+            <div class="wallet-photo-actions">
+              <div class="btn-row">
+                <label class="btn btn-ghost" for="ddLogoInput">Pilih Logo</label>
+                <input type="file" id="ddLogoInput" accept="image/*" style="display:none;">
+                <button type="button" class="btn btn-ghost" id="btnRemoveDdLogo" style="display:none;">Hapus</button>
+              </div>
+              <span class="wallet-photo-hint">PNG/JPG, maks 2MB, atau tarik &amp; lepas ke sini. Kosongkan untuk pakai logo bawaan.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="tema-section">
+          <h3>Favicon</h3>
+          <p>Ikon tab browser &amp; yang tampil di hasil pencarian Google. Kosongkan untuk pakai logo/ikon bawaan.</p>
+          <div class="wallet-photo-picker as-logo-picker as-favicon-picker" id="ddFaviconDrop">
+            <div class="wallet-photo-preview" id="ddFaviconPreview">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>
+            </div>
+            <div class="wallet-photo-actions">
+              <div class="btn-row">
+                <label class="btn btn-ghost" for="ddFaviconInput">Pilih Favicon</label>
+                <input type="file" id="ddFaviconInput" accept="image/png,image/jpeg,image/x-icon,image/svg+xml" style="display:none;">
+                <button type="button" class="btn btn-ghost" id="btnRemoveDdFavicon" style="display:none;">Hapus</button>
+              </div>
+              <span class="wallet-photo-hint">PNG/ICO persegi, maks 1MB, atau tarik &amp; lepas ke sini. Kosongkan untuk pakai logo/ikon bawaan.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="lap-filter-footer lap-filter-footer--split">
+        <button type="button" class="btn btn-ghost lap-filter-cancel-btn" id="dataDiriCancelBtn">Batal</button>
+        <button type="button" class="btn btn-primary lap-filter-save-btn" id="dataDiriDoneBtn">Selesai</button>
+      </div>
+    </div>
+  </div>
+  <!-- ===== /HALAMAN "DATA DIRI" ===== -->
+
   <!-- ===== BOTTOM SHEET: PILIH BULAN (wheel picker bulan/tahun) ===== -->
   <div class="lap-sheet-overlay" id="lapMonthSheetOverlay">
     <div class="lap-sheet" id="lapMonthSheet">
@@ -9578,7 +9675,12 @@ body.is-scrolling *{
         <div class="settings-section">
           <span class="settings-section-label">Informasi Pribadi</span>
           <div class="settings-group">
-            <button type="button" class="settings-row" disabled>
+            <!-- ---- Baris ini SEKARANG aktif -- atribut "disabled"
+                 dilepas KHUSUS utk baris ini saja (baris2 lain di
+                 .settings-list masih placeholder spt semula, tetap
+                 pakai "disabled" native spt sebelumnya) -- membuka
+                 halaman penuh "Data Diri" (Nama Web/Logo/Favicon). ---- -->
+            <button type="button" class="settings-row" id="dataDiriOpenBtn">
               <span class="settings-row-icon">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2.3"/><path d="M5.5 17c.6-2.2 2.3-3.3 3.5-3.3s2.9 1.1 3.5 3.3M14.5 9h4M14.5 12.5h4"/></svg>
               </span>
