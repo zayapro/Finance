@@ -224,6 +224,7 @@
   const form = document.getElementById('cloudAuthForm');
   const emailInput = document.getElementById('cloudAuthEmail');
   const passInput = document.getElementById('cloudAuthPassword');
+  const passToggle = document.getElementById('cloudAuthPwToggle');
   const msgBox = document.getElementById('cloudAuthMsg');
   const submitBtn = document.getElementById('cloudAuthSubmitBtn');
   const titleEl = document.getElementById('cloudAuthTitle');
@@ -257,6 +258,22 @@
   switchLink.addEventListener('click', function () {
     setMode(mode === 'login' ? 'signup' : 'login');
   });
+
+  /* Toggle mata polos (tanpa border/box) buat lihat/sembunyikan
+     password login -- sama persis konsepnya dengan .saldo-toggle di
+     banner saldo: cuma ganti type input & ikon, tombolnya sendiri
+     sudah tanpa bingkai lewat class .pw-eye-toggle di CSS. */
+  if (passToggle && passInput) {
+    var EYE_ICON_OPEN = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>';
+    var EYE_ICON_OFF = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/></svg>';
+    passToggle.addEventListener('click', function () {
+      var nowVisible = passInput.type === 'password';
+      passInput.type = nowVisible ? 'text' : 'password';
+      passToggle.innerHTML = nowVisible ? EYE_ICON_OFF : EYE_ICON_OPEN;
+      passToggle.setAttribute('aria-pressed', String(nowVisible));
+      passToggle.setAttribute('aria-label', nowVisible ? 'Sembunyikan password' : 'Tampilkan password');
+    });
+  }
 
   form.addEventListener('submit', async function (e) {
     e.preventDefault();

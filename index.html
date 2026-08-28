@@ -7670,6 +7670,28 @@ select#categoryFilter[hidden]{display:none;}
   background-image:url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232563EB' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
 }
 .form-row input:focus,.form-row select:focus,.form-row textarea:focus{border-color:var(--forest-glow);}
+/* Bungkus input password/API key supaya ikon mata bisa ditempel di
+   dalam kotak input (posisi absolute), tanpa mengubah lebar/format
+   input lain yang tidak butuh toggle. */
+.pw-field-wrap{position:relative;}
+.pw-field-wrap input{padding-right:38px;}
+/* Tombol mata (show/hide) untuk field password: SENGAJA tanpa
+   background box, border, atau radius apa pun -- cuma ikon polos
+   yang mengambang persis seperti .saldo-toggle di banner saldo,
+   supaya konsisten dengan gaya toggle mata yang sudah ada di app ini. */
+.pw-eye-toggle{
+  position:absolute;right:10px;top:50%;transform:translateY(-50%);
+  width:26px;height:26px;
+  display:flex;align-items:center;justify-content:center;
+  background:none;border:none;padding:0;margin:0;
+  color:var(--ink-faint,#6B7690);
+  cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;
+  transition:color .15s ease;
+}
+.pw-eye-toggle:hover{color:var(--ink-soft,#5B6472);}
+.pw-eye-toggle:focus-visible{outline:2px solid var(--forest-glow);outline-offset:1px;border-radius:6px;}
+.cloud-auth-card .cloud-auth-field input#cloudAuthPassword{padding-right:38px;}
+.cloud-auth-card .pw-eye-toggle{right:12px;color:var(--ink-faint,#6B7690);}
 .form-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 .modal-actions{display:flex;gap:10px;margin-top:6px;}
 .modal-actions .btn{flex:1;justify-content:center;}
@@ -11608,7 +11630,12 @@ body.is-scrolling *{
     <form id="aiSettingsForm">
       <div class="form-row">
         <label for="aiApiKeyInput">API Key Gemini</label>
-        <input type="password" id="aiApiKeyInput" placeholder="Tempel API key Gemini di sini" autocomplete="off">
+        <div class="pw-field-wrap">
+          <input type="password" id="aiApiKeyInput" placeholder="Tempel API key Gemini di sini" autocomplete="off">
+          <button type="button" class="pw-eye-toggle" id="aiApiKeyToggle" tabindex="-1" aria-label="Tampilkan API key" aria-pressed="false">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
         <p class="ai-settings-hint">Dapatkan API key gratis di <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a>. Key disimpan hanya di browser ini (localStorage), tidak dikirim ke server manapun selain Google.</p>
       </div>
       <div class="form-row">
@@ -11660,6 +11687,9 @@ body.is-scrolling *{
       <div class="cloud-auth-field">
         <svg class="cloud-auth-field-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
         <input type="password" id="cloudAuthPassword" autocomplete="current-password" required placeholder="Password (min. 6 karakter)">
+        <button type="button" class="pw-eye-toggle" id="cloudAuthPwToggle" tabindex="-1" aria-label="Tampilkan password" aria-pressed="false">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
       </div>
       <button type="submit" class="cloud-auth-btn" id="cloudAuthSubmitBtn">Masuk</button>
     </form>
