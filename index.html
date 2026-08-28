@@ -1557,7 +1557,13 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 }
 .saldo-toggle{
   flex-shrink:0;
-  width:26px;height:26px;
+  /* Ukuran tombol dinaikkan dari 26px -> 30px, ikonnya sendiri dari
+     17px -> 21px (lihat svg#saldoEyeIcon di HTML): angka saldo di
+     sebelahnya bisa sampai 40px (clamp .saldo-value), jadi ikon 17px
+     kelihatan kekecilan/tenggelam di sampingnya. 30/21 memberi sedikit
+     "napas" di sekeliling ikon sambil tetap proporsional terhadap
+     angka saldo & tetap nyaman disentuh di HP. */
+  width:30px;height:30px;
   display:flex;align-items:center;justify-content:center;
   /* Tanpa "kartu": tidak ada background box, border, atau radius --
      cuma ikon mata polos mengambang. Warnanya SEBELUMNYA putih-krem
@@ -8603,7 +8609,12 @@ body.is-scrolling *{
      ellipsis di .saldo-value (aturan dasar) tetap dipertahankan
      sebagai jaring pengaman kalau saldo-nya sangat besar. */
   .saldo-value{font-size:clamp(26px, 8.6vw, 38px);}
-  .saldo-toggle{width:24px;height:24px;}
+  /* Ikutin proporsi yang sama seperti desktop (tombol/ikon = 30/21),
+     hanya diskalakan turun sedikit buat layar sempit: tombol 28px,
+     ikon 20px lewat override CSS width/height (menang atas atribut
+     width/height di elemen <svg>, bukan cuma preferensi/default). */
+  .saldo-toggle{width:28px;height:28px;}
+  .saldo-toggle svg{width:20px;height:20px;}
   /* Margin horizontal 0 (samakan dengan .saldo-card di atas, yang
      sekarang ikut lebar konten .app) supaya kartu "Uang Masuk &
      Keluar" tetap pas selebar .saldo-card — lihat catatan lengkap
@@ -9045,7 +9056,7 @@ body.is-scrolling *{
       <div class="saldo-row">
         <div class="saldo-value mono" id="saldoValue">Rp 0</div>
         <button class="saldo-toggle" id="saldoToggle" type="button" title="Sembunyikan/tampilkan saldo" aria-label="Sembunyikan atau tampilkan saldo">
-          <svg id="saldoEyeIcon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+          <svg id="saldoEyeIcon" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg>
         </button>
       </div>
 
