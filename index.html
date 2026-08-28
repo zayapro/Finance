@@ -3845,7 +3845,20 @@ tr.fade-up{animation:fadeRow .35s ease both;}
    visibility:hidden ikut ditambahkan sbg fix kedipan/tonjolan sudut
    melengkung saat sticky discroll di Safari/HP, sama seperti wrapper
    sticky lain. ---- */
-#temaOverlay .lap-filter-head{
+/* ---- UPDATE: fix sticky-header di atas awalnya sengaja dikhususkan
+   HANYA ke #temaOverlay (Data Diri saat itu belum diminta ikut sticky).
+   Sekarang diperluas juga ke "#dataDiriOverlay .lap-filter-head" supaya
+   gaya visual kedua halaman benar2 SAMA PERSIS lagi saat discroll
+   (bukan cuma sama di kondisi diam) -- popup Filter (#lapFilterOverlay)
+   TETAP sengaja tidak ikut disentuh, cuma 2 selector ini yg ditulis
+   eksplisit, bukan menimpa ".lap-filter-head" polos. ---- */
+/* ---- UPDATE: header Tema sekarang sticky lewat wrapper baru
+   ".tema-sticky-head" (dibungkus BARENG kartu Pratinjau, lihat catatan
+   lengkap & CSS-nya di dekat ".lap-filter-card") -- jadi "#temaOverlay"
+   DILEPAS dari selector di bawah ini supaya tidak dobel/konflik dgn
+   wrapper barunya. "#dataDiriOverlay" tetap dipertahankan apa adanya
+   (strukturnya tidak ikut berubah, headernya masih sticky sendiri). ---- */
+#dataDiriOverlay .lap-filter-head{
   position:sticky;top:0;z-index:3;
   transform:translateZ(0);-webkit-transform:translateZ(0);
   backface-visibility:hidden;-webkit-backface-visibility:hidden;
@@ -7472,6 +7485,70 @@ html.zp-app-loading .page-body > .lap-panel{display:none;}
   backface-visibility:hidden;-webkit-backface-visibility:hidden;
   isolation:isolate;
 }
+/* ================================================================
+   PERMINTAAN: posisi kartu Pratinjau di halaman Tema dibuat MENEMPEL
+   (sticky) bareng header oranye saat discroll, niru PERSIS pola
+   ".bd-sticky-head" + ".bd-page-body" di halaman Tagihan & Hutang
+   (lihat catatan lengkap di sana): header oranye + potongan kartu
+   putih yg menumpang di atasnya dibungkus SATU wrapper sticky, supaya
+   posisi relatifnya (banner di atas, kartu menumpang lewat margin
+   negatif) tetap terjaga & unit ini berhenti di puncak layar -- bukan
+   ikut hilang ke atas spt sebelumnya. Section lain (Warna Aksen, Gaya
+   Font, dst di ".lap-filter-card--rest" di bawah) SENGAJA TIDAK ikut
+   dibungkus, tetap scroll normal, persis daftar tagihan/hutang yg
+   scroll normal di bawah .bd-sticky-head (".bd-page-body-rest"). ---- */
+.tema-sticky-head{
+  position:sticky;top:0;z-index:6;
+  /* z-index disamakan dgn .bd-sticky-head (6) -- lebih tinggi drpd
+     .lap-filter-card--rest (z-index:2) supaya pas kartu section di
+     bawahnya ikut tergulung naik ke posisi ini, ia tersembunyi RAPI di
+     BALIK unit sticky ini (bukan malah menutupi/menang tumpuk di
+     atasnya), sama seperti pasangan fix z-index .lap-filter-head vs
+     .lap-filter-card sebelumnya. */
+  transform:translateZ(0);-webkit-transform:translateZ(0);
+  backface-visibility:hidden;-webkit-backface-visibility:hidden;
+}
+/* .lap-filter-head DI DALAM wrapper sticky ini tidak perlu lagi jadi
+   sticky sendiri (posisi:relative bawaannya sudah cukup, cukup
+   wrapper induknya saja yg sticky) -- override khusus scoped ke sini
+   supaya #temaOverlay/#dataDiriOverlay .lap-filter-head yg BUKAN di
+   dalam .tema-sticky-head (spt di Data Diri) tidak ikut berubah. */
+.tema-sticky-head .lap-filter-head{position:relative;z-index:1;}
+/* ---- Potongan kartu putih ATAS yg menumpang di header oranye lewat
+   margin negatif + radius atas (28px, sama persis nilai .lap-filter-card)
+   -- niru ".bd-page-body" (bagian DALAM .bd-sticky-head), cuma isinya
+   kartu Pratinjau saja. Padding-bottom dikecilkan (16px, bukan 20px
+   spt .lap-filter-card) krn di sinilah jarak visual ke section
+   pertama ("Warna Aksen") di .lap-filter-card--rest bawah ditentukan
+   -- .lap-filter-card--rest sendiri padding-top-nya di-nol-kan
+   (lihat modifier di bawah) supaya jaraknya PERSIS sama dgn gap:16px
+   antar section lain, tidak dobel. ---- */
+.tema-preview-wrap{
+  position:relative;z-index:2;
+  background:var(--card);
+  margin:-24px 0 0;
+  border-radius:28px 28px 0 0;
+  padding:22px 16px 16px;
+  transform:translateZ(0);-webkit-transform:translateZ(0);
+  backface-visibility:hidden;-webkit-backface-visibility:hidden;
+}
+/* ---- Varian "sisa konten" dari .lap-filter-card: dipakai KHUSUS di
+   #temaCard (section Warna Aksen/Gaya Font/Elemen Dekoratif/Bingkai
+   Avatar) sekarang kartu Pratinjau-nya sudah dipindah ke
+   .tema-preview-wrap DI ATAS (di dalam wrapper sticky terpisah).
+   Margin negatif & radius atas DINETRALKAN (sudah "dipakai" oleh
+   .tema-preview-wrap di atasnya) supaya tidak terjadi tumpukan efek
+   kartu dua kali -- persis pola ".bd-page-body-rest" thd ".bd-page-body"
+   di Tagihan & Hutang. padding-top di-nol-kan krn jarak ke kartu
+   Pratinjau di atasnya sudah disediakan oleh padding-bottom
+   .tema-preview-wrap (16px, sama dgn gap:16px antar section lain via
+   flex gap yg tetap berlaku di sini). Selector di-scope KHUSUS
+   ".lap-filter-card.lap-filter-card--rest" (bukan menimpa
+   .lap-filter-card polos) supaya kartu putih di popup Filter & halaman
+   Data Diri (yg TIDAK ikut restrukturisasi ini) tidak ikut berubah. ---- */
+.lap-filter-card.lap-filter-card--rest{
+  margin-top:0;border-radius:0;padding-top:0;
+}
 .lap-filter-section{
   background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
   padding:14px 16px 4px;box-shadow:var(--shadow-sm);
@@ -7793,6 +7870,7 @@ select#categoryFilter[hidden]{display:none;}
 @media (max-width:400px){
   .lap-filter-head{padding-left:14px;padding-right:14px;}
   .lap-filter-card{padding-left:14px;padding-right:14px;}
+  .tema-preview-wrap{padding-left:14px;padding-right:14px;}
 }
 /* Baris 1 kartu (judul pendek) + baris 2 (lebih panjang) -- disusun
    beda-beda sedikit lebarnya antar kartu supaya tidak terasa
@@ -9892,75 +9970,97 @@ body.is-scrolling *{
        pilihan tema menyusul. ===== -->
   <div class="detail-page-overlay lap-filter-overlay" id="temaOverlay">
     <div class="lap-filter-page">
-      <div class="lap-filter-head">
-        <button class="lap-filter-back-btn" id="temaBackBtn" type="button" aria-label="Tutup Tema">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
-        </button>
-        <h2>Tema</h2>
-        <span class="lap-filter-back-btn" style="visibility:hidden" aria-hidden="true"></span>
+      <!-- ---- PERMINTAAN: posisi kartu Pratinjau dibuat MENEMPEL
+           (sticky) bareng header oranye "Tema" saat halaman discroll,
+           niru PERSIS pola ".bd-sticky-head" di halaman Tagihan &
+           Hutang (banner + kartu ringkasan + tab dibungkus SATU
+           wrapper sticky supaya posisi relatifnya -- banner di atas,
+           kartu menumpang di bawahnya lewat margin negatif -- tetap
+           terjaga & unit ini berhenti di puncak layar, bukan ikut
+           hilang ke atas). Di sini unitnya header "Tema" + kartu
+           Pratinjau (bukan kartu ringkasan/tab krn Tema tidak
+           punya itu) -- section lain (Warna Aksen dst di bawah)
+           SENGAJA TIDAK ikut dibungkus, tetap scroll normal spt
+           daftar tagihan/hutang yg scroll di bawah .bd-sticky-head. ---- -->
+      <div class="tema-sticky-head" id="temaStickyHead">
+        <div class="lap-filter-head">
+          <button class="lap-filter-back-btn" id="temaBackBtn" type="button" aria-label="Tutup Tema">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <h2>Tema</h2>
+          <span class="lap-filter-back-btn" style="visibility:hidden" aria-hidden="true"></span>
+        </div>
+
+        <!-- ---- Potongan kartu putih ATAS yg menumpang di header oranye
+             (margin negatif + radius atas), niru ".bd-page-body" (bagian
+             DALAM .bd-sticky-head) -- cuma isinya kartu Pratinjau saja,
+             bukan seluruh konten halaman (sisanya di .lap-filter-card--rest
+             di bawah, di LUAR wrapper sticky ini). ---- -->
+        <div class="tema-preview-wrap">
+          <div class="tema-preview-card" id="temaPreviewCard">
+            <!-- ---- Elemen dekoratif ikut ditampilkan di kartu Pratinjau
+                 ini juga (markup & 4 varian bentuk PERSIS sama dgn
+                 #bannerDeco di banner asli), supaya perubahan switch
+                 "Tampilkan Elemen" & pilihan bentuk di section bawah
+                 langsung kelihatan live di sini, bukan cuma di banner
+                 beranda yg sedang tidak terlihat selagi popup Tema
+                 terbuka. Disinkronkan bareng lewat applyBannerDeco()
+                 yg sekarang menimpa KEDUA id (#bannerDeco & id ini)
+                 sekaligus -- lihat script.js. ---- -->
+            <div class="banner-deco" id="temaPreviewDeco" data-shape="circles" aria-hidden="true">
+              <div class="bd-circles">
+                <span class="bd-circle bd-circle-a"></span>
+                <span class="bd-circle bd-circle-b"></span>
+              </div>
+              <div class="bd-dots"></div>
+              <svg class="bd-wave" viewBox="0 0 400 130" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M0,58 C70,95 150,25 230,58 C300,86 350,45 400,62 L400,130 L0,130 Z" fill="#fff" opacity="0.12"/>
+                <path d="M0,82 C90,112 175,58 265,80 C325,96 365,64 400,80 L400,130 L0,130 Z" fill="#fff" opacity="0.08"/>
+              </svg>
+              <svg class="bd-blob" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                <path fill="#fff" opacity="0.11" d="M42.7,-59.7C54.5,-52.3,62.4,-38.4,66.5,-23.6C70.7,-8.9,71.2,6.7,66.4,20.4C61.6,34.1,51.5,45.9,39,53.6C26.5,61.4,13.2,65.1,-0.7,66.2C-14.7,67.3,-29.4,65.8,-41.4,58.6C-53.5,51.4,-62.9,38.5,-68.1,23.9C-73.3,9.3,-74.3,-7,-69.4,-21.1C-64.6,-35.2,-53.8,-47.1,-41,-54.6C-28.1,-62.1,-14.1,-65.1,0.8,-66.5C15.6,-67.9,31.2,-67.6,42.7,-59.7Z" transform="translate(100 100)"/>
+              </svg>
+            </div>
+            <!-- ---- REDESIGN kartu Pratinjau: label "Pratinjau" yg
+                 sebelumnya baris teks polos di atas nama, sekarang jadi
+                 tag pil kecil melayang di pojok kanan-atas kartu (spy
+                 tidak ikut mendesak alur baca utama & langsung terlihat
+                 sbg "ini contoh tampilan", bukan bagian dari isi asli).
+                 Avatar + nama SEKARANG disusun SEJAJAR (baris, bukan
+                 ditumpuk vertikal spt sebelumnya) meniru PERSIS susunan
+                 asli avatar+nama di <header class="banner"> beranda
+                 (.brand-wrap .brand > .brand-mark-wrap + .brand-text-col,
+                 lihat markup #banner di atas) -- supaya kartu ini terasa
+                 benar-benar seperti "potongan banner asli", bukan kartu
+                 generik terpisah gayanya. ---- -->
+            <span class="tema-preview-tag" aria-hidden="true">Pratinjau</span>
+            <div class="tema-preview-top">
+              <!-- ---- Avatar pratinjau khusus fitur "Bingkai Avatar":
+                   numpang markup & class PERSIS sama dgn avatar asli di
+                   banner beranda (.brand-mark-wrap/.brand-mark/.brand-mark-badge,
+                   lihat catatan CSS "FITUR BARU: Bingkai Avatar" di atas) --
+                   supaya cincin bingkai yg dipilih di grid #temaFrameGrid di
+                   bawah langsung kelihatan LIVE di sini juga, disinkronkan
+                   bareng avatar asli lewat applyAvatarFrame() (script.js)
+                   yg menimpa KEDUA id (#brandMarkWrap & id ini) sekaligus,
+                   persis pola applyBannerDeco() thd #bannerDeco. ---- -->
+              <span class="brand-mark-wrap tema-preview-avatar-wrap" id="temaPreviewAvatarWrap">
+                <span class="brand-mark" id="temaPreviewAvatarIcon">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>
+                </span>
+                <span class="brand-mark-badge" aria-hidden="true">PREMIUM</span>
+              </span>
+              <span class="tema-preview-titles">
+                <strong id="temaPreviewName">ZAYAPRO</strong>
+                <span class="tema-preview-sub">Warna, font &amp; gaya banner Anda</span>
+              </span>
+            </div>
+            <button type="button" class="tema-preview-btn" tabindex="-1">Tombol Contoh</button>
+          </div>
+        </div>
       </div>
 
-      <div class="lap-filter-card" id="temaCard">
-        <div class="tema-preview-card" id="temaPreviewCard">
-          <!-- ---- Elemen dekoratif ikut ditampilkan di kartu Pratinjau
-               ini juga (markup & 4 varian bentuk PERSIS sama dgn
-               #bannerDeco di banner asli), supaya perubahan switch
-               "Tampilkan Elemen" & pilihan bentuk di section bawah
-               langsung kelihatan live di sini, bukan cuma di banner
-               beranda yg sedang tidak terlihat selagi popup Tema
-               terbuka. Disinkronkan bareng lewat applyBannerDeco()
-               yg sekarang menimpa KEDUA id (#bannerDeco & id ini)
-               sekaligus -- lihat script.js. ---- -->
-          <div class="banner-deco" id="temaPreviewDeco" data-shape="circles" aria-hidden="true">
-            <div class="bd-circles">
-              <span class="bd-circle bd-circle-a"></span>
-              <span class="bd-circle bd-circle-b"></span>
-            </div>
-            <div class="bd-dots"></div>
-            <svg class="bd-wave" viewBox="0 0 400 130" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M0,58 C70,95 150,25 230,58 C300,86 350,45 400,62 L400,130 L0,130 Z" fill="#fff" opacity="0.12"/>
-              <path d="M0,82 C90,112 175,58 265,80 C325,96 365,64 400,80 L400,130 L0,130 Z" fill="#fff" opacity="0.08"/>
-            </svg>
-            <svg class="bd-blob" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-              <path fill="#fff" opacity="0.11" d="M42.7,-59.7C54.5,-52.3,62.4,-38.4,66.5,-23.6C70.7,-8.9,71.2,6.7,66.4,20.4C61.6,34.1,51.5,45.9,39,53.6C26.5,61.4,13.2,65.1,-0.7,66.2C-14.7,67.3,-29.4,65.8,-41.4,58.6C-53.5,51.4,-62.9,38.5,-68.1,23.9C-73.3,9.3,-74.3,-7,-69.4,-21.1C-64.6,-35.2,-53.8,-47.1,-41,-54.6C-28.1,-62.1,-14.1,-65.1,0.8,-66.5C15.6,-67.9,31.2,-67.6,42.7,-59.7Z" transform="translate(100 100)"/>
-            </svg>
-          </div>
-          <!-- ---- REDESIGN kartu Pratinjau: label "Pratinjau" yg
-               sebelumnya baris teks polos di atas nama, sekarang jadi
-               tag pil kecil melayang di pojok kanan-atas kartu (spy
-               tidak ikut mendesak alur baca utama & langsung terlihat
-               sbg "ini contoh tampilan", bukan bagian dari isi asli).
-               Avatar + nama SEKARANG disusun SEJAJAR (baris, bukan
-               ditumpuk vertikal spt sebelumnya) meniru PERSIS susunan
-               asli avatar+nama di <header class="banner"> beranda
-               (.brand-wrap .brand > .brand-mark-wrap + .brand-text-col,
-               lihat markup #banner di atas) -- supaya kartu ini terasa
-               benar-benar seperti "potongan banner asli", bukan kartu
-               generik terpisah gayanya. ---- -->
-          <span class="tema-preview-tag" aria-hidden="true">Pratinjau</span>
-          <div class="tema-preview-top">
-            <!-- ---- Avatar pratinjau khusus fitur "Bingkai Avatar":
-                 numpang markup & class PERSIS sama dgn avatar asli di
-                 banner beranda (.brand-mark-wrap/.brand-mark/.brand-mark-badge,
-                 lihat catatan CSS "FITUR BARU: Bingkai Avatar" di atas) --
-                 supaya cincin bingkai yg dipilih di grid #temaFrameGrid di
-                 bawah langsung kelihatan LIVE di sini juga, disinkronkan
-                 bareng avatar asli lewat applyAvatarFrame() (script.js)
-                 yg menimpa KEDUA id (#brandMarkWrap & id ini) sekaligus,
-                 persis pola applyBannerDeco() thd #bannerDeco. ---- -->
-            <span class="brand-mark-wrap tema-preview-avatar-wrap" id="temaPreviewAvatarWrap">
-              <span class="brand-mark" id="temaPreviewAvatarIcon">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>
-              </span>
-              <span class="brand-mark-badge" aria-hidden="true">PREMIUM</span>
-            </span>
-            <span class="tema-preview-titles">
-              <strong id="temaPreviewName">ZAYAPRO</strong>
-              <span class="tema-preview-sub">Warna, font &amp; gaya banner Anda</span>
-            </span>
-          </div>
-          <button type="button" class="tema-preview-btn" tabindex="-1">Tombol Contoh</button>
-        </div>
+      <div class="lap-filter-card lap-filter-card--rest" id="temaCard">
         <div class="tema-section">
           <h3>Warna Aksen</h3>
           <p>Pilih warna utama aplikasi. Warna ini berlaku di semua halaman — banner, tombol, badge, hingga grafik.</p>
