@@ -7104,11 +7104,38 @@ document.getElementById('btnAddDesktop')?.addEventListener('click', () => openAd
 // kalau sudah login -> Keluar akun (spt sebelumnya); kalau belum ->
 // buka popup Masuk/Daftar (menggantikan aksi logout yang tidak relevan
 // buat guest).
-function handleAccountToggleClick() {
+let accountToggleBusy = false; // cegah klik ganda (mis. tap 2x cepat di HP) memicu 2 proses logout bersamaan
+async function handleAccountToggleClick() {
+  if (accountToggleBusy) return;
   if (typeof window.cloudIsLoggedIn === 'function' && window.cloudIsLoggedIn()) {
-    if (typeof window.cloudSignOut === 'function' && confirm('Keluar dari akun ini?')) {
-      window.cloudSignOut();
+    if (typeof window.cloudSignOut !== 'function') return;
+    if (!confirm('Keluar dari akun ini?')) return;
+    accountToggleBusy = true;
+    // Semua tombol yang bisa memicu logout (banner mobile, mini-topbar,
+    // baris Pengaturan) sengaja dinonaktifkan bareng selama proses
+    // berjalan, supaya tidak ada jalur lain yang ikut memicu logout
+    // kedua sebelum yang pertama selesai.
+    ['btnAddMobile', 'miniLogoutBtn', 'settingsAccountBtn'].forEach(function (id) {
+      const el = document.getElementById(id);
+      if (el) el.disabled = true;
+    });
+    const result = await window.cloudSignOut();
+    if (result && result.ok === false) {
+      // Logout gagal (mis. tidak ada koneksi) -- sebelumnya error di
+      // sini diabaikan diam-diam & tombol bisa "macet" kelihatan aktif
+      // padahal sesi belum benar-benar berakhir. Sekarang user dikasih
+      // tahu lewat toast & tombol dikembalikan bisa diklik lagi supaya
+      // bisa dicoba ulang.
+      showToast('Gagal logout, coba lagi. Periksa koneksi internet kamu.', 'err');
+      accountToggleBusy = false;
+      ['btnAddMobile', 'miniLogoutBtn', 'settingsAccountBtn'].forEach(function (id) {
+        const el = document.getElementById(id);
+        if (el) el.disabled = false;
+      });
     }
+    // Kalau ok:true, tidak perlu reset accountToggleBusy/disabled di sini --
+    // cloud-sync.js akan me-reload halaman (lewat event SIGNED_OUT), yang
+    // otomatis membuat ulang semua state termasuk variabel ini.
   } else if (typeof window.cloudRequireLogin === 'function') {
     window.cloudRequireLogin('Masuk atau daftar untuk mengaktifkan sinkron cloud & fitur Tanya AI.');
   }

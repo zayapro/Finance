@@ -798,6 +798,22 @@
     if (event === 'SIGNED_OUT') {
       currentUser = null;
       unsubscribeResetChannel();
+      // FIX "logout tidak bersih": sebelumnya localStorage TIDAK
+      // pernah dibersihkan saat logout, jadi data akun (transaksi,
+      // saldo, target, dsb) yang sempat ditarik dari cloud tetap
+      // nyangkut di perangkat ini -- dan karena app bisa dipakai
+      // tanpa login (mode lokal/guest), data itu langsung kelihatan
+      // & bisa diedit siapa pun yang buka browser yang sama, TANPA
+      // perlu login lagi. Ini masalah privasi terutama di perangkat
+      // bersama. Sekarang localStorage ikut dibersihkan begitu logout
+      // (pola sama seperti cloudResetDatabase di bawah), supaya
+      // setelah logout app benar-benar kembali kosong seperti baru.
+      // Key yang memang murni lokal & bukan bagian data akun (lihat
+      // isCloudExcluded -- cache berita, API key & riwayat chat AI)
+      // TETAP dipertahankan karena bukan data sensitif per-akun.
+      Object.keys(localStorage).forEach(function (key) {
+        if (!isCloudExcluded(key)) localStorage.removeItem(key);
+      });
       location.reload();
     }
   });
@@ -805,7 +821,17 @@
   /* Dipanggil dari tombol "Keluar" yang ditambahkan di halaman
      (lihat initFooter di script.js) -- diekspos secara global. */
   window.cloudSignOut = async function () {
-    await sb.auth.signOut();
+    // Dikembalikan { ok: true } / { ok: false, error } supaya
+    // pemanggil (handleAccountToggleClick di script.js) bisa kasih
+    // tahu user kalau logout gagal, bukan diam saja. Sebelumnya
+    // fungsi ini tidak mengembalikan apa-apa & error dari
+    // signOut() diabaikan total.
+    const { error } = await sb.auth.signOut();
+    if (error) {
+      console.error('Gagal logout:', error);
+      return { ok: false, error: error };
+    }
+    return { ok: true };
   };
 
   /* ---------- reset database online ----------
