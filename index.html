@@ -1560,17 +1560,23 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   width:26px;height:26px;
   display:flex;align-items:center;justify-content:center;
   /* Tanpa "kartu": tidak ada background box, border, atau radius --
-     cuma ikon mata polos mengambang, warnanya mengikuti warna teks di
-     sekitarnya (putih semi-transparan di atas banner gelap) supaya
-     tetap terbaca tanpa bingkai. */
+     cuma ikon mata polos mengambang. Warnanya SEBELUMNYA putih-krem
+     nyaris transparan (rgba(255,248,241,.85)), dipakai waktu kartu
+     saldo masih berlatar banner gelap. Sekarang .saldo-card sudah
+     berlatar terang/putih (lihat var(--card-fade-bg)), jadi warna
+     seterang itu bikin ikonnya nyaris tak kelihatan -- menyatu ke
+     background. Diganti abu gelap tipis (var(--ink-faint)) supaya
+     tetap kontras & kebaca di atas latar terang, sambil tetap tanpa
+     bingkai apa pun. */
   background:none;
   border:none;
-  color:rgba(255,248,241,0.85);
+  color:var(--ink-faint,#6B7690);
+  opacity:.75;
   transition:color .15s ease, opacity .15s ease;
   -webkit-tap-highlight-color:transparent;
   touch-action:manipulation;
 }
-.saldo-toggle:hover{color:#fff;opacity:.85;}
+.saldo-toggle:hover{color:var(--ink,#131A2A);opacity:1;}
 /* Baris Pemasukan/Pengeluaran bulan ini: SENGAJA justify-content:flex-start
    (bukan space-between) supaya di layar lebar (desktop/tablet) kedua item
    ini tetap NEMPEL rapat & mengelompok tepat di bawah "Saldo Total",
