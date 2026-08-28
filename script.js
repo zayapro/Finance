@@ -44,6 +44,24 @@ try {
   document.documentElement.classList.remove('zp-page-restore-saya');
 } catch (e) { /* abaikan */ }
 
+/* ==========================================================
+   GERBANG LOGIN UNTUK FITUR CLOUD
+   Sekarang app BISA dipakai sepenuhnya tanpa login (data
+   tersimpan lokal di perangkat ini saja, lihat cloud-sync.js
+   yang tidak lagi memaksa overlay login tampil di awal & selalu
+   memuat file ini walau belum ada sesi). Popup login/daftar
+   HANYA dipanggil di sini, tepat pada aksi yang benar-benar
+   butuh akun cloud (sinkron antar perangkat & Tanya AI, juga
+   pengaturan akun spt Ubah PIN/Password & Login Biometrik).
+   Kembalikan true kalau sudah login (boleh lanjut), atau false
+   sambil membuka popup login/daftar (dengan pesan alasan
+   singkat) kalau belum -- pemanggil WAJIB berhenti (return) saat
+   hasilnya false, jangan lanjut menjalankan aksi yang butuh akun. */
+function requireCloudLogin(reason) {
+  if (typeof window.cloudIsLoggedIn === 'function' && window.cloudIsLoggedIn()) return true;
+  if (typeof window.cloudRequireLogin === 'function') window.cloudRequireLogin(reason);
+  return false;
+}
 
 /* PENTING (fix "patah-patah" saat refresh di HP): ExcelJS, jsPDF, &
    jspdf-autotable dulu dimuat lewat <script src> statis di index.html
@@ -7071,25 +7089,38 @@ function drawAndDownloadReceipt(t) {
 }
 document.getElementById('btnAddDesktop')?.addEventListener('click', () => openAddModal());
 // Tombol "+" pada banner mobile SEBELUMNYA membuka modal Tambah
-// Transaksi -- sekarang difungsikan ulang jadi tombol Keluar/Masuk
-// akun (login-logout), supaya kontrol akun juga tersedia langsung
-// dari banner utama, tidak cuma dari mini-topbar (#miniLogoutBtn)
-// atau tombol mengambang desktop (#cloudLogoutBtn). Karena script.js
-// ini SENDIRI baru dimuat SETELAH login berhasil (lihat alur boot()
-// di cloud-sync.js), tombol ini pada praktiknya selalu tampil dalam
-// kondisi sudah login -- jadi aksinya adalah logout. Fallback ke
-// overlay login tetap disertakan untuk jaga-jaga jika suatu saat
-// tombol ini bisa diakses sebelum login.
-document.getElementById('btnAddMobile').addEventListener('click', () => {
-  if (typeof window.cloudSignOut === 'function') {
-    if (confirm('Keluar dari akun ini?')) {
+// Transaksi -- sekarang difungsikan ulang jadi tombol akun, supaya
+// kontrol akun juga tersedia langsung dari banner utama, tidak cuma
+// dari mini-topbar (#miniLogoutBtn). Karena app sekarang BISA dipakai
+// tanpa login (lihat requireCloudLogin di atas & alur boot() baru di
+// cloud-sync.js), tombol ini dicek dulu status loginnya tiap diklik:
+// kalau sudah login -> Keluar akun (spt sebelumnya); kalau belum ->
+// buka popup Masuk/Daftar (menggantikan aksi logout yang tidak relevan
+// buat guest).
+function handleAccountToggleClick() {
+  if (typeof window.cloudIsLoggedIn === 'function' && window.cloudIsLoggedIn()) {
+    if (typeof window.cloudSignOut === 'function' && confirm('Keluar dari akun ini?')) {
       window.cloudSignOut();
     }
-  } else {
-    const overlay = document.getElementById('cloudAuthOverlay');
-    if (overlay) overlay.classList.remove('hidden');
+  } else if (typeof window.cloudRequireLogin === 'function') {
+    window.cloudRequireLogin('Masuk atau daftar untuk mengaktifkan sinkron cloud & fitur Tanya AI.');
   }
-});
+}
+document.getElementById('btnAddMobile').addEventListener('click', handleAccountToggleClick);
+// Label tombol akun (banner & mini-topbar) disesuaikan sekali di awal
+// sesuai status login saat halaman dibuka -- cukup sekali karena
+// begitu status login berubah (masuk/keluar), halaman selalu di-reload
+// oleh cloud-sync.js sehingga label ini ikut dihitung ulang dari nol.
+(function syncAccountToggleLabels() {
+  const loggedIn = typeof window.cloudIsLoggedIn === 'function' && window.cloudIsLoggedIn();
+  const label = loggedIn ? 'Keluar dari akun' : 'Masuk / Daftar akun';
+  ['btnAddMobile', 'miniLogoutBtn'].forEach(function (id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.title = label;
+    el.setAttribute('aria-label', label);
+  });
+})();
 // Tombol "+" di header "Semua Transaksi" halaman Laporan -- buka modal
 // Tambah Transaksi yang sama (lihat komentar di markupnya, index.html).
 document.getElementById('lapAddTxBtn')?.addEventListener('click', () => openAddModal());
@@ -8713,6 +8744,7 @@ document.getElementById('btnResetCloudDb').addEventListener('click', async () =>
     showToast('Fitur sinkron cloud tidak tersedia di halaman ini.', 'err');
     return;
   }
+  if (!requireCloudLogin('Masuk untuk mereset database cloud.')) return;
 
   const step1 = confirm(
     'PERINGATAN\n\nIni akan menghapus SEMUA data (transaksi, target, dompet, tagihan, hutang, sumber pendapatan, dsb) secara PERMANEN dari database cloud dan perangkat ini. Data yang sama juga akan hilang di semua perangkat lain yang login dengan akun ini.\n\nLanjutkan?'
@@ -9549,6 +9581,19 @@ function confirmDataDiriOverlay() {
   closeDataDiriOverlay();
 }
 document.getElementById('dataDiriOpenBtn')?.addEventListener('click', openDataDiriOverlay);
+
+/* ---- Baris "Masuk / Daftar Akun" <-> "Logout" di halaman Pengaturan
+   (dinamis mengikuti status login, lihat requireCloudLogin di atas) ---- */
+function updateAccountSettingsRow() {
+  const btn = document.getElementById('settingsAccountBtn');
+  const title = document.getElementById('settingsAccountBtnTitle');
+  if (!btn || !title) return;
+  const loggedIn = typeof window.cloudIsLoggedIn === 'function' && window.cloudIsLoggedIn();
+  title.textContent = loggedIn ? 'Logout' : 'Masuk / Daftar Akun';
+  btn.classList.toggle('settings-row-danger', loggedIn);
+}
+updateAccountSettingsRow();
+document.getElementById('settingsAccountBtn')?.addEventListener('click', handleAccountToggleClick);
 document.getElementById('dataDiriBackBtn')?.addEventListener('click', closeDataDiriOverlay);
 document.getElementById('dataDiriCancelBtn')?.addEventListener('click', closeDataDiriOverlay);
 document.getElementById('dataDiriDoneBtn')?.addEventListener('click', confirmDataDiriOverlay);
@@ -9570,7 +9615,10 @@ function closePinChangeConfirmSheet() {
   document.getElementById('pinChangeConfirmSheetOverlay').classList.remove('open');
   unlockBodyScroll();
 }
-document.getElementById('btnOpenPinChange')?.addEventListener('click', openPinChangeConfirmSheet);
+document.getElementById('btnOpenPinChange')?.addEventListener('click', () => {
+  if (!requireCloudLogin('Masuk untuk mengubah PIN.')) return;
+  openPinChangeConfirmSheet();
+});
 document.getElementById('pinChangeConfirmCloseBtn')?.addEventListener('click', closePinChangeConfirmSheet);
 document.getElementById('pinChangeConfirmCancelBtn')?.addEventListener('click', closePinChangeConfirmSheet);
 document.getElementById('pinChangeConfirmProceedBtn')?.addEventListener('click', function () {
@@ -9788,7 +9836,10 @@ document.getElementById('pwChangeContinueBtn')?.addEventListener('click', async 
     }
   }
 });
-document.getElementById('btnOpenPasswordChange')?.addEventListener('click', openPwChangeOverlay);
+document.getElementById('btnOpenPasswordChange')?.addEventListener('click', () => {
+  if (!requireCloudLogin('Masuk untuk mengubah password.')) return;
+  openPwChangeOverlay();
+});
 document.getElementById('pwChangeBackBtn')?.addEventListener('click', closePwChangeOverlay);
 
 /* ---- Sheet "Lupa Password" (dibuka dari dalam halaman Ubah Password) ---- */
@@ -9830,6 +9881,10 @@ document.getElementById('pwForgotSendBtn')?.addEventListener('click', async func
   if (!toggle || !window.zayaproAuth) return;
   toggle.checked = window.zayaproAuth.isBiometricEnabled();
   toggle.addEventListener('change', async function () {
+    if (!requireCloudLogin('Masuk untuk mengaktifkan Login Biometrik.')) {
+      toggle.checked = false;
+      return;
+    }
     if (toggle.checked) {
       const supported = await window.zayaproAuth.biometricSupported();
       if (!supported) {
@@ -10975,26 +11030,20 @@ function initFooter() {
    window.cloudSignOut() dari cloud-sync.js, yang akan sign-out dari
    Supabase lalu me-reload halaman ke layar login. */
 function initCloudLogoutButton() {
-  if (typeof window.cloudSignOut !== 'function') return;
-
-  const confirmAndSignOut = () => {
-    if (confirm('Keluar dari akun ini?')) {
-      window.cloudSignOut();
-    }
-  };
-
   // Tombol "Keluar" mengambang di pojok kiri atas (desktop) sudah
   // dihapus atas permintaan -- fungsi logout tetap tersedia lewat
-  // menu Settings (baris "Logout") dan mini-topbar di HP.
+  // menu Settings (baris "Logout"/"Masuk") dan mini-topbar di HP.
 
   // Versi HP: ikon yang sudah ada di mini-topbar, cukup ditampilkan
   // (default disembunyikan lewat inline style di index.html) & diberi
-  // fungsi klik yang sama dengan versi desktop.
+  // fungsi klik yang sama (Keluar kalau sudah login, buka popup
+  // Masuk/Daftar kalau belum -- lihat handleAccountToggleClick di atas)
+  // dengan tombol "+" pada banner utama.
   const miniBtn = document.getElementById('miniLogoutBtn');
   if (miniBtn && !miniBtn._logoutBound) {
     miniBtn._logoutBound = true;
     miniBtn.style.display = '';
-    miniBtn.addEventListener('click', confirmAndSignOut);
+    miniBtn.addEventListener('click', handleAccountToggleClick);
   }
 }
 
@@ -11087,7 +11136,9 @@ function closeAiChatPanel() {
   closeModal(aiChatOverlay);
 }
 if (aiFabBtn) aiFabBtn.addEventListener('click', () => {
-  aiChatPanel.classList.contains('open') ? closeAiChatPanel() : openAiChatPanel();
+  if (aiChatPanel.classList.contains('open')) { closeAiChatPanel(); return; }
+  if (!requireCloudLogin('Masuk untuk memakai fitur Tanya AI.')) return;
+  openAiChatPanel();
 });
 if (aiChatCloseBtn) aiChatCloseBtn.addEventListener('click', closeAiChatPanel);
 if (aiChatOverlay) aiChatOverlay.addEventListener('click', closeAiChatPanel);

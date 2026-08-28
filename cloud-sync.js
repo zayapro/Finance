@@ -271,6 +271,22 @@
   function clearMsg() {
     msgBox.className = 'cloud-auth-msg';
   }
+
+  /* ---------- API publik login/status untuk script.js ----------
+     App sekarang BISA dipakai sepenuhnya tanpa login (lihat boot()
+     di bawah -- overlay TIDAK lagi dipaksa tampil di awal). Dua
+     fungsi ini yang dipakai script.js (lewat requireCloudLogin() di
+     sana) untuk mengecek status login & memunculkan popup Masuk/
+     Daftar HANYA saat user benar-benar mengakses fitur yang butuh
+     akun cloud (sinkron antar perangkat, Tanya AI, Ubah PIN/Password,
+     Login Biometrik, Reset Database Online). */
+  window.cloudIsLoggedIn = function () { return !!currentUser; };
+  window.cloudRequireLogin = function (reason) {
+    if (!overlay) return;
+    setMode('login');
+    if (reason) showMsg(reason, 'ok'); else clearMsg();
+    overlay.classList.remove('hidden');
+  };
   function setMode(next) {
     mode = next;
     clearMsg();
@@ -296,6 +312,36 @@
   }
   switchLink.addEventListener('click', function () {
     setMode(mode === 'login' ? 'signup' : 'login');
+  });
+
+  /* Tombol tutup (X) -- cuma boleh dipakai kalau app sudah jalan
+     (appStarted, artinya user memang sedang pakai app secara lokal &
+     popup ini muncul karena mengklik fitur cloud), supaya tetap tidak
+     ada cara menutup popup di jalur LAMA yang masih sah menahannya
+     (proses login sesi otomatis/PIN saat boot -- lihat boot() &
+     requirePinUnlock -- overlay itu beda elemen, bukan ini). */
+  function closeAuthOverlayIfDismissable() {
+    if (!appStarted) return;
+    overlay.classList.add('hidden');
+    clearMsg();
+  }
+  const closeBtn = document.getElementById('cloudAuthCloseBtn');
+  if (closeBtn) closeBtn.addEventListener('click', closeAuthOverlayIfDismissable);
+
+  // Klik di area gelap di LUAR kartu (backdrop) juga menutup popup --
+  // hanya kalau klik itu benar-benar kena elemen overlay-nya sendiri,
+  // bukan salah satu anak di dalam kartu (event.target === overlay),
+  // supaya klik di dalam form tidak ikut menutup popup tanpa sengaja.
+  overlay.addEventListener('click', function (e) {
+    if (e.target === overlay) closeAuthOverlayIfDismissable();
+  });
+
+  // Tombol Escape juga menutup popup, kalau sedang terbuka & memang
+  // boleh ditutup (app sudah jalan/guest).
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && !overlay.classList.contains('hidden')) {
+      closeAuthOverlayIfDismissable();
+    }
   });
 
   /* Toggle mata polos (tanpa border/box) buat lihat/sembunyikan
@@ -357,7 +403,7 @@
         });
         if (error) throw error;
         if (data.session) {
-          await onLoggedIn(data.session.user);
+          await onLoggedIn(data.session.user, true);
         } else {
           showMsg('Pendaftaran berhasil! Cek email kamu untuk konfirmasi, lalu masuk.', 'ok');
           setMode('login');
@@ -365,7 +411,7 @@
       } else {
         const { data, error } = await sb.auth.signInWithPassword({ email: email, password: password });
         if (error) throw error;
-        await onLoggedIn(data.user);
+        await onLoggedIn(data.user, false);
       }
     } catch (err) {
       showMsg(translateAuthError(err && err.message), 'err');
@@ -383,7 +429,7 @@
     return msg;
   }
 
-  async function onLoggedIn(user) {
+  async function onLoggedIn(user, isNewSignup) {
     currentUser = user;
     // Diekspos ke `window` (bukan cuma variabel lokal di dalam IIFE ini)
     // supaya script.js BISA membacanya secara sinkron -- dipakai sbg
@@ -398,10 +444,56 @@
     // -- dipakai script.js sbg "Nama Web" bawaan, lihat getDefaultAppName().
     window.zayaproAccountName = (user.user_metadata && user.user_metadata.full_name) || null;
     subscribeResetChannel(user.id);
-    showMsg('Menarik data dari cloud...', 'ok');
-    await pullAllFromCloud();
+
+    if (isNewSignup && appStarted) {
+      // App sekarang bisa dipakai dulu secara lokal SEBELUM daftar
+      // akun (lihat boot() -- guest tanpa sesi langsung startAppOnce()).
+      // Kalau form ini disubmit dalam mode DAFTAR sementara app sudah
+      // jalan (artinya ada kemungkinan data lokal guest yang belum
+      // pernah tersinkron), data cloud akun baru ini masih KOSONG --
+      // jangan pullAllFromCloud() spt biasa (itu akan MENGHAPUS semua
+      // data lokal yang belum ada di cloud). Sebaliknya, DORONG data
+      // lokal yang sudah ada ke cloud, supaya jadi data awal akun baru
+      // ini alih-alih hilang.
+      showMsg('Menyimpan data ke akun baru...', 'ok');
+      await pushAllLocalToCloud();
+    } else {
+      showMsg('Menarik data dari cloud...', 'ok');
+      await pullAllFromCloud();
+    }
+
     overlay.classList.add('hidden');
-    startAppOnce();
+    // Kalau app SUDAH jalan (guest yang baru saja login/daftar dari
+    // tengah sesi pakai lokal), muat ulang halaman supaya script.js
+    // dimuat ulang dari nol dengan data yang baru saja ditarik/didorong
+    // di atas -- lebih sederhana & aman drpd mencoba "menyuntik ulang"
+    // data ke instance app yang sudah terlanjur jalan dgn data lama.
+    if (appStarted) {
+      location.reload();
+    } else {
+      startAppOnce();
+    }
+  }
+
+  /* Dipanggil HANYA dari jalur "daftar akun baru sambil app sudah
+     jalan sbg guest" di atas -- lihat komentarnya. Mendorong SEMUA
+     key localStorage yang memang disinkron (bukan yang dikecualikan,
+     lihat isCloudExcluded) ke kv_store akun yang baru saja dibuat,
+     supaya data yang sempat dicatat sebagai guest tidak hilang. */
+  async function pushAllLocalToCloud() {
+    const rows = [];
+    Object.keys(localStorage).forEach(function (key) {
+      if (key === RESET_PENDING_KEY) return;
+      if (isCloudExcluded(key)) return;
+      const raw = localStorage.getItem(key);
+      let payload;
+      try { payload = JSON.parse(raw); } catch (e) { payload = raw; }
+      rows.push({ user_id: currentUser.id, key: key, value: payload, updated_at: new Date().toISOString() });
+    });
+    if (!rows.length) return true;
+    const { error } = await sb.from('kv_store').upsert(rows, { onConflict: 'user_id,key' });
+    if (error) { console.error('Gagal mendorong data lokal ke akun baru:', error); return false; }
+    return true;
   }
 
   function startAppOnce() {
@@ -687,7 +779,18 @@
       await pullAllFromCloud();
       startAppOnce();
     } else {
-      overlay.classList.remove('hidden');
+      // PERUBAHAN PENTING: dulu overlay login/daftar dipaksa tampil di
+      // sini & startAppOnce() (yang memuat script.js) DITAHAN sampai
+      // user login -- jadi app benar-benar tidak bisa dibuka sama
+      // sekali tanpa login. Sekarang app boleh langsung dibuka & dipakai
+      // secara lokal (data tersimpan di perangkat ini saja, tidak
+      // sinkron) tanpa login sama sekali -- popup Masuk/Daftar HANYA
+      // muncul belakangan kalau user sendiri mengklik fitur yang
+      // butuh akun cloud (lihat requireCloudLogin()/window.cloudRequireLogin
+      // yang dipanggil dari script.js pada aksi spt sinkron, Tanya AI,
+      // Ubah PIN/Password, Login Biometrik, Reset Database Online).
+      overlay.classList.add('hidden');
+      startAppOnce();
     }
   })();
 

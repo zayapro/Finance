@@ -9226,7 +9226,17 @@ body.is-scrolling *{
   box-shadow:0 24px 60px -20px color-mix(in srgb, var(--primary-deep) 35%, transparent), 0 0 0 1px rgba(255,255,255,.4) inset;
   text-align:center;
   animation:cloudAuthPop .35s cubic-bezier(.2,.8,.25,1);
+  position:relative;
 }
+.cloud-auth-close-btn{
+  position:absolute; top:14px; right:14px;
+  width:30px; height:30px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  background:transparent; border:none; cursor:pointer;
+  color:var(--ink-soft,#5B6472); opacity:.7;
+  transition:background .15s, opacity .15s;
+}
+.cloud-auth-close-btn:hover{ background:color-mix(in srgb, var(--ink) 8%, transparent); opacity:1; }
 @keyframes cloudAuthPop{
   from{ opacity:0; transform:translateY(10px) scale(.98); }
   to{ opacity:1; transform:translateY(0) scale(1); }
@@ -10731,11 +10741,17 @@ body.is-scrolling *{
 
         <div class="settings-section">
           <div class="settings-group">
-            <button type="button" class="settings-row settings-row-danger" disabled>
+            <!-- Baris ini dinamis (lihat updateAccountSettingsRow() di
+                 script.js): kalau belum login jadi ajakan "Masuk / Daftar
+                 Akun" (membuka popup cloud, dipakai buat aktifkan sinkron
+                 & Tanya AI); kalau sudah login jadi "Logout" spt semula.
+                 App sendiri TETAP bisa dipakai penuh secara lokal tanpa
+                 login sama sekali, baris ini murni opsional. -->
+            <button type="button" class="settings-row settings-row-danger" id="settingsAccountBtn">
               <span class="settings-row-icon">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3"/><path d="M16 17l5-5-5-5M21 12H9"/></svg>
               </span>
-              <span class="settings-row-title">Logout</span>
+              <span class="settings-row-title" id="settingsAccountBtnTitle">Masuk / Daftar Akun</span>
               <svg class="settings-row-chevron" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"/></svg>
             </button>
           </div>
@@ -12567,8 +12583,16 @@ body.is-scrolling *{
      halaman tidak perlu menunggu pustaka besar itu dimuat &
      dieksekusi duluan kalau memang tidak sedang dipakai. -->
 <!-- ===== OVERLAY LOGIN / DAFTAR (CLOUD SYNC) ===== -->
-<div id="cloudAuthOverlay">
+<div id="cloudAuthOverlay" class="hidden">
   <div class="cloud-auth-card">
+    <!-- App sekarang bisa dipakai tanpa login (data tersimpan lokal
+         di perangkat ini), jadi popup ini TIDAK LAGI wajib -- tombol
+         tutup ini biar user bisa membatalkan & lanjut pakai app secara
+         lokal kalau berubah pikiran (lihat cloudAuthCloseBtn di
+         cloud-sync.js). -->
+    <button type="button" class="cloud-auth-close-btn" id="cloudAuthCloseBtn" aria-label="Tutup">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+    </button>
     <div class="cloud-auth-logo">
       <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>
     </div>
