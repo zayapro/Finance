@@ -7923,29 +7923,16 @@ function applyGlobalTheme(state) {
 function renderTemaColorGrid(state) {
   const grid = document.getElementById('temaColorGrid');
   if (!grid) return;
-  const checkSvg = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
-  // Pipet: ikon penanda tetap utk swatch "Sendiri" (bukan cuma saat
-  // aktif spt centang preset lain), supaya kartunya kebaca sbg "warna
-  // bebas" walau belum dipilih -- gradasi conic pelangi di baliknya
-  // saja kurang jelas maksudnya tanpa ikon ini.
-  const pipetSvg = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="m2 22 1-4 9.5-9.5"/><path d="M13.5 8.5 17 5"/><path d="M15 3l6 6-3 3-6-6z"/></svg>';
+  // Versi baru: lingkaran solid berjajar ala referensi foto -- tanpa
+  // label teks & tanpa badge centang, status "terpilih" cukup lewat
+  // class .active (cincin abu-abu, lihat CSS .tema-color-btn.active).
   const presetHtml = GLOBAL_THEME_PRESETS.map(p => `
-    <button type="button" class="tema-color-btn${state.mode === p.key ? ' active' : ''}" data-temamode="${p.key}" style="--tc-color:${p.primary};--tc-deep:${p.deep}">
-      <span class="tema-color-dot"></span>
-      <span class="tema-color-check">${checkSvg}</span>
-      <span class="tema-color-label">${p.label}</span>
-    </button>
+    <button type="button" class="tema-color-btn${state.mode === p.key ? ' active' : ''}" data-temamode="${p.key}" style="--tc-color:${p.primary}" title="${p.label}" aria-label="Warna ${p.label}" aria-pressed="${state.mode === p.key ? 'true' : 'false'}"></button>
   `).join('');
   const customColor = state.custom || GLOBAL_THEME_DEFAULTS.custom;
-  const customDeep = deriveGlobalThemeShades(customColor).deep;
   const customHtml = `
-    <button type="button" class="tema-color-btn tema-color-custom${state.mode === 'custom' ? ' active' : ''}" data-temamode="custom" style="--tc-color:${customColor};--tc-deep:${customDeep}">
-      <span class="tema-color-dot">
-        <span class="tema-color-pipet">${pipetSvg}</span>
-        <input type="color" id="temaCustomInput" value="${customColor}" aria-label="Pilih warna sendiri">
-      </span>
-      <span class="tema-color-check">${checkSvg}</span>
-      <span class="tema-color-label">Sendiri</span>
+    <button type="button" class="tema-color-btn tema-color-custom${state.mode === 'custom' ? ' active' : ''}" data-temamode="custom" style="--tc-color:${customColor}" title="Sendiri" aria-label="Pilih warna sendiri" aria-pressed="${state.mode === 'custom' ? 'true' : 'false'}">
+      <input type="color" id="temaCustomInput" value="${customColor}" aria-label="Pilih warna sendiri">
     </button>
   `;
   grid.innerHTML = presetHtml + customHtml;
