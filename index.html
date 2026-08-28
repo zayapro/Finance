@@ -688,7 +688,7 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
   transform:translateX(-50%);
   display:flex;align-items:center;
   padding:2px 8px;border-radius:999px;
-  font-family:'Poppins',sans-serif;font-size:7px;font-weight:800;letter-spacing:.04em;
+  font-family:'Poppins',sans-serif;font-size:7px;font-weight:500;letter-spacing:.04em;
   color:#fff;white-space:nowrap;
   background:var(--forest-glow);
   box-shadow:0 2px 5px -1px color-mix(in srgb, var(--forest-glow) 55%, black 25%);
@@ -701,9 +701,8 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
   /* Batasi lebar kolom teks supaya nama aplikasi yang PANJANG (diisi
      pengguna lewat Pengaturan Aplikasi) tidak mendorong ikon-ikon di
      kanan banner (jam kurs/notifikasi) atau meluber keluar layar --
-     alih-alih dipotong (ellipsis), nama dibiarkan patah ke baris
-     berikutnya (lihat white-space:normal di .brand-text-col
-     .brand-name) supaya nama panjang tetap terbaca utuh. */
+     nama yang kepanjangan dipotong satu baris dengan elipsis (...)
+     lihat .brand-text-col .brand-name. */
   max-width:clamp(120px, 42vw, 190px);
 }
 .brand-greeting{
@@ -712,15 +711,16 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
 }
 /* Nama brand di banner: bobotnya DITURUNKAN ke 600 (semi-bold ringan)
    & ukurannya diperkecil (18px -> 15.5px) supaya lebih pas/proporsional
-   dengan lencana & avatar yang sudah diperkecil, dan dibolehkan patah
-   baris (bukan nowrap+ellipsis seperti .brand-name dasar di
-   mini-topbar/footer) supaya nama aplikasi yang panjang tetap rapi
-   terbaca, tidak terpotong. */
+   dengan lencana & avatar yang sudah diperkecil. Nama yang kepanjangan
+   dipotong satu baris dengan elipsis (...), TIDAK dibolehkan patah ke
+   baris kedua lagi. */
 .brand-text-col .brand-name{
   font-weight:600;
   font-size:15.5px;
-  white-space:normal;
-  overflow-wrap:break-word;word-break:break-word;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  max-width:100%;
   line-height:1.15;
 }
 /* Versi logo brand di dalam banner "Saldo Total": lingkaran foto dengan
@@ -1535,34 +1535,42 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   min-width:0;flex:0 1 auto;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
-/* Gaya sembunyikan saldo ala bank/e-wallet: bukan blur, tapi digit
-   angkanya sungguhan diganti karakter bulatan (•) lewat JS (lihat
-   maskCurrencyString di script.js) sambil tetap mempertahankan format
-   pemisah ribuan aslinya (mis. "Rp ••.•••.•••"). Class ini cuma
-   nambahin sedikit jarak antar-titik & non-selectable supaya baris
-   titik-titiknya kelihatan rapi & tidak bisa ke-copy sembarangan. */
+/* Desimal ",00" di belakang nominal saldo: ukurannya SEPARUH dari
+   angka utama (0.5em, relatif ke font-size .saldo-value yang lagi
+   aktif di elemen ini -- otomatis ikut menyusut/membesar mengikuti
+   clamp() responsif induknya, tidak perlu di-hardcode ulang di media
+   query manapun). Dibuat sedikit lebih ringan & agak transparan biar
+   angka utamanya tetap yang paling menonjol. */
+.saldo-decimal{
+  font-size:0.5em;
+  font-weight:600;
+  opacity:0.75;
+}
+/* Gaya sembunyikan saldo ala bank/e-wallet: nominalnya diganti "***"
+   (lihat maskCurrencyString di script.js), prefix mata uang (mis.
+   "Rp") tetap dipertahankan apa adanya. Class ini cuma nambahin
+   sedikit jarak antar-karakter & non-selectable supaya tampilan
+   maskingnya rapi & tidak bisa ke-copy sembarangan. */
 .saldo-value.is-hidden{
   letter-spacing:0.04em;
   user-select:none;
 }
 .saldo-toggle{
   flex-shrink:0;
-  width:34px;height:34px;border-radius:11px;
+  width:26px;height:26px;
   display:flex;align-items:center;justify-content:center;
-  /* Sebelumnya abu netral polos (var(--paper)/var(--line)) yang terasa
-     lepas dari warna aksen kartu ini. Diganti jadi tint oranye lembut
-     senada dengan pill IDR/USD di atasnya (sama-sama var(--primary-soft)
-     + border oranye tipis) supaya tombol mata ini kelihatan "satu
-     keluarga" dengan aksen kartu, bukan elemen abu-abu yang nyempil
-     sendiri. */
-  background:var(--primary-soft);
-  border:1px solid rgba(242,103,43,0.18);
-  color:var(--primary-deep);
-  transition:background .15s ease, color .15s ease, border-color .15s ease;
+  /* Tanpa "kartu": tidak ada background box, border, atau radius --
+     cuma ikon mata polos mengambang, warnanya mengikuti warna teks di
+     sekitarnya (putih semi-transparan di atas banner gelap) supaya
+     tetap terbaca tanpa bingkai. */
+  background:none;
+  border:none;
+  color:rgba(255,248,241,0.85);
+  transition:color .15s ease, opacity .15s ease;
   -webkit-tap-highlight-color:transparent;
   touch-action:manipulation;
 }
-.saldo-toggle:hover{background:rgba(242,103,43,0.16);border-color:rgba(242,103,43,0.32);color:var(--primary-deep);}
+.saldo-toggle:hover{color:#fff;opacity:.85;}
 /* Baris Pemasukan/Pengeluaran bulan ini: SENGAJA justify-content:flex-start
    (bukan space-between) supaya di layar lebar (desktop/tablet) kedua item
    ini tetap NEMPEL rapat & mengelompok tepat di bawah "Saldo Total",
@@ -8567,7 +8575,7 @@ body.is-scrolling *{
      ellipsis di .saldo-value (aturan dasar) tetap dipertahankan
      sebagai jaring pengaman kalau saldo-nya sangat besar. */
   .saldo-value{font-size:clamp(26px, 8.6vw, 38px);}
-  .saldo-toggle{width:30px;height:30px;border-radius:10px;}
+  .saldo-toggle{width:24px;height:24px;}
   /* Margin horizontal 0 (samakan dengan .saldo-card di atas, yang
      sekarang ikut lebar konten .app) supaya kartu "Uang Masuk &
      Keluar" tetap pas selebar .saldo-card — lihat catatan lengkap

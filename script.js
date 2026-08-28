@@ -1429,15 +1429,29 @@ function isSaldoHidden() {
   return stored === null ? true : stored === '1';
 }
 
-/* Gaya "sembunyikan saldo" ala aplikasi bank/e-wallet pada umumnya:
-   digit angka diganti bulatan titik (•) TAPI format pemisah ribuan &
-   prefix mata uangnya tetap dipertahankan apa adanya (mis. "Rp
-   ••.•••.•••"), bukan cuma di-blur seperti sebelumnya. Selain lebih
-   mirip pola yang sudah familiar buat pengguna, ini juga sedikit lebih
-   privat karena teks aslinya memang tidak lagi ada di layar (blur CSS
-   masih menyisakan angka asli di balik piksel yang kabur). */
+/* Gaya "sembunyikan saldo": prefix mata uangnya tetap dipertahankan
+   (mis. "Rp"), tapi nominalnya diganti jadi "***" saja (bukan
+   titik-titik sepanjang jumlah digit aslinya) -- lebih ringkas dan
+   tidak membocorkan jumlah digit angka aslinya sama sekali. */
 function maskCurrencyString(str) {
-  return String(str).replace(/[0-9]/g, '•');
+  const s = String(str);
+  const m = s.match(/^(\D*)/); // tangkap prefix non-digit di depan (mis. "Rp ")
+  const prefix = m ? m[1] : '';
+  return prefix + '***';
+}
+
+/* Tampilan saldo dengan desimal ",00" di belakang, ukuran fontnya
+   SEPARUH dari font angka utama (pakai unit "em" relatif ke
+   .saldo-value supaya otomatis ikut menyusut/membesar mengikuti
+   clamp() responsif si induk, lihat .saldo-decimal di CSS). Desimal
+   ini HANYA ditambahkan untuk mode Rupiah -- kalau lagi mode USD,
+   formatternya (usdFormatter) sudah otomatis menyertakan 2 angka
+   desimal sendiri (mis. "$12.34"), jadi tidak perlu ditambah lagi. */
+function fmtSaldoDisplayHTML(raw) {
+  const text = fmtRupiah(raw);
+  const isUSD = (typeof displayCurrency !== 'undefined' && displayCurrency === 'USD' && fxBaseRate);
+  if (isUSD) return text;
+  return text + '<span class="saldo-decimal">,00</span>';
 }
 
 function applySaldoVisibility() {
@@ -1453,7 +1467,7 @@ function applySaldoVisibility() {
   // saat ditampilkan lagi (langsung jadi angka final), sama seperti pola
   // reveal instan di aplikasi bank/e-wallet.
   cancelAnimationFrame(saldoAnimFrame);
-  valueEl.textContent = hidden ? maskCurrencyString(fmtRupiah(raw)) : fmtRupiah(raw);
+  valueEl.innerHTML = hidden ? maskCurrencyString(fmtRupiah(raw)) : fmtSaldoDisplayHTML(raw);
   iconEl.innerHTML = hidden ? EYE_OFF_SVG : EYE_OPEN_SVG;
   if (btn) btn.title = hidden ? 'Tampilkan saldo' : 'Sembunyikan saldo';
 }
@@ -1491,7 +1505,7 @@ function animateSaldo(target) {
   if (!saldoFirstRenderDone) {
     saldoFirstRenderDone = true;
     cancelAnimationFrame(saldoAnimFrame);
-    el.textContent = fmtRupiah(target);
+    el.innerHTML = fmtSaldoDisplayHTML(target);
     el.dataset.raw = target;
     return;
   }
@@ -1503,7 +1517,7 @@ function animateSaldo(target) {
     const p = Math.min(1, (now - startTime) / duration);
     const eased = 1 - Math.pow(1 - p, 3);
     const value = start + (target - start) * eased;
-    el.textContent = fmtRupiah(value);
+    el.innerHTML = fmtSaldoDisplayHTML(value);
     if (p < 1) {
       saldoAnimFrame = requestAnimationFrame(tick);
     } else {
