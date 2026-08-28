@@ -357,7 +357,18 @@ try {
   --z-panel-overlay:150;
   --z-panel:151;
   --z-modal:200;
-  --z-toast:300;
+  /* FIX toast guest tak muncul di mobile: dulu 300, tapi overlay
+     login/daftar (#cloudAuthOverlay) & overlay kunci PIN
+     (#pinLockOverlay) pakai z-index:99999 -- jauh di atas 300.
+     Guest yang menyentuh fitur berbayar akun (Tanya AI, sinkron, dll)
+     memicu requireCloudLogin() di script.js, yang memanggil
+     showToast() LALU langsung window.cloudRequireLogin() di tick yang
+     sama -- overlay full-layar itu menutup toast SEBELUM sempat
+     kelihatan sama sekali (bukan cuma soal posisi, tertutup total).
+     Dinaikkan jauh di atas 99999 supaya toast tetap "paling atas,
+     selalu terlihat" sesuai niat aslinya (lihat komentar di atas),
+     termasuk saat muncul bareng popup-popup itu. */
+  --z-toast:100000;
 }
 *{box-sizing:border-box;}
 /* ---- Hapus SEMUA "kotak/bayangan biru" bawaan browser saat elemen
@@ -8168,7 +8179,7 @@ select#categoryFilter[hidden]{display:none;}
 
 /* ============ TOAST ============ */
 .toast-wrap{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:10px;z-index:var(--z-toast);}
-@media (max-width:640px){.toast-wrap{left:16px;right:16px;bottom:calc(72px + 14px + env(safe-area-inset-bottom, 0px));align-items:stretch;z-index:610;}}
+@media (max-width:640px){.toast-wrap{left:16px;right:16px;bottom:calc(72px + 14px + env(safe-area-inset-bottom, 0px));align-items:stretch;z-index:var(--z-toast);}}
 .toast{
   background:var(--forest-deep);color:#fff;padding:12px 16px;border-radius:10px;
   font-size:13.5px;font-weight:600;display:flex;align-items:center;gap:9px;
