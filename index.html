@@ -2102,7 +2102,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   background:transparent;
 }
 .flow-deal-title{display:flex;align-items:center;gap:12px;min-width:0;flex:1 1 auto;overflow:hidden;}
-.flow-deal-title .icon-badge{background:linear-gradient(140deg,#FDBA74,#C2410C);box-shadow:none;flex-shrink:0;}
+.flow-deal-title .icon-badge{background:linear-gradient(140deg, var(--primary-light), var(--primary-deep));box-shadow:none;flex-shrink:0;}
 .flow-deal-title-text{min-width:0;}
 .flow-deal-title-text h3{font-size:11.5px;font-weight:700;color:var(--ink-soft);font-family:var(--font-body);text-transform:uppercase;letter-spacing:0.05em;line-height:1.45;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .flow-deal-sub{font-size:10.5px;font-weight:500;color:var(--ink-faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -3750,24 +3750,24 @@ tr.fade-up{animation:fadeRow .35s ease both;}
    centang di pojok saat aktif), TAPI 2 kolom & isinya huruf "Aa" besar
    sbg pratinjau tiap gaya font (bukan lingkaran warna) + label nama
    gaya di bawahnya. ---- */
-.tema-font-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+.tema-font-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;}
 .tema-font-btn{
-  position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
-  border:1.5px solid var(--line);border-radius:16px;background:var(--paper);
-  padding:14px 8px 11px;cursor:pointer;font-family:inherit;
+  position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  border:1.5px solid var(--line);border-radius:14px;background:var(--paper);
+  padding:11px 4px 9px;cursor:pointer;font-family:inherit;min-width:0;
   transition:transform .15s cubic-bezier(.3,1.6,.4,1), border-color .15s ease, background .15s ease;
 }
 .tema-font-btn:hover{transform:translateY(-2px);}
 .tema-font-btn.active{border-color:var(--primary);background:color-mix(in srgb, var(--primary) 9%, var(--card));}
 .tema-font-btn .tfb-check{
-  position:absolute;top:8px;right:8px;width:18px;height:18px;border-radius:50%;
+  position:absolute;top:6px;right:6px;width:16px;height:16px;border-radius:50%;
   background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;
   opacity:0;transform:scale(0.6);transition:opacity .15s ease, transform .15s ease;
 }
 .tema-font-btn.active .tfb-check{opacity:1;transform:scale(1);}
-.tema-font-btn .tfb-preview{font-size:22px;font-weight:600;color:var(--ink);line-height:1.15;}
+.tema-font-btn .tfb-preview{font-size:18px;font-weight:600;color:var(--ink);line-height:1.15;}
 .tema-font-btn.active .tfb-preview{color:var(--primary);}
-.tema-font-btn .tfb-label{font-size:11.5px;font-weight:700;color:var(--ink);text-align:center;line-height:1.25;}
+.tema-font-btn .tfb-label{font-size:9.5px;font-weight:700;color:var(--ink);text-align:center;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
 .tema-font-btn.active .tfb-label{color:var(--primary);}
 .tema-preview-card{
   margin-top:14px;border-radius:18px;padding:16px 16px 14px;color:#fff;

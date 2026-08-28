@@ -8001,7 +8001,12 @@ document.getElementById('temaColorGrid')?.addEventListener('click', (e) => {
   if (!btn || e.target.tagName === 'INPUT') return;
   const mode = btn.dataset.temamode;
   if (mode === 'custom') {
-    openTemaCustomColorModal();
+    // ---- Fitur "Warna Sendiri" DIPENDAM sementara (belum dirilis) ----
+    // Swatch pelangi tetap tampil sbg preview fitur yg akan datang,
+    // tapi belum bisa dipilih/diklik dulu -- cukup kasih tahu lewat
+    // toast, TIDAK membuka popup #temaCustomColorModalOverlay ataupun
+    // mengubah state warna yg sedang aktif.
+    showToast('Fitur warna sendiri belum tersedia saat ini.', 'info');
     return;
   }
   const state = { ...temaPendingState, mode };
