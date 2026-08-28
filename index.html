@@ -9313,6 +9313,87 @@ body.is-scrolling *{
 }
 #cloudSyncBadge .dot{ width:7px; height:7px; border-radius:50%; background:#6EE7B7; }
 #cloudSyncBadge.err .dot{ background:#FDA4AF; }
+/* ---- Kolom yang cuma tampil di mode Daftar (Nama, PIN, Konfirmasi
+   PIN) -- disembunyikan di mode Masuk lewat class ini, ditoggle oleh
+   setMode() di cloud-sync.js. ---- */
+.cloud-auth-field-signup-only{ display:none; }
+.cloud-auth-card.mode-signup .cloud-auth-field-signup-only{ display:block; }
+/* ---- Overlay kunci PIN: dot indikator + keypad numerik ---- */
+#pinLockOverlay{
+  position:fixed; inset:0; z-index:99999;
+  background:
+    radial-gradient(760px 420px at 15% -10%, color-mix(in srgb, var(--primary) 30%, transparent), transparent 60%),
+    radial-gradient(680px 460px at 105% 110%, color-mix(in srgb, var(--primary-deep) 20%, transparent), transparent 55%),
+    var(--forest-deep, #0B1220);
+  display:flex; align-items:center; justify-content:center;
+  padding:24px;
+}
+#pinLockOverlay.hidden{ display:none; }
+.pin-lock-card{ max-width:320px; }
+.pin-dots{
+  display:flex; align-items:center; justify-content:center; gap:14px;
+  margin:6px 0 18px;
+}
+.pin-dot{
+  width:14px; height:14px; border-radius:50%;
+  border:2px solid var(--line,#E4E8EF);
+  background:transparent;
+  transition:background .15s, border-color .15s, transform .15s;
+}
+.pin-dot.filled{
+  background:var(--primary,#F2672B);
+  border-color:var(--primary,#F2672B);
+  transform:scale(1.1);
+}
+.pin-dots.shake{ animation:pinShake .4s; }
+@keyframes pinShake{
+  10%,90%{ transform:translateX(-2px); }
+  20%,80%{ transform:translateX(4px); }
+  30%,50%,70%{ transform:translateX(-8px); }
+  40%,60%{ transform:translateX(8px); }
+}
+.pin-keypad{
+  display:grid; grid-template-columns:repeat(3,1fr); gap:12px;
+  margin:0 0 18px;
+}
+.pin-key{
+  aspect-ratio:1/1; border-radius:50%; border:1px solid var(--line,#E4E8EF);
+  background:var(--paper,#F4F6F9); color:var(--ink,#131A2A);
+  font-size:19px; font-weight:700; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  transition:background .12s, transform .1s;
+}
+.pin-key:active{ transform:scale(.93); background:var(--card,#FFFFFF); }
+.pin-key-empty{ background:transparent; border:none; cursor:default; }
+.pin-key-back{ color:var(--ink-soft,#5B6472); }
+
+/* ============ HALAMAN "UBAH PIN" & "UBAH PASSWORD" (di Pengaturan > Keamanan) ============
+   Ikon bundar besar di bottom sheet konfirmasi (mirip .confirm-icon
+   tapi lebih besar & 2 varian warna: kuning utk peringatan "Ubah PIN",
+   biru/primary utk "Lupa Password") -- gaya & ukurannya niru referensi
+   gambar yg diminta. */
+.sec-sheet-icon{
+  width:76px; height:76px; margin:4px auto 14px;
+  display:flex; align-items:center; justify-content:center;
+}
+.sec-sheet-icon.warn{ color:#F59E0B; }
+.sec-sheet-icon.lock{ color:var(--primary,#F2672B); }
+.sec-sheet-title{ margin:0 0 6px; font-size:17px; font-weight:700; text-align:center; color:var(--ink,#131A2A); }
+.sec-sheet-desc{ margin:0 0 20px; font-size:13.5px; line-height:1.55; text-align:center; color:var(--ink-soft,#5B6472); }
+.sec-sheet-actions{ display:flex; flex-direction:column; gap:10px; }
+.sec-sheet-actions .btn{ width:100%; justify-content:center; }
+/* Step "Ubah PIN": pakai lagi .pin-dots/.pin-keypad yg sudah ada,
+   ditaruh di dalam kartu halaman biasa (bukan overlay gelap kunci
+   boot), jadi tanpa background gelap -- cukup dipusatkan. */
+.pin-change-step{ text-align:center; padding:8px 0 4px; }
+.pin-change-step h3{ margin:0 0 6px; font-size:16.5px; font-weight:700; color:var(--ink,#131A2A); }
+.pin-change-step p{ margin:0 0 18px; font-size:13px; color:var(--ink-soft,#5B6472); }
+.pin-change-step .pin-keypad{ max-width:280px; margin-left:auto; margin-right:auto; }
+/* Step "Ubah Password": form biasa dgn link "Lupa Password?" di kanan */
+.pw-change-step p{ margin:0 0 16px; font-size:13px; color:var(--ink-soft,#5B6472); line-height:1.5; }
+.pw-forgot-link{ display:inline-block; margin-top:2px; font-size:13px; font-weight:600; color:var(--primary-deep,#C2410C); text-decoration:none; cursor:pointer; }
+.pw-forgot-link:hover{ text-decoration:underline; }
+.pw-change-step[hidden]{ display:none; }
 </style>
 </head>
 <body>
@@ -10224,6 +10305,147 @@ body.is-scrolling *{
   </div>
   <!-- ===== /HALAMAN "DATA DIRI" ===== -->
 
+  <!-- ===== BOTTOM SHEET: KONFIRMASI UBAH PIN =====
+       Dipicu dari baris "Ubah PIN" di Pengaturan > Keamanan. Tombol
+       "Ubah PIN" di sini menutup sheet & membuka halaman penuh
+       #pinChangeOverlay (mulai dari langkah verifikasi PIN lama). -->
+  <div class="lap-sheet-overlay" id="pinChangeConfirmSheetOverlay">
+    <div class="lap-sheet" id="pinChangeConfirmSheet" style="text-align:center;">
+      <div class="lap-sheet-handle"></div>
+      <div style="padding:6px 4px 2px;position:relative;">
+        <button type="button" class="lap-sheet-close-btn" id="pinChangeConfirmCloseBtn" aria-label="Tutup" style="position:absolute;right:0;top:0;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+        <div class="sec-sheet-icon warn">
+          <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9c.7-1.2 2.7-1.2 3.4 0l8.2 14.2c.7 1.2-.2 2.7-1.7 2.7H3.8c-1.5 0-2.4-1.5-1.7-2.7L10.3 3.9Z"/><path d="M12 9v4.5"/><circle cx="12" cy="16.8" r="1" fill="currentColor" stroke="none"/></svg>
+        </div>
+        <h3 class="sec-sheet-title">Yakin kamu ingin mengubah PIN?</h3>
+        <p class="sec-sheet-desc">PIN ini dipakai sebagai kunci cepat masuk ke ZAYAPRO di perangkat ini, menggantikan PIN lama begitu berhasil diganti.</p>
+        <div class="sec-sheet-actions">
+          <button type="button" class="btn btn-primary" id="pinChangeConfirmProceedBtn">Ubah PIN</button>
+          <button type="button" class="btn btn-ghost" id="pinChangeConfirmCancelBtn">Batal</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== HALAMAN PENUH: UBAH PIN (3 langkah: verifikasi PIN lama ->
+       PIN baru -> konfirmasi PIN baru, berbagi 1 set dot+keypad yg
+       sama, cuma judul/subjudulnya yg berganti per langkah, lihat
+       initPinChangeFlow() di script.js) ===== -->
+  <div class="detail-page-overlay lap-filter-overlay" id="pinChangeOverlay">
+    <div class="lap-filter-page">
+      <div class="lap-filter-head">
+        <button class="lap-filter-back-btn" id="pinChangeBackBtn" type="button" aria-label="Tutup Ubah PIN">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <h2>Ubah PIN</h2>
+        <span class="lap-filter-back-btn" style="visibility:hidden" aria-hidden="true"></span>
+      </div>
+      <div class="lap-filter-card">
+        <div class="pin-change-step">
+          <h3 id="pinChangeStepTitle">Masukkan PIN Lama</h3>
+          <p id="pinChangeStepSub">Masukkan PIN kamu saat ini untuk melanjutkan.</p>
+          <div class="cloud-auth-msg" id="pinChangeMsg"></div>
+          <div class="pin-dots" id="pinChangeDots">
+            <span class="pin-dot"></span><span class="pin-dot"></span><span class="pin-dot"></span>
+            <span class="pin-dot"></span><span class="pin-dot"></span><span class="pin-dot"></span>
+          </div>
+          <div class="pin-keypad" id="pinChangeKeypad">
+            <button type="button" class="pin-key" data-num="1">1</button>
+            <button type="button" class="pin-key" data-num="2">2</button>
+            <button type="button" class="pin-key" data-num="3">3</button>
+            <button type="button" class="pin-key" data-num="4">4</button>
+            <button type="button" class="pin-key" data-num="5">5</button>
+            <button type="button" class="pin-key" data-num="6">6</button>
+            <button type="button" class="pin-key" data-num="7">7</button>
+            <button type="button" class="pin-key" data-num="8">8</button>
+            <button type="button" class="pin-key" data-num="9">9</button>
+            <span class="pin-key pin-key-empty" aria-hidden="true"></span>
+            <button type="button" class="pin-key" data-num="0">0</button>
+            <button type="button" class="pin-key pin-key-back" id="pinChangeBackspace" aria-label="Hapus angka">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2Z"/><path d="M18 9l-6 6M12 9l6 6"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== HALAMAN PENUH: UBAH PASSWORD (langkah 1: verifikasi
+       password lama -> langkah 2: isi password baru) ===== -->
+  <div class="detail-page-overlay lap-filter-overlay" id="pwChangeOverlay">
+    <div class="lap-filter-page">
+      <div class="lap-filter-head">
+        <button class="lap-filter-back-btn" id="pwChangeBackBtn" type="button" aria-label="Tutup Ubah Password">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <h2>Ubah Password</h2>
+        <span class="lap-filter-back-btn" style="visibility:hidden" aria-hidden="true"></span>
+      </div>
+      <div class="lap-filter-card">
+        <div class="pw-change-step" id="pwStepOld">
+          <p>Masukkan password kamu saat ini untuk menjaga keamanan akun.</p>
+          <div class="form-row">
+            <div class="pw-field-wrap">
+              <input type="password" id="pwOldInput" placeholder="Password Lama" autocomplete="current-password">
+              <button type="button" class="pw-eye-toggle" id="pwOldToggle" tabindex="-1" aria-label="Tampilkan password" aria-pressed="false">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+          </div>
+          <a class="pw-forgot-link" id="pwForgotLink">Lupa Password?</a>
+          <div class="cloud-auth-msg" id="pwOldMsg"></div>
+        </div>
+        <div class="pw-change-step" id="pwStepNew" hidden>
+          <p>Buat password baru yang mudah kamu ingat, minimal 6 karakter.</p>
+          <div class="form-row">
+            <div class="pw-field-wrap">
+              <input type="password" id="pwNewInput" placeholder="Password Baru" autocomplete="new-password">
+              <button type="button" class="pw-eye-toggle" id="pwNewToggle" tabindex="-1" aria-label="Tampilkan password" aria-pressed="false">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="pw-field-wrap">
+              <input type="password" id="pwNewConfirmInput" placeholder="Konfirmasi Password Baru" autocomplete="new-password">
+              <button type="button" class="pw-eye-toggle" id="pwNewConfirmToggle" tabindex="-1" aria-label="Tampilkan password" aria-pressed="false">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="cloud-auth-msg" id="pwNewMsg"></div>
+        </div>
+      </div>
+      <div class="lap-filter-footer">
+        <button type="button" class="btn btn-primary lap-filter-save-btn" id="pwChangeContinueBtn" disabled>Lanjutkan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== BOTTOM SHEET: LUPA PASSWORD ===== -->
+  <div class="lap-sheet-overlay" id="pwForgotSheetOverlay">
+    <div class="lap-sheet" id="pwForgotSheet" style="text-align:center;">
+      <div class="lap-sheet-handle"></div>
+      <div style="padding:6px 4px 2px;position:relative;">
+        <button type="button" class="lap-sheet-close-btn" id="pwForgotCloseBtn" aria-label="Tutup" style="position:absolute;right:0;top:0;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+        <div class="sec-sheet-icon lock">
+          <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="10" rx="2"/><circle cx="12" cy="15" r="1.4"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+        </div>
+        <h3 class="sec-sheet-title">Lupa Password</h3>
+        <p class="sec-sheet-desc">Jika lupa password, kami akan mengirim link atur ulang password ke email akun kamu.</p>
+        <div class="cloud-auth-msg" id="pwForgotMsg"></div>
+        <div class="sec-sheet-actions">
+          <button type="button" class="btn btn-primary" id="pwForgotSendBtn">Atur Ulang Password</button>
+          <button type="button" class="btn btn-ghost" id="pwForgotCancelBtn">Batalkan</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ===== BOTTOM SHEET: PILIH BULAN (wheel picker bulan/tahun) ===== -->
   <div class="lap-sheet-overlay" id="lapMonthSheetOverlay">
     <div class="lap-sheet" id="lapMonthSheet">
@@ -10447,27 +10669,27 @@ body.is-scrolling *{
         <div class="settings-section">
           <span class="settings-section-label">Keamanan</span>
           <div class="settings-group">
-            <button type="button" class="settings-row" disabled>
+            <button type="button" class="settings-row" id="btnOpenPinChange">
               <span class="settings-row-icon">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15" r="1.3" fill="currentColor" stroke="none"/></svg>
               </span>
               <span class="settings-row-title">Ubah PIN</span>
               <svg class="settings-row-chevron" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"/></svg>
             </button>
-            <button type="button" class="settings-row" disabled>
+            <button type="button" class="settings-row" id="btnOpenPasswordChange">
               <span class="settings-row-icon">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="10.5" width="15" height="10" rx="2"/><path d="M7.5 10.5V7a4.5 4.5 0 0 1 9 0v3.5"/></svg>
               </span>
               <span class="settings-row-title">Ubah Password</span>
               <svg class="settings-row-chevron" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"/></svg>
             </button>
-            <div class="settings-row settings-row-toggle" aria-disabled="true">
+            <div class="settings-row settings-row-toggle" id="biometricToggleRow">
               <span class="settings-row-icon">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4.5v-1M17 4.5v-1M4.5 7h-1M4.5 17h-1M19.5 7h1M19.5 17h1M7 19.5v1M17 19.5v1"/><rect x="6" y="6" width="12" height="12" rx="3.5"/><circle cx="12" cy="12" r="2"/></svg>
               </span>
               <span class="settings-row-title">Login Biometrik</span>
               <label class="settings-toggle">
-                <input type="checkbox" disabled>
+                <input type="checkbox" id="biometricToggleInput">
                 <span class="settings-toggle-track"><span class="settings-toggle-thumb"></span></span>
               </label>
             </div>
@@ -12354,6 +12576,14 @@ body.is-scrolling *{
     <p class="cloud-auth-tagline">Kelola keuanganmu, di mana saja.</p>
     <div class="cloud-auth-msg" id="cloudAuthMsg"></div>
     <form id="cloudAuthForm">
+      <!-- Kolom Nama -- CUMA relevan/wajib di mode Daftar (disembunyikan
+           & atribut required-nya dilepas otomatis di mode Masuk lewat
+           setMode() di cloud-sync.js), dipakai sbg "Nama Web" bawaan &
+           identitas akun. -->
+      <div class="cloud-auth-field cloud-auth-field-signup-only" id="cloudAuthNameField">
+        <svg class="cloud-auth-field-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <input type="text" id="cloudAuthName" autocomplete="name" placeholder="Nama kamu">
+      </div>
       <div class="cloud-auth-field">
         <svg class="cloud-auth-field-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z" opacity="0"/><path d="M22 6 12 13 2 6"/><path d="M2 6h20v12H2z"/></svg>
         <input type="email" id="cloudAuthEmail" autocomplete="email" required placeholder="Email">
@@ -12365,6 +12595,19 @@ body.is-scrolling *{
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>
         </button>
       </div>
+      <!-- Kolom PIN -- CUMA di mode Daftar. PIN ini BUKAN pengganti
+           password (login tetap pakai email+password), tapi kunci
+           cepat 6 digit yg diminta tiap kali app dibuka ulang dgn
+           sesi yg masih tersimpan di HP, jadi tidak perlu ketik ulang
+           email/password tiap buka app. -->
+      <div class="cloud-auth-field cloud-auth-field-signup-only" id="cloudAuthPinField">
+        <svg class="cloud-auth-field-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="10" rx="2"/><circle cx="12" cy="15" r="1.6"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+        <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" id="cloudAuthPin" autocomplete="new-password" placeholder="Buat PIN (6 digit angka)">
+      </div>
+      <div class="cloud-auth-field cloud-auth-field-signup-only" id="cloudAuthPinConfirmField">
+        <svg class="cloud-auth-field-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="10" rx="2"/><circle cx="12" cy="15" r="1.6"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+        <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" id="cloudAuthPinConfirm" autocomplete="new-password" placeholder="Ulangi PIN">
+      </div>
       <button type="submit" class="cloud-auth-btn" id="cloudAuthSubmitBtn">Masuk</button>
     </form>
     <div class="cloud-auth-switch">
@@ -12374,6 +12617,49 @@ body.is-scrolling *{
   </div>
 </div>
 <div id="cloudSyncBadge" style="display:none;"><span class="dot"></span><span id="cloudSyncBadgeText">Tersinkron</span></div>
+
+<!-- ===== OVERLAY KUNCI PIN =====
+     Tampil (menggantikan langsung masuk ke app) hanya kalau: sesi
+     Supabase masih ada dari sebelumnya (jadi TIDAK perlu ketik ulang
+     email/password) DAN akun ini sudah pernah mengatur PIN saat
+     daftar. Diisi & dikontrol penuh dari cloud-sync.js. -->
+<div id="pinLockOverlay" class="hidden">
+  <div class="cloud-auth-card pin-lock-card">
+    <div class="cloud-auth-logo">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="10" rx="2"/><circle cx="12" cy="15" r="1.6"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+    </div>
+    <h2>Masukkan PIN</h2>
+    <p class="cloud-auth-tagline" id="pinLockGreeting">Selamat datang kembali</p>
+    <div class="pin-dots" id="pinLockDots">
+      <span class="pin-dot"></span><span class="pin-dot"></span><span class="pin-dot"></span>
+      <span class="pin-dot"></span><span class="pin-dot"></span><span class="pin-dot"></span>
+    </div>
+    <div class="cloud-auth-msg" id="pinLockMsg"></div>
+    <div class="pin-keypad" id="pinLockKeypad">
+      <button type="button" class="pin-key" data-num="1">1</button>
+      <button type="button" class="pin-key" data-num="2">2</button>
+      <button type="button" class="pin-key" data-num="3">3</button>
+      <button type="button" class="pin-key" data-num="4">4</button>
+      <button type="button" class="pin-key" data-num="5">5</button>
+      <button type="button" class="pin-key" data-num="6">6</button>
+      <button type="button" class="pin-key" data-num="7">7</button>
+      <button type="button" class="pin-key" data-num="8">8</button>
+      <button type="button" class="pin-key" data-num="9">9</button>
+      <span class="pin-key pin-key-empty" aria-hidden="true"></span>
+      <button type="button" class="pin-key" data-num="0">0</button>
+      <button type="button" class="pin-key pin-key-back" id="pinLockBackspace" aria-label="Hapus angka">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2Z"/><path d="M18 9l-6 6M12 9l6 6"/></svg>
+      </button>
+    </div>
+    <div class="cloud-auth-switch">
+      <a id="pinLockForgotLink">Lupa PIN? Keluar &amp; masuk ulang</a>
+    </div>
+    <button type="button" class="btn btn-ghost" id="pinLockBiometricRetryBtn" style="display:none;margin-top:10px;width:100%;justify-content:center;gap:6px;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a7 7 0 0 0-7 7v2c0 3.5-1 5.5-2 7"/><path d="M19 10v2c0 3-.6 5-1.5 6.5"/><path d="M12 3a7 7 0 0 1 7 7v2"/><path d="M8 10a4 4 0 0 1 8 0v2c0 2.5.5 4.5 1.5 6"/><path d="M12 10v3c0 3-1 5-3 7"/><path d="M12 13v1c0 2.5-.6 4.5-2 6"/></svg>
+      Coba Sidik Jari / Face ID Lagi
+    </button>
+  </div>
+</div>
 
 <!-- SDK Supabase, dimuat sebelum cloud-sync.js.
      CATATAN: script.js SENGAJA TIDAK dimuat statis di sini lagi --

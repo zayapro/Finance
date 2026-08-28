@@ -221,10 +221,14 @@
 
   /* ---------- overlay login/daftar ---------- */
   const overlay = document.getElementById('cloudAuthOverlay');
+  const authCard = overlay ? overlay.querySelector('.cloud-auth-card') : null;
   const form = document.getElementById('cloudAuthForm');
+  const nameInput = document.getElementById('cloudAuthName');
   const emailInput = document.getElementById('cloudAuthEmail');
   const passInput = document.getElementById('cloudAuthPassword');
   const passToggle = document.getElementById('cloudAuthPwToggle');
+  const pinInput = document.getElementById('cloudAuthPin');
+  const pinConfirmInput = document.getElementById('cloudAuthPinConfirm');
   const msgBox = document.getElementById('cloudAuthMsg');
   const submitBtn = document.getElementById('cloudAuthSubmitBtn');
   const titleEl = document.getElementById('cloudAuthTitle');
@@ -232,6 +236,33 @@
   const switchLink = document.getElementById('cloudAuthSwitchLink');
 
   let mode = 'login'; // 'login' | 'signup'
+
+  /* ---------- util hash PIN (SHA-256, bukan dienkripsi 2 arah -- cukup
+     buat kunci-cepat lokal, BUKAN pengganti keamanan email+password
+     yang tetap jadi gerbang otentikasi utama ke Supabase/RLS) ----------
+     Digarami pakai email (bukan user id) supaya bisa dihitung SEKALIGUS
+     saat form daftar disubmit -- sebelum tahu apakah sesi langsung
+     terbentuk atau masih menunggu konfirmasi email -- lalu dititipkan
+     ke user_metadata via options.data pada sb.auth.signUp() itu
+     sendiri, jadi TIDAK perlu langkah "simpan PIN tertunda" terpisah. */
+  const PIN_SALT = 'zayapro-pin-v1';
+  async function sha256Hex(str) {
+    const enc = new TextEncoder().encode(str);
+    const buf = await crypto.subtle.digest('SHA-256', enc);
+    return Array.from(new Uint8Array(buf)).map(function (b) { return b.toString(16).padStart(2, '0'); }).join('');
+  }
+  function computePinHash(email, pin) {
+    return sha256Hex(PIN_SALT + ':' + String(email || '').trim().toLowerCase() + ':' + pin);
+  }
+  // Saring input kolom PIN di form daftar supaya cuma angka yang bisa
+  // diketik (mis. HP tetap munculin keypad angka lewat inputmode, tapi
+  // ini jaga-jaga di keyboard fisik/browser desktop juga).
+  [pinInput, pinConfirmInput].forEach(function (el) {
+    if (!el) return;
+    el.addEventListener('input', function () {
+      el.value = el.value.replace(/[^0-9]/g, '').slice(0, 6);
+    });
+  });
 
   function showMsg(text, kind) {
     msgBox.textContent = text;
@@ -243,6 +274,14 @@
   function setMode(next) {
     mode = next;
     clearMsg();
+    if (authCard) authCard.classList.toggle('mode-signup', mode === 'signup');
+    // Kolom Nama & PIN cuma WAJIB (required) di mode Daftar -- dilepas
+    // di mode Masuk supaya form login lama (email+password saja) tetap
+    // bisa disubmit tanpa terganjal validasi HTML pada kolom yang
+    // memang disembunyikan.
+    if (nameInput) nameInput.required = (mode === 'signup');
+    if (pinInput) pinInput.required = (mode === 'signup');
+    if (pinConfirmInput) pinConfirmInput.required = (mode === 'signup');
     if (mode === 'signup') {
       titleEl.textContent = 'Daftar Akun ZAYAPRO';
       submitBtn.textContent = 'Daftar';
@@ -278,17 +317,44 @@
   form.addEventListener('submit', async function (e) {
     e.preventDefault();
     clearMsg();
+    const name = nameInput ? nameInput.value.trim() : '';
     const email = emailInput.value.trim();
     const password = passInput.value;
+    const pin = pinInput ? pinInput.value.trim() : '';
+    const pinConfirm = pinConfirmInput ? pinConfirmInput.value.trim() : '';
     if (!email || password.length < 6) {
       showMsg('Isi email dan password (minimal 6 karakter).', 'err');
       return;
+    }
+    if (mode === 'signup') {
+      if (!name) {
+        showMsg('Isi nama kamu.', 'err');
+        return;
+      }
+      if (!/^[0-9]{6}$/.test(pin)) {
+        showMsg('PIN harus 6 digit angka.', 'err');
+        return;
+      }
+      if (pin !== pinConfirm) {
+        showMsg('Konfirmasi PIN tidak cocok.', 'err');
+        return;
+      }
     }
     submitBtn.disabled = true;
     submitBtn.textContent = mode === 'signup' ? 'Mendaftar...' : 'Masuk...';
     try {
       if (mode === 'signup') {
-        const { data, error } = await sb.auth.signUp({ email: email, password: password });
+        // PIN dihitung hash-nya (bukan disimpan mentah) & dititipkan
+        // langsung ke user_metadata lewat options.data saat mendaftar
+        // -- jadi tersedia di akun ini SEJAK AWAL, baik saat sesi
+        // langsung terbentuk maupun saat masih menunggu user login
+        // pertama kali setelah konfirmasi email.
+        const pinHash = await computePinHash(email, pin);
+        const { data, error } = await sb.auth.signUp({
+          email: email,
+          password: password,
+          options: { data: { full_name: name, pin_hash: pinHash } }
+        });
         if (error) throw error;
         if (data.session) {
           await onLoggedIn(data.session.user);
@@ -328,6 +394,9 @@
     // src="script.js">, jadi begitu script.js jalan, nilai ini sudah
     // pasti tersedia (bukan race condition/masih kosong).
     window.zayaproAccountEmail = user.email || null;
+    // Nama yang diisi di kolom "Nama" saat daftar (user_metadata.full_name)
+    // -- dipakai script.js sbg "Nama Web" bawaan, lihat getDefaultAppName().
+    window.zayaproAccountName = (user.user_metadata && user.user_metadata.full_name) || null;
     subscribeResetChannel(user.id);
     showMsg('Menarik data dari cloud...', 'ok');
     await pullAllFromCloud();
@@ -352,6 +421,222 @@
     document.body.appendChild(s);
   }
 
+  /* ---------- kunci PIN (dipakai HANYA saat sesi lama dipakai lagi
+     otomatis di boot(), lihat di bawah -- BUKAN sesudah submit form
+     login/daftar, krn di situ user baru saja membuktikan identitasnya
+     lewat email+password) ---------- */
+  const pinLockOverlay = document.getElementById('pinLockOverlay');
+  function fallbackNameFromEmail(email) {
+    const local = String(email || '').split('@')[0];
+    if (!local) return '';
+    return local.replace(/[._]+/g, ' ').trim().split(/\s+/).filter(Boolean)
+      .map(function (w) { return w.charAt(0).toUpperCase() + w.slice(1); }).join(' ');
+  }
+  function requirePinUnlock(user, expectedHash) {
+    return new Promise(function (resolve) {
+      const dotsWrap = document.getElementById('pinLockDots');
+      const dots = dotsWrap ? Array.prototype.slice.call(dotsWrap.querySelectorAll('.pin-dot')) : [];
+      const msgBox2 = document.getElementById('pinLockMsg');
+      const greeting = document.getElementById('pinLockGreeting');
+      const keypad = document.getElementById('pinLockKeypad');
+      const backspaceBtn = document.getElementById('pinLockBackspace');
+      const forgotLink = document.getElementById('pinLockForgotLink');
+      const bioRetryBtn = document.getElementById('pinLockBiometricRetryBtn');
+      let entered = '';
+      let checking = false;
+
+      if (bioRetryBtn) {
+        bioRetryBtn.style.display = window.zayaproAuth.isBiometricEnabled() ? 'flex' : 'none';
+      }
+
+      if (greeting) {
+        const displayName = (user.user_metadata && user.user_metadata.full_name) || fallbackNameFromEmail(user.email);
+        greeting.textContent = displayName ? ('Halo, ' + displayName) : 'Selamat datang kembali';
+      }
+
+      function renderDots() {
+        dots.forEach(function (d, i) { d.classList.toggle('filled', i < entered.length); });
+      }
+      function showErr(text) {
+        if (msgBox2) { msgBox2.textContent = text; msgBox2.className = 'cloud-auth-msg show err'; }
+        if (dotsWrap) {
+          dotsWrap.classList.remove('shake');
+          void dotsWrap.offsetWidth; // restart animasi shake
+          dotsWrap.classList.add('shake');
+        }
+      }
+      function clearErr() {
+        if (msgBox2) msgBox2.className = 'cloud-auth-msg';
+      }
+      async function handleComplete() {
+        checking = true;
+        const hash = await computePinHash(user.email, entered);
+        if (hash === expectedHash) {
+          cleanup();
+          pinLockOverlay.classList.add('hidden');
+          resolve();
+        } else {
+          showErr('PIN salah, coba lagi.');
+          entered = '';
+          renderDots();
+          checking = false;
+        }
+      }
+      function onKeyClick(e) {
+        const btn = e.target.closest('.pin-key[data-num]');
+        if (!btn || checking) return;
+        if (entered.length >= 6) return;
+        clearErr();
+        entered += btn.getAttribute('data-num');
+        renderDots();
+        if (entered.length === 6) handleComplete();
+      }
+      function onBackspace() {
+        if (checking) return;
+        clearErr();
+        entered = entered.slice(0, -1);
+        renderDots();
+      }
+      function onForgot() {
+        window.cloudSignOut();
+      }
+      async function onBioRetry() {
+        if (checking) return;
+        const ok = await window.zayaproAuth.tryBiometricUnlock();
+        if (ok) {
+          cleanup();
+          pinLockOverlay.classList.add('hidden');
+          resolve();
+        }
+      }
+      function cleanup() {
+        keypad.removeEventListener('click', onKeyClick);
+        backspaceBtn.removeEventListener('click', onBackspace);
+        forgotLink.removeEventListener('click', onForgot);
+        if (bioRetryBtn) bioRetryBtn.removeEventListener('click', onBioRetry);
+      }
+
+      keypad.addEventListener('click', onKeyClick);
+      backspaceBtn.addEventListener('click', onBackspace);
+      forgotLink.addEventListener('click', onForgot);
+      if (bioRetryBtn) bioRetryBtn.addEventListener('click', onBioRetry);
+
+      entered = '';
+      renderDots();
+      clearErr();
+      pinLockOverlay.classList.remove('hidden');
+    });
+  }
+
+  /* ---------- API terpusat utk halaman Pengaturan > Keamanan
+     (Ubah PIN / Ubah Password / Login Biometrik) -- dipanggil dari
+     script.js, semua operasi otentikasi tetap lewat modul ini krn
+     `sb` & `currentUser` cuma ada di sini. ---------- */
+  window.zayaproAuth = {
+    hasPin: function () {
+      return !!(currentUser && currentUser.user_metadata && currentUser.user_metadata.pin_hash);
+    },
+    verifyPin: async function (pin) {
+      if (!currentUser) return false;
+      const hash = currentUser.user_metadata && currentUser.user_metadata.pin_hash;
+      if (!hash) return false;
+      const h = await computePinHash(currentUser.email, pin);
+      return h === hash;
+    },
+    setPin: async function (newPin) {
+      if (!currentUser) throw new Error('Belum login.');
+      const hash = await computePinHash(currentUser.email, newPin);
+      const { data, error } = await sb.auth.updateUser({ data: { pin_hash: hash } });
+      if (error) throw error;
+      currentUser = data.user;
+      return true;
+    },
+    verifyPassword: async function (password) {
+      if (!currentUser) return false;
+      const { error } = await sb.auth.signInWithPassword({ email: currentUser.email, password: password });
+      return !error;
+    },
+    changePassword: async function (newPassword) {
+      const { data, error } = await sb.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      currentUser = data.user;
+      return true;
+    },
+    requestPasswordReset: async function () {
+      if (!currentUser) throw new Error('Belum login.');
+      const { error } = await sb.auth.resetPasswordForEmail(currentUser.email);
+      if (error) throw error;
+      return true;
+    },
+    /* ---------- Login Biometrik (WebAuthn, platform authenticator)
+       ----------
+       Kredensialnya dibuat & disimpan LOKAL per perangkat (localStorage,
+       BUKAN dikirim/diverifikasi ke server -- tidak ada tabel public
+       key di Supabase), jadi sifatnya murni "kenyamanan buka app cepat
+       di perangkat ini" (menggantikan layar PIN), BUKAN otentikasi
+       kriptografis penuh spt passkey sungguhan yg dicek backend.
+       Otomatis dianggap tidak tersedia kalau perangkat/browser tidak
+       punya sensor sidik jari/Face ID atau halaman diakses lewat HTTP
+       (WebAuthn wajib HTTPS/localhost). */
+    biometricSupported: async function () {
+      try {
+        return !!(window.PublicKeyCredential && await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable());
+      } catch (e) { return false; }
+    },
+    isBiometricEnabled: function () {
+      if (!currentUser) return false;
+      return localStorage.getItem('zayapro_biometric_cred_' + currentUser.id) != null;
+    },
+    enableBiometric: async function () {
+      if (!currentUser) throw new Error('Belum login.');
+      const challenge = crypto.getRandomValues(new Uint8Array(32));
+      const userIdBytes = new TextEncoder().encode(currentUser.id);
+      const cred = await navigator.credentials.create({
+        publicKey: {
+          challenge: challenge,
+          rp: { name: 'ZAYAPRO' },
+          user: {
+            id: userIdBytes,
+            name: currentUser.email || 'user',
+            displayName: (currentUser.user_metadata && currentUser.user_metadata.full_name) || currentUser.email || 'user'
+          },
+          pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
+          authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required' },
+          timeout: 60000,
+          attestation: 'none'
+        }
+      });
+      if (!cred) throw new Error('Gagal membuat kredensial biometrik.');
+      const idB64 = btoa(String.fromCharCode.apply(null, new Uint8Array(cred.rawId)));
+      localStorage.setItem('zayapro_biometric_cred_' + currentUser.id, idB64);
+      return true;
+    },
+    disableBiometric: function () {
+      if (!currentUser) return;
+      localStorage.removeItem('zayapro_biometric_cred_' + currentUser.id);
+    },
+    tryBiometricUnlock: async function () {
+      if (!currentUser) return false;
+      const idB64 = localStorage.getItem('zayapro_biometric_cred_' + currentUser.id);
+      if (!idB64) return false;
+      try {
+        const supported = await this.biometricSupported();
+        if (!supported) return false;
+        const rawId = Uint8Array.from(atob(idB64), function (c) { return c.charCodeAt(0); });
+        const challenge = crypto.getRandomValues(new Uint8Array(32));
+        const assertion = await navigator.credentials.get({
+          publicKey: {
+            challenge: challenge,
+            allowCredentials: [{ id: rawId, type: 'public-key' }],
+            userVerification: 'required',
+            timeout: 25000
+          }
+        });
+        return !!assertion;
+      } catch (e) { return false; }
+    }
+  };
+
   /* ---------- cek sesi saat halaman dibuka ---------- */
   (async function boot() {
     const { data } = await sb.auth.getSession();
@@ -361,7 +646,23 @@
       // jalur "sudah login sebelumnya, sesi masih ada" ini pun tetap
       // mengeskpos email akun ke script.js.
       window.zayaproAccountEmail = currentUser.email || null;
+      window.zayaproAccountName = (currentUser.user_metadata && currentUser.user_metadata.full_name) || null;
       subscribeResetChannel(currentUser.id);
+
+      // Sesi lama dipakai otomatis TANPA user mengetik ulang
+      // email/password -- kalau akun ini sudah pernah mengatur PIN
+      // saat daftar, minta PIN dulu di sini sbg kunci cepat sebelum
+      // masuk ke app (menggantikan "ketik ulang email/password").
+      const pinHash = currentUser.user_metadata && currentUser.user_metadata.pin_hash;
+      if (pinHash) {
+        let unlockedByBiometric = false;
+        if (window.zayaproAuth.isBiometricEnabled()) {
+          unlockedByBiometric = await window.zayaproAuth.tryBiometricUnlock();
+        }
+        if (!unlockedByBiometric) {
+          await requirePinUnlock(currentUser, pinHash);
+        }
+      }
 
       // Kalau halaman ini dimuat ulang SETELAH reset database
       // (lihat cloudResetDatabase di bawah), bersihkan cloud + local

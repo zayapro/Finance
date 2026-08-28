@@ -7801,6 +7801,13 @@ function deriveAccountNameFromEmail(email) {
     .join(' ');
 }
 function getDefaultAppName() {
+  // Prioritas: nama asli yang diisi user di kolom "Nama" saat daftar
+  // (window.zayaproAccountName, diekspos cloud-sync.js dari
+  // user_metadata.full_name) -- baru kalau kosong (akun lama yang
+  // daftar sebelum kolom Nama ada), fallback ke tebakan dari email
+  // spt semula.
+  const realName = (window.zayaproAccountName || '').trim();
+  if (realName) return realName;
   return deriveAccountNameFromEmail(window.zayaproAccountEmail) || 'ZAYAPRO';
 }
 
@@ -9545,6 +9552,304 @@ document.getElementById('dataDiriOpenBtn')?.addEventListener('click', openDataDi
 document.getElementById('dataDiriBackBtn')?.addEventListener('click', closeDataDiriOverlay);
 document.getElementById('dataDiriCancelBtn')?.addEventListener('click', closeDataDiriOverlay);
 document.getElementById('dataDiriDoneBtn')?.addEventListener('click', confirmDataDiriOverlay);
+
+/* ==========================================================
+   PENGATURAN > KEAMANAN — Ubah PIN, Ubah Password, Login Biometrik.
+   Semua operasi otentikasi sesungguhnya (verifikasi/ubah PIN & password,
+   kirim email reset, WebAuthn) dilempar ke window.zayaproAuth yang
+   diekspos cloud-sync.js -- di sini murni logika UI (buka/tutup
+   overlay & sheet, pindah langkah, tampilkan pesan error/sukses).
+========================================================== */
+
+/* ---- Sheet konfirmasi "Ubah PIN" ---- */
+function openPinChangeConfirmSheet() {
+  document.getElementById('pinChangeConfirmSheetOverlay').classList.add('open');
+  lockBodyScroll();
+}
+function closePinChangeConfirmSheet() {
+  document.getElementById('pinChangeConfirmSheetOverlay').classList.remove('open');
+  unlockBodyScroll();
+}
+document.getElementById('btnOpenPinChange')?.addEventListener('click', openPinChangeConfirmSheet);
+document.getElementById('pinChangeConfirmCloseBtn')?.addEventListener('click', closePinChangeConfirmSheet);
+document.getElementById('pinChangeConfirmCancelBtn')?.addEventListener('click', closePinChangeConfirmSheet);
+document.getElementById('pinChangeConfirmProceedBtn')?.addEventListener('click', function () {
+  closePinChangeConfirmSheet();
+  openPinChangeOverlay();
+});
+
+/* ---- Halaman "Ubah PIN" (3 langkah, 1 set dot+keypad dipakai ulang) ---- */
+let pcStep = 'old';   // 'old' -> 'new' -> 'confirm'
+let pcEntered = '';
+let pcOldOk = false;  // sudah lolos verifikasi PIN lama
+let pcNewPin = '';    // PIN baru yg diketik di langkah 'new', dicocokkan di 'confirm'
+let pcChecking = false;
+
+function pcRenderDots() {
+  const dots = document.querySelectorAll('#pinChangeDots .pin-dot');
+  dots.forEach((d, i) => d.classList.toggle('filled', i < pcEntered.length));
+}
+function pcShowErr(text) {
+  const msg = document.getElementById('pinChangeMsg');
+  msg.textContent = text;
+  msg.className = 'cloud-auth-msg show err';
+  const dotsWrap = document.getElementById('pinChangeDots');
+  dotsWrap.classList.remove('shake');
+  void dotsWrap.offsetWidth;
+  dotsWrap.classList.add('shake');
+}
+function pcClearMsg() {
+  document.getElementById('pinChangeMsg').className = 'cloud-auth-msg';
+}
+function pcGoToStep(step) {
+  pcStep = step;
+  pcEntered = '';
+  pcChecking = false;
+  pcClearMsg();
+  pcRenderDots();
+  const title = document.getElementById('pinChangeStepTitle');
+  const sub = document.getElementById('pinChangeStepSub');
+  if (step === 'old') {
+    title.textContent = 'Masukkan PIN Lama';
+    sub.textContent = 'Masukkan PIN kamu saat ini untuk melanjutkan.';
+  } else if (step === 'new') {
+    title.textContent = 'Buat PIN Baru';
+    sub.textContent = 'Buat 6 digit PIN baru yang mudah kamu ingat.';
+  } else {
+    title.textContent = 'Konfirmasi PIN Baru';
+    sub.textContent = 'Ketik ulang PIN baru kamu untuk konfirmasi.';
+  }
+}
+function openPinChangeOverlay() {
+  pcOldOk = false;
+  pcNewPin = '';
+  pcGoToStep('old');
+  document.getElementById('pinChangeOverlay').classList.add('open');
+  lockBodyScroll();
+}
+function closePinChangeOverlay() {
+  document.getElementById('pinChangeOverlay').classList.remove('open');
+  unlockBodyScroll();
+}
+async function pcHandleComplete() {
+  pcChecking = true;
+  if (pcStep === 'old') {
+    const ok = await window.zayaproAuth.verifyPin(pcEntered);
+    if (ok) {
+      pcOldOk = true;
+      pcGoToStep('new');
+    } else {
+      pcShowErr('PIN salah, coba lagi.');
+      pcEntered = '';
+      pcRenderDots();
+      pcChecking = false;
+    }
+  } else if (pcStep === 'new') {
+    pcNewPin = pcEntered;
+    pcGoToStep('confirm');
+  } else {
+    if (pcEntered === pcNewPin) {
+      try {
+        await window.zayaproAuth.setPin(pcNewPin);
+        closePinChangeOverlay();
+        showToast('PIN berhasil diganti.');
+      } catch (err) {
+        pcShowErr('Gagal menyimpan PIN baru, coba lagi.');
+        pcEntered = '';
+        pcRenderDots();
+        pcChecking = false;
+      }
+    } else {
+      pcShowErr('Konfirmasi PIN tidak cocok, ulangi dari PIN baru.');
+      pcNewPin = '';
+      setTimeout(() => pcGoToStep('new'), 700);
+    }
+  }
+}
+document.getElementById('pinChangeKeypad')?.addEventListener('click', function (e) {
+  const btn = e.target.closest('.pin-key[data-num]');
+  if (!btn || pcChecking) return;
+  if (pcEntered.length >= 6) return;
+  pcClearMsg();
+  pcEntered += btn.getAttribute('data-num');
+  pcRenderDots();
+  if (pcEntered.length === 6) pcHandleComplete();
+});
+document.getElementById('pinChangeBackspace')?.addEventListener('click', function () {
+  if (pcChecking) return;
+  pcClearMsg();
+  pcEntered = pcEntered.slice(0, -1);
+  pcRenderDots();
+});
+document.getElementById('pinChangeBackBtn')?.addEventListener('click', closePinChangeOverlay);
+
+/* ---- Halaman "Ubah Password" (langkah 1: verifikasi password lama,
+   langkah 2: password baru + konfirmasi) ---- */
+function pwGoToStepOld() {
+  document.getElementById('pwStepOld').hidden = false;
+  document.getElementById('pwStepNew').hidden = true;
+  document.getElementById('pwChangeContinueBtn').textContent = 'Lanjutkan';
+  document.getElementById('pwOldMsg').className = 'cloud-auth-msg';
+}
+function pwGoToStepNew() {
+  document.getElementById('pwStepOld').hidden = true;
+  document.getElementById('pwStepNew').hidden = false;
+  document.getElementById('pwChangeContinueBtn').textContent = 'Ganti Password';
+  document.getElementById('pwNewMsg').className = 'cloud-auth-msg';
+}
+function openPwChangeOverlay() {
+  document.getElementById('pwOldInput').value = '';
+  document.getElementById('pwNewInput').value = '';
+  document.getElementById('pwNewConfirmInput').value = '';
+  pwUpdateContinueState();
+  pwGoToStepOld();
+  document.getElementById('pwChangeOverlay').classList.add('open');
+  lockBodyScroll();
+}
+function closePwChangeOverlay() {
+  document.getElementById('pwChangeOverlay').classList.remove('open');
+  unlockBodyScroll();
+}
+function pwUpdateContinueState() {
+  const btn = document.getElementById('pwChangeContinueBtn');
+  const oldHidden = document.getElementById('pwStepOld').hidden;
+  if (!oldHidden) {
+    btn.disabled = document.getElementById('pwOldInput').value.length < 6;
+  } else {
+    const nv = document.getElementById('pwNewInput').value;
+    const cv = document.getElementById('pwNewConfirmInput').value;
+    btn.disabled = !(nv.length >= 6 && cv.length >= 6);
+  }
+}
+document.getElementById('pwOldInput')?.addEventListener('input', pwUpdateContinueState);
+document.getElementById('pwNewInput')?.addEventListener('input', pwUpdateContinueState);
+document.getElementById('pwNewConfirmInput')?.addEventListener('input', pwUpdateContinueState);
+[['pwOldToggle', 'pwOldInput'], ['pwNewToggle', 'pwNewInput'], ['pwNewConfirmToggle', 'pwNewConfirmInput']].forEach(function ([btnId, inputId]) {
+  const btn = document.getElementById(btnId);
+  const input = document.getElementById(inputId);
+  if (!btn || !input) return;
+  btn.addEventListener('click', function () {
+    input.type = input.type === 'password' ? 'text' : 'password';
+    btn.setAttribute('aria-pressed', String(input.type === 'text'));
+  });
+});
+document.getElementById('pwChangeContinueBtn')?.addEventListener('click', async function () {
+  const btn = this;
+  const oldHidden = document.getElementById('pwStepOld').hidden;
+  if (!oldHidden) {
+    const oldPassword = document.getElementById('pwOldInput').value;
+    btn.disabled = true;
+    const prevText = btn.textContent;
+    btn.textContent = 'Memeriksa...';
+    try {
+      const ok = await window.zayaproAuth.verifyPassword(oldPassword);
+      if (ok) {
+        pwGoToStepNew();
+      } else {
+        const msg = document.getElementById('pwOldMsg');
+        msg.textContent = 'Password lama salah.';
+        msg.className = 'cloud-auth-msg show err';
+      }
+    } catch (err) {
+      const msg = document.getElementById('pwOldMsg');
+      msg.textContent = 'Terjadi kesalahan, coba lagi.';
+      msg.className = 'cloud-auth-msg show err';
+    } finally {
+      btn.textContent = prevText;
+      pwUpdateContinueState();
+    }
+  } else {
+    const nv = document.getElementById('pwNewInput').value;
+    const cv = document.getElementById('pwNewConfirmInput').value;
+    const msg = document.getElementById('pwNewMsg');
+    if (nv.length < 6) {
+      msg.textContent = 'Password baru minimal 6 karakter.';
+      msg.className = 'cloud-auth-msg show err';
+      return;
+    }
+    if (nv !== cv) {
+      msg.textContent = 'Konfirmasi password tidak cocok.';
+      msg.className = 'cloud-auth-msg show err';
+      return;
+    }
+    btn.disabled = true;
+    const prevText = btn.textContent;
+    btn.textContent = 'Menyimpan...';
+    try {
+      await window.zayaproAuth.changePassword(nv);
+      closePwChangeOverlay();
+      showToast('Password berhasil diganti.');
+    } catch (err) {
+      msg.textContent = 'Gagal mengganti password, coba lagi.';
+      msg.className = 'cloud-auth-msg show err';
+    } finally {
+      btn.textContent = prevText;
+      pwUpdateContinueState();
+    }
+  }
+});
+document.getElementById('btnOpenPasswordChange')?.addEventListener('click', openPwChangeOverlay);
+document.getElementById('pwChangeBackBtn')?.addEventListener('click', closePwChangeOverlay);
+
+/* ---- Sheet "Lupa Password" (dibuka dari dalam halaman Ubah Password) ---- */
+function openPwForgotSheet() {
+  document.getElementById('pwForgotMsg').className = 'cloud-auth-msg';
+  document.getElementById('pwForgotSheetOverlay').classList.add('open');
+  lockBodyScroll();
+}
+function closePwForgotSheet() {
+  document.getElementById('pwForgotSheetOverlay').classList.remove('open');
+  unlockBodyScroll();
+}
+document.getElementById('pwForgotLink')?.addEventListener('click', openPwForgotSheet);
+document.getElementById('pwForgotCloseBtn')?.addEventListener('click', closePwForgotSheet);
+document.getElementById('pwForgotCancelBtn')?.addEventListener('click', closePwForgotSheet);
+document.getElementById('pwForgotSendBtn')?.addEventListener('click', async function () {
+  const btn = this;
+  btn.disabled = true;
+  const prevText = btn.textContent;
+  btn.textContent = 'Mengirim...';
+  try {
+    await window.zayaproAuth.requestPasswordReset();
+    closePwForgotSheet();
+    closePwChangeOverlay();
+    showToast('Link atur ulang password sudah dikirim ke email kamu.');
+  } catch (err) {
+    const msg = document.getElementById('pwForgotMsg');
+    msg.textContent = 'Gagal mengirim email, coba lagi.';
+    msg.className = 'cloud-auth-msg show err';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = prevText;
+  }
+});
+
+/* ---- Toggle "Login Biometrik" ---- */
+(async function initBiometricToggle() {
+  const toggle = document.getElementById('biometricToggleInput');
+  if (!toggle || !window.zayaproAuth) return;
+  toggle.checked = window.zayaproAuth.isBiometricEnabled();
+  toggle.addEventListener('change', async function () {
+    if (toggle.checked) {
+      const supported = await window.zayaproAuth.biometricSupported();
+      if (!supported) {
+        toggle.checked = false;
+        showToast('Perangkat/browser ini tidak mendukung Login Biometrik (butuh sidik jari/Face ID & akses HTTPS).', 'err');
+        return;
+      }
+      try {
+        await window.zayaproAuth.enableBiometric();
+        showToast('Login Biometrik diaktifkan di perangkat ini.');
+      } catch (err) {
+        toggle.checked = false;
+        showToast('Gagal mengaktifkan Login Biometrik, coba lagi.', 'err');
+      }
+    } else {
+      window.zayaproAuth.disableBiometric();
+      showToast('Login Biometrik dimatikan di perangkat ini.');
+    }
+  });
+})();
 
 document.getElementById('ddLogoInput')?.addEventListener('change', (e) => {
   const file = e.target.files && e.target.files[0];
