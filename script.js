@@ -1,5 +1,5 @@
 /* ==========================================================
-   ZAYAPRO — Pengelola Uang Masuk & Keluar
+   ZAYAin — Pengelola Uang Masuk & Keluar
    Semua panggilan localStorage di file ini sudah diganti jadi
    `cloudStorage` (lihat cloud-sync.js, dimuat sebelum file ini).
    cloudStorage.getItem/setItem/removeItem PUNYA API PERSIS SAMA
@@ -5242,7 +5242,7 @@ async function exportIncomeSourceExcel() {
 
   const total = list.reduce((s, x) => s + (Number(x.amount) || 0), 0);
   const wb = new ExcelJS.Workbook();
-  wb.creator = 'ZAYAPRO';
+  wb.creator = 'ZAYAin';
   wb.created = new Date();
   const ws = wb.addWorksheet('Sumber Pendapatan', { views: [{ state: 'frozen', ySplit: 4 }] });
 
@@ -5252,7 +5252,7 @@ async function exportIncomeSourceExcel() {
 
   ws.mergeCells('A1:E1');
   const titleCell = ws.getCell('A1');
-  titleCell.value = 'ZAYAPRO — Sumber Pendapatan';
+  titleCell.value = 'ZAYAin — Sumber Pendapatan';
   titleCell.font = { name: 'Calibri', size: 16, bold: true, color: { argb: 'FFFFFFFF' } };
   titleCell.alignment = { vertical: 'middle', horizontal: 'left' };
   ws.getRow(1).height = 30;
@@ -5330,7 +5330,7 @@ async function exportIncomeSourcePdf() {
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(18);
-  doc.text('ZAYAPRO', 40, 34);
+  doc.text('ZAYAin', 40, 34);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(11);
   doc.text('Laporan Sumber Pendapatan', 40, 52);
@@ -5365,7 +5365,7 @@ async function exportIncomeSourcePdf() {
       doc.setFontSize(8.5);
       doc.setTextColor(138, 147, 163);
       doc.text(`Halaman ${data.pageNumber} / ${pageCount}`, pageW - 40, doc.internal.pageSize.getHeight() - 20, { align: 'right' });
-      doc.text('ZAYAPRO — Kelola Uang Masuk & Keluar', 40, doc.internal.pageSize.getHeight() - 20);
+      doc.text('ZAYAin — Kelola Uang Masuk & Keluar', 40, doc.internal.pageSize.getHeight() - 20);
     }
   });
 
@@ -6424,7 +6424,7 @@ txModal.addEventListener('click', (e) => { if (e.target === txModal) closeModal(
    dibuka dgn tap kartu transaksi di tab Aktifitas (bukan tombol
    edit/hapus). Meniru pola struk pembayaran pada umumnya (lencana
    sukses, nominal besar, rincian, lalu Bagikan/Unduh/Selesai) tapi
-   warna & identitasnya memakai tema ZAYAPRO sendiri.
+   warna & identitasnya memakai tema ZAYAin sendiri.
 ========================================================== */
 const txReceiptOverlay = document.getElementById('txReceiptOverlay');
 let receiptTxId = null;
@@ -6536,7 +6536,7 @@ document.getElementById('receiptExpandBody').addEventListener('transitionend', (
 });
 
 function currentAppName() {
-  return (document.getElementById('brandNameText')?.textContent || '').trim() || 'ZAYAPRO';
+  return (document.getElementById('brandNameText')?.textContent || '').trim() || 'ZAYAin';
 }
 
 function receiptSummaryText(t) {
@@ -7821,10 +7821,10 @@ const APP_META_DESC_MAXLEN = 160;
    terbaca rapi sbg nama, bukan mentah2 "budi.santoso99" -- dipakai di
    mana pun aplikasi butuh nama aplikasi tapi pengguna belum pernah
    mengganti "Nama Web" sendiri (appName kosong). APP_SETTINGS_DEFAULTS.appName
-   SENGAJA dikosongkan ('') -- bukan lagi hardcode 'ZAYAPRO' -- supaya
+   SENGAJA dikosongkan ('') -- bukan lagi hardcode 'ZAYAin' -- supaya
    status "belum pernah diisi pengguna" bisa dibedakan dari "sudah
    pernah diisi", dan getDefaultAppName() di bawah inilah yg
-   menentukan tampilannya selama appName masih kosong. 'ZAYAPRO' cuma
+   menentukan tampilannya selama appName masih kosong. 'ZAYAin' cuma
    dipakai sbg jaring pengaman paling akhir kalau emailnya sendiri
    entah kenapa tidak tersedia. ---- */
 function deriveAccountNameFromEmail(email) {
@@ -7846,7 +7846,7 @@ function getDefaultAppName() {
   // spt semula.
   const realName = (window.zayaproAccountName || '').trim();
   if (realName) return realName;
-  return deriveAccountNameFromEmail(window.zayaproAccountEmail) || 'ZAYAPRO';
+  return deriveAccountNameFromEmail(window.zayaproAccountEmail) || 'ZAYAin';
 }
 
 /* ==========================================================
@@ -7857,7 +7857,7 @@ function getDefaultAppName() {
    --primary-soft SEKALIGUS --banner-orange/--banner-orange-deep --
    yaitu SEMUA variabel warna yang dipakai banner Beranda, tombol,
    badge, & elemen brand lain di seluruh app. 6 pilihan siap pakai,
-   dikurasi supaya senada dengan identitas ZAYAPRO (aksen hangat di
+   dikurasi supaya senada dengan identitas ZAYAin (aksen hangat di
    atas latar navy gelap + kartu putih): Oren (bawaan, warna brand
    asli), Zamrud & Toska (kesan uang/pertumbuhan finansial), Safir
    (kepercayaan), Ametis (premium), Emas (kesan kekayaan/tabungan).
@@ -10043,14 +10043,14 @@ async function exportTransactionsExcel() {
   const net = masuk - keluar;
 
   const wb = new ExcelJS.Workbook();
-  wb.creator = 'ZAYAPRO';
+  wb.creator = 'ZAYAin';
   wb.created = new Date();
   const ws = wb.addWorksheet('Transaksi', { views: [{ state: 'frozen', ySplit: 4 }] });
   ws.columns = [{ width: 13 }, { width: 12 }, { width: 20 }, { width: 34 }, { width: 20 }];
 
   ws.mergeCells('A1:E1');
   const titleCell = ws.getCell('A1');
-  titleCell.value = 'ZAYAPRO — Riwayat Transaksi';
+  titleCell.value = 'ZAYAin — Riwayat Transaksi';
   titleCell.font = { name: 'Calibri', size: 16, bold: true, color: { argb: 'FFFFFFFF' } };
   ws.getRow(1).height = 30;
 
@@ -10130,7 +10130,7 @@ async function exportTransactionsPdf() {
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(18);
-  doc.text('ZAYAPRO', 40, 34);
+  doc.text('ZAYAin', 40, 34);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(11);
   doc.text('Laporan Riwayat Transaksi', 40, 52);
@@ -10178,7 +10178,7 @@ async function exportTransactionsPdf() {
       doc.setFontSize(8.5);
       doc.setTextColor(138, 147, 163);
       doc.text(`Halaman ${data.pageNumber} / ${pageCount}`, pageW - 40, doc.internal.pageSize.getHeight() - 20, { align: 'right' });
-      doc.text('ZAYAPRO — Kelola Uang Masuk & Keluar', 40, doc.internal.pageSize.getHeight() - 20);
+      doc.text('ZAYAin — Kelola Uang Masuk & Keluar', 40, doc.internal.pageSize.getHeight() - 20);
     }
   });
 
@@ -11254,7 +11254,7 @@ function renderAiMessages() {
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="6" width="12" height="12" rx="3"/><path d="M9.5 2v3M14.5 2v3M9.5 19v3M14.5 19v3M2 9.5h3M2 14.5h3M19 9.5h3M19 14.5h3"/></svg>
       </div>
       <p>${aiActiveTab === 'data'
-        ? 'Tanya apa saja soal saldo, transaksi, tagihan, atau hutangmu di ZAYAPRO.'
+        ? 'Tanya apa saja soal saldo, transaksi, tagihan, atau hutangmu di ZAYAin.'
         : 'Tanya apa saja ke AI, mulai dari tips keuangan sampai hal umum lainnya.'}</p>
       <p class="ai-chat-empty-hint">${aiActiveTab === 'data' ? 'Contoh: "Berapa pengeluaran bulan ini?"' : 'Contoh: "Bagaimana cara mulai menabung?"'}</p>
     `;
@@ -11278,7 +11278,7 @@ function buildAiMsgNode(msg) {
     head.className = 'ai-msg-head';
     head.innerHTML = `
       <span class="ai-msg-ic"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="6" y="6" width="12" height="12" rx="3"/><path d="M9.5 2v3M14.5 2v3M9.5 19v3M14.5 19v3M2 9.5h3M2 14.5h3M19 9.5h3M19 14.5h3"/></svg></span>
-      <span class="ai-msg-name">ZAYAPRO AI</span>
+      <span class="ai-msg-name">ZAYAin AI</span>
     `;
     const content = document.createElement('div');
     content.className = 'ai-msg-content';
@@ -11466,7 +11466,7 @@ function appendAiTypingIndicator() {
   row.innerHTML = `
     <div class="ai-msg-head">
       <span class="ai-msg-ic"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="6" y="6" width="12" height="12" rx="3"/><path d="M9.5 2v3M14.5 2v3M9.5 19v3M14.5 19v3M2 9.5h3M2 14.5h3M19 9.5h3M19 14.5h3"/></svg></span>
-      <span class="ai-msg-name">ZAYAPRO AI</span>
+      <span class="ai-msg-name">ZAYAin AI</span>
     </div>
     <div class="ai-msg-content"><div class="ai-typing"><span></span><span></span><span></span></div></div>
   `;
@@ -11485,8 +11485,8 @@ async function callGeminiApi(userText, mode) {
 
   const formattingNote = ' Format jawaban dengan markdown ringan bila membantu keterbacaan: **tebal** untuk poin penting, daftar bullet "- " untuk rincian/list, dan blok kode ``` ``` khusus untuk data terstruktur (misalnya tabel angka rapi).';
   const systemInstruction = mode === 'data'
-    ? `Kamu adalah asisten keuangan pribadi di aplikasi ZAYAPRO. Jawab dalam Bahasa Indonesia, singkat, jelas, dan ramah.${formattingNote} Gunakan data keuangan pengguna berikut sebagai konteks untuk menjawab. Jangan mengarang angka di luar data ini, dan sebutkan jika suatu informasi tidak tersedia di data.\n\n=== DATA KEUANGAN PENGGUNA ===\n${buildFinancialContextSummary()}`
-    : `Kamu adalah asisten AI umum di aplikasi ZAYAPRO. Jawab dalam Bahasa Indonesia, singkat, jelas, dan ramah.${formattingNote}`;
+    ? `Kamu adalah asisten keuangan pribadi di aplikasi ZAYAin. Jawab dalam Bahasa Indonesia, singkat, jelas, dan ramah.${formattingNote} Gunakan data keuangan pengguna berikut sebagai konteks untuk menjawab. Jangan mengarang angka di luar data ini, dan sebutkan jika suatu informasi tidak tersedia di data.\n\n=== DATA KEUANGAN PENGGUNA ===\n${buildFinancialContextSummary()}`
+    : `Kamu adalah asisten AI umum di aplikasi ZAYAin. Jawab dalam Bahasa Indonesia, singkat, jelas, dan ramah.${formattingNote}`;
 
   // Sertakan beberapa pesan terakhir sebagai riwayat percakapan supaya
   // konteks obrolan tetap nyambung, tanpa mengirim seluruh riwayat.

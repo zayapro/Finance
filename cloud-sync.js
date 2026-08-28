@@ -1,5 +1,5 @@
 /* ==========================================================
-   ZAYAPRO — CLOUD SYNC (Supabase)
+   ZAYAin — CLOUD SYNC (Supabase)
    Modul ini HARUS dimuat SEBELUM script.js.
    Menyediakan `window.cloudStorage`: pengganti drop-in untuk
    `localStorage` (API sama: getItem/setItem/removeItem) yang
@@ -299,12 +299,12 @@
     if (pinInput) pinInput.required = (mode === 'signup');
     if (pinConfirmInput) pinConfirmInput.required = (mode === 'signup');
     if (mode === 'signup') {
-      titleEl.textContent = 'Daftar Akun ZAYAPRO';
+      titleEl.textContent = 'Daftar Akun ZAYAin';
       submitBtn.textContent = 'Daftar';
       switchText.textContent = 'Sudah punya akun?';
       switchLink.textContent = 'Masuk di sini';
     } else {
-      titleEl.textContent = 'Masuk ke ZAYAPRO';
+      titleEl.textContent = 'Masuk ke ZAYAin';
       submitBtn.textContent = 'Masuk';
       switchText.textContent = 'Belum punya akun?';
       switchLink.textContent = 'Daftar di sini';
@@ -686,7 +686,7 @@
       const cred = await navigator.credentials.create({
         publicKey: {
           challenge: challenge,
-          rp: { name: 'ZAYAPRO' },
+          rp: { name: 'ZAYAin' },
           user: {
             id: userIdBytes,
             name: currentUser.email || 'user',
