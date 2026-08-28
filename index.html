@@ -682,23 +682,18 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
    menyelip tepat di bawahnya. Hanya dipakai di logo banner beranda --
    logo di footer/mini-topbar/popup struk tetap pakai gaya kotak putih
    polos seperti semula. ---- */
-.brand-mark-wrap{position:relative;flex-shrink:0;width:44px;height:44px;margin-bottom:9px;}
+.brand-mark-wrap{position:relative;flex-shrink:0;width:48px;height:48px;margin-bottom:11px;}
 .brand-mark-badge{
-  position:absolute;left:50%;bottom:-9px;z-index:2;
+  position:absolute;left:50%;bottom:-10px;z-index:3;
   transform:translateX(-50%);
-  display:flex;align-items:center;gap:1.5px;
-  padding:1.5px 5px 1.5px 4px;border-radius:16px;
-  font-family:'Poppins',sans-serif;font-size:7px;font-weight:800;letter-spacing:.02em;
-  color:color-mix(in srgb, var(--forest-glow) 65%, black 35%);white-space:nowrap;
-  background:linear-gradient(135deg,
-    color-mix(in srgb, var(--forest-glow) 32%, white 68%),
-    color-mix(in srgb, var(--forest-glow) 88%, white 12%) 60%,
-    var(--forest-glow));
-  border:1.4px solid #fff;
+  display:flex;align-items:center;
+  padding:2px 8px;border-radius:999px;
+  font-family:'Poppins',sans-serif;font-size:7px;font-weight:800;letter-spacing:.04em;
+  color:#fff;white-space:nowrap;
+  background:var(--forest-glow);
   box-shadow:0 2px 5px -1px color-mix(in srgb, var(--forest-glow) 55%, black 25%);
   animation:brandBadgeFloat 2.6s ease-in-out infinite;
 }
-.brand-mark-badge .badge-ic{font-size:7px;line-height:1;}
 @keyframes brandBadgeFloat{0%,100%{transform:translateX(-50%) translateY(0);}50%{transform:translateX(-50%) translateY(-1.5px);}}
 @media (prefers-reduced-motion:reduce){.brand-mark-badge{animation:none;}}
 .brand-text-col{
@@ -715,13 +710,15 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
   font-family:'Poppins',sans-serif;font-weight:500;font-size:11.5px;
   color:rgba(255,248,241,0.88);letter-spacing:.005em;white-space:nowrap;
 }
-/* Nama brand di banner: bobotnya diturunkan sedikit (800 -> 700) supaya
-   tidak terlalu "berat" dibanding sapaan & lencana PREMIUM yang lebih
-   ringan di sekitarnya, dan dibolehkan patah baris (bukan nowrap+
-   ellipsis seperti .brand-name dasar di mini-topbar/footer) supaya
-   nama aplikasi yang panjang tetap rapi terbaca, tidak terpotong. */
+/* Nama brand di banner: bobotnya DITURUNKAN ke 600 (semi-bold ringan)
+   & ukurannya diperkecil (18px -> 15.5px) supaya lebih pas/proporsional
+   dengan lencana & avatar yang sudah diperkecil, dan dibolehkan patah
+   baris (bukan nowrap+ellipsis seperti .brand-name dasar di
+   mini-topbar/footer) supaya nama aplikasi yang panjang tetap rapi
+   terbaca, tidak terpotong. */
 .brand-text-col .brand-name{
-  font-weight:700;
+  font-weight:600;
+  font-size:15.5px;
   white-space:normal;
   overflow-wrap:break-word;word-break:break-word;
   line-height:1.15;
@@ -730,10 +727,11 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
    cincin berpendar warna tema aktif (ala avatar member premium), tanpa
    mengubah logo di mini-topbar/footer yang tetap pakai warna aslinya. */
 .banner .brand-mark-wrap .brand-mark{
-  width:44px;height:44px;border-radius:50%;
+  position:relative;z-index:2;
+  width:48px;height:48px;border-radius:50%;
   background:#FFFFFF;
   color:var(--primary-deep);
-  border:2px solid var(--forest-glow);
+  border:2.5px solid var(--forest-glow);
   animation:bannerBrandMarkPulse 2.6s ease-in-out infinite;
 }
 @keyframes bannerBrandMarkPulse{
@@ -8931,7 +8929,7 @@ body.is-scrolling *{
             <span class="brand-mark" id="brandMarkIcon">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>
             </span>
-            <span class="brand-mark-badge" aria-hidden="true"><span class="badge-ic">👑</span>PREMIUM</span>
+            <span class="brand-mark-badge" aria-hidden="true">PREMIUM</span>
           </span>
           <span class="brand-text-col">
             <span class="brand-greeting" id="brandGreetingText">Selamat pagi 👋</span>
