@@ -7960,6 +7960,56 @@ function applyFontPreview(fontKey) {
   document.documentElement.style.setProperty('--font-body', fontPreset.body);
   document.documentElement.style.setProperty('--font-display', fontPreset.display);
 }
+/* ==========================================================
+   "Elemen Dekoratif Banner" di halaman Tema -- on/off + 4 pilihan
+   bentuk (lingkaran, gelombang, titik-titik, blob) utk hiasan
+   transparan di latar <header class="banner"> (lihat markup #bannerDeco
+   & CSS .banner-deco/.bd-* di index.html). Disimpan terpisah dari
+   GLOBAL_THEME_KEY (warna) & APP_SETTINGS_KEY (font/nama/logo) di key
+   sendiri krn ini murni preferensi hiasan, bukan bagian dari sistem
+   warna/font. ---- */
+const BANNER_DECO_KEY = 'alirin_banner_deco_v1';
+const BANNER_DECO_SHAPES = [
+  { key: 'circles', label: 'Lingkaran', svg: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="9" cy="9" r="6.5" fill="currentColor" opacity="0.9"/><circle cx="17" cy="17" r="4" fill="currentColor" opacity="0.45"/></svg>' },
+  { key: 'wave', label: 'Gelombang', svg: '<svg width="22" height="16" viewBox="0 0 28 18" fill="none"><path d="M1 10c3-6 6-6 9 0s6 6 9 0 6-6 8 0" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" fill="none"/></svg>' },
+  { key: 'dots', label: 'Titik-titik', svg: '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="5" r="2"/><circle cx="12" cy="5" r="2"/><circle cx="19" cy="5" r="2"/><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2" opacity="0.5"/><circle cx="5" cy="19" r="2" opacity="0.5"/></svg>' },
+  { key: 'blob', label: 'Blob', svg: '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3c4 0 8 2.4 8 7 0 5-3.5 11-8 11S4 15 4 10c0-4.6 4-7 8-7Z"/></svg>' },
+];
+const BANNER_DECO_DEFAULTS = { enabled: true, shape: 'circles' };
+function loadBannerDeco() {
+  try {
+    const raw = cloudStorage.getItem(BANNER_DECO_KEY);
+    return raw ? { ...BANNER_DECO_DEFAULTS, ...JSON.parse(raw) } : { ...BANNER_DECO_DEFAULTS };
+  } catch (e) { return { ...BANNER_DECO_DEFAULTS }; }
+}
+function saveBannerDeco(state) {
+  try { cloudStorage.setItem(BANNER_DECO_KEY, JSON.stringify(state)); }
+  catch (e) { showToast('Gagal menyimpan elemen dekoratif banner.', 'err'); }
+}
+// Terapkan on/off + bentuk ke #bannerDeco -- dipakai baik utk pratinjau
+// sementara di halaman Tema maupun utk render awal saat app dimuat.
+function applyBannerDeco(state) {
+  const el = document.getElementById('bannerDeco');
+  if (!el) return;
+  el.dataset.shape = BANNER_DECO_SHAPES.some(s => s.key === state.shape) ? state.shape : BANNER_DECO_DEFAULTS.shape;
+  el.classList.toggle('bd-off', !state.enabled);
+}
+function renderTemaDecoGrid(state) {
+  const grid = document.getElementById('temaDecoGrid');
+  if (!grid) return;
+  grid.classList.toggle('is-off', !state.enabled);
+  grid.innerHTML = BANNER_DECO_SHAPES.map(s => `
+    <button type="button" class="tema-font-btn${state.shape === s.key ? ' active' : ''}" data-decoshape="${s.key}" aria-label="Bentuk ${s.label}">
+      <span class="tdb-shape-preview">${s.svg}</span>
+      <span class="tfb-label">${s.label}</span>
+    </button>
+  `).join('');
+  const switchBtn = document.getElementById('temaDecoSwitch');
+  if (switchBtn) {
+    switchBtn.classList.toggle('active', state.enabled);
+    switchBtn.setAttribute('aria-checked', state.enabled ? 'true' : 'false');
+  }
+}
 /* ---- State sementara halaman Tema: dipakai supaya pilihan warna
    cuma PRATINJAU (live preview) dulu selagi popup terbuka -- baru
    benar-benar tersimpan ke storage kalau tombol "Selesai" ditekan.
@@ -7967,11 +8017,15 @@ function applyFontPreview(fontKey) {
    kembali kalau tombol "Batal"/tombol kembali/Escape ditekan).
    temaPendingState = pilihan yg sedang dipratinjau saat ini.
    temaFontOriginalKey/temaFontPendingKey = pasangan yg sama tapi utk
-   pilihan Gaya Font, mengikuti pola yg identik. ---- */
+   pilihan Gaya Font, & temaDecoOriginalState/temaDecoPendingState
+   pasangan yg sama lagi utk "Elemen Dekoratif Banner", mengikuti pola
+   identik. ---- */
 let temaOriginalState = null;
 let temaPendingState = null;
 let temaFontOriginalKey = null;
 let temaFontPendingKey = null;
+let temaDecoOriginalState = null;
+let temaDecoPendingState = null;
 function refreshTemaPage() {
   const state = loadGlobalTheme();
   temaOriginalState = state;
@@ -7982,11 +8036,31 @@ function refreshTemaPage() {
   temaFontOriginalKey = fontKey;
   temaFontPendingKey = fontKey;
   renderTemaFontGrid(fontKey);
+  const decoState = loadBannerDeco();
+  temaDecoOriginalState = decoState;
+  temaDecoPendingState = decoState;
+  renderTemaDecoGrid(decoState);
   const nameEl = document.getElementById('temaPreviewName');
   if (nameEl) {
     nameEl.textContent = (settings.appName || '').trim() || getDefaultAppName();
   }
 }
+document.getElementById('temaDecoSwitch')?.addEventListener('click', () => {
+  const state = { ...temaDecoPendingState, enabled: !temaDecoPendingState.enabled };
+  temaDecoPendingState = state;
+  applyBannerDeco(state);
+  renderTemaDecoGrid(state);
+});
+document.getElementById('temaDecoGrid')?.addEventListener('click', (e) => {
+  const btn = e.target.closest('.tema-font-btn');
+  if (!btn || !temaDecoPendingState.enabled) return;
+  const shape = btn.dataset.decoshape;
+  if (shape === temaDecoPendingState.shape) return;
+  const state = { ...temaDecoPendingState, shape };
+  temaDecoPendingState = state;
+  applyBannerDeco(state);
+  renderTemaDecoGrid(state);
+});
 document.getElementById('temaFontGrid')?.addEventListener('click', (e) => {
   const btn = e.target.closest('.tema-font-btn');
   if (!btn) return;
@@ -8103,6 +8177,10 @@ document.getElementById('temaCustomColorInput')?.addEventListener('input', (e) =
 // sejak render pertama (senada dgn applyAppSettings(loadAppSettings())
 // di bawah nanti).
 applyGlobalTheme(loadGlobalTheme());
+// Sama halnya utk elemen dekoratif banner (on/off + bentuk) -- diterapkan
+// sesegera mungkin juga supaya banner tidak sempat "berkedip" tampil lalu
+// hilang/berubah bentuk sesaat setelah halaman dimuat.
+applyBannerDeco(loadBannerDeco());
 
 function loadAppSettings() {
   try {
@@ -9242,6 +9320,7 @@ function openTemaOverlay() {
 function closeTemaOverlay() {
   if (temaOriginalState) applyGlobalTheme(temaOriginalState);
   if (temaFontOriginalKey) applyFontPreview(temaFontOriginalKey);
+  if (temaDecoOriginalState) applyBannerDeco(temaDecoOriginalState);
   document.getElementById('temaOverlay').classList.remove('open');
   unlockBodyScroll();
 }
@@ -9264,6 +9343,12 @@ function confirmTemaOverlay() {
     saveAppSettings(settings);
     applyFontPreview(temaFontPendingKey);
     temaFontOriginalKey = temaFontPendingKey;
+    changed = true;
+  }
+  if (temaDecoPendingState && JSON.stringify(temaDecoPendingState) !== JSON.stringify(temaDecoOriginalState)) {
+    saveBannerDeco(temaDecoPendingState);
+    applyBannerDeco(temaDecoPendingState);
+    temaDecoOriginalState = temaDecoPendingState;
     changed = true;
   }
   if (changed) showToast('Tema disimpan.');

@@ -503,6 +503,50 @@ a{color:inherit;}
 .banner::before{
   content:none;
 }
+/* ---- Elemen dekoratif banner (lihat markup #bannerDeco di atas) ----
+   Kontainer full-cover di lapisan paling bawah banner (z-index rendah,
+   DI BAWAH .banner-top yang z-index:3), murni hiasan & tidak
+   mengganggu klik apa pun di baliknya. Cuma 1 dari 4 varian bentuk yang
+   digambar sekaligus di HTML yang ditampilkan pada satu waktu, dipilih
+   lewat atribut [data-shape] di kontainer -- lihat renderBannerDeco()
+   di script.js. Class .bd-off (dikontrol lewat switch "Elemen
+   Dekoratif Banner" di halaman Tema) memudarkan seluruh kontainer ini
+   ke opacity:0 tanpa melepas markup-nya dari DOM, supaya transisi
+   nyala/mati mulus & bentuk yg terakhir dipilih tetap "diingat". ---- */
+.banner-deco{
+  position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:1;
+  opacity:1;transition:opacity .3s ease;
+}
+.banner-deco.bd-off{opacity:0;}
+.banner-deco>*{display:none;}
+.banner-deco[data-shape="circles"] .bd-circles{display:block;}
+.banner-deco[data-shape="wave"] .bd-wave{display:block;}
+.banner-deco[data-shape="dots"] .bd-dots{display:block;}
+.banner-deco[data-shape="blob"] .bd-blob{display:block;}
+/* Varian 1 (bawaan): lingkaran abstrak transparan, 3 ukuran berjajar
+   diagonal supaya tidak menumpuk tepat di atas logo brand/tombol ikon
+   kanan atas -- massa terbesar sengaja diarahkan ke sudut kanan-bawah
+   yang lebih lapang (area kosong sebelum ditindih kartu Saldo putih). */
+.bd-circles{position:absolute;inset:0;}
+.bd-circle{position:absolute;border-radius:50%;background:#fff;}
+.bd-circle-a{width:230px;height:230px;bottom:-100px;right:-55px;opacity:.10;}
+.bd-circle-b{width:96px;height:96px;top:-34px;left:56%;opacity:.09;background:none;border:1.5px solid rgba(255,255,255,.35);}
+.bd-circle-c{width:80px;height:80px;bottom:14%;left:-24px;opacity:.09;}
+/* Varian 2: titik-titik halus mengelompok di pojok kanan-atas, senada
+   nuansa data/grafik finansial tanpa terasa ramai. */
+.bd-dots{
+  position:absolute;top:-8px;right:-4px;width:180px;height:130px;
+  background-image:radial-gradient(rgba(255,255,255,.28) 1.6px, transparent 1.6px);
+  background-size:20px 20px;
+  -webkit-mask-image:linear-gradient(225deg,#000 30%,transparent 78%);
+  mask-image:linear-gradient(225deg,#000 30%,transparent 78%);
+}
+/* Varian 3: gelombang lembut menyapu alas banner -- 2 lapis kurva
+   opacity beda supaya ada kedalaman tanpa ramai. */
+.bd-wave{position:absolute;left:0;right:0;bottom:-2px;width:100%;height:58%;}
+/* Varian 4: satu bentuk organik (blob) mengambang di sudut kanan-bawah,
+   alternatif yang lebih lembut/tidak geometris dibanding lingkaran. */
+.bd-blob{position:absolute;width:230px;height:230px;bottom:-70px;right:-60px;}
 @keyframes gridPan{
   0%{background-position:0 0, 0 0;}
   100%{background-position:34px 68px, 34px 68px;}
@@ -3769,8 +3813,17 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 .tema-font-btn.active .tfb-preview{color:var(--primary);}
 .tema-font-btn .tfb-label{font-size:9.5px;font-weight:700;color:var(--ink);text-align:center;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
 .tema-font-btn.active .tfb-label{color:var(--primary);}
+/* ---- Grid pilihan bentuk "Elemen Dekoratif Banner" -- numpang gaya
+   kartu .tema-font-btn di atas (grid 4 kolom di sini krn ikonnya kecil
+   & cuma 4 pilihan), cuma isi pratinjaunya ikon SVG mini bertema
+   bentuk (bukan huruf "Aa"). .is-off memudarkan & mengunci klik
+   seluruh grid saat switch "Tampilkan Elemen" di atasnya dimatikan. */
+.tema-deco-grid{grid-template-columns:repeat(4,1fr);margin-top:12px;}
+.tema-deco-grid.is-off{opacity:.45;pointer-events:none;}
+.tdb-shape-preview{display:flex;align-items:center;justify-content:center;height:22px;color:var(--ink-faint);}
+.tema-font-btn.active .tdb-shape-preview{color:var(--primary);}
 .tema-preview-card{
-  margin-top:14px;border-radius:18px;padding:16px 16px 14px;color:#fff;
+  border-radius:18px;padding:16px 16px 14px;color:#fff;
   background:linear-gradient(135deg,var(--primary),var(--primary-deep));
   box-shadow:0 10px 20px -8px color-mix(in srgb, var(--primary) 55%, transparent);
   display:flex;flex-direction:column;gap:6px;
@@ -9025,6 +9078,34 @@ body.is-scrolling *{
 
   <!-- ===== BANNER ===== -->
   <header class="banner" id="banner">
+    <!-- ---- Elemen dekoratif banner: lingkaran/gelombang/titik/blob
+         abstrak transparan opasitas rendah, murni hiasan (aria-hidden,
+         pointer-events:none), TIDAK berisi teks apa pun. Bentuk mana
+         yang tampil diatur lewat atribut data-shape di kontainer ini
+         (4 varian sudah digambar sekaligus di bawah, CSS yang
+         menyembunyikan/menampilkan sesuai data-shape -- lihat
+         renderBannerDeco() di script.js), & bisa dimatikan total lewat
+         class .bd-off (fitur on/off "Elemen Dekoratif Banner" di
+         halaman Tema, #temaOverlay). Warnanya sengaja putih transparan
+         (bukan warna biru tetap) supaya otomatis senada dengan warna
+         aksen banner apa pun yang sedang aktif (oranye bawaan, Safir
+         yang birunya pekat, dst) alih-alih bentrok saat warna tema
+         diganti. ---- -->
+    <div class="banner-deco" id="bannerDeco" data-shape="circles" aria-hidden="true">
+      <div class="bd-circles">
+        <span class="bd-circle bd-circle-a"></span>
+        <span class="bd-circle bd-circle-b"></span>
+        <span class="bd-circle bd-circle-c"></span>
+      </div>
+      <div class="bd-dots"></div>
+      <svg class="bd-wave" viewBox="0 0 400 130" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M0,58 C70,95 150,25 230,58 C300,86 350,45 400,62 L400,130 L0,130 Z" fill="#fff" opacity="0.12"/>
+        <path d="M0,82 C90,112 175,58 265,80 C325,96 365,64 400,80 L400,130 L0,130 Z" fill="#fff" opacity="0.08"/>
+      </svg>
+      <svg class="bd-blob" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <path fill="#fff" opacity="0.11" d="M42.7,-59.7C54.5,-52.3,62.4,-38.4,66.5,-23.6C70.7,-8.9,71.2,6.7,66.4,20.4C61.6,34.1,51.5,45.9,39,53.6C26.5,61.4,13.2,65.1,-0.7,66.2C-14.7,67.3,-29.4,65.8,-41.4,58.6C-53.5,51.4,-62.9,38.5,-68.1,23.9C-73.3,9.3,-74.3,-7,-69.4,-21.1C-64.6,-35.2,-53.8,-47.1,-41,-54.6C-28.1,-62.1,-14.1,-65.1,0.8,-66.5C15.6,-67.9,31.2,-67.6,42.7,-59.7Z" transform="translate(100 100)"/>
+      </svg>
+    </div>
     <div class="flow-field" id="flowField"></div>
     <div class="flow-line">
       <svg viewBox="0 0 900 90" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
@@ -9566,6 +9647,11 @@ body.is-scrolling *{
       </div>
 
       <div class="lap-filter-card" id="temaCard">
+        <div class="tema-preview-card" id="temaPreviewCard">
+          <small>Pratinjau</small>
+          <strong id="temaPreviewName">ZAYAPRO</strong>
+          <button type="button" class="tema-preview-btn" tabindex="-1">Tombol Contoh</button>
+        </div>
         <div class="tema-section">
           <h3>Warna Aksen</h3>
           <p>Pilih warna utama aplikasi. Warna ini berlaku di semua halaman — banner, tombol, badge, hingga grafik.</p>
@@ -9594,10 +9680,28 @@ body.is-scrolling *{
           <p>Pilih gaya huruf aplikasi. Ikut berubah di judul, angka saldo, hingga label tombol di semua halaman.</p>
           <div class="tema-font-grid" id="temaFontGrid"></div>
         </div>
-        <div class="tema-preview-card" id="temaPreviewCard">
-          <small>Pratinjau</small>
-          <strong id="temaPreviewName">ZAYAPRO</strong>
-          <button type="button" class="tema-preview-btn" tabindex="-1">Tombol Contoh</button>
+        <!-- ---- Fitur BARU: on/off + pilihan bentuk "Elemen Dekoratif
+             Banner" (lihat markup #bannerDeco di <header class="banner">
+             & CSS .banner-deco/.bd-*). Baris switch-nya niru gaya
+             .ws-row/.ws-switch yang sudah ada di halaman Widget
+             Beranda (bukan bikin komponen switch baru) supaya bahasa
+             desainnya konsisten. 4 pilihan bentuk (kartu mini niru
+             .tema-font-btn) cuma bisa disentuh selagi switch menyala
+             (disabled & pudar kalau mati -- lihat .tema-deco-grid.is-off
+             di CSS). Sama seperti Warna Aksen & Gaya Font, di sini juga
+             cuma PRATINJAU live selama popup terbuka, baru tersimpan
+             permanen kalau tombol "Selesai" ditekan. ---- -->
+        <div class="tema-section">
+          <h3>Elemen Dekoratif Banner</h3>
+          <p>Hiasan transparan berupa bentuk abstrak di latar banner beranda, murni dekorasi tanpa teks.</p>
+          <div class="ws-row" style="padding:0 0 14px;border-bottom:none;">
+            <div class="ws-row-text">
+              <span class="ws-row-title">Tampilkan Elemen</span>
+              <span class="ws-row-sub">Nyalakan/matikan hiasan di banner beranda</span>
+            </div>
+            <button type="button" class="ws-switch active" id="temaDecoSwitch" role="switch" aria-checked="true" aria-label="Aktifkan/nonaktifkan elemen dekoratif banner"><span class="ws-switch-knob"></span></button>
+          </div>
+          <div class="tema-font-grid tema-deco-grid" id="temaDecoGrid"></div>
         </div>
       </div>
 
