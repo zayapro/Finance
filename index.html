@@ -890,6 +890,27 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
    & margin-bottom bawaan (utk ruang lencana) dimatikan krn swatch mini
    ini tidak punya lencana PREMIUM. ---- */
 .brand-mark-wrap.tfb-avatar-mini{width:32px;height:32px;margin-bottom:0;}
+/* ---- FIX: glow "Neon Berpendar" versi mini (32px) di grid pemilihan
+   #temaFrameGrid SENGAJA dikasih box-shadow lebih kecil drpd versi asli
+   di banner (avatarNeonPulse, dibuat utk lingkaran 48px) -- dipakai apa
+   adanya, spread-nya (sampai 16px + 5px) jadi kelewat besar & nyaris
+   memenuhi seluruh kartu swatch mini yg cuma ~32px, bikin kartu ini
+   kelihatan jauh lebih "ramai"/menonjol drpd 5 kartu bingkai lain di
+   sebelahnya. Keyframe terpisah (bukan cuma override sekali) supaya
+   animasi berdenyutnya tetap jalan, cuma jarak pendarnya yg dipangkas
+   proporsional ke ukuran kecil ini. Selector diberi bobot yg sama
+   (class+atribut+class) dgn aturan asli, ditulis belakangan supaya
+   menang di kartu mini ini saja -- avatar asli di banner beranda &
+   kartu Pratinjau (yg ukurannya 48px) tetap pakai animasi lama, tidak
+   ikut berubah. ---- */
+.tfb-avatar-mini[data-avatar-frame="neon"] .brand-mark{animation:avatarNeonPulseMini 1.7s ease-in-out infinite;}
+@keyframes avatarNeonPulseMini{
+  0%,100%{box-shadow:0 0 0 0 color-mix(in srgb, var(--primary) 65%, transparent), 0 0 4px 0px color-mix(in srgb, var(--primary) 55%, transparent);}
+  50%{box-shadow:0 0 0 2px color-mix(in srgb, var(--primary) 0%, transparent), 0 0 7px 2px color-mix(in srgb, var(--primary) 75%, transparent);}
+}
+@media (prefers-reduced-motion:reduce){
+  .tfb-avatar-mini[data-avatar-frame="neon"] .brand-mark{animation:none;box-shadow:0 0 0 2px color-mix(in srgb, var(--primary) 30%, transparent);}
+}
 .banner-date-col{display:flex;flex-direction:column;align-items:flex-end;gap:4px;min-width:0;}
 .banner-date{font-size:12.5px;color:rgba(244,247,243,0.72);white-space:nowrap;
   /* FIX KEDIP: lihat catatan lengkap di .banner-fx .fx-value di bawah —
@@ -3921,6 +3942,17 @@ tr.fade-up{animation:fadeRow .35s ease both;}
    sbg pratinjau tiap gaya font (bukan lingkaran warna) + label nama
    gaya di bawahnya. ---- */
 .tema-font-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;}
+/* ---- FIX: grid #temaFrameGrid ("Bingkai Avatar") numpang class
+   .tema-font-grid di atas (4 kolom), TAPI diberi override KHUSUS jadi
+   3 kolom di sini krn isinya 6 pilihan dgn nama lebih panjang ("Neon
+   Berpendar", "Tanpa Bingkai") drpd 4 pilihan Gaya Font/Elemen
+   Dekoratif Banner yg namanya pendek semua -- dipaksa 4 kolom bikin
+   kartunya terlalu sempit sampai labelnya kepotong elipsis ("Neon
+   Berpe…"). 3 kolom (2 baris utk 6 kartu) memberi ruang lebih lega
+   per kartu supaya nama lengkapnya muat tanpa terpotong, sementara
+   Gaya Font & Elemen Dekoratif Banner yg TIDAK diberi id ini tetap
+   pakai 4 kolom bawaan seperti semula. ---- */
+#temaFrameGrid{grid-template-columns:repeat(3,1fr);}
 .tema-font-btn{
   position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
   border:1.5px solid var(--line);border-radius:14px;background:var(--paper);
