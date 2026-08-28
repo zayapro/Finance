@@ -503,16 +503,27 @@ a{color:inherit;}
 .banner::before{
   content:none;
 }
-/* ---- Elemen dekoratif banner (lihat markup #bannerDeco di atas) ----
+/* ---- Elemen dekoratif banner (lihat markup #bannerDeco di atas &
+   #temaPreviewDeco di kartu Pratinjau halaman Tema) ----
    Kontainer full-cover di lapisan paling bawah banner (z-index rendah,
    DI BAWAH .banner-top yang z-index:3), murni hiasan & tidak
    mengganggu klik apa pun di baliknya. Cuma 1 dari 4 varian bentuk yang
    digambar sekaligus di HTML yang ditampilkan pada satu waktu, dipilih
-   lewat atribut [data-shape] di kontainer -- lihat renderBannerDeco()
+   lewat atribut [data-shape] di kontainer -- lihat applyBannerDeco()
    di script.js. Class .bd-off (dikontrol lewat switch "Elemen
    Dekoratif Banner" di halaman Tema) memudarkan seluruh kontainer ini
    ke opacity:0 tanpa melepas markup-nya dari DOM, supaya transisi
-   nyala/mati mulus & bentuk yg terakhir dipilih tetap "diingat". ---- */
+   nyala/mati mulus & bentuk yg terakhir dipilih tetap "diingat".
+   SEMUA ukuran & posisi di bawah ini SENGAJA dalam % (relatif ke lebar/
+   tinggi kontainernya sendiri) + aspect-ratio:1/1 utk bentuk bulat --
+   BUKAN px tetap -- supaya proporsinya tetap pas & rapi di container
+   manapun: banner asli yang lebar & pendek di HP, banner lebar di
+   desktop (maks ~1180px), MAUPUN kartu Pratinjau mungil di halaman
+   Tema -- 1 aturan brs berlaku otomatis di ketiganya tanpa perlu
+   override ukuran terpisah per kontainer. Semua bentuk sengaja
+   dikumpulkan di area "sepi" (separuh bawah & sudut kanan-bawah)
+   supaya tidak pernah menumpuk di atas logo brand/tombol ikon
+   kanan-atas yang isinya justru paling padat. ---- */
 .banner-deco{
   position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:1;
   opacity:1;transition:opacity .3s ease;
@@ -523,30 +534,31 @@ a{color:inherit;}
 .banner-deco[data-shape="wave"] .bd-wave{display:block;}
 .banner-deco[data-shape="dots"] .bd-dots{display:block;}
 .banner-deco[data-shape="blob"] .bd-blob{display:block;}
-/* Varian 1 (bawaan): lingkaran abstrak transparan, 3 ukuran berjajar
-   diagonal supaya tidak menumpuk tepat di atas logo brand/tombol ikon
-   kanan atas -- massa terbesar sengaja diarahkan ke sudut kanan-bawah
-   yang lebih lapang (area kosong sebelum ditindih kartu Saldo putih). */
+/* Varian 1 (bawaan): 2 lingkaran abstrak transparan -- 1 besar mengalir
+   dari sudut kanan-bawah (area paling lapang, tepat di atas kartu
+   Saldo putih yang menindihnya), 1 kecil di sudut kiri-bawah sebagai
+   penyeimbang ringan supaya komposisinya tidak berat sebelah. Sengaja
+   cuma 2 (bukan 3) supaya kesannya tetap minimalis & bersih. */
 .bd-circles{position:absolute;inset:0;}
-.bd-circle{position:absolute;border-radius:50%;background:#fff;}
-.bd-circle-a{width:230px;height:230px;bottom:-100px;right:-55px;opacity:.10;}
-.bd-circle-b{width:96px;height:96px;top:-34px;left:56%;opacity:.09;background:none;border:1.5px solid rgba(255,255,255,.35);}
-.bd-circle-c{width:80px;height:80px;bottom:14%;left:-24px;opacity:.09;}
-/* Varian 2: titik-titik halus mengelompok di pojok kanan-atas, senada
-   nuansa data/grafik finansial tanpa terasa ramai. */
+.bd-circle{position:absolute;border-radius:50%;background:#fff;aspect-ratio:1/1;}
+.bd-circle-a{width:46%;bottom:-24%;right:-12%;opacity:.11;}
+.bd-circle-b{width:20%;bottom:-9%;left:-6%;opacity:.08;}
+/* Varian 2: titik-titik halus mengelompok di sudut kanan-bawah (posisi
+   senada varian Lingkaran), memudar makin ke tengah -- kesan data/
+   grafik finansial tanpa terasa ramai. */
 .bd-dots{
-  position:absolute;top:-8px;right:-4px;width:180px;height:130px;
-  background-image:radial-gradient(rgba(255,255,255,.28) 1.6px, transparent 1.6px);
-  background-size:20px 20px;
-  -webkit-mask-image:linear-gradient(225deg,#000 30%,transparent 78%);
-  mask-image:linear-gradient(225deg,#000 30%,transparent 78%);
+  position:absolute;bottom:-6%;right:-2%;width:44%;height:56%;
+  background-image:radial-gradient(rgba(255,255,255,.3) 1.6px, transparent 1.6px);
+  background-size:9% 9%;
+  -webkit-mask-image:radial-gradient(circle at 100% 100%, #000 35%, transparent 78%);
+  mask-image:radial-gradient(circle at 100% 100%, #000 35%, transparent 78%);
 }
 /* Varian 3: gelombang lembut menyapu alas banner -- 2 lapis kurva
    opacity beda supaya ada kedalaman tanpa ramai. */
-.bd-wave{position:absolute;left:0;right:0;bottom:-2px;width:100%;height:58%;}
+.bd-wave{position:absolute;left:0;right:0;bottom:0;width:100%;height:52%;}
 /* Varian 4: satu bentuk organik (blob) mengambang di sudut kanan-bawah,
    alternatif yang lebih lembut/tidak geometris dibanding lingkaran. */
-.bd-blob{position:absolute;width:230px;height:230px;bottom:-70px;right:-60px;}
+.bd-blob{position:absolute;width:48%;aspect-ratio:1/1;bottom:-16%;right:-14%;}
 @keyframes gridPan{
   0%{background-position:0 0, 0 0;}
   100%{background-position:34px 68px, 34px 68px;}
@@ -770,11 +782,39 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
 /* Versi logo brand di dalam banner "Saldo Total": lingkaran foto dengan
    cincin berpendar warna tema aktif (ala avatar member premium), tanpa
    mengubah logo di mini-topbar/footer yang tetap pakai warna aslinya. */
-.banner .brand-mark-wrap .brand-mark{
+.brand-mark-wrap .brand-mark{
   position:relative;z-index:2;
-  width:48px;height:48px;border-radius:50%;
+  width:100%;height:100%;border-radius:50%;
   background:#FFFFFF;
   color:var(--primary-deep);
+  display:flex;align-items:center;justify-content:center;
+}
+/* ============================================================
+   FITUR BARU: "Bingkai Avatar" di halaman Tema -- 6 pilihan gaya
+   bingkai untuk lingkaran avatar/logo premium di banner (elemen yang
+   SAMA dgn ".brand-mark-wrap .brand-mark" di atas, dulu cuma 1 gaya
+   cincin tetap warna forest-glow, sekarang bisa diganti-ganti).
+   Dipilih lewat atribut "data-avatar-frame" yg ditaruh LANGSUNG pada
+   elemen ".brand-mark-wrap" itu sendiri (diisi oleh applyAvatarFrame()
+   di script.js, lihat AVATAR_FRAME_KEY/AVATAR_FRAME_STYLES) -- dipakai
+   di 2 tempat yg SELALU disinkronkan bareng, persis pola
+   applyBannerDeco(): wrap asli di banner beranda (#brandMarkWrap) &
+   wrap pratinjau di kartu "Pratinjau" halaman Tema
+   (#temaPreviewAvatarWrap). Cincin bentuk cincin/segi-enam dekoratif
+   digambar lewat pseudo-elemen ::before pada ".brand-mark-wrap" itu
+   sendiri (bukan pada ".brand-mark" di dalamnya) supaya bisa "mengintip"
+   keluar dari tepi lingkaran avatar tanpa kepotong overflow. Semua
+   ukuran pseudo-elemen SENGAJA pakai satuan % (relatif ke kotak
+   ".brand-mark-wrap" yg jadi containing block-nya, bukan px tetap) --
+   supaya sistem cincin yg SAMA ini otomatis ikut menyusut rapi dipakai
+   ulang utk swatch mini 32px di grid pemilihan (.tfb-avatar-mini,
+   lihat HTML #temaFrameGrid), tanpa perlu nulis CSS terpisah lagi
+   utk versi kecilnya. Default (atribut belum ada / nilai "classic")
+   SENGAJA disamakan PERSIS dgn gaya cincin lama supaya avatar yg sudah
+   ada sebelum fitur ini dirilis tidak berubah tampilan sampai
+   pengguna sendiri yg pilih bingkai lain. ============================================================ */
+.brand-mark-wrap[data-avatar-frame="classic"] .brand-mark,
+.brand-mark-wrap:not([data-avatar-frame]) .brand-mark{
   border:2.5px solid var(--forest-glow);
   animation:bannerBrandMarkPulse 2.6s ease-in-out infinite;
 }
@@ -783,9 +823,73 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
   70%{box-shadow:0 0 0 8px color-mix(in srgb, var(--forest-glow) 0%, transparent), 0 0 10px color-mix(in srgb, var(--forest-glow) 35%, transparent);}
   100%{box-shadow:0 0 0 0 color-mix(in srgb, var(--forest-glow) 0%, transparent), 0 0 10px color-mix(in srgb, var(--forest-glow) 35%, transparent);}
 }
-@media (prefers-reduced-motion:reduce){
-  .banner .brand-mark-wrap .brand-mark{animation:none;box-shadow:0 0 0 4px color-mix(in srgb, var(--forest-glow) 18%, transparent);}
+/* ---- "Emas Mewah": cincin conic-gradient emas yg pelan-pelan
+   berputar di belakang avatar (mengintip lewat inset negatif %),
+   avatar sendiri dikasih border putih tipis spy tampak "menumpang"
+   rapi di atas cincinnya, senada dgn lencana PREMIUM di bawahnya. ---- */
+.brand-mark-wrap[data-avatar-frame="gold"] .brand-mark{
+  border:3px solid #FFFDF6;
+  box-shadow:0 2px 8px -2px rgba(184,134,11,.45);
 }
+.brand-mark-wrap[data-avatar-frame="gold"]::before{
+  content:"";position:absolute;inset:-14%;border-radius:50%;z-index:1;
+  background:conic-gradient(from 0deg,#FFF6D6,#F4C752,#B8860B,#F4C752,#FFF6D6);
+  animation:avatarGoldSpin 5s linear infinite;
+}
+@keyframes avatarGoldSpin{to{transform:rotate(360deg);}}
+/* ---- "Neon Berpendar": cincin solid warna primer aktif (ikut warna
+   Aksen yg dipilih di section atasnya) dgn glow yg berdenyut lebih
+   kuat & cepat drpd gaya Klasik -- kesan avatar "menyala". ---- */
+.brand-mark-wrap[data-avatar-frame="neon"] .brand-mark{
+  border:2.5px solid var(--primary);
+  animation:avatarNeonPulse 1.7s ease-in-out infinite;
+}
+@keyframes avatarNeonPulse{
+  0%,100%{box-shadow:0 0 0 0 color-mix(in srgb, var(--primary) 65%, transparent), 0 0 9px 1px color-mix(in srgb, var(--primary) 55%, transparent);}
+  50%{box-shadow:0 0 0 5px color-mix(in srgb, var(--primary) 0%, transparent), 0 0 16px 5px color-mix(in srgb, var(--primary) 80%, transparent);}
+}
+/* ---- "Segi Enam": avatar & cincinnya dipotong bentuk heksagon (numpang
+   warna gradasi primer->forest-glow yg sudah dipakai di elemen lain)
+   lewat clip-path, bukan lingkaran -- kesan lencana/badge premium yg
+   lebih tegas & modern. ---- */
+.brand-mark-wrap[data-avatar-frame="hex"] .brand-mark{
+  border:none;border-radius:0;
+  clip-path:polygon(25% 4%, 75% 4%, 100% 50%, 75% 96%, 25% 96%, 0% 50%);
+}
+.brand-mark-wrap[data-avatar-frame="hex"]::before{
+  content:"";position:absolute;inset:-12%;z-index:1;
+  background:linear-gradient(135deg, var(--primary), var(--forest-glow));
+  clip-path:polygon(25% 4%, 75% 4%, 100% 50%, 75% 96%, 25% 96%, 0% 50%);
+}
+/* ---- "Garis Putus": cincin putus-putus yg berputar pelan mengelilingi
+   avatar, kesan lebih santai/kasual drpd cincin solid lainnya. ---- */
+.brand-mark-wrap[data-avatar-frame="dashed"] .brand-mark{border:2px solid #FFFFFF;}
+.brand-mark-wrap[data-avatar-frame="dashed"]::before{
+  content:"";position:absolute;inset:-16%;border-radius:50%;z-index:1;
+  border:2px dashed var(--primary);
+  animation:avatarDashSpin 9s linear infinite;
+}
+@keyframes avatarDashSpin{to{transform:rotate(360deg);}}
+/* ---- "Tanpa Bingkai": avatar polos rata tanpa cincin/glow apa pun --
+   lencana "PREMIUM" di bawahnya ikut disembunyikan krn kesan minimalis
+   yg diminta gaya ini jadi kurang pas kalau lencananya masih nongol
+   sendirian tanpa cincin penghias di atasnya. ---- */
+.brand-mark-wrap[data-avatar-frame="none"] .brand-mark{border:none;box-shadow:none;}
+.brand-mark-wrap[data-avatar-frame="none"] + .brand-mark-badge,
+.brand-mark-wrap[data-avatar-frame="none"] .brand-mark-badge{display:none;}
+@media (prefers-reduced-motion:reduce){
+  .brand-mark-wrap[data-avatar-frame="classic"] .brand-mark,
+  .brand-mark-wrap:not([data-avatar-frame]) .brand-mark{animation:none;box-shadow:0 0 0 4px color-mix(in srgb, var(--forest-glow) 18%, transparent);}
+  .brand-mark-wrap[data-avatar-frame="gold"]::before{animation:none;}
+  .brand-mark-wrap[data-avatar-frame="neon"] .brand-mark{animation:none;box-shadow:0 0 0 3px color-mix(in srgb, var(--primary) 30%, transparent);}
+  .brand-mark-wrap[data-avatar-frame="dashed"]::before{animation:none;}
+}
+/* ---- Ukuran mini (32px) khusus utk swatch pratinjau di grid pemilihan
+   #temaFrameGrid -- numpang PERSIS sistem cincin di atas (semua pakai
+   satuan % thd kotak wrap-nya sendiri), cuma ukuran wrap-nya diperkecil
+   & margin-bottom bawaan (utk ruang lencana) dimatikan krn swatch mini
+   ini tidak punya lencana PREMIUM. ---- */
+.brand-mark-wrap.tfb-avatar-mini{width:32px;height:32px;margin-bottom:0;}
 .banner-date-col{display:flex;flex-direction:column;align-items:flex-end;gap:4px;min-width:0;}
 .banner-date{font-size:12.5px;color:rgba(244,247,243,0.72);white-space:nowrap;
   /* FIX KEDIP: lihat catatan lengkap di .banner-fx .fx-value di bawah —
@@ -3703,6 +3807,28 @@ tr.fade-up{animation:fadeRow .35s ease both;}
    warna aksen sekunder pada modal Pengaturan Aplikasi). Swatch besar
    supaya nyaman disentuh di HP, dilengkapi label nama warna & preview
    kartu kecil yg langsung ikut berubah begitu warna dipilih. ---- */
+/* ---- PERMINTAAN: header oranye "Tema" (.lap-filter-head) dibuat
+   MENEMPEL (position:sticky) di atas layar saat halaman Tema
+   discroll, persis seperti pola sticky-header di halaman lain
+   (.lap-sticky-top di Laporan, .bd-sticky-head di Tagihan & Hutang,
+   .saya-sticky-top di Pengaturan). Sengaja di-scope KHUSUS ke
+   "#temaOverlay .lap-filter-head" (bukan menimpa .lap-filter-head
+   begitu saja) krn class itu dipakai bareng oleh 2 popup lain juga
+   (popup Filter #lapFilterOverlay & halaman Data Diri
+   #dataDiriOverlay) yang TIDAK diminta ikut berubah.
+   z-index dinaikkan dari 1 -> 3 (melebihi .lap-filter-card yg z-index
+   2) supaya pas .lap-filter-card ikut tergulung naik ke posisi
+   header, kartu putihnya tidak menutupi/menang tumpuk atas header
+   oranye yg sedang menempel -- pasangan fix yg sama dgn
+   .saya-sticky-top thd .settings-list. translateZ(0)+backface-
+   visibility:hidden ikut ditambahkan sbg fix kedipan/tonjolan sudut
+   melengkung saat sticky discroll di Safari/HP, sama seperti wrapper
+   sticky lain. ---- */
+#temaOverlay .lap-filter-head{
+  position:sticky;top:0;z-index:3;
+  transform:translateZ(0);-webkit-transform:translateZ(0);
+  backface-visibility:hidden;-webkit-backface-visibility:hidden;
+}
 .tema-section{
   background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
   padding:16px;box-shadow:var(--shadow-sm);
@@ -3823,17 +3949,36 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 .tdb-shape-preview{display:flex;align-items:center;justify-content:center;height:22px;color:var(--ink-faint);}
 .tema-font-btn.active .tdb-shape-preview{color:var(--primary);}
 .tema-preview-card{
+  position:relative;overflow:hidden;
   border-radius:18px;padding:16px 16px 14px;color:#fff;
   background:linear-gradient(135deg,var(--primary),var(--primary-deep));
   box-shadow:0 10px 20px -8px color-mix(in srgb, var(--primary) 55%, transparent);
   display:flex;flex-direction:column;gap:6px;
 }
+/* Konten teks/tombol kartu Pratinjau perlu diangkat ke atas lapisan
+   #temaPreviewDeco (z-index:1, lihat .banner-deco) supaya elemen
+   dekoratif tidak menutupi tulisan -- persis pola .banner-top di
+   banner asli (z-index:3) menang di atas #bannerDeco. */
+/* ---- Jarak ekstra khusus avatar pratinjau (lihat markup
+   #temaPreviewAvatarWrap) -- lencana PREMIUM-nya menggantung di
+   bawah lewat position:absolute, jadi perlu sedikit ruang tambahan
+   supaya tidak numpuk dgn label "Pratinjau" tepat di bawahnya. ---- */
+.tema-preview-avatar-wrap{margin-bottom:16px;}
+.tema-preview-card small,
+.tema-preview-card strong,
+.tema-preview-card .tema-preview-btn,
+.tema-preview-avatar-wrap{position:relative;z-index:2;}
 .tema-preview-card small{font-size:10.5px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;opacity:0.85;}
 .tema-preview-card strong{font-size:19px;font-family:var(--font-display,'Poppins',sans-serif);}
 .tema-preview-btn{
   align-self:flex-start;margin-top:6px;padding:7px 14px;border-radius:999px;border:none;
   background:rgba(255,255,255,0.22);color:#fff;font-size:12px;font-weight:700;cursor:default;
 }
+/* Catatan: bentuk #temaPreviewDeco TIDAK butuh override ukuran
+   terpisah lagi di sini -- aturan .bd-circle/.bd-dots/.bd-wave/.bd-blob
+   di CSS Banner (semuanya dalam % + aspect-ratio) sudah otomatis
+   menyesuaikan proporsi ke ukuran kartu Pratinjau yang lebih mungil
+   ini, persis seperti menyesuaikan ke lebar banner asli. */
 
 /* ---- Kepadatan tampilan ---- */
 .as-density-toggle{display:flex;gap:6px;background:var(--paper);border:1px solid var(--line);border-radius:11px;padding:4px;}
@@ -9084,7 +9229,7 @@ body.is-scrolling *{
          yang tampil diatur lewat atribut data-shape di kontainer ini
          (4 varian sudah digambar sekaligus di bawah, CSS yang
          menyembunyikan/menampilkan sesuai data-shape -- lihat
-         renderBannerDeco() di script.js), & bisa dimatikan total lewat
+         applyBannerDeco() di script.js), & bisa dimatikan total lewat
          class .bd-off (fitur on/off "Elemen Dekoratif Banner" di
          halaman Tema, #temaOverlay). Warnanya sengaja putih transparan
          (bukan warna biru tetap) supaya otomatis senada dengan warna
@@ -9095,7 +9240,6 @@ body.is-scrolling *{
       <div class="bd-circles">
         <span class="bd-circle bd-circle-a"></span>
         <span class="bd-circle bd-circle-b"></span>
-        <span class="bd-circle bd-circle-c"></span>
       </div>
       <div class="bd-dots"></div>
       <svg class="bd-wave" viewBox="0 0 400 130" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
@@ -9125,7 +9269,7 @@ body.is-scrolling *{
     <div class="banner-top">
       <div class="brand-wrap">
         <div class="brand" id="brandBtn" title="Pengaturan Aplikasi" role="button" tabindex="0" aria-label="Buka pengaturan aplikasi">
-          <span class="brand-mark-wrap">
+          <span class="brand-mark-wrap" id="brandMarkWrap">
             <span class="brand-mark" id="brandMarkIcon">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>
             </span>
@@ -9648,6 +9792,44 @@ body.is-scrolling *{
 
       <div class="lap-filter-card" id="temaCard">
         <div class="tema-preview-card" id="temaPreviewCard">
+          <!-- ---- Elemen dekoratif ikut ditampilkan di kartu Pratinjau
+               ini juga (markup & 4 varian bentuk PERSIS sama dgn
+               #bannerDeco di banner asli), supaya perubahan switch
+               "Tampilkan Elemen" & pilihan bentuk di section bawah
+               langsung kelihatan live di sini, bukan cuma di banner
+               beranda yg sedang tidak terlihat selagi popup Tema
+               terbuka. Disinkronkan bareng lewat applyBannerDeco()
+               yg sekarang menimpa KEDUA id (#bannerDeco & id ini)
+               sekaligus -- lihat script.js. ---- -->
+          <div class="banner-deco" id="temaPreviewDeco" data-shape="circles" aria-hidden="true">
+            <div class="bd-circles">
+              <span class="bd-circle bd-circle-a"></span>
+              <span class="bd-circle bd-circle-b"></span>
+            </div>
+            <div class="bd-dots"></div>
+            <svg class="bd-wave" viewBox="0 0 400 130" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M0,58 C70,95 150,25 230,58 C300,86 350,45 400,62 L400,130 L0,130 Z" fill="#fff" opacity="0.12"/>
+              <path d="M0,82 C90,112 175,58 265,80 C325,96 365,64 400,80 L400,130 L0,130 Z" fill="#fff" opacity="0.08"/>
+            </svg>
+            <svg class="bd-blob" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+              <path fill="#fff" opacity="0.11" d="M42.7,-59.7C54.5,-52.3,62.4,-38.4,66.5,-23.6C70.7,-8.9,71.2,6.7,66.4,20.4C61.6,34.1,51.5,45.9,39,53.6C26.5,61.4,13.2,65.1,-0.7,66.2C-14.7,67.3,-29.4,65.8,-41.4,58.6C-53.5,51.4,-62.9,38.5,-68.1,23.9C-73.3,9.3,-74.3,-7,-69.4,-21.1C-64.6,-35.2,-53.8,-47.1,-41,-54.6C-28.1,-62.1,-14.1,-65.1,0.8,-66.5C15.6,-67.9,31.2,-67.6,42.7,-59.7Z" transform="translate(100 100)"/>
+            </svg>
+          </div>
+          <!-- ---- Avatar pratinjau khusus fitur "Bingkai Avatar" (BARU):
+               numpang markup & class PERSIS sama dgn avatar asli di
+               banner beranda (.brand-mark-wrap/.brand-mark/.brand-mark-badge,
+               lihat catatan CSS "FITUR BARU: Bingkai Avatar" di atas) --
+               supaya cincin bingkai yg dipilih di grid #temaFrameGrid di
+               bawah langsung kelihatan LIVE di sini juga, disinkronkan
+               bareng avatar asli lewat applyAvatarFrame() (script.js)
+               yg menimpa KEDUA id (#brandMarkWrap & id ini) sekaligus,
+               persis pola applyBannerDeco() thd #bannerDeco. ---- -->
+          <span class="brand-mark-wrap tema-preview-avatar-wrap" id="temaPreviewAvatarWrap">
+            <span class="brand-mark" id="temaPreviewAvatarIcon">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>
+            </span>
+            <span class="brand-mark-badge" aria-hidden="true">PREMIUM</span>
+          </span>
           <small>Pratinjau</small>
           <strong id="temaPreviewName">ZAYAPRO</strong>
           <button type="button" class="tema-preview-btn" tabindex="-1">Tombol Contoh</button>
@@ -9702,6 +9884,22 @@ body.is-scrolling *{
             <button type="button" class="ws-switch active" id="temaDecoSwitch" role="switch" aria-checked="true" aria-label="Aktifkan/nonaktifkan elemen dekoratif banner"><span class="ws-switch-knob"></span></button>
           </div>
           <div class="tema-font-grid tema-deco-grid" id="temaDecoGrid"></div>
+        </div>
+        <!-- ---- Fitur BARU: "Bingkai Avatar" -- pilih gaya cincin/bingkai
+             utk lingkaran avatar/logo premium di banner beranda (elemen
+             #brandMarkWrap, yg sebelumnya cuma 1 gaya cincin tetap).
+             Kartu preview-nya numpang gaya .tema-font-btn yg sudah ada
+             (grid 2 kolom persis Gaya Font di atas), cuma isi
+             pratinjaunya lingkaran avatar mini bercincin (bkn huruf
+             "Aa") -- lihat .tfb-avatar-mini & sistem cincin
+             "data-avatar-frame" lengkap di CSS. Sama seperti Warna
+             Aksen/Gaya Font/Elemen Dekoratif di atas, pilihan di sini
+             jg cuma PRATINJAU live selama popup terbuka, baru tersimpan
+             permanen kalau tombol "Selesai" ditekan. ---- -->
+        <div class="tema-section">
+          <h3>Bingkai Avatar</h3>
+          <p>Pilih gaya cincin/bingkai untuk avatar logo di banner beranda.</p>
+          <div class="tema-font-grid" id="temaFrameGrid"></div>
         </div>
       </div>
 

@@ -7986,13 +7986,21 @@ function saveBannerDeco(state) {
   try { cloudStorage.setItem(BANNER_DECO_KEY, JSON.stringify(state)); }
   catch (e) { showToast('Gagal menyimpan elemen dekoratif banner.', 'err'); }
 }
-// Terapkan on/off + bentuk ke #bannerDeco -- dipakai baik utk pratinjau
-// sementara di halaman Tema maupun utk render awal saat app dimuat.
+// Terapkan on/off + bentuk ke elemen dekoratif -- dipakai baik utk
+// pratinjau sementara di halaman Tema maupun utk render awal saat app
+// dimuat. Menimpa DUA kontainer sekaligus dgn state yg sama: #bannerDeco
+// (banner asli beranda) & #temaPreviewDeco (kartu "Pratinjau" di
+// halaman Tema, lihat markup #temaPreviewCard) supaya keduanya selalu
+// sinkron -- termasuk saat popup Tema terbuka & banner beranda sendiri
+// sedang tidak terlihat.
 function applyBannerDeco(state) {
-  const el = document.getElementById('bannerDeco');
-  if (!el) return;
-  el.dataset.shape = BANNER_DECO_SHAPES.some(s => s.key === state.shape) ? state.shape : BANNER_DECO_DEFAULTS.shape;
-  el.classList.toggle('bd-off', !state.enabled);
+  const shape = BANNER_DECO_SHAPES.some(s => s.key === state.shape) ? state.shape : BANNER_DECO_DEFAULTS.shape;
+  ['bannerDeco', 'temaPreviewDeco'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.dataset.shape = shape;
+    el.classList.toggle('bd-off', !state.enabled);
+  });
 }
 function renderTemaDecoGrid(state) {
   const grid = document.getElementById('temaDecoGrid');
@@ -8010,6 +8018,59 @@ function renderTemaDecoGrid(state) {
     switchBtn.setAttribute('aria-checked', state.enabled ? 'true' : 'false');
   }
 }
+/* ==========================================================
+   "Bingkai Avatar" di halaman Tema -- 6 pilihan gaya cincin/bingkai
+   utk lingkaran avatar/logo premium di banner (elemen .brand-mark-wrap
+   .brand-mark, lihat markup #brandMarkWrap & sistem CSS lengkap
+   "data-avatar-frame" di index.html). Disimpan terpisah di key
+   sendiri (persis pola BANNER_DECO_KEY di atas) krn ini murni
+   preferensi hiasan avatar, bukan bagian dari sistem warna/font. ---- */
+const AVATAR_FRAME_KEY = 'alirin_avatar_frame_v1';
+const AVATAR_FRAME_STYLES = [
+  { key: 'classic', label: 'Klasik' },
+  { key: 'gold', label: 'Emas Mewah' },
+  { key: 'neon', label: 'Neon Berpendar' },
+  { key: 'hex', label: 'Segi Enam' },
+  { key: 'dashed', label: 'Garis Putus' },
+  { key: 'none', label: 'Tanpa Bingkai' },
+];
+const AVATAR_FRAME_DEFAULTS = { frame: 'classic' };
+function loadAvatarFrame() {
+  try {
+    const raw = cloudStorage.getItem(AVATAR_FRAME_KEY);
+    return raw ? { ...AVATAR_FRAME_DEFAULTS, ...JSON.parse(raw) } : { ...AVATAR_FRAME_DEFAULTS };
+  } catch (e) { return { ...AVATAR_FRAME_DEFAULTS }; }
+}
+function saveAvatarFrame(state) {
+  try { cloudStorage.setItem(AVATAR_FRAME_KEY, JSON.stringify(state)); }
+  catch (e) { showToast('Gagal menyimpan bingkai avatar.', 'err'); }
+}
+// Terapkan gaya bingkai terpilih ke DUA wrap avatar sekaligus (persis
+// pola applyBannerDeco() thd #bannerDeco/#temaPreviewDeco): avatar asli
+// di banner beranda (#brandMarkWrap) & avatar pratinjau di kartu
+// "Pratinjau" halaman Tema (#temaPreviewAvatarWrap), supaya keduanya
+// selalu sinkron termasuk saat popup Tema terbuka & banner beranda
+// sendiri sedang tidak terlihat.
+function applyAvatarFrame(state) {
+  const frame = AVATAR_FRAME_STYLES.some(f => f.key === state.frame) ? state.frame : AVATAR_FRAME_DEFAULTS.frame;
+  ['brandMarkWrap', 'temaPreviewAvatarWrap'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.dataset.avatarFrame = frame;
+  });
+}
+function renderTemaFrameGrid(state) {
+  const grid = document.getElementById('temaFrameGrid');
+  if (!grid) return;
+  const checkSvg = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
+  grid.innerHTML = AVATAR_FRAME_STYLES.map(f => `
+    <button type="button" class="tema-font-btn${state.frame === f.key ? ' active' : ''}" data-avatarframe="${f.key}" aria-label="Bingkai ${f.label}">
+      <span class="tfb-check">${checkSvg}</span>
+      <span class="brand-mark-wrap tfb-avatar-mini" data-avatar-frame="${f.key}"><span class="brand-mark"></span></span>
+      <span class="tfb-label">${f.label}</span>
+    </button>
+  `).join('');
+}
 /* ---- State sementara halaman Tema: dipakai supaya pilihan warna
    cuma PRATINJAU (live preview) dulu selagi popup terbuka -- baru
    benar-benar tersimpan ke storage kalau tombol "Selesai" ditekan.
@@ -8017,15 +8078,18 @@ function renderTemaDecoGrid(state) {
    kembali kalau tombol "Batal"/tombol kembali/Escape ditekan).
    temaPendingState = pilihan yg sedang dipratinjau saat ini.
    temaFontOriginalKey/temaFontPendingKey = pasangan yg sama tapi utk
-   pilihan Gaya Font, & temaDecoOriginalState/temaDecoPendingState
-   pasangan yg sama lagi utk "Elemen Dekoratif Banner", mengikuti pola
-   identik. ---- */
+   pilihan Gaya Font, temaDecoOriginalState/temaDecoPendingState
+   pasangan yg sama lagi utk "Elemen Dekoratif Banner", &
+   temaFrameOriginalState/temaFramePendingState pasangan yg sama lagi
+   utk "Bingkai Avatar", mengikuti pola identik. ---- */
 let temaOriginalState = null;
 let temaPendingState = null;
 let temaFontOriginalKey = null;
 let temaFontPendingKey = null;
 let temaDecoOriginalState = null;
 let temaDecoPendingState = null;
+let temaFrameOriginalState = null;
+let temaFramePendingState = null;
 function refreshTemaPage() {
   const state = loadGlobalTheme();
   temaOriginalState = state;
@@ -8040,11 +8104,27 @@ function refreshTemaPage() {
   temaDecoOriginalState = decoState;
   temaDecoPendingState = decoState;
   renderTemaDecoGrid(decoState);
+  applyBannerDeco(decoState);
+  const frameState = loadAvatarFrame();
+  temaFrameOriginalState = frameState;
+  temaFramePendingState = frameState;
+  renderTemaFrameGrid(frameState);
+  applyAvatarFrame(frameState);
   const nameEl = document.getElementById('temaPreviewName');
   if (nameEl) {
     nameEl.textContent = (settings.appName || '').trim() || getDefaultAppName();
   }
 }
+document.getElementById('temaFrameGrid')?.addEventListener('click', (e) => {
+  const btn = e.target.closest('.tema-font-btn');
+  if (!btn) return;
+  const frame = btn.dataset.avatarframe;
+  if (frame === temaFramePendingState.frame) return;
+  const state = { ...temaFramePendingState, frame };
+  temaFramePendingState = state;
+  applyAvatarFrame(state);
+  renderTemaFrameGrid(state);
+});
 document.getElementById('temaDecoSwitch')?.addEventListener('click', () => {
   const state = { ...temaDecoPendingState, enabled: !temaDecoPendingState.enabled };
   temaDecoPendingState = state;
@@ -8181,6 +8261,10 @@ applyGlobalTheme(loadGlobalTheme());
 // sesegera mungkin juga supaya banner tidak sempat "berkedip" tampil lalu
 // hilang/berubah bentuk sesaat setelah halaman dimuat.
 applyBannerDeco(loadBannerDeco());
+// Sama halnya lagi utk bingkai avatar -- diterapkan sesegera mungkin jg
+// supaya avatar banner tidak sempat "berkedip" pakai bingkai bawaan lalu
+// berubah sesaat setelah halaman dimuat.
+applyAvatarFrame(loadAvatarFrame());
 
 function loadAppSettings() {
   try {
@@ -9321,6 +9405,7 @@ function closeTemaOverlay() {
   if (temaOriginalState) applyGlobalTheme(temaOriginalState);
   if (temaFontOriginalKey) applyFontPreview(temaFontOriginalKey);
   if (temaDecoOriginalState) applyBannerDeco(temaDecoOriginalState);
+  if (temaFrameOriginalState) applyAvatarFrame(temaFrameOriginalState);
   document.getElementById('temaOverlay').classList.remove('open');
   unlockBodyScroll();
 }
@@ -9349,6 +9434,12 @@ function confirmTemaOverlay() {
     saveBannerDeco(temaDecoPendingState);
     applyBannerDeco(temaDecoPendingState);
     temaDecoOriginalState = temaDecoPendingState;
+    changed = true;
+  }
+  if (temaFramePendingState && JSON.stringify(temaFramePendingState) !== JSON.stringify(temaFrameOriginalState)) {
+    saveAvatarFrame(temaFramePendingState);
+    applyAvatarFrame(temaFramePendingState);
+    temaFrameOriginalState = temaFramePendingState;
     changed = true;
   }
   if (changed) showToast('Tema disimpan.');
