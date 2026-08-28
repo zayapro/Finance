@@ -3630,6 +3630,30 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 }
 .as-theme-swatch svg{position:relative;z-index:1;color:#fff;filter:drop-shadow(0 1px 2px rgba(0,0,0,0.35));}
 
+/* ---- Pengganti .as-theme-row: kartu pintasan ke halaman Tema
+   (bukan picker warna terpisah lagi -- lihat catatan di HTML). Gaya
+   kartunya niru .form-row input (border+radius+padding senada) supaya
+   tetap menyatu dgn elemen form lain di modal ini, cuma isinya sebuah
+   dot warna aksen aktif + teks singkat + tombol pintasan, bukan input. */
+.as-accent-linkout{
+  display:flex;align-items:center;gap:10px;
+  border:1px solid var(--line);border-radius:11px;background:var(--paper);
+  padding:10px 10px 10px 12px;
+}
+.as-accent-linkout-dot{
+  flex-shrink:0;width:22px;height:22px;border-radius:50%;
+  background:linear-gradient(135deg, var(--primary), var(--primary-deep));
+  box-shadow:0 3px 8px -2px color-mix(in srgb, var(--primary) 55%, transparent);
+}
+.as-accent-linkout-text{flex:1;min-width:0;font-size:11.5px;line-height:1.4;color:var(--ink-soft);}
+.as-accent-linkout-btn{
+  flex-shrink:0;border:none;border-radius:999px;padding:7px 13px;
+  background:var(--primary);color:#fff;font-size:11.5px;font-weight:700;
+  cursor:pointer;white-space:nowrap;transition:opacity .15s ease,transform .12s ease;
+}
+.as-accent-linkout-btn:hover{opacity:.9;}
+.as-accent-linkout-btn:active{transform:scale(.96);}
+
 /* ---- Halaman "Tema": pilih warna aksen GLOBAL aplikasi (dipakai di
    halaman penuh #temaOverlay, beda dgn .as-theme-row di atas yg cuma
    warna aksen sekunder pada modal Pengaturan Aplikasi). Swatch besar
@@ -3651,31 +3675,69 @@ tr.fade-up{animation:fadeRow .35s ease both;}
    DIHILANGKAN krn di sini dia ada DI DALAM .tema-section yg sudah
    punya padding-bottom sendiri, supaya tidak dobel jarak. ---- */
 .tema-section .form-row{margin-bottom:0;}
-.tema-color-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:10px;}
+.tema-color-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:11px;}
+/* ---- Kartu pemilih warna, versi baru ----
+   SEBELUMNYA: swatch lingkaran polos 36px, dan saat aktif dilapisi
+   overlay putih semi-transparan tepat DI ATAS lingkaran -- warna
+   aslinya jadi agak "pudar"/ketutup pas lagi dipilih, ironis krn
+   momen itu justru saat pengguna paling perlu lihat warnanya jelas.
+   SEKARANG: swatch jadi persegi membulat lebih besar (fill lebar
+   kartu) dengan gradasi 2 titik (--tc-color -> --tc-deep, sama persis
+   pasangan shade yang bakal dipakai beneran di banner/tombol app --
+   jadi preview-nya representatif, bukan cuma warna flat), dan warna
+   itu TETAP terlihat penuh baik lagi aktif maupun tidak. Status
+   "terpilih" dipindah keluar dari swatch: jadi badge bulat kecil
+   mengambang di pojok kanan-atas kartu (pola "notification badge"),
+   plus border & bayangan kartu ikut diwarnai. ---- */
 .tema-color-btn{
-  position:relative;display:flex;flex-direction:column;align-items:center;gap:7px;
-  border:1.5px solid var(--line);border-radius:16px;background:var(--paper);
-  padding:12px 6px 10px;cursor:pointer;font-family:inherit;
-  transition:transform .15s cubic-bezier(.3,1.6,.4,1), border-color .15s ease, background .15s ease;
+  position:relative;display:flex;flex-direction:column;align-items:stretch;gap:8px;
+  border:1.5px solid var(--line);border-radius:18px;background:var(--card);
+  padding:9px 9px 10px;cursor:pointer;font-family:inherit;
+  transition:transform .15s cubic-bezier(.3,1.6,.4,1), border-color .15s ease, box-shadow .15s ease, background .15s ease;
 }
 .tema-color-btn:hover{transform:translateY(-2px);}
-.tema-color-btn.active{border-color:var(--tc-color,var(--primary));background:color-mix(in srgb, var(--tc-color,var(--primary)) 9%, var(--card));}
+.tema-color-btn:active{transform:translateY(0) scale(.96);}
+.tema-color-btn.active{
+  border-color:var(--tc-color,var(--primary));
+  background:color-mix(in srgb, var(--tc-color,var(--primary)) 7%, var(--card));
+  box-shadow:0 10px 20px -10px color-mix(in srgb, var(--tc-color,var(--primary)) 65%, transparent);
+}
 .tema-color-dot{
-  position:relative;width:36px;height:36px;border-radius:50%;flex-shrink:0;
-  background:var(--tc-color,var(--primary));
-  box-shadow:0 4px 10px -3px color-mix(in srgb, var(--tc-color,var(--primary)) 55%, transparent);
+  position:relative;width:100%;height:46px;border-radius:13px;flex-shrink:0;
+  background:linear-gradient(135deg, var(--tc-color,var(--primary)) 0%, var(--tc-deep,var(--primary-deep)) 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.28), inset 0 -6px 10px -6px rgba(0,0,0,.18);
 }
-.tema-color-btn.active .tema-color-dot::after{
-  content:'';position:absolute;inset:0;border-radius:50%;
-  background:rgba(255,255,255,0.18);box-shadow:0 0 0 3px #fff inset;
+/* Badge centang: mengambang di pojok kartu (bukan lagi di atas
+   swatch), muncul dgn animasi "pop" kecil hanya saat kartu aktif. */
+.tema-color-check{
+  position:absolute;top:5px;right:5px;width:20px;height:20px;border-radius:50%;
+  background:#fff;color:var(--tc-color,var(--primary));
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 2px 6px -1px rgba(19,26,42,.3), 0 0 0 2px var(--tc-color,var(--primary));
+  opacity:0;transform:scale(.4);
+  transition:opacity .15s ease, transform .15s cubic-bezier(.3,1.6,.4,1);
+  pointer-events:none;
 }
-.tema-color-dot svg{position:absolute;inset:0;margin:auto;color:#fff;filter:drop-shadow(0 1px 2px rgba(0,0,0,0.35));}
+.tema-color-btn.active .tema-color-check{opacity:1;transform:scale(1);}
 .tema-color-label{font-size:11.5px;font-weight:700;color:var(--ink);text-align:center;line-height:1.25;}
 .tema-color-btn.active .tema-color-label{color:var(--tc-color,var(--primary));}
+/* Swatch "Sendiri": conic-gradient pelangi dipertahankan sbg latar
+   default (menandakan "warna bebas, pilih apa saja"), TAPI sekarang
+   dikasih ikon pipet permanen di tengahnya (bukan cuma centang saat
+   aktif) supaya maksudnya kebaca tanpa perlu dipilih dulu. Begitu
+   pengguna sudah pernah pilih warna sendiri & kartunya aktif, latar
+   ganti jadi gradasi warna pilihannya sendiri (sama pola dgn preset
+   lain) supaya konsisten "swatch = preview warna beneran". */
 .tema-color-btn.tema-color-custom .tema-color-dot{
   background:conic-gradient(from 180deg, #F2672B, #E11D48, #7C3AED, #2563EB, #059669, #F2672B);
 }
-.tema-color-btn.tema-color-custom.active .tema-color-dot{background:var(--tc-color,var(--primary));}
+.tema-color-btn.tema-color-custom.active .tema-color-dot{
+  background:linear-gradient(135deg, var(--tc-color,var(--primary)) 0%, var(--tc-deep,var(--primary-deep)) 100%);
+}
+.tema-color-pipet{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  color:#fff;filter:drop-shadow(0 1px 2px rgba(0,0,0,.4));pointer-events:none;
+}
 .tema-color-custom input[type="color"]{
   position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;border:none;padding:0;
 }
@@ -11430,7 +11492,20 @@ body.is-scrolling *{
         <div class="as-section-split">
           <div class="as-section">
             <span class="as-section-label">Warna Aksen</span>
-            <div class="as-theme-row" id="asThemeRow"></div>
+            <!-- Dulu di sini ada picker 6 swatch SENDIRI (terpisah dari
+                 halaman "Tema"), efeknya cuma menimpa --forest-glow --
+                 jadi milih warna di sini atau di Tema bisa beda hasil/
+                 saling menimpa, & sebagian elemen (banner, tombol utama)
+                 TIDAK ikut berubah dari sini. Sekarang disatukan: satu2nya
+                 tempat pilih warna aksen adalah halaman Tema, yg efeknya
+                 skrg BENERAN mencakup seluruh aplikasi (lihat
+                 applyGlobalTheme() di script.js). Section ini jadi
+                 pintasan ke sana saja, bukan picker terpisah lagi. -->
+            <div class="as-accent-linkout" id="asAccentLinkout">
+              <span class="as-accent-linkout-dot" id="asAccentLinkoutDot"></span>
+              <span class="as-accent-linkout-text">Diatur dari halaman Tema, berlaku ke seluruh aplikasi.</span>
+              <button type="button" class="as-accent-linkout-btn" id="asAccentLinkoutBtn">Buka Tema</button>
+            </div>
           </div>
           <div class="as-section">
             <span class="as-section-label">Font</span>

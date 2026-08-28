@@ -7904,21 +7904,47 @@ function applyGlobalTheme(state) {
   root.setProperty('--primary-soft', shades.soft);
   root.setProperty('--banner-orange', shades.banner);
   root.setProperty('--banner-orange-deep', shades.bannerDeep);
+  /* ---- BARU: --forest-glow ikut disatukan ke sini ----
+     SEBELUMNYA --forest-glow (dipakai di >100 tempat: cincin fokus,
+     hover tombol edit, warna kartu dompet, badge, tombol tambah, dst
+     -- lihat grep var(--forest-glow) di index.html) dikendalikan
+     SENDIRI oleh "Warna Aksen" di modal Pengaturan Aplikasi
+     (applyAppSettings, via APP_THEME_PRESETS/settings.theme), jadi
+     TERPISAH dari 6 warna siap-pakai di halaman Tema ini. Akibatnya
+     pilih warna di halaman Tema TIDAK benar2 "global" -- elemen2
+     ber-forest-glow tetap warna lama. --forest-deep/--forest-mid
+     SENGAJA TIDAK ikut disamakan -- itu bukan bagian dari sistem
+     warna aksen, keduanya adalah warna navy gelap tetap yang dipakai
+     utk tooltip/badge gelap/kode (lihat linear-gradient(...,
+     var(--forest-deep), var(--forest-mid)) di banner & elemen gelap
+     lain), tidak terkait sama sekali dengan warna aksen oranye/dsb. */
+  root.setProperty('--forest-glow', shades.primary);
 }
 function renderTemaColorGrid(state) {
   const grid = document.getElementById('temaColorGrid');
   if (!grid) return;
-  const checkSvg = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
+  const checkSvg = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
+  // Pipet: ikon penanda tetap utk swatch "Sendiri" (bukan cuma saat
+  // aktif spt centang preset lain), supaya kartunya kebaca sbg "warna
+  // bebas" walau belum dipilih -- gradasi conic pelangi di baliknya
+  // saja kurang jelas maksudnya tanpa ikon ini.
+  const pipetSvg = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="m2 22 1-4 9.5-9.5"/><path d="M13.5 8.5 17 5"/><path d="M15 3l6 6-3 3-6-6z"/></svg>';
   const presetHtml = GLOBAL_THEME_PRESETS.map(p => `
-    <button type="button" class="tema-color-btn${state.mode === p.key ? ' active' : ''}" data-temamode="${p.key}" style="--tc-color:${p.primary}">
-      <span class="tema-color-dot">${state.mode === p.key ? checkSvg : ''}</span>
+    <button type="button" class="tema-color-btn${state.mode === p.key ? ' active' : ''}" data-temamode="${p.key}" style="--tc-color:${p.primary};--tc-deep:${p.deep}">
+      <span class="tema-color-dot"></span>
+      <span class="tema-color-check">${checkSvg}</span>
       <span class="tema-color-label">${p.label}</span>
     </button>
   `).join('');
   const customColor = state.custom || GLOBAL_THEME_DEFAULTS.custom;
+  const customDeep = deriveGlobalThemeShades(customColor).deep;
   const customHtml = `
-    <button type="button" class="tema-color-btn tema-color-custom${state.mode === 'custom' ? ' active' : ''}" data-temamode="custom" style="--tc-color:${customColor}">
-      <span class="tema-color-dot">${state.mode === 'custom' ? checkSvg : ''}<input type="color" id="temaCustomInput" value="${customColor}" aria-label="Pilih warna sendiri"></span>
+    <button type="button" class="tema-color-btn tema-color-custom${state.mode === 'custom' ? ' active' : ''}" data-temamode="custom" style="--tc-color:${customColor};--tc-deep:${customDeep}">
+      <span class="tema-color-dot">
+        <span class="tema-color-pipet">${pipetSvg}</span>
+        <input type="color" id="temaCustomInput" value="${customColor}" aria-label="Pilih warna sendiri">
+      </span>
+      <span class="tema-color-check">${checkSvg}</span>
       <span class="tema-color-label">Sendiri</span>
     </button>
   `;
@@ -8052,8 +8078,11 @@ function applyAppSettings(settings) {
   const receiptMarkEl = document.getElementById('receiptBrandMarkIcon');
   if (receiptMarkEl) receiptMarkEl.innerHTML = logoHtml;
 
-  const preset = APP_THEME_PRESETS.find(p => p.key === settings.theme) || APP_THEME_PRESETS[0];
-  document.documentElement.style.setProperty('--forest-glow', preset.color);
+  /* --forest-glow SENGAJA TIDAK lagi di-set di sini -- sumbernya kini
+     TUNGGAL dari applyGlobalTheme() (halaman Tema), supaya "Warna
+     Aksen" beneran berlaku ke SELURUH aplikasi (termasuk elemen2 yg
+     pakai --forest-glow), bukan cuma --primary/--banner-orange. Lihat
+     catatan lengkap di fungsi applyGlobalTheme(). */
 
   const fontPreset = APP_FONT_PRESETS.find(f => f.key === settings.font) || APP_FONT_PRESETS[0];
   document.documentElement.style.setProperty('--font-body', fontPreset.body);
@@ -8331,9 +8360,14 @@ if (asFaviconDrop) {
 }
 document.getElementById('asMetaDescription').addEventListener('input', updateAsMetaDescCount);
 
-document.getElementById('asThemeRow').addEventListener('click', (e) => {
-  const btn = e.target.closest('[data-astheme]');
-  if (btn) setAsSelectedTheme(btn.dataset.astheme);
+document.getElementById('asAccentLinkoutBtn')?.addEventListener('click', () => {
+  // "Buka Tema": tutup modal Pengaturan Aplikasi ini, lalu buka
+  // halaman Tema -- sekarang satu2nya tempat mengganti warna aksen,
+  // menggantikan picker .as-theme-row lama yg efeknya dulu cuma
+  // sebagian & bisa saling menimpa dgn halaman Tema (lihat catatan di
+  // applyGlobalTheme() & HTML section "Warna Aksen").
+  closeModal(appSettingsModal);
+  openTemaOverlay();
 });
 document.getElementById('asIconRow').addEventListener('click', (e) => {
   const btn = e.target.closest('[data-asicon]');
