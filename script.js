@@ -7931,9 +7931,7 @@ function renderTemaColorGrid(state) {
   `).join('');
   const customColor = state.custom || GLOBAL_THEME_DEFAULTS.custom;
   const customHtml = `
-    <button type="button" class="tema-color-btn tema-color-custom${state.mode === 'custom' ? ' active' : ''}" data-temamode="custom" style="--tc-color:${customColor}" title="Sendiri" aria-label="Pilih warna sendiri" aria-pressed="${state.mode === 'custom' ? 'true' : 'false'}">
-      <input type="color" id="temaCustomInput" value="${customColor}" aria-label="Pilih warna sendiri">
-    </button>
+    <button type="button" class="tema-color-btn tema-color-custom${state.mode === 'custom' ? ' active' : ''}" data-temamode="custom" style="--tc-color:${customColor}" title="Sendiri" aria-label="Pilih warna sendiri" aria-pressed="${state.mode === 'custom' ? 'true' : 'false'}"></button>
   `;
   grid.innerHTML = presetHtml + customHtml;
 }
@@ -8003,7 +8001,7 @@ document.getElementById('temaColorGrid')?.addEventListener('click', (e) => {
   if (!btn || e.target.tagName === 'INPUT') return;
   const mode = btn.dataset.temamode;
   if (mode === 'custom') {
-    document.getElementById('temaCustomInput')?.click();
+    openTemaCustomColorModal();
     return;
   }
   const state = { ...temaPendingState, mode };
@@ -8011,15 +8009,90 @@ document.getElementById('temaColorGrid')?.addEventListener('click', (e) => {
   applyGlobalTheme(state);
   renderTemaColorGrid(state);
 });
-document.getElementById('temaColorGrid')?.addEventListener('input', (e) => {
-  if (e.target.id !== 'temaCustomInput') return;
-  const state = { mode: 'custom', custom: e.target.value.toUpperCase() };
+
+/* ==========================================================
+   POPUP "WARNA SENDIRI" -- lihat markup #temaCustomColorModalOverlay
+   di index.html. Gantikan alur lama (tap swatch pelangi -> langsung
+   buka <input type="color"> bawaan browser) dgn popup bergaya sendiri
+   yg PUSATNYA kolom ketik kode HEX -- tombol pipet kecil di ujung
+   kolom tetap membuka color picker asli OS/browser sbg alternatif
+   visual, tapi bukan lagi satu-satunya cara. Sama seperti dulu:
+   berubah warna di sini LANGSUNG live-preview ke seluruh app selama
+   popup terbuka, baru benar2 tersimpan ke temaPendingState (lalu ke
+   storage saat "Selesai" halaman Tema ditekan) kalau tombol "Pakai
+   Warna Ini" di popup ini ditekan -- kalau "Batal"/tutup popup,
+   warna app dikembalikan lagi ke keadaan SEBELUM popup ini dibuka. */
+const temaCustomColorModal = document.getElementById('temaCustomColorModalOverlay');
+let temaCustomModalPrevState = null; // state tema (warna) sblm popup custom dibuka -- utk "Batal"
+
+function isValidHex6(hex) {
+  return /^[0-9A-Fa-f]{6}$/.test(hex || '');
+}
+function renderTemaCustomModalPreview(hex) {
+  const safeHex = isValidHex6(hex) ? `#${hex.toUpperCase()}` : 'var(--primary)';
+  const bigPreview = document.getElementById('temaCustomPreviewBig');
+  const headIcon = document.getElementById('temaCustomModalIcon');
+  if (bigPreview) bigPreview.style.setProperty('--tcm-color', safeHex);
+  if (headIcon) headIcon.style.setProperty('--tcm-color', safeHex);
+}
+function openTemaCustomColorModal() {
+  if (!temaCustomColorModal) return;
+  temaCustomModalPrevState = temaPendingState;
+  const startColor = (temaPendingState.mode === 'custom' && temaPendingState.custom)
+    ? temaPendingState.custom
+    : (temaPendingState.custom || GLOBAL_THEME_DEFAULTS.custom);
+  const hex6 = startColor.replace('#', '').toUpperCase();
+  const hexInput = document.getElementById('temaCustomHexInput');
+  const colorInput = document.getElementById('temaCustomColorInput');
+  if (hexInput) hexInput.value = hex6;
+  if (colorInput) colorInput.value = `#${hex6}`;
+  renderTemaCustomModalPreview(hex6);
+  openModal(temaCustomColorModal);
+  setTimeout(() => hexInput?.focus(), 200);
+}
+function closeTemaCustomColorModal(revert) {
+  if (!temaCustomColorModal) return;
+  if (revert && temaCustomModalPrevState) {
+    temaPendingState = temaCustomModalPrevState;
+    applyGlobalTheme(temaPendingState);
+  }
+  closeModal(temaCustomColorModal);
+}
+document.getElementById('temaCustomModalCloseBtn')?.addEventListener('click', () => closeTemaCustomColorModal(true));
+document.getElementById('temaCustomModalCancelBtn')?.addEventListener('click', () => closeTemaCustomColorModal(true));
+temaCustomColorModal?.addEventListener('click', (e) => { if (e.target === temaCustomColorModal) closeTemaCustomColorModal(true); });
+document.getElementById('temaCustomModalApplyBtn')?.addEventListener('click', () => {
+  const hexInput = document.getElementById('temaCustomHexInput');
+  const hex6 = (hexInput?.value || '').toUpperCase();
+  if (!isValidHex6(hex6)) { showToast('Kode HEX harus 6 digit (0-9, A-F).', 'err'); return; }
+  const state = { mode: 'custom', custom: `#${hex6}` };
   temaPendingState = state;
   applyGlobalTheme(state);
+  renderTemaColorGrid(state);
+  closeModal(temaCustomColorModal);
 });
-document.getElementById('temaColorGrid')?.addEventListener('change', (e) => {
-  if (e.target.id !== 'temaCustomInput') return;
-  renderTemaColorGrid(temaPendingState);
+// Ketik langsung di kolom HEX -- live-preview begitu sudah 6 digit valid,
+// sambil bersihkan karakter di luar 0-9/A-F & batasi 6 digit supaya
+// pengguna tetap bisa ngetik bebas (termasuk paste "#F2672B" dgn pagar)
+// tanpa error, bukan langsung menolak tiap ketikan yg belum lengkap.
+document.getElementById('temaCustomHexInput')?.addEventListener('input', (e) => {
+  let v = e.target.value.replace(/[^0-9A-Fa-f]/g, '').toUpperCase().slice(0, 6);
+  e.target.value = v;
+  if (isValidHex6(v)) {
+    const colorInput = document.getElementById('temaCustomColorInput');
+    if (colorInput) colorInput.value = `#${v}`;
+    renderTemaCustomModalPreview(v);
+    applyGlobalTheme({ mode: 'custom', custom: `#${v}` });
+  }
+});
+// Pipet (color picker asli OS/browser) -- begitu pengguna pilih warna
+// dari situ, kolom HEX & pratinjau ikut disinkronkan otomatis.
+document.getElementById('temaCustomColorInput')?.addEventListener('input', (e) => {
+  const hex6 = e.target.value.replace('#', '').toUpperCase();
+  const hexInput = document.getElementById('temaCustomHexInput');
+  if (hexInput) hexInput.value = hex6;
+  renderTemaCustomModalPreview(hex6);
+  applyGlobalTheme({ mode: 'custom', custom: `#${hex6}` });
 });
 // Terapkan warna tema tersimpan sesegera mungkin supaya sudah benar
 // sejak render pertama (senada dgn applyAppSettings(loadAppSettings())

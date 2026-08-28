@@ -311,7 +311,7 @@ try {
      variabel di sini supaya ke-4 elemen itu DIJAMIN selalu senada,
      termasuk saat kartu "Uang Masuk & Keluar" aktif/terbuka lalu
      diciutkan kembali ke bentuk tab ringkasan. */
-  --card-fade-bg: linear-gradient(to right, #FFFFFF 0%, #FFFFFF 45%, #FFF9F2 70%, #FFEFDF 100%);
+  --card-fade-bg: linear-gradient(to right, #FFFFFF 0%, #FFFFFF 45%, color-mix(in srgb, var(--primary) 6%, white) 70%, color-mix(in srgb, var(--primary) 14%, white) 100%);
   --ink:#131A2A;
   --ink-soft:#5B6472;
   --ink-faint:#6B7690;
@@ -656,13 +656,13 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
   background:#FFFFFF;
   display:flex;align-items:center;justify-content:center;
   color:var(--primary-deep);
-  box-shadow:0 4px 14px -4px rgba(124,45,18,0.35), 0 0 0 0 rgba(242,103,43,0.5);
+  box-shadow:0 4px 14px -4px color-mix(in srgb, var(--primary-deep) 35%, transparent), 0 0 0 0 color-mix(in srgb, var(--primary) 50%, transparent);
   animation:brandMarkPulse 2.6s ease-in-out infinite;
 }
 @keyframes brandMarkPulse{
-  0%{box-shadow:0 0 0 0 rgba(242,103,43,0.45);}
-  70%{box-shadow:0 0 0 10px rgba(242,103,43,0);}
-  100%{box-shadow:0 0 0 0 rgba(242,103,43,0);}
+  0%{box-shadow:0 0 0 0 color-mix(in srgb, var(--primary) 45%, transparent);}
+  70%{box-shadow:0 0 0 10px color-mix(in srgb, var(--primary) 0%, transparent);}
+  100%{box-shadow:0 0 0 0 color-mix(in srgb, var(--primary) 0%, transparent);}
 }
 @media (prefers-reduced-motion:reduce){
   .brand-mark{animation:none;box-shadow:none;}
@@ -1168,13 +1168,13 @@ tr.fade-up{animation:fadeRow .35s ease both;}
      jadi shadow ke bawah malah menimbulkan garis batas/bayangan palsu
      tepat di sambungannya, alih-alih terlihat menyatu. */
   box-shadow:
-    0 -16px 30px -10px rgba(242,103,43,0.38);
+    0 -16px 30px -10px color-mix(in srgb, var(--primary) 38%, transparent);
 }
 @media (max-width:640px){
   .saldo-card{
     margin:-18px 0 22px;padding:24px 22px 6px;border-radius:26px 26px 0 0;
     box-shadow:
-      0 -13px 24px -9px rgba(242,103,43,0.38);
+      0 -13px 24px -9px color-mix(in srgb, var(--primary) 38%, transparent);
   }
   .fc-peek-handle{padding:18px 22px 18px 22px;border-radius:0 0 26px 26px;}
   /* Lengkungan bawah kartu "Uang Masuk & Keluar" SAAT DIBUKA PENUH
@@ -1286,7 +1286,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
      "pinggiran" tegas, bukan menyatu. Warna shadow diganti krem/oranye
      lembut (senada ujung gradasi kartu) supaya pijaran bawahnya
      melebur halus ke latar halaman, sama seperti pola di atas. */
-  box-shadow:0 18px 30px -20px rgba(242,103,43,0.22);
+  box-shadow:0 18px 30px -20px color-mix(in srgb, var(--primary) 22%, transparent);
   clip-path:inset(0 0 -40px 0 round 0 0 30px 30px);
   transition:box-shadow .18s ease, transform .35s cubic-bezier(.22,1,.36,1), opacity .3s ease, background .18s ease;
   /* FIX "bayangan kotak" saat tab ini diketuk di HP: browser mobile
@@ -1456,7 +1456,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
      sempit buat disentuh di HP. */
   width:74px;height:28px;border-radius:999px;padding:3px;
   background:var(--primary-soft);
-  border:1px solid rgba(242,103,43,0.18);
+  border:1px solid color-mix(in srgb, var(--primary) 18%, transparent);
   cursor:pointer;
   /* FIX "ada bayangan kotak pas diklik di HP": browser mobile secara
      default menggambar highlight sentuh (tap highlight) berbentuk
@@ -1495,7 +1495,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
      = 33px. Tinggi: 28 - 2*1border - 2*3padding = 20px. */
   width:33px;height:20px;border-radius:999px;
   background:linear-gradient(140deg,var(--primary-light),var(--primary));
-  box-shadow:0 2px 7px rgba(194,65,12,0.38);
+  box-shadow:0 2px 7px color-mix(in srgb, var(--primary-deep) 38%, transparent);
   transition:transform .32s cubic-bezier(.34,1.56,.64,1);
 }
 .currency-toggle.usd .ct-knob{transform:translateX(33px);}
@@ -1592,7 +1592,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
    pojok). Di HP (≤600px) tetap dikembalikan ke space-between lewat
    media query di bawah, karena di lebar sempit itu justru bikin kedua
    item mengisi rata lebar layar dengan rapi. */
-.saldo-sub{display:flex;gap:26px;margin-top:20px;padding-top:18px;border-top:1px solid rgba(242,103,43,0.14);flex-wrap:wrap;justify-content:flex-start;position:relative;z-index:3;}
+.saldo-sub{display:flex;gap:26px;margin-top:20px;padding-top:18px;border-top:1px solid color-mix(in srgb, var(--primary) 14%, transparent);flex-wrap:wrap;justify-content:flex-start;position:relative;z-index:3;}
 .saldo-sub-item{display:flex;align-items:center;gap:10px;min-width:0;}
 /* Item kanan (Pengeluaran) rata KANAN teksnya begitu baris ini melebar
    penuh (mis. mode 2-kolom di HP lewat media query di bawah), biar
@@ -1740,8 +1740,8 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 .income-shortcut-card::before{
   content:'';position:absolute;inset:0;z-index:0;pointer-events:none;
   background:linear-gradient(135deg,
-    rgba(242,103,43,0.10) 0%,
-    rgba(242,103,43,0.04) 38%,
+    color-mix(in srgb, var(--primary) 10%, transparent) 0%,
+    color-mix(in srgb, var(--primary) 4%, transparent) 38%,
     rgba(217,119,6,0.05) 72%,
     rgba(217,119,6,0.09) 100%);
 }
@@ -1756,11 +1756,11 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 .isc-shortcut-viewall{
   display:inline-flex;align-items:center;gap:4px;flex-shrink:0;
   font-size:12.5px;font-weight:700;color:var(--primary-deep);background:color-mix(in srgb, var(--primary) 10%, transparent);
-  border:1px solid rgba(242,103,43,0.20);padding:6px 12px;border-radius:999px;
+  border:1px solid color-mix(in srgb, var(--primary) 20%, transparent);padding:6px 12px;border-radius:999px;
   transition:color .15s ease, transform .15s ease, background .15s ease, border-color .15s ease, box-shadow .15s ease;
 }
 .isc-shortcut-viewall svg{transition:transform .15s ease;}
-.isc-shortcut-viewall:hover{color:#fff;background:linear-gradient(135deg,var(--primary),var(--primary-deep));border-color:transparent;box-shadow:0 6px 14px -4px rgba(242,103,43,0.5);}
+.isc-shortcut-viewall:hover{color:#fff;background:linear-gradient(135deg,var(--primary),var(--primary-deep));border-color:transparent;box-shadow:0 6px 14px -4px color-mix(in srgb, var(--primary) 50%, transparent);}
 .isc-shortcut-viewall:hover svg{transform:translateX(2px);}
 .isc-shortcut-row{
   position:relative;z-index:1;display:flex;justify-content:space-between;align-items:flex-start;
@@ -3679,9 +3679,9 @@ tr.fade-up{animation:fadeRow .35s ease both;}
    referensi: lingkaran solid berjajar, tanpa label/kartu bingkai --
    status "terpilih" cukup lewat cincin abu-abu mengambang di luar
    lingkaran, warna terpilih tetap solid & jelas terlihat) ---- */
-.tema-color-grid{display:flex;flex-wrap:wrap;align-items:center;gap:16px;padding:2px;}
+.tema-color-grid{display:grid;grid-template-columns:repeat(7,1fr);align-items:center;justify-items:center;gap:6px;padding:2px;}
 .tema-color-btn{
-  position:relative;width:42px;height:42px;border-radius:50%;flex-shrink:0;
+  position:relative;width:100%;max-width:38px;aspect-ratio:1;border-radius:50%;flex-shrink:0;
   border:none;padding:0;cursor:pointer;font-family:inherit;
   background:var(--tc-color,var(--primary));
   box-shadow:0 2px 6px -1px rgba(15,23,42,.28);
@@ -3690,7 +3690,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 .tema-color-btn:hover{transform:scale(1.07);}
 .tema-color-btn:active{transform:scale(.93);}
 .tema-color-btn.active{
-  box-shadow:0 0 0 3px var(--card), 0 0 0 5px var(--ink-faint), 0 2px 6px -1px rgba(15,23,42,.28);
+  box-shadow:0 0 0 2px var(--card), 0 0 0 4px var(--ink-faint), 0 2px 6px -1px rgba(15,23,42,.28);
 }
 /* Swatch "Sendiri": gradasi conic pelangi lembut jadi latar tetap
    (bukan cuma saat belum dipilih) -- menandakan "warna bebas" persis
@@ -3702,6 +3702,49 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 .tema-color-custom input[type="color"]{
   position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;border:none;padding:0;border-radius:50%;
 }
+
+/* ---- Popup "Warna Sendiri" -- dipicu tap swatch terakhir (pelangi)
+   di grid warna, gantikan color picker bawaan browser yang polos.
+   Isinya: lingkaran pratinjau besar yang ikut berubah live, kolom
+   input kode HEX (utama, bisa ketik langsung "F2672B"), dan tombol
+   pipet kecil di ujung kolom yang tetap membuka color picker asli
+   OS/browser (utk yg mau pilih visual dari palet, bukan ngetik kode).
+   Style-nya numpang bahasa desain .modal/.modal-head yang sudah ada
+   di app (dipakai jg oleh modal Ganti Ikon dst) supaya konsisten. ---- */
+.tema-custom-modal .modal-head-icon{
+  background:var(--tcm-color,var(--primary));
+}
+.tema-custom-preview{
+  width:100%;height:64px;border-radius:16px;margin-bottom:16px;
+  background:var(--tcm-color,var(--primary));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.25), inset 0 -8px 14px -8px rgba(0,0,0,.2), 0 8px 18px -10px color-mix(in srgb, var(--tcm-color,var(--primary)) 60%, transparent);
+  transition:background .1s linear;
+}
+.tema-custom-label{font-size:11.5px;font-weight:700;color:var(--ink-soft);margin:0 0 7px;}
+.tema-custom-hexrow{
+  display:flex;align-items:center;gap:9px;
+  border:1.5px solid var(--line);border-radius:12px;background:var(--paper);
+  padding:9px 9px 9px 13px;transition:border-color .15s ease, background .15s ease;
+}
+.tema-custom-hexrow:focus-within{border-color:var(--tcm-color,var(--primary));background:var(--card);}
+.tema-custom-hash{font-family:'Poppins',sans-serif;font-weight:700;font-size:16px;color:var(--ink-faint);flex-shrink:0;}
+.tema-custom-hexrow input[type="text"]{
+  flex:1;min-width:0;border:none;background:transparent;padding:0;
+  font-family:'Poppins',sans-serif;font-weight:700;font-size:16px;letter-spacing:0.03em;
+  color:var(--ink);text-transform:uppercase;
+}
+.tema-custom-hexrow input[type="text"]::placeholder{color:var(--ink-faint);text-transform:none;font-weight:600;}
+.tema-custom-pipet-btn{
+  position:relative;flex-shrink:0;width:34px;height:34px;border-radius:9px;overflow:hidden;
+  background:conic-gradient(from 180deg, #FDE68A, #6EE7B7, #93C5FD, #C4B5FD, #FDA4AF, #FDE68A);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+  box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.6);
+}
+.tema-custom-pipet-btn svg{position:relative;z-index:1;color:#fff;filter:drop-shadow(0 1px 2px rgba(0,0,0,.45));}
+.tema-custom-pipet-btn input[type="color"]{
+  position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;border:none;padding:0;
+}
+.tema-custom-hint{font-size:11px;color:var(--ink-faint);margin:8px 0 0;line-height:1.5;}
 /* ---- Grid pemilih "Gaya Font" -- niru bahasa desain .tema-color-btn
    di atasnya (kartu rounded, border+background aktif pakai var(--primary),
    centang di pojok saat aktif), TAPI 2 kolom & isinya huruf "Aa" besar
@@ -4732,12 +4775,12 @@ body.density-compact .income-cards-group{gap:10px;}
      inset di dalamnya) supaya warnanya serasi dgn teks aktif yang
      juga oranye (var(--primary)) -- jadi pil aktif kelihatan jelas
      "menyala" tanpa perlu garis tepi di dalam. */
-  background:rgba(242,103,43,0.14);border-radius:999px;
+  background:color-mix(in srgb, var(--primary) 14%, transparent);border-radius:999px;
   /* Border oranye DIHAPUS -- tint background di atas sudah cukup buat
      nunjukin pil aktif, tanpa garis tepi yang bisa kelihatan
      buram/berantakan di sudut kapsul (mis. tab "Catatan" paling kanan). */
   border:none;
-  box-shadow:0 1px 3px rgba(242,103,43,0.12);
+  box-shadow:0 1px 3px color-mix(in srgb, var(--primary) 12%, transparent);
   transition:transform .32s cubic-bezier(.34,1.15,.34,1), width .32s cubic-bezier(.34,1.15,.34,1), opacity .15s ease;
   opacity:0;pointer-events:none;z-index:0;
   box-sizing:border-box;
@@ -4829,8 +4872,8 @@ input[type="number"].year-input{width:110px;font-family:'Poppins',sans-serif;}
   touch-action:manipulation;-webkit-tap-highlight-color:transparent;
 }
 .btn:active{transform:scale(0.97);}
-.btn-primary{background:var(--primary);color:#fff;box-shadow:0 4px 14px rgba(194,65,12,0.28);}
-.btn-primary:hover{background:var(--primary-deep);box-shadow:0 6px 18px rgba(194,65,12,0.32);}
+.btn-primary{background:var(--primary);color:#fff;box-shadow:0 4px 14px color-mix(in srgb, var(--primary-deep) 28%, transparent);}
+.btn-primary:hover{background:var(--primary-deep);box-shadow:0 6px 18px color-mix(in srgb, var(--primary-deep) 32%, transparent);}
 .btn-ghost{background:var(--paper);color:var(--ink);border:1px solid var(--line);}
 .btn-ghost:hover{background:#e6e9f5;border-color:#c9cee3;}
 /* ---- Khusus tombol "Muat Lebih Banyak" di halaman Laporan: font
@@ -5641,7 +5684,7 @@ tbody tr:last-child td{border-bottom:none;}
 .tx-modal .modal-actions .btn,
 .bill-modal .modal-actions .btn{padding:13px;border-radius:13px;font-size:14.5px;font-weight:600;}
 .tx-modal .modal-actions .btn-primary{
-  background:var(--primary);box-shadow:0 8px 18px -8px rgba(194,65,12,0.5);
+  background:var(--primary);box-shadow:0 8px 18px -8px color-mix(in srgb, var(--primary-deep) 50%, transparent);
   transition:background .16s ease, box-shadow .16s ease;
 }
 .tx-modal .modal-actions .btn-primary:hover{background:var(--primary-deep);}
@@ -6256,7 +6299,7 @@ tbody tr:last-child td{border-bottom:none;}
   border-radius:28px 28px 0 0;
   padding-top:24px;
   /* Bayangan oranye di tepi atas kartu DIHAPUS (sebelumnya
-     box-shadow:0 -16px 30px -10px rgba(242,103,43,0.38)) -- ini
+     box-shadow:0 -16px 30px -10px color-mix(in srgb, var(--primary) 38%, transparent)) -- ini
      yang sempat terlihat sebagai "bayangan oren" sesaat setiap kali
      halaman Tagihan & Hutang ini dibuka/berpindah dari menu lain.
      Disamakan dengan .page-body (Laporan/Dompet/Pengaturan) yang
@@ -6546,8 +6589,8 @@ tbody tr:last-child td{border-bottom:none;}
   transition:all .15s ease;cursor:pointer;
   touch-action:manipulation;-webkit-tap-highlight-color:transparent;
 }
-.bd-icon-btn:hover{background:var(--paper);border-color:rgba(242,103,43,0.35);color:var(--primary);}
-.bd-icon-btn.active{background:rgba(242,103,43,0.12);border-color:rgba(242,103,43,0.45);color:var(--primary);}
+.bd-icon-btn:hover{background:var(--paper);border-color:color-mix(in srgb, var(--primary) 35%, transparent);color:var(--primary);}
+.bd-icon-btn.active{background:color-mix(in srgb, var(--primary) 12%, transparent);border-color:color-mix(in srgb, var(--primary) 45%, transparent);color:var(--primary);}
 .bd-icon-btn:active{transform:scale(0.92);}
 /* ---- Tombol "+" Tambah Transaksi di header "Semua Transaksi" (Laporan)
    -- sengaja diberi warna solid oranye (bukan outline netral spt ikon
@@ -8775,8 +8818,8 @@ body.is-scrolling *{
      gradasi banner/body di halaman utama), bukan lagi biru-hijau gelap
      yang terasa seperti aplikasi lain. */
   background:
-    radial-gradient(760px 420px at 15% -10%, rgba(242,103,43,.30), transparent 60%),
-    radial-gradient(680px 460px at 105% 110%, rgba(194,65,12,.20), transparent 55%),
+    radial-gradient(760px 420px at 15% -10%, color-mix(in srgb, var(--primary) 30%, transparent), transparent 60%),
+    radial-gradient(680px 460px at 105% 110%, color-mix(in srgb, var(--primary-deep) 20%, transparent), transparent 55%),
     var(--forest-deep, #0B1220);
   display:flex; align-items:center; justify-content:center;
   padding:24px;
@@ -8794,7 +8837,7 @@ body.is-scrolling *{
   border-radius:22px;
   padding:32px 26px 26px;
   color:var(--ink, #131A2A);
-  box-shadow:0 24px 60px -20px rgba(124,45,18,.35), 0 0 0 1px rgba(255,255,255,.4) inset;
+  box-shadow:0 24px 60px -20px color-mix(in srgb, var(--primary-deep) 35%, transparent), 0 0 0 1px rgba(255,255,255,.4) inset;
   text-align:center;
   animation:cloudAuthPop .35s cubic-bezier(.2,.8,.25,1);
 }
@@ -8808,13 +8851,13 @@ body.is-scrolling *{
   display:flex; align-items:center; justify-content:center;
   background:linear-gradient(135deg, var(--primary,#F2672B), var(--primary-deep,#C2410C));
   color:#fff;
-  box-shadow:0 10px 22px -8px rgba(194,65,12,.5), 0 0 0 0 rgba(242,103,43,0.5);
+  box-shadow:0 10px 22px -8px color-mix(in srgb, var(--primary-deep) 50%, transparent), 0 0 0 0 color-mix(in srgb, var(--primary) 50%, transparent);
   animation:cloudAuthLogoPulse 2.6s ease-in-out infinite;
 }
 @keyframes cloudAuthLogoPulse{
-  0%{box-shadow:0 10px 22px -8px rgba(194,65,12,.5), 0 0 0 0 rgba(242,103,43,0.45);}
-  70%{box-shadow:0 10px 22px -8px rgba(194,65,12,.5), 0 0 0 10px rgba(242,103,43,0);}
-  100%{box-shadow:0 10px 22px -8px rgba(194,65,12,.5), 0 0 0 0 rgba(242,103,43,0);}
+  0%{box-shadow:0 10px 22px -8px color-mix(in srgb, var(--primary-deep) 50%, transparent), 0 0 0 0 color-mix(in srgb, var(--primary) 45%, transparent);}
+  70%{box-shadow:0 10px 22px -8px color-mix(in srgb, var(--primary-deep) 50%, transparent), 0 0 0 10px color-mix(in srgb, var(--primary) 0%, transparent);}
+  100%{box-shadow:0 10px 22px -8px color-mix(in srgb, var(--primary-deep) 50%, transparent), 0 0 0 0 color-mix(in srgb, var(--primary) 0%, transparent);}
 }
 @media (prefers-reduced-motion:reduce){
   .cloud-auth-logo{animation:none;}
@@ -8855,10 +8898,10 @@ body.is-scrolling *{
   background:linear-gradient(135deg, var(--primary,#F2672B), var(--primary-deep,#C2410C));
   color:#fff;
   cursor:pointer; margin-top:6px;
-  box-shadow:0 10px 22px -10px rgba(194,65,12,.6);
+  box-shadow:0 10px 22px -10px color-mix(in srgb, var(--primary-deep) 60%, transparent);
   transition:transform .12s, box-shadow .12s, opacity .12s;
 }
-.cloud-auth-card .cloud-auth-btn:hover{ transform:translateY(-1px); box-shadow:0 14px 26px -10px rgba(194,65,12,.7); }
+.cloud-auth-card .cloud-auth-btn:hover{ transform:translateY(-1px); box-shadow:0 14px 26px -10px color-mix(in srgb, var(--primary-deep) 70%, transparent); }
 .cloud-auth-card .cloud-auth-btn:active{ transform:translateY(0); }
 .cloud-auth-card .cloud-auth-btn:disabled{ opacity:.6; cursor:not-allowed; transform:none; }
 .cloud-auth-card .cloud-auth-switch{
@@ -11226,6 +11269,49 @@ body.is-scrolling *{
     <div class="modal-actions">
       <button type="button" class="btn btn-ghost" id="btnSourceIconCancel">Batal</button>
       <button type="button" class="btn btn-primary" id="btnSourceIconSave">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== POPUP "WARNA SENDIRI" (halaman Tema) =====
+     Dipicu tap swatch pelangi terakhir di grid Warna Aksen -- gantikan
+     color picker bawaan browser yang polos. Isi: lingkaran pratinjau
+     besar + kolom input kode HEX (utama, ketik langsung) + tombol
+     pipet kecil (masih pakai <input type="color"> asli di baliknya,
+     utk yg mau pilih visual dari palet OS/browser). Perubahan warna
+     di sini LIVE-preview ke seluruh app persis sama seperti sebelumnya
+     (lihat listener input/change #temaCustomHexInput & #temaCustomColorInput
+     di script.js) -- baru benar2 tersimpan ke storage saat tombol
+     "Selesai" utama di halaman Tema ditekan, sama seperti pilihan
+     preset lain. ===== -->
+<div class="modal-overlay" id="temaCustomColorModalOverlay">
+  <div class="modal tema-custom-modal">
+    <div class="modal-head">
+      <div class="modal-head-left">
+        <span class="modal-head-icon" id="temaCustomModalIcon"></span>
+        <div class="modal-head-titles">
+          <h3>Warna Sendiri</h3>
+          <p class="modal-head-sub">Ketik kode HEX atau pilih dari palet</p>
+        </div>
+      </div>
+      <button class="modal-close" id="temaCustomModalCloseBtn" type="button">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="tema-custom-preview" id="temaCustomPreviewBig"></div>
+    <p class="tema-custom-label">Kode warna (HEX)</p>
+    <div class="tema-custom-hexrow">
+      <span class="tema-custom-hash">#</span>
+      <input type="text" id="temaCustomHexInput" maxlength="6" placeholder="F2672B" autocomplete="off" autocapitalize="characters" spellcheck="false" inputmode="text">
+      <label class="tema-custom-pipet-btn" for="temaCustomColorInput" aria-label="Pilih dari palet warna">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="m2 22 1-4 9.5-9.5"/><path d="M13.5 8.5 17 5"/><path d="M15 3l6 6-3 3-6-6z"/></svg>
+        <input type="color" id="temaCustomColorInput" value="#F2672B">
+      </label>
+    </div>
+    <p class="tema-custom-hint">6 digit huruf/angka (0-9, A-F), mis. F2672B untuk oranye.</p>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-ghost" id="temaCustomModalCancelBtn">Batal</button>
+      <button type="button" class="btn btn-primary" id="temaCustomModalApplyBtn">Pakai Warna Ini</button>
     </div>
   </div>
 </div>
