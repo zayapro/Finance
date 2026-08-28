@@ -54,12 +54,19 @@ try {
    butuh akun cloud (sinkron antar perangkat & Tanya AI, juga
    pengaturan akun spt Ubah PIN/Password & Login Biometrik).
    Kembalikan true kalau sudah login (boleh lanjut), atau false
-   sambil membuka popup login/daftar (dengan pesan alasan
-   singkat) kalau belum -- pemanggil WAJIB berhenti (return) saat
-   hasilnya false, jangan lanjut menjalankan aksi yang butuh akun. */
+   sambil menampilkan notifikasi toast singkat + membuka popup
+   login/daftar (dengan pesan alasan yang sama di dalam kartunya)
+   kalau belum -- pemanggil WAJIB berhenti (return) saat hasilnya
+   false, jangan lanjut menjalankan aksi yang butuh akun. */
 function requireCloudLogin(reason) {
   if (typeof window.cloudIsLoggedIn === 'function' && window.cloudIsLoggedIn()) return true;
-  if (typeof window.cloudRequireLogin === 'function') window.cloudRequireLogin(reason);
+  const msg = reason || 'Fitur ini butuh akun. Silakan masuk/daftar dulu.';
+  // Notifikasi toast singkat di pojok layar (spt notifikasi lain di
+  // app ini, lihat showToast() di bawah) supaya user langsung sadar
+  // KENAPA popup login tiba-tiba muncul, tanpa harus baca pesan kecil
+  // di dalam kartu popup dulu.
+  if (typeof showToast === 'function') showToast(msg, 'err');
+  if (typeof window.cloudRequireLogin === 'function') window.cloudRequireLogin(msg);
   return false;
 }
 
@@ -11137,7 +11144,7 @@ function closeAiChatPanel() {
 }
 if (aiFabBtn) aiFabBtn.addEventListener('click', () => {
   if (aiChatPanel.classList.contains('open')) { closeAiChatPanel(); return; }
-  if (!requireCloudLogin('Masuk untuk memakai fitur Tanya AI.')) return;
+  if (!requireCloudLogin('Masuk untuk menggunakan Tanya AI.')) return;
   openAiChatPanel();
 });
 if (aiChatCloseBtn) aiChatCloseBtn.addEventListener('click', closeAiChatPanel);
