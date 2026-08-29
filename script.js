@@ -7978,6 +7978,23 @@ function saveGlobalTheme(state) {
 // "orange" (lihat GLOBAL_THEME_PRESETS) supaya konsisten sebelum
 // applyGlobalTheme(loadGlobalTheme()) pertama kali jalan di bawah nanti.
 let currentBannerColorHex = '#FA8B1E';
+// FIX BUG FATAL "script.js berhenti total di tengah jalan": variabel ini
+// SEBELUMNYA dideklarasikan jauh di bawah (dekat syncMobileChromeColor()),
+// padahal applyGlobalTheme(loadGlobalTheme()) sudah dipanggil di baris
+// ~8355 -- lebih awal dari deklarasi aslinya. applyGlobalTheme() memanggil
+// refreshMobileChromeColor() -> syncMobileChromeColor(), yang membaca
+// variabel `let` ini SEBELUM baris deklarasi aslinya sempat dieksekusi.
+// `let`/`const` (beda dari `function`) TIDAK bisa diakses sebelum baris
+// deklarasinya benar-benar jalan (temporal dead zone) -- akibatnya
+// muncul "Uncaught ReferenceError: Cannot access 'mobileChromeColorCache'
+// before initialization" yang TIDAK dibungkus try/catch, sehingga
+// menghentikan SISA SELURUH file script.js ini seketika (semua listener
+// tombol & init() yang seharusnya jalan setelahnya jadi tidak pernah
+// terpasang/terpanggil sama sekali -- itulah kenapa banyak tombol/
+// halaman "seperti mati" setelah fitur warna address bar ditambahkan).
+// Dipindah ke sini (sebelum applyGlobalTheme() pernah dipanggil) supaya
+// nilainya sudah pasti siap sebelum dibaca dari mana pun.
+let mobileChromeColorCache = null;
 function applyGlobalTheme(state) {
   const shades = resolveGlobalThemeShades(state);
   currentBannerColorHex = shades.banner;
@@ -11824,7 +11841,6 @@ function initMiniTopbar() {
 // mini-topbar putih sudah menempel menggantikannya. Tanpa ini, status
 // bar HP akan tetap gelap terus walau mini-topbar di bawahnya sudah
 // berubah putih -- kelihatan "belang"/tidak menyatu.
-let mobileChromeColorCache = null;
 function syncMobileChromeColor(hex) {
   if (mobileChromeColorCache === hex) return;
   mobileChromeColorCache = hex;
