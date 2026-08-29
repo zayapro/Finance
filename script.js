@@ -10491,17 +10491,26 @@ function renderNotifPanel() {
     moreEl.style.display = 'none';
   }
 
+  // ---- Kelompokkan daftar per tanggal jatuh tempo (mis. "29 Agustus
+  // 2026"), meniru pola notifikasi ala aplikasi mobile yang mengelompokkan
+  // entri per hari alih-alih daftar polos tanpa pemisah. Judul kelompok
+  // hanya dicetak sekali per tanggal yang sama (item sudah terurut
+  // menaik berdasarkan dueDate). ----
+  let lastGroupDate = null;
   listEl.innerHTML = list.map(item => {
     const due = dueLabel(item.dueDate);
     const urgencyClass = due.overdue ? ' overdue' : (due.soon ? ' soon' : '');
     const dueClass = due.overdue ? ' due-pill' : (due.soon ? ' due-soon' : '');
-    return `
-      <div class="notif-item type-${notifTab}${urgencyClass}">
-        <div class="notif-item-ic">
-          ${notifTab === 'tagihan'
-            ? '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>'
-            : '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="9"/><path d="M9.5 15.5c0 1.1 1 2 2.5 2s2.5-.9 2.5-2-1-1.7-2.5-2.1S9.5 12.6 9.5 11.5s1-2 2.5-2 2.5.9 2.5 2"/></svg>'}
-        </div>
+    const groupLabel = notifGroupDateLabel(item.dueDate);
+    const groupHeading = groupLabel !== lastGroupDate
+      ? `<div class="notif-date-heading">${escapeHtml(groupLabel)}</div>` : '';
+    lastGroupDate = groupLabel;
+    const icSvg = notifTab === 'tagihan'
+      ? '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>'
+      : '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="9"/><path d="M9.5 15.5c0 1.1 1 2 2.5 2s2.5-.9 2.5-2-1-1.7-2.5-2.1S9.5 12.6 9.5 11.5s1-2 2.5-2 2.5.9 2.5 2"/></svg>';
+    return `${groupHeading}
+      <div class="notif-item type-${notifTab}${urgencyClass}" data-notifopen="${item.id}" data-notifkind="${notifTab}" role="button" tabindex="0">
+        <div class="notif-item-ic">${icSvg}</div>
         <div class="notif-item-body">
           <div class="nm">
             <span class="nm-text" title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</span>
@@ -10512,20 +10521,89 @@ function renderNotifPanel() {
             <span class="due${dueClass}">${due.text}</span>
           </div>
         </div>
-        <div class="notif-item-actions">
-          <button class="pay-btn" data-pay="${item.id}" title="Tandai lunas">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M20 6 9 17l-5-5"/></svg>
-          </button>
-          <button class="edit-btn" data-notifedit="${item.id}" title="Edit">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-          </button>
-          <button class="del-btn" data-notifdel="${item.id}" title="Hapus">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6h16Z"/></svg>
-          </button>
-        </div>
+        <div class="notif-item-thumb">${icSvg}</div>
       </div>`;
   }).join('');
 }
+
+// Label judul pengelompokan tanggal di daftar notifikasi, mis.
+// "29 Agustus 2026" (format panjang ala aplikasi mobile), dengan
+// sapaan relatif untuk hari ini/besok/kemarin supaya lebih akrab.
+function notifGroupDateLabel(dateStr) {
+  const diff = daysUntil(dateStr);
+  if (diff === 0) return 'Hari Ini';
+  if (diff === 1) return 'Besok';
+  if (diff === -1) return 'Kemarin';
+  return new Date(dateStr + 'T00:00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+// ---- Popup detail notifikasi (muncul di atas panel saat 1 baris
+// tagihan/hutang di-tap) — meniru kartu detail ala aplikasi mobile:
+// banner ikon besar berwarna, judul, tanggal, keterangan, dan tombol
+// aksi utama ("Tandai Lunas") + tautan Edit/Hapus. ----
+const notifDetailOverlay = document.getElementById('notifDetailOverlay');
+const notifDetailSheet = document.getElementById('notifDetailSheet');
+let notifDetailCurrent = null; // { kind, id }
+
+const NOTIF_DETAIL_ICONS = {
+  tagihan: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>',
+  hutang: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M9.5 15.5c0 1.1 1 2 2.5 2s2.5-.9 2.5-2-1-1.7-2.5-2.1S9.5 12.6 9.5 11.5s1-2 2.5-2 2.5.9 2.5 2"/></svg>'
+};
+
+function openNotifDetail(kind, id) {
+  const store = kind === 'tagihan' ? bills : debts;
+  const item = store.find(x => x.id === id);
+  if (!item) return;
+  notifDetailCurrent = { kind, id };
+
+  const due = dueLabel(item.dueDate);
+  const dateFull = new Date(item.dueDate + 'T00:00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+
+  notifDetailSheet.className = 'notif-detail-sheet type-' + kind + (due.overdue ? ' overdue' : '');
+  document.getElementById('notifDetailBannerIc').innerHTML = NOTIF_DETAIL_ICONS[kind];
+  document.getElementById('notifDetailTitle').textContent = item.name;
+  document.getElementById('notifDetailDate').textContent = `${due.text} · ${dateFull}`;
+
+  const desc = kind === 'tagihan'
+    ? `Tagihan ${item.name} sebesar ${fmtRupiah(item.amount)} jatuh tempo pada ${dateFull}. ${due.overdue ? 'Sudah melewati jatuh tempo, segera lunasi agar tidak terkena denda keterlambatan.' : 'Segera lakukan pembayaran sebelum tanggal jatuh tempo.'}`
+    : `Hutang ${item.name} sebesar ${fmtRupiah(item.amount)} perlu dilunasi pada ${dateFull}. ${due.overdue ? 'Sudah melewati tenggat, segera bayar untuk menjaga catatan keuanganmu tetap rapi.' : 'Sisihkan dana agar bisa dilunasi tepat waktu.'}`;
+  document.getElementById('notifDetailDesc').textContent = item.note ? `${desc} Catatan: ${item.note}` : desc;
+
+  const primaryBtn = document.getElementById('notifDetailPrimaryBtn');
+  primaryBtn.textContent = 'Tandai Lunas';
+  primaryBtn.style.display = item.status === 'belum' ? '' : 'none';
+
+  notifDetailOverlay.classList.add('open');
+  notifDetailSheet.classList.add('open');
+  lockBodyScroll();
+}
+function closeNotifDetail() {
+  notifDetailOverlay.classList.remove('open');
+  notifDetailSheet.classList.remove('open');
+  notifDetailCurrent = null;
+  if (!notifPanel.classList.contains('open')) unlockBodyScroll();
+}
+notifDetailOverlay.addEventListener('click', closeNotifDetail);
+document.getElementById('notifDetailCloseBtn').addEventListener('click', closeNotifDetail);
+document.getElementById('notifDetailPrimaryBtn').addEventListener('click', () => {
+  if (!notifDetailCurrent) return;
+  markPaid(notifDetailCurrent.kind, notifDetailCurrent.id);
+  closeNotifDetail();
+});
+document.getElementById('notifDetailEditBtn').addEventListener('click', () => {
+  if (!notifDetailCurrent) return;
+  const { kind, id } = notifDetailCurrent;
+  closeNotifDetail();
+  closeNotifPanel();
+  openEditBillModal(kind, id);
+});
+document.getElementById('notifDetailDelBtn').addEventListener('click', () => {
+  if (!notifDetailCurrent) return;
+  const { kind, id } = notifDetailCurrent;
+  closeNotifDetail();
+  closeNotifPanel();
+  openDeleteConfirm(id, kind);
+});
 
 function markPaid(kind, id) {
   const store = kind === 'tagihan' ? bills : debts;
@@ -10587,6 +10665,7 @@ function openNotifPanel() {
 function closeNotifPanel() {
   notifPanel.classList.remove('open');
   notifPanelOverlay.classList.remove('open');
+  if (notifDetailSheet.classList.contains('open')) closeNotifDetail();
   unlockBodyScroll();
 }
 window.addEventListener('resize', () => { if (notifPanel.classList.contains('open')) positionNotifPanel(); });
@@ -10635,12 +10714,12 @@ document.getElementById('notifTabs').addEventListener('click', (e) => {
   renderNotifPanel();
 });
 document.getElementById('notifList').addEventListener('click', (e) => {
-  const payBtn = e.target.closest('[data-pay]');
-  const editBtn = e.target.closest('[data-notifedit]');
-  const delBtn = e.target.closest('[data-notifdel]');
-  if (payBtn) markPaid(notifTab, payBtn.dataset.pay);
-  if (editBtn) { closeNotifPanel(); openEditBillModal(notifTab, editBtn.dataset.notifedit); }
-  if (delBtn) { closeNotifPanel(); openDeleteConfirm(delBtn.dataset.notifdel, notifTab); }
+  const row = e.target.closest('[data-notifopen]');
+  if (row) openNotifDetail(row.dataset.notifkind, row.dataset.notifopen);
+});
+document.getElementById('notifList').addEventListener('keydown', (e) => {
+  const row = e.target.closest('[data-notifopen]');
+  if (row && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openNotifDetail(row.dataset.notifkind, row.dataset.notifopen); }
 });
 document.getElementById('notifAddBtn').addEventListener('click', () => {
   closeNotifPanel();
@@ -10651,7 +10730,7 @@ document.addEventListener('click', (e) => {
   // Panel sekarang berada di luar .notif-wrap (dipindah ke level teratas
   // dokumen supaya tidak tertutup elemen lain), jadi klik di dalam panel
   // itu sendiri juga harus dianggap "di dalam", bukan cuma tombol pemicunya.
-  if (!e.target.closest('.notif-wrap') && !e.target.closest('#notifPanel')) closeNotifPanel();
+  if (!e.target.closest('.notif-wrap') && !e.target.closest('#notifPanel') && !e.target.closest('#notifDetailSheet') && !e.target.closest('#notifDetailOverlay')) closeNotifPanel();
 });
 document.getElementById('notifViewAllBtn').addEventListener('click', () => {
   closeNotifPanel();
@@ -11125,6 +11204,7 @@ document.addEventListener('keydown', (e) => {
   if (appSettingsModal.classList.contains('open')) { closeModal(appSettingsModal); return; }
   if (incomeModal.classList.contains('open')) { closeModal(incomeModal); return; }
   if (billModal.classList.contains('open')) { closeModal(billModal); return; }
+  if (notifDetailSheet.classList.contains('open')) { closeNotifDetail(); return; }
   if (notifPanel.classList.contains('open')) closeNotifPanel();
   if (aiSettingsModal.classList.contains('open')) { closeModal(aiSettingsModal); return; }
   if (aiChatPanel.classList.contains('open')) closeAiChatPanel();
