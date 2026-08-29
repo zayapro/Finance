@@ -9975,6 +9975,13 @@ body.is-scrolling *{
 .sec-sheet-desc{ margin:0 0 20px; font-size:13.5px; line-height:1.55; text-align:center; color:var(--ink-soft,#5B6472); }
 .sec-sheet-actions{ display:flex; flex-direction:column; gap:10px; }
 .sec-sheet-actions .btn{ width:100%; justify-content:center; }
+/* ---- Varian "Batal" (kiri) + aksi utama (kanan) berdampingan, gaya
+   pil bulat penuh -- SAMA PERSIS dgn pola .lap-filter-footer--split
+   yg dipakai di popup lain (mis. halaman Tema, Data Diri), supaya
+   sheet konfirmasi PIN ini konsisten dgn popup2 lain di app, bukan
+   lagi tombol kotak ditumpuk vertikal dgn urutan Batal di bawah. ---- */
+.sec-sheet-actions--split{ flex-direction:row; }
+.sec-sheet-actions--split .btn{ width:auto; flex:1 1 0; }
 /* Step "Ubah PIN": pakai lagi .pin-dots/.pin-keypad yg sudah ada,
    ditaruh di dalam kartu halaman biasa (bukan overlay gelap kunci
    boot), jadi tanpa background gelap -- cukup dipusatkan. */
@@ -11108,9 +11115,9 @@ body.is-scrolling *{
         </div>
         <h3 class="sec-sheet-title">Yakin kamu ingin mengubah PIN?</h3>
         <p class="sec-sheet-desc">PIN ini dipakai sebagai kunci cepat masuk ke ZAYAin di perangkat ini, menggantikan PIN lama begitu berhasil diganti.</p>
-        <div class="sec-sheet-actions">
-          <button type="button" class="btn btn-primary" id="pinChangeConfirmProceedBtn">Ubah PIN</button>
-          <button type="button" class="btn btn-ghost" id="pinChangeConfirmCancelBtn">Batal</button>
+        <div class="sec-sheet-actions sec-sheet-actions--split">
+          <button type="button" class="btn btn-ghost lap-filter-cancel-btn" id="pinChangeConfirmCancelBtn">Batal</button>
+          <button type="button" class="btn btn-primary lap-filter-save-btn" id="pinChangeConfirmProceedBtn">Ubah PIN</button>
         </div>
       </div>
     </div>
