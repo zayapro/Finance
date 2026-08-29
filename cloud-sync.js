@@ -786,6 +786,25 @@
     const { data } = await sb.auth.getSession();
     if (data && data.session && data.session.user) {
       currentUser = data.session.user;
+      // BUG FIX: sb.auth.getSession() di atas cuma membaca sesi yang
+      // SUDAH TERSIMPAN (termasuk isi user_metadata di dalamnya) dari
+      // penyimpanan lokal, TANPA menjamin itu sudah mencerminkan
+      // perubahan user_metadata (mis. pin_hash yang baru saja dibuat
+      // lewat "Buat PIN" di Pengaturan) kalau access token-nya sendiri
+      // belum sempat di-refresh sejak perubahan itu terjadi. Akibatnya
+      // sesaat setelah membuat PIN lalu me-refresh HALAMAN (bukan
+      // cuma ganti tab), pin_hash bisa kelihatan kosong lagi di sini
+      // padahal sudah tersimpan di server -- yang bikin layar
+      // kunci/biometrik ikut ter-skip seolah PIN tidak pernah dibuat.
+      // sb.auth.getUser() menarik ULANG data user LANGSUNG dari
+      // server (bukan cuma decode sesi lokal), jadi selalu dapat
+      // user_metadata paling baru. Best-effort: kalau panggilan ini
+      // gagal (mis. offline), tetap pakai currentUser dari sesi lokal
+      // di atas drpd memblokir app sama sekali.
+      try {
+        const { data: freshData, error: freshErr } = await sb.auth.getUser();
+        if (!freshErr && freshData && freshData.user) currentUser = freshData.user;
+      } catch (e) { /* best-effort -- fallback ke sesi lokal */ }
       // Sama spt di onLoggedIn() di atas -- lihat komentarnya -- supaya
       // jalur "sudah login sebelumnya, sesi masih ada" ini pun tetap
       // mengeskpos email akun ke script.js.
