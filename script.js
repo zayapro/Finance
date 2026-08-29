@@ -9755,7 +9755,31 @@ document.getElementById('dataDiriDoneBtn')?.addEventListener('click', confirmDat
 ========================================================== */
 
 /* ---- Sheet konfirmasi "Ubah PIN" ---- */
+// Label di baris Pengaturan, sheet konfirmasi, & judul halaman
+// disesuaikan tergantung akun ini SUDAH punya PIN atau BELUM --
+// "Buat PIN" kalau belum pernah diset sama sekali (tidak ada PIN
+// lama utk diverifikasi/diganti), "Ubah PIN" kalau sudah ada.
+function updatePinChangeLabels() {
+  const hasExistingPin = !!(window.zayaproAuth && window.zayaproAuth.hasPin());
+  const verb = hasExistingPin ? 'Ubah' : 'Buat';
+  const rowTitle = document.querySelector('#btnOpenPinChange .settings-row-title');
+  if (rowTitle) rowTitle.textContent = verb + ' PIN';
+  const sheetTitle = document.querySelector('#pinChangeConfirmSheet .sec-sheet-title');
+  if (sheetTitle) sheetTitle.textContent = 'Yakin kamu ingin ' + (hasExistingPin ? 'mengubah' : 'membuat') + ' PIN?';
+  const sheetDesc = document.querySelector('#pinChangeConfirmSheet .sec-sheet-desc');
+  if (sheetDesc) {
+    sheetDesc.textContent = hasExistingPin
+      ? 'PIN ini dipakai sebagai kunci cepat masuk ke ZAYAin di perangkat ini, menggantikan PIN lama begitu berhasil diganti.'
+      : 'PIN ini dipakai sebagai kunci cepat masuk ke ZAYAin di perangkat ini, & jadi syarat sebelum Login Biometrik bisa diaktifkan.';
+  }
+  const proceedBtn = document.getElementById('pinChangeConfirmProceedBtn');
+  if (proceedBtn) proceedBtn.textContent = verb + ' PIN';
+  const overlayTitle = document.querySelector('#pinChangeOverlay .lap-filter-head h2');
+  if (overlayTitle) overlayTitle.textContent = verb + ' PIN';
+}
+updatePinChangeLabels();
 function openPinChangeConfirmSheet() {
+  updatePinChangeLabels();
   document.getElementById('pinChangeConfirmSheetOverlay').classList.add('open');
   lockBodyScroll();
 }
@@ -9780,6 +9804,7 @@ let pcEntered = '';
 let pcOldOk = false;  // sudah lolos verifikasi PIN lama
 let pcNewPin = '';    // PIN baru yg diketik di langkah 'new', dicocokkan di 'confirm'
 let pcChecking = false;
+let pcHadPinAtStart = false; // dipakai HANYA utk pilih teks toast sukses di akhir (dibuat vs diganti)
 
 function pcRenderDots() {
   const dots = document.querySelectorAll('#pinChangeDots .pin-dot');
@@ -9819,12 +9844,14 @@ function pcGoToStep(step) {
 function openPinChangeOverlay() {
   pcOldOk = false;
   pcNewPin = '';
+  updatePinChangeLabels();
   // Kalau akun ini BELUM PERNAH punya PIN sama sekali (mis. dibuat
   // sebelum fitur PIN ada, atau lewat jalur yang tidak mewajibkan
   // PIN saat daftar), tidak ada "PIN lama" yang bisa diverifikasi --
   // langsung lompat ke step buat PIN baru, drpd memaksa user
   // memasukkan PIN yang memang tidak pernah ada (dead end).
   const hasExistingPin = window.zayaproAuth && window.zayaproAuth.hasPin();
+  pcHadPinAtStart = !!hasExistingPin;
   if (hasExistingPin) {
     pcGoToStep('old');
   } else {
@@ -9856,10 +9883,12 @@ async function pcHandleComplete() {
     pcGoToStep('confirm');
   } else {
     if (pcEntered === pcNewPin) {
+      const wasFirstTime = !pcHadPinAtStart;
       try {
         await window.zayaproAuth.setPin(pcNewPin);
         closePinChangeOverlay();
-        showToast('PIN berhasil diganti.');
+        updatePinChangeLabels();
+        showToast(wasFirstTime ? 'PIN berhasil dibuat.' : 'PIN berhasil diganti.');
       } catch (err) {
         pcShowErr('Gagal menyimpan PIN baru, coba lagi.');
         pcEntered = '';
@@ -9892,6 +9921,23 @@ document.getElementById('pinChangeBackBtn')?.addEventListener('click', closePinC
 
 /* ---- Halaman "Ubah Password" (langkah 1: verifikasi password lama,
    langkah 2: password baru + konfirmasi) ---- */
+// Sama spt updatePinChangeLabels() -- label baris Pengaturan & judul
+// halaman disesuaikan tergantung akun sudah punya password atau
+// belum (lihat hasPassword() di cloud-sync.js). Untuk saat ini akan
+// selalu "Ubah Password" krn password wajib diisi sejak signup, tapi
+// disiapkan supaya siap kalau nanti ada metode daftar tanpa password.
+let pwHadPasswordAtStart = true;
+function updatePasswordChangeLabels() {
+  const hasExisting = !!(window.zayaproAuth && window.zayaproAuth.hasPassword());
+  const verb = hasExisting ? 'Ubah' : 'Buat';
+  const rowTitle = document.querySelector('#btnOpenPasswordChange .settings-row-title');
+  if (rowTitle) rowTitle.textContent = verb + ' Password';
+  const overlayTitle = document.querySelector('#pwChangeOverlay .lap-filter-head h2');
+  if (overlayTitle) overlayTitle.textContent = verb + ' Password';
+  const backBtn = document.getElementById('pwChangeBackBtn');
+  if (backBtn) backBtn.setAttribute('aria-label', 'Tutup ' + verb + ' Password');
+}
+updatePasswordChangeLabels();
 function pwGoToStepOld() {
   document.getElementById('pwStepOld').hidden = false;
   document.getElementById('pwStepNew').hidden = true;
@@ -9901,15 +9947,24 @@ function pwGoToStepOld() {
 function pwGoToStepNew() {
   document.getElementById('pwStepOld').hidden = true;
   document.getElementById('pwStepNew').hidden = false;
-  document.getElementById('pwChangeContinueBtn').textContent = 'Ganti Password';
+  document.getElementById('pwChangeContinueBtn').textContent = pwHadPasswordAtStart ? 'Ganti Password' : 'Buat Password';
   document.getElementById('pwNewMsg').className = 'cloud-auth-msg';
 }
 function openPwChangeOverlay() {
   document.getElementById('pwOldInput').value = '';
   document.getElementById('pwNewInput').value = '';
   document.getElementById('pwNewConfirmInput').value = '';
+  updatePasswordChangeLabels();
+  // Sama spt PIN: kalau akun ini belum punya password (lihat catatan
+  // di hasPassword()), tidak ada "password lama" utk diverifikasi --
+  // langsung lompat ke step buat password baru.
+  pwHadPasswordAtStart = !!(window.zayaproAuth && window.zayaproAuth.hasPassword());
+  if (pwHadPasswordAtStart) {
+    pwGoToStepOld();
+  } else {
+    pwGoToStepNew();
+  }
   pwUpdateContinueState();
-  pwGoToStepOld();
   document.getElementById('pwChangeOverlay').classList.add('open');
   lockBodyScroll();
 }
@@ -9985,7 +10040,8 @@ document.getElementById('pwChangeContinueBtn')?.addEventListener('click', async 
     try {
       await window.zayaproAuth.changePassword(nv);
       closePwChangeOverlay();
-      showToast('Password berhasil diganti.');
+      updatePasswordChangeLabels();
+      showToast(pwHadPasswordAtStart ? 'Password berhasil diganti.' : 'Password berhasil dibuat.');
     } catch (err) {
       msg.textContent = 'Gagal mengganti password, coba lagi.';
       msg.className = 'cloud-auth-msg show err';

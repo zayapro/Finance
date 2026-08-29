@@ -659,6 +659,27 @@
     hasPin: function () {
       return !!(currentUser && currentUser.user_metadata && currentUser.user_metadata.pin_hash);
     },
+    // Saat ini SEMUA akun daftar lewat email+password (lihat
+    // sb.auth.signUp() di atas, field password wajib diisi min. 6
+    // karakter) -- jadi fungsi ini akan SELALU true utk sekarang.
+    // Disiapkan sbg jaga-jaga: kalau nanti ditambahkan metode daftar
+    // lain yg tidak pakai password (mis. OAuth Google, magic
+    // link/OTP), Supabase mencatatnya lewat currentUser.identities
+    // (daftar provider yg terhubung ke akun ini) -- akun yg TIDAK
+    // punya identity berprovider 'email' berarti memang tidak pernah
+    // set password, jadi baris "Ubah Password" di Pengaturan perlu
+    // berubah jadi "Buat Password" (lihat updatePasswordChangeLabels
+    // di script.js).
+    hasPassword: function () {
+      if (!currentUser) return false;
+      const identities = currentUser.identities || [];
+      if (identities.some(function (i) { return i.provider === 'email'; })) return true;
+      // Fallback utk kasus identities tidak tersedia di objek user
+      // (mis. versi SDK lama) -- anggap masih account email/password
+      // spt biasa drpd salah menampilkan "Buat Password" ke user yg
+      // sebenarnya sudah punya password.
+      return !identities.length;
+    },
     verifyPin: async function (pin) {
       if (!currentUser) return false;
       const hash = currentUser.user_metadata && currentUser.user_metadata.pin_hash;
