@@ -38,7 +38,17 @@
   // aplikasi yang tersimpan di kv_store. Akibatnya sesi login hilang
   // begitu halaman di-reload (dilempar balik ke layar login) padahal
   // baru saja berhasil login. (Bug fix)
-  const CLOUD_EXCLUDE_PREFIX = ['alirin_news_cache_v1_', 'sb-'];
+  // 'zayapro_biometric_cred_' = ID kredensial WebAuthn (Login
+  // Biometrik), lihat enableBiometric()/isBiometricEnabled() di
+  // window.zayaproAuth. Ini SENGAJA murni device-local (kredensial
+  // sidik jari/Face ID cuma berlaku utk perangkat yg mendaftarkannya,
+  // tidak bisa & tidak boleh dipindah ke perangkat lain lewat cloud)
+  // dan memang TIDAK PERNAH di-push ke kv_store. Tanpa dikecualikan
+  // di sini, key ini ikut terhapus setiap pullAllFromCloud() jalan
+  // (setiap refresh/buka app dgn sesi aktif) krn dianggap "key lokal
+  // yg sudah tidak ada di cloud" -- itulah sebabnya toggle Login
+  // Biometrik kembali OFF sendiri tiap kali di-refresh. (Bug fix)
+  const CLOUD_EXCLUDE_PREFIX = ['alirin_news_cache_v1_', 'sb-', 'zayapro_biometric_cred_'];
   function isCloudExcluded(key) {
     if (CLOUD_EXCLUDE_EXACT.indexOf(key) !== -1) return true;
     return CLOUD_EXCLUDE_PREFIX.some(function (p) { return key.indexOf(p) === 0; });
