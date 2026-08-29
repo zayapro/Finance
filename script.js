@@ -10521,7 +10521,7 @@ function renderNotifPanel() {
             <span class="due${dueClass}">${due.text}</span>
           </div>
         </div>
-        <svg class="notif-item-chevron" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"/></svg>
+        <div class="notif-item-thumb">${icSvg}</div>
       </div>`;
   }).join('');
 }

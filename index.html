@@ -1294,6 +1294,18 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
   color:#fff;background:var(--wine);
 }
 .notif-item-body .due.due-pill::before{background:#fff;flex-shrink:0;}
+/* ---- Thumbnail lencana di kanan tiap baris (ala foto kecil di
+   notifikasi aplikasi mobile referensi) — kotak gradien warna sesuai
+   kategori dgn ikon besar di tengah, menggantikan chevron polos. ---- */
+.notif-item-thumb{
+  width:52px;height:52px;border-radius:15px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg, #D97706, #B45309);color:#fff;
+  box-shadow:0 5px 12px -5px rgba(217,119,6,0.55);
+}
+.notif-item-thumb svg{width:21px;height:21px;}
+.notif-item.type-hutang .notif-item-thumb{background:linear-gradient(135deg, #7C3AED, #5B21B6);box-shadow:0 5px 12px -5px rgba(124,58,237,0.55);}
+.notif-item.overdue .notif-item-thumb{background:linear-gradient(135deg, var(--wine), #9F1239);box-shadow:0 5px 12px -5px rgba(225,29,72,0.55);}
 .notif-item-actions{display:flex;flex-direction:column;gap:5px;flex-shrink:0;}
 .notif-item-actions button{
   width:28px;height:28px;border-radius:9px;border:1px solid transparent;background:var(--paper);
@@ -1395,30 +1407,62 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
 .notif-item-body .meta{flex-direction:column;align-items:flex-start;gap:4px;margin-top:4px;}
 .notif-item-body .amt{font-size:12.5px;color:var(--ink-soft);font-weight:700;}
 .notif-item-body .due{font-size:10.5px;}
-.notif-item-chevron{flex-shrink:0;color:var(--ink-faint);}
 
-/* ---- Popup detail notifikasi: DISAMAKAN dengan pola modal lain di
-   web ini (mis. modal "Rincian Platform"/"Detail Akun" — lihat
-   .modal-overlay/.modal/.modal-head/.modal-head-icon/.pfd-total-row/
-   .modal-actions), bukan lagi kartu ilustrasi bergaya poster promo
-   ala aplikasi mobile. Kartu muncul di TENGAH layar (fade + scale),
-   sama seperti semua modal lainnya, bukan meluncur dari bawah. ---- */
-.notif-detail-modal{max-width:400px;}
+/* ---- Popup detail notifikasi: KEMBALI ke gaya kartu ilustrasi ala
+   aplikasi mobile (mengikuti referensi) — bottom sheet yg meluncur
+   dari BAWAH layar (bukan lagi modal mengambang di tengah), dgn
+   banner besar berwarna gradien + ikon di bagian atas, lalu judul,
+   tanggal, info nominal, keterangan, dan tombol aksi di bawahnya.
+   Selector pakai ID (#notifDetailOverlay/#notifDetailSheet) supaya
+   override aturan .modal-overlay/.modal generik menang terlepas dari
+   urutannya di file ini. ---- */
+#notifDetailOverlay{align-items:flex-end;padding:0;}
+#notifDetailSheet{
+  width:100%;max-width:480px;margin:0 auto;padding:0;
+  border-radius:24px 24px 0 0;overflow:hidden;
+  max-height:92vh;position:relative;
+  transform:translateY(100%);transition:transform .34s cubic-bezier(.32,.72,0,1);
+}
+#notifDetailOverlay.open #notifDetailSheet{transform:translateY(0);}
+.notif-detail-handle{width:36px;height:4px;border-radius:99px;background:rgba(15,23,42,0.14);margin:10px auto 0;flex-shrink:0;}
+.notif-detail-close{
+  position:absolute;top:14px;right:14px;z-index:2;
+  width:30px;height:30px;border-radius:50%;flex-shrink:0;
+  background:rgba(255,255,255,0.26);backdrop-filter:blur(2px);
+  color:#fff;border:none;display:flex;align-items:center;justify-content:center;
+  transition:background .15s ease, transform .12s ease;touch-action:manipulation;
+}
+.notif-detail-close:hover{background:rgba(255,255,255,0.4);}
+.notif-detail-close:active{transform:scale(0.9);}
 #notifDetailBannerIc{
-  background:linear-gradient(140deg, #D97706, #B45309);
-  box-shadow:0 6px 14px -4px rgba(217,119,6,0.45);
+  margin-top:8px;height:132px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg, #D97706, #B45309);
+  position:relative;
 }
-.notif-detail-modal.type-hutang #notifDetailBannerIc{
-  background:linear-gradient(140deg, #7C3AED, #5B21B6);
-  box-shadow:0 6px 14px -4px rgba(124,58,237,0.45);
+.notif-detail-modal.type-hutang #notifDetailBannerIc{background:linear-gradient(135deg, #7C3AED, #5B21B6);}
+.notif-detail-modal.overdue #notifDetailBannerIc{background:linear-gradient(135deg, var(--wine), #9F1239);}
+#notifDetailBannerIc svg{width:44px;height:44px;color:#fff;position:relative;z-index:1;}
+.notif-detail-body{padding:18px 20px calc(20px + env(safe-area-inset-bottom, 0px));overflow-y:auto;}
+.notif-detail-body h3{font-size:18px;font-weight:800;color:var(--ink);letter-spacing:-0.01em;margin:0 0 4px;line-height:1.3;}
+.notif-detail-date{font-size:12px;color:var(--ink-faint);font-weight:600;margin:0 0 12px;}
+.notif-detail-amt-chip{
+  display:inline-flex;align-items:baseline;gap:7px;
+  background:var(--paper);border:1px solid var(--line);border-radius:12px;
+  padding:8px 12px;margin-bottom:12px;
 }
-.notif-detail-modal.overdue #notifDetailBannerIc{
-  background:linear-gradient(140deg, var(--wine), #9F1239);
-  box-shadow:0 6px 14px -4px rgba(225,29,72,0.45);
-}
-#notifDetailBannerIc svg{width:20px;height:20px;}
+.notif-detail-amt-chip span:first-child{font-size:10.5px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:0.03em;}
+.notif-detail-amt-chip span:last-child{font-family:'Poppins',sans-serif;font-size:15.5px;font-weight:800;color:var(--ink);}
 .notif-detail-desc{font-size:12.5px;color:var(--ink-soft);line-height:1.6;margin:0 0 16px;}
-.notif-detail-primary{width:100%;justify-content:center;min-height:46px;margin-top:10px;}
+.notif-detail-links{display:flex;align-items:center;gap:8px;margin-bottom:12px;}
+.notif-detail-links button{background:none;border:none;padding:0;font-size:12px;font-weight:700;color:var(--ink-faint);cursor:pointer;touch-action:manipulation;}
+.notif-detail-links button:hover{color:var(--forest-glow);}
+.notif-detail-links .dot{color:var(--line);font-size:10px;}
+.notif-detail-primary{width:100%;justify-content:center;min-height:48px;}
+@media (max-width:600px){
+  #notifDetailBannerIc{height:112px;}
+  #notifDetailBannerIc svg{width:38px;height:38px;}
+}
 
 .flow-field{display:none;}
 .particle{
@@ -12958,34 +13002,26 @@ body.is-scrolling *{
      baris tombol aksi (.modal-actions) di bawah. ===== -->
 <div class="modal-overlay" id="notifDetailOverlay">
   <div class="modal notif-detail-modal" id="notifDetailSheet" role="dialog" aria-modal="true" aria-labelledby="notifDetailTitle">
-    <div class="modal-head">
-      <div class="modal-head-left">
-        <span class="modal-head-icon" id="notifDetailBannerIc"></span>
-        <div class="modal-head-titles">
-          <h3 id="notifDetailTitle"></h3>
-          <p class="modal-head-sub" id="notifDetailDate"></p>
-        </div>
+    <div class="notif-detail-handle"></div>
+    <button class="notif-detail-close" id="notifDetailCloseBtn" type="button" aria-label="Tutup detail">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+    <div id="notifDetailBannerIc"></div>
+    <div class="notif-detail-body">
+      <h3 id="notifDetailTitle"></h3>
+      <p class="notif-detail-date" id="notifDetailDate"></p>
+      <div class="notif-detail-amt-chip">
+        <span id="notifDetailAmtLabel">Jumlah</span>
+        <span id="notifDetailAmt">Rp0</span>
       </div>
-      <button class="modal-close" id="notifDetailCloseBtn" type="button" aria-label="Tutup detail">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6 6 18M6 6l12 12"/></svg>
-      </button>
+      <p class="notif-detail-desc" id="notifDetailDesc"></p>
+      <div class="notif-detail-links">
+        <button type="button" id="notifDetailEditBtn">Edit</button>
+        <span class="dot">&middot;</span>
+        <button type="button" id="notifDetailDelBtn">Hapus</button>
+      </div>
+      <button class="btn btn-primary notif-detail-primary" id="notifDetailPrimaryBtn" type="button"></button>
     </div>
-    <div class="pfd-total-row">
-      <span id="notifDetailAmtLabel">Jumlah</span>
-      <span id="notifDetailAmt">Rp0</span>
-    </div>
-    <p class="notif-detail-desc" id="notifDetailDesc"></p>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" id="notifDetailEditBtn" type="button">
-        <svg width="13.5" height="13.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-        Edit
-      </button>
-      <button class="btn btn-ghost" id="notifDetailDelBtn" type="button">
-        <svg width="13.5" height="13.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6h16Z"/></svg>
-        Hapus
-      </button>
-    </div>
-    <button class="btn btn-primary notif-detail-primary" id="notifDetailPrimaryBtn" type="button"></button>
   </div>
 </div>
 
