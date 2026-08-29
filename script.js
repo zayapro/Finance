@@ -10139,7 +10139,7 @@ document.getElementById('pwForgotSendBtn')?.addEventListener('click', async func
       // pernah muncul) -- itulah sebabnya wajib dicek dulu di sini.
       if (!window.zayaproAuth.hasPin()) {
         toggle.checked = false;
-        showToast('Atur PIN dulu lewat menu "Ubah PIN" sebelum mengaktifkan Login Biometrik.', 'err');
+        showToast('Atur PIN dulu lewat menu "Buat PIN" sebelum mengaktifkan Login Biometrik.', 'err');
         return;
       }
       try {
