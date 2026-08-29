@@ -10026,7 +10026,35 @@ document.getElementById('pwForgotSendBtn')?.addEventListener('click', async func
 /* ---- Toggle "Login Biometrik" ---- */
 (async function initBiometricToggle() {
   const toggle = document.getElementById('biometricToggleInput');
+  const row = document.getElementById('biometricToggleRow');
   if (!toggle || !window.zayaproAuth) return;
+
+  // Kalau HP/browser ini memang tidak punya sensor sidik jari/Face ID
+  // (atau diakses lewat HTTP, bukan HTTPS), baris "Login Biometrik"
+  // TETAP ditampilkan (supaya user tetap tahu fiturnya ada) tapi
+  // diburamkan & toggle-nya dikunci total (tidak bisa disentuh),
+  // dilengkapi keterangan kecil "Tidak didukung di perangkat ini".
+  // User yang HP-nya tidak punya sensor tetap terkunci pakai PIN spt
+  // biasa (lihat requirePinUnlock di cloud-sync.js).
+  const supported = await window.zayaproAuth.biometricSupported();
+  if (!supported) {
+    if (row) row.classList.add('is-unsupported');
+    toggle.disabled = true;
+    toggle.checked = false;
+    const note = document.getElementById('biometricUnsupportedNote');
+    if (note) note.style.display = '';
+    // Baris tetap bisa disentuh (bukan pointer-events:none) supaya
+    // user yang menyentuhnya tetap dapat penjelasan lewat toast,
+    // bukan cuma diam tidak ada respons sama sekali.
+    if (row) {
+      row.addEventListener('click', function (e) {
+        e.preventDefault();
+        showToast('HP ini tidak memiliki sensor sidik jari/Face ID, jadi Login Biometrik tidak bisa dipakai. Kamu tetap bisa masuk pakai PIN.', 'err');
+      });
+    }
+    return;
+  }
+
   toggle.checked = window.zayaproAuth.isBiometricEnabled();
   toggle.addEventListener('change', async function () {
     if (!requireCloudLogin('Masuk untuk mengaktifkan Login Biometrik.')) {
@@ -10034,12 +10062,6 @@ document.getElementById('pwForgotSendBtn')?.addEventListener('click', async func
       return;
     }
     if (toggle.checked) {
-      const supported = await window.zayaproAuth.biometricSupported();
-      if (!supported) {
-        toggle.checked = false;
-        showToast('Perangkat/browser ini tidak mendukung Login Biometrik (butuh sidik jari/Face ID & akses HTTPS).', 'err');
-        return;
-      }
       try {
         await window.zayaproAuth.enableBiometric();
         showToast('Login Biometrik diaktifkan di perangkat ini.');

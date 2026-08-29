@@ -7624,6 +7624,21 @@ html.zp-app-loading .page-body > .settings-list{display:none;}
 .settings-toggle input:checked + .settings-toggle-track{background:var(--brass);}
 .settings-toggle input:checked + .settings-toggle-track .settings-toggle-thumb{transform:translateX(17px);}
 
+/* ---- Baris "Login Biometrik" saat HP/browser TIDAK punya sensor
+   sidik jari/Face ID (atau diakses lewat HTTP, bukan HTTPS) -- lihat
+   initBiometricToggle() di script.js. Barisnya TETAP ditampilkan
+   (bukan disembunyikan) supaya user tetap tahu fiturnya ada, tapi
+   diburamkan & tidak bisa disentuh sama sekali, sebagai penanda
+   visual "tidak tersedia di perangkat ini". */
+.settings-row-toggle.is-unsupported{
+  filter:grayscale(1) blur(0.5px);
+  opacity:.45;
+  cursor:not-allowed;
+}
+.settings-row-toggle.is-unsupported .settings-row-title-sub{
+  display:block;font-size:11.5px;color:var(--ink-faint);margin-top:2px;font-weight:400;
+}
+
 .settings-version{
   text-align:center;font-size:12px;color:var(--ink-faint);margin:4px 0 8px;
 }
@@ -11459,7 +11474,7 @@ body.is-scrolling *{
               <span class="settings-row-icon">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4.5v-1M17 4.5v-1M4.5 7h-1M4.5 17h-1M19.5 7h1M19.5 17h1M7 19.5v1M17 19.5v1"/><rect x="6" y="6" width="12" height="12" rx="3.5"/><circle cx="12" cy="12" r="2"/></svg>
               </span>
-              <span class="settings-row-title">Login Biometrik</span>
+              <span class="settings-row-title">Login Biometrik<span class="settings-row-title-sub" id="biometricUnsupportedNote" style="display:none;">Tidak didukung di perangkat ini</span></span>
               <label class="settings-toggle">
                 <input type="checkbox" id="biometricToggleInput">
                 <span class="settings-toggle-track"><span class="settings-toggle-thumb"></span></span>

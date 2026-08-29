@@ -445,6 +445,27 @@
     window.zayaproAccountName = (user.user_metadata && user.user_metadata.full_name) || null;
     subscribeResetChannel(user.id);
 
+    // PERMINTAAN: Login Biometrik aktif SEJAK PERTAMA KALI app dibuka
+    // (bukan cuma opsi manual di Pengaturan) -- jadi begitu akun baru
+    // selesai didaftarkan, langsung coba daftarkan kredensial sidik
+    // jari/Face ID di perangkat ini. Sengaja HANYA di jalur akun BARU
+    // (isNewSignup), bukan di jalur login akun lama, supaya perangkat
+    // lama milik user yang memang sengaja mematikan togglenya tidak
+    // dinyalakan ulang paksa tanpa sepengetahuannya.
+    // Best-effort & diam-diam: kalau perangkat/browser tidak punya
+    // sensor sidik jari/Face ID, diakses lewat HTTP (bukan HTTPS), atau
+    // user membatalkan dialog OS-nya, cukup dilewati -- akun tetap
+    // berhasil dibuat & user masih bisa menyalakannya manual lewat
+    // toggle "Login Biometrik" di halaman Pengaturan kapan saja.
+    if (isNewSignup) {
+      try {
+        const supported = await window.zayaproAuth.biometricSupported();
+        if (supported) await window.zayaproAuth.enableBiometric();
+      } catch (e) {
+        // Dialog OS dibatalkan/gagal -- biarkan biometrik tetap nonaktif.
+      }
+    }
+
     if (isNewSignup && appStarted) {
       // App sekarang bisa dipakai dulu secara lokal SEBELUM daftar
       // akun (lihat boot() -- guest tanpa sesi langsung startAppOnce()).
