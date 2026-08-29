@@ -7991,6 +7991,18 @@ function applyGlobalTheme(state) {
      var(--forest-deep), var(--forest-mid)) di banner & elemen gelap
      lain), tidak terkait sama sekali dengan warna aksen oranye/dsb. */
   root.setProperty('--forest-glow', shades.primary);
+  // Address bar/status bar (theme-color meta, header Telegram, dst --
+  // lihat getActiveMobileChromeColor()/syncMobileChromeColor() di bawah)
+  // ikut disamakan SAAT ITU JUGA begitu warna banner berubah, entah krn
+  // pilih preset warna di halaman Tema, pratinjau warna custom (color
+  // picker), atau batal/konfirmasi modal Tema -- bukan cuma nyambung
+  // belakangan pas discroll. typeof-check krn fungsi ini didefinisikan
+  // lebih jauh di bawah file (aman, function declaration di-hoist), TAPI
+  // applyGlobalTheme(loadGlobalTheme()) di baris paling bawah file ini
+  // bisa saja jalan sebelum baris function refreshMobileChromeColor()
+  // "tergambar" kalau suatu saat kode ini dipindah ke luar file/module
+  // terpisah -- check ini jaga2 supaya tidak error di skenario itu.
+  if (typeof refreshMobileChromeColor === 'function') refreshMobileChromeColor();
 }
 function renderTemaColorGrid(state) {
   const grid = document.getElementById('temaColorGrid');
@@ -11728,8 +11740,7 @@ function initMiniTopbar() {
       if (!mq.matches) {
         bar.classList.remove('mtb-active');
         mtbFirstCheck = false;
-        const rootStyles = getComputedStyle(document.documentElement);
-        syncMobileChromeColor((rootStyles.getPropertyValue('--forest-deep') || '#0B1220').trim());
+        refreshMobileChromeColor();
         return;
       }
       // FIX BUG "mini-topbar nyangkut tampil di tab lain": kalau tab
@@ -11755,10 +11766,7 @@ function initMiniTopbar() {
       // selama banner besar masih kelihatan, putih (--card) begitu
       // mini-topbar putih sudah menempel menggantikannya -- supaya
       // keduanya selalu senada, tidak "belang".
-      const rootStyles = getComputedStyle(document.documentElement);
-      const forestDeep = (rootStyles.getPropertyValue('--forest-deep') || '#0B1220').trim();
-      const cardColor = (rootStyles.getPropertyValue('--card') || '#FFFFFF').trim();
-      syncMobileChromeColor(bannerFullyPassed ? cardColor : forestDeep);
+      refreshMobileChromeColor();
       if (mtbFirstCheck) {
         mtbFirstCheck = false;
         bar.style.transition = 'none';
@@ -11808,8 +11816,20 @@ let mobileChromeColorCache = null;
 function syncMobileChromeColor(hex) {
   if (mobileChromeColorCache === hex) return;
   mobileChromeColorCache = hex;
+  // Beberapa meta ikut disamakan sekaligus tiap warna berubah:
+  // - theme-color: dibaca Chrome/Edge/Samsung Internet (Android & desktop
+  //   PWA) DAN Safari iOS 15+ untuk mewarnai address bar/status bar.
+  // - msapplication-navbutton-color: peninggalan Windows Phone/IE lama,
+  //   murah utk ikut disamakan sekalian (tidak berdampak di browser lain).
+  // CATATAN JUJUR: sejumlah browser/OS memang TIDAK punya API buat
+  // mewarnai chrome-nya sama sekali (mis. Firefox & Safari di macOS utk
+  // tab biasa, atau Chrome/Edge desktop di luar mode PWA ter-install) --
+  // itu batasan platform masing2 browser, bukan sesuatu yg bisa
+  // "dipaksa" lewat kode web di sisi mana pun.
   const metaTheme = document.querySelector('meta[name="theme-color"]');
   if (metaTheme) metaTheme.setAttribute('content', hex);
+  const metaNavBtn = document.querySelector('meta[name="msapplication-navbutton-color"]');
+  if (metaNavBtn) metaNavBtn.setAttribute('content', hex);
   try {
     const tg = window.Telegram && window.Telegram.WebApp;
     if (tg) {
@@ -11820,6 +11840,34 @@ function syncMobileChromeColor(hex) {
       }
     }
   } catch (e) { /* abaikan */ }
+}
+
+// ============ WARNA STATUS BAR/ADDRESS BAR MENGIKUTI BANNER ============
+// Menghitung warna yg SEHARUSNYA dipakai status bar HP / address bar
+// browser / header Telegram SAAT INI: mengikuti --banner-orange yg
+// sedang aktif (ikut berubah begitu user ganti warna tema di halaman
+// Tema -- lihat applyGlobalTheme()), kecuali di mobile begitu banner
+// besar sudah discroll lewat & mini-topbar putih menempel menggantikannya
+// (--card). Dipakai bersama oleh initTelegramWebApp() (saat app pertama
+// dibuka), initMiniTopbar() (tiap kali status scroll berubah), DAN
+// applyGlobalTheme() (begitu user ganti warna tema, supaya address bar
+// ikut berubah SAAT ITU JUGA, tanpa perlu scroll/refresh dulu).
+function getActiveMobileChromeColor() {
+  const rootStyles = getComputedStyle(document.documentElement);
+  const bannerColor = (rootStyles.getPropertyValue('--banner-orange') || '#FA8B1E').trim();
+  const cardColor = (rootStyles.getPropertyValue('--card') || '#FFFFFF').trim();
+  const bannerEl = document.getElementById('banner');
+  let mqMatches = false;
+  try { mqMatches = window.matchMedia('(max-width:600px)').matches; } catch (e) { /* abaikan */ }
+  if (mqMatches && bannerEl) {
+    const bannerFullyPassed = bannerEl.offsetParent !== null
+      && bannerEl.getBoundingClientRect().bottom <= 0;
+    return bannerFullyPassed ? cardColor : bannerColor;
+  }
+  return bannerColor;
+}
+function refreshMobileChromeColor() {
+  syncMobileChromeColor(getActiveMobileChromeColor());
 }
 
 function initTelegramWebApp() {
@@ -11834,9 +11882,7 @@ function initTelegramWebApp() {
     if (typeof tg.expand === 'function') tg.expand();
     if (typeof tg.disableVerticalSwipes === 'function') tg.disableVerticalSwipes();
 
-    const rootStyles = getComputedStyle(document.documentElement);
-    const forestDeep = (rootStyles.getPropertyValue('--forest-deep') || '#0B1220').trim();
-    syncMobileChromeColor(forestDeep);
+    refreshMobileChromeColor();
   } catch (e) {
     console.warn('initTelegramWebApp dilewati:', e);
   }
