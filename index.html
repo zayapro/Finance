@@ -1188,23 +1188,52 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
 .notif-panel.open{visibility:visible;transform:translateX(0);}
 .notif-panel-overlay{display:none;}
 
-/* ---- Kepala halaman notifikasi: DIKEMBALIKAN ke gaya banner warna +
-   tombol kembali bulat translucent (niru PERSIS pola .lap-filter-head/
-   .lap-filter-back-btn yang dipakai halaman Tema/Data Diri/Ubah PIN),
-   sesuai referensi desain user — bukan lagi header putih polos ala
-   .detail-page-head. Judul dipusatkan, dgn spacer tak-terlihat di
-   kanan (lebar sama dgn tombol kembali) supaya judul benar2 center.
-   SEKARANG position:sticky (bukan cuma relative) -- niru PERSIS pola
-   .bd-sticky-head/.lap-sticky-top: banner ini tetap menempel di atas
-   selama halaman digulir, dgn z-index LEBIH TINGGI drpd
-   .notif-page-body supaya kartu putih di bawahnya benar2 "masuk ke
-   balik" banner ini saat digulir, bukan malah menimpanya. ---- */
+/* ---- FIX: banner + kartu putih notifikasi TIDAK kelihatan melengkung
+   sama sekali (potongannya lurus/persegi) -- akar masalahnya z-index
+   .notif-panel-head (3) sebelumnya LEBIH TINGGI drpd .notif-page-body
+   (2), jadi banner malah MENUTUPI sudut lengkung kartu putih (bukan
+   kartu yg "duduk" di atas ekor banner spt di halaman Filter). Sekedar
+   membalik angka z-index-nya TIDAK cukup -- itu justru bikin kartu
+   putih menutupi banner begitu discroll. Solusinya niru PERSIS pola
+   .bd-sticky-head (Tagihan & Hutang): banner + "topi" lengkung kecil
+   (.notif-page-body-cap) dibungkus SATU wrapper sticky (.notif-sticky-head),
+   baru daftar notifikasi (.notif-page-body-rest) scroll normal
+   TERPISAH di bawahnya -- lihat .notif-sticky-head & .notif-page-body-cap
+   di bawah, serta wrapper baru di markup HTML. .notif-panel-head sendiri
+   SEKARANG cukup position:relative (bukan sticky lagi) krn yg sticky
+   adalah wrapper induknya. ---- */
 .notif-panel-head{
   display:flex;align-items:center;gap:10px;flex-shrink:0;
-  position:sticky;top:0;z-index:3;
+  position:relative;z-index:1;
   background:var(--nav-orange);color:#FFF8F1;
   padding:calc(16px + env(safe-area-inset-top,0px)) 18px clamp(40px,9vw,56px);
 }
+/* ---- Wrapper sticky: niru PERSIS .bd-sticky-head/.tema-sticky-head --
+   membungkus banner (.notif-panel-head) + topi lengkung (di bawah)
+   supaya keduanya menempel bareng di atas layar saat discroll. ---- */
+.notif-sticky-head{
+  position:sticky;top:0;z-index:6;
+  transform:translateZ(0);-webkit-transform:translateZ(0);
+  backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  isolation:isolate;
+}
+/* ---- Topi lengkung: potongan KECIL kartu putih yg menumpang di ekor
+   banner lewat margin negatif + radius atas (28px, sama persis
+   .lap-filter-card/.notif-page-body) -- niru ".tema-preview-wrap" tapi
+   tanpa isi (notifikasi tidak punya kartu Pratinjau), cuma bertugas
+   menampilkan lengkungan putih di ATAS unit sticky ini. Daftar
+   notifikasi sendiri ada di ".notif-page-body-rest" TERPISAH di bawah
+   (scroll normal, radius dinetralkan -- sudah "dipakai" topi ini). ---- */
+.notif-page-body-cap{
+  position:relative;z-index:2;
+  background:var(--card);
+  margin:-24px 0 0;height:24px;
+  border-radius:28px 28px 0 0;
+  transform:translateZ(0);-webkit-transform:translateZ(0);
+  backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  isolation:isolate;
+}
+.notif-page-body.notif-page-body-rest{margin-top:0;border-radius:0;padding-top:14px;}
 .notif-panel-head-titles{flex:1;min-width:0;text-align:center;}
 .notif-panel-head-titles h3{font-size:clamp(16px,3.6vw,19px);font-weight:500;color:#FFF8F1;letter-spacing:-0.005em;line-height:1.25;font-family:'Poppins',sans-serif;}
 .notif-panel-head-sub{margin:2px 0 0;font-size:12px;color:rgba(255,248,241,0.78);font-weight:600;}
@@ -1293,7 +1322,15 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
 .notif-item.overdue .notif-item-ic{background:rgba(225,29,72,0.15);color:var(--wine);}
 .notif-item-body{flex:1;min-width:0;}
 .notif-item-body .nm{font-size:13px;font-weight:700;color:var(--ink);display:flex;align-items:center;gap:6px;min-width:0;}
-.notif-item-body .nm .nm-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
+/* ---- FIX: baris ini SEBELUMNYA memotong judul jadi satu baris +
+   "..." (nowrap+ellipsis) -- peninggalan gaya kartu lama, TIDAK
+   sengaja ikut kepakai lagi krn baris .notif-item-body .nm .nm-text
+   yang baru (di style "flat" bawah) tidak pernah menimpa properti ini
+   scr eksplisit. Padahal gambar referensi menampilkan judul APA
+   ADANYA, boleh membungkus ke baris ke-2 kalau panjang (bukan
+   terpotong "..." di tengah kata) -- dinetralkan jadi wrap normal,
+   PERSIS pola .amt di bawahnya. ---- */
+.notif-item-body .nm .nm-text{overflow:visible;text-overflow:clip;white-space:normal;min-width:0;}
 /* Sama seperti .bd-item-body .meta: kolom (Rp di atas, pil di bawah)
    supaya pil "X hari lagi" & "Jatuh tempo hari ini" selalu di posisi
    yang sama, dan pil dibatasi max-width:100% + boleh membungkus
@@ -10097,7 +10134,17 @@ body.is-scrolling *{
 /* Lencana/gambar kanan: lebih rata, bayangan tipis saja (bukan
    dramatis) supaya terasa seperti thumbnail foto kecil ala
    referensi, bukan lencana ikon besar. */
-.notif-item-thumb{width:50px;height:50px;border-radius:13px;box-shadow:none;margin-top:1px;}
+/* ---- FIX: SEBELUMNYA thumbnail fallback (tanpa gambar) masih
+   mewarisi latar gradien diagonal + bayangan dari gaya kartu lama
+   (.notif-item-thumb paling atas file) krn baris ini cuma menimpa
+   ukuran/radius, TIDAK ikut menimpa "background" -- padahal gambar
+   referensi menampilkan lencana flat/rata (bukan gradien), niru
+   PERSIS palet .notif-item-ic supaya kategori (tagihan/hutang/
+   kustom) tetap konsisten warnanya antara ikon kiri & lencana kanan. ---- */
+.notif-item-thumb{width:50px;height:50px;border-radius:13px;box-shadow:none;margin-top:1px;background:#D97706;}
+.notif-item.type-hutang .notif-item-thumb{background:#7C3AED;}
+.notif-item.overdue .notif-item-thumb{background:var(--wine);}
+.notif-item.type-custom .notif-item-thumb{background:var(--primary);}
 /* Kalau notifikasi (kustom) membawa gambar sungguhan (PERMINTAAN
    BARU): thumbnail kanan menampilkan gambar itu APA ADANYA (cover
    penuh kotak 50x50, tanpa warna latar solid/ikon lagi) -- kalau
@@ -13177,17 +13224,20 @@ body.is-scrolling *{
      terganggu tampilan lain. -->
 <div class="notif-panel-overlay" id="notifPanelOverlay"></div>
 <div class="notif-panel" id="notifPanel">
-  <div class="notif-panel-head">
-    <button class="notif-back-btn" id="notifCloseBtn" type="button" aria-label="Tutup notifikasi">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-    </button>
-    <div class="notif-panel-head-titles">
-      <h3>Notifikasi</h3>
+  <div class="notif-sticky-head">
+    <div class="notif-panel-head">
+      <button class="notif-back-btn" id="notifCloseBtn" type="button" aria-label="Tutup notifikasi">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <div class="notif-panel-head-titles">
+        <h3>Notifikasi</h3>
+      </div>
+      <span class="notif-panel-head-spacer" aria-hidden="true"></span>
     </div>
-    <span class="notif-panel-head-spacer" aria-hidden="true"></span>
+    <div class="notif-page-body-cap" aria-hidden="true"></div>
   </div>
 
-  <div class="notif-page-body" id="notifPageBody">
+  <div class="notif-page-body notif-page-body-rest" id="notifPageBody">
     <div class="notif-list" id="notifList"></div>
   </div>
 </div>
