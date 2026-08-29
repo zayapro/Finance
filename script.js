@@ -7967,8 +7967,20 @@ function saveGlobalTheme(state) {
   try { cloudStorage.setItem(GLOBAL_THEME_KEY, JSON.stringify(state)); }
   catch (e) { showToast('Gagal menyimpan warna tema.', 'err'); }
 }
+// Disimpan di variabel JS terpisah (bukan cuma dibaca ulang dari CSS var
+// lewat getComputedStyle tiap kali dibutuhkan) supaya warna banner yang
+// dipakai address bar/status bar SELALU pasti versi TERBARU persis saat
+// applyGlobalTheme() dipanggil -- tanpa bergantung pada timing browser
+// "mengembalikan" nilai --banner-orange lewat getComputedStyle (yang di
+// sebagian kasus/browser bisa saja belum ke-refresh kalau dibaca dalam
+// microtask/frame yang sama dengan setProperty()-nya). Nilai awal
+// #FA8B1E SENGAJA sama dengan default --banner-orange di CSS/preset
+// "orange" (lihat GLOBAL_THEME_PRESETS) supaya konsisten sebelum
+// applyGlobalTheme(loadGlobalTheme()) pertama kali jalan di bawah nanti.
+let currentBannerColorHex = '#FA8B1E';
 function applyGlobalTheme(state) {
   const shades = resolveGlobalThemeShades(state);
+  currentBannerColorHex = shades.banner;
   const root = document.documentElement.style;
   root.setProperty('--primary', shades.primary);
   root.setProperty('--primary-deep', shades.deep);
@@ -11853,8 +11865,13 @@ function syncMobileChromeColor(hex) {
 // applyGlobalTheme() (begitu user ganti warna tema, supaya address bar
 // ikut berubah SAAT ITU JUGA, tanpa perlu scroll/refresh dulu).
 function getActiveMobileChromeColor() {
+  // Warna banner diambil dari variabel JS currentBannerColorHex (lihat
+  // catatan di dekat deklarasinya, dekat applyGlobalTheme()) -- BUKAN
+  // dari getComputedStyle('--banner-orange') lagi, supaya tidak pernah
+  // ketinggalan/telat mengikuti perubahan warna tema. --card tetap aman
+  // dibaca dari CSS krn nilainya statis (tidak pernah diubah lewat JS).
   const rootStyles = getComputedStyle(document.documentElement);
-  const bannerColor = (rootStyles.getPropertyValue('--banner-orange') || '#FA8B1E').trim();
+  const bannerColor = currentBannerColorHex || '#FA8B1E';
   const cardColor = (rootStyles.getPropertyValue('--card') || '#FFFFFF').trim();
   const bannerEl = document.getElementById('banner');
   let mqMatches = false;
