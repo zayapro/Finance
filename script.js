@@ -7104,6 +7104,43 @@ document.getElementById('btnAddDesktop')?.addEventListener('click', () => openAd
 // kalau sudah login -> Keluar akun (spt sebelumnya); kalau belum ->
 // buka popup Masuk/Daftar (menggantikan aksi logout yang tidak relevan
 // buat guest).
+// ---- Redesign popup konfirmasi keluar akun ----
+// SEBELUMNYA pakai confirm() bawaan browser (kotak abu-abu polos milik
+// OS/browser, tidak senada sama sekali dgn tampilan ZAYAin & tidak bisa
+// diberi ikon/warna/animasi apa pun). Sekarang diganti modal custom
+// (#logoutConfirmOverlay, lihat markup + catatan desainnya di index.html)
+// yg dibungkus jadi fungsi berbasis Promise di sini supaya pemanggilnya
+// (handleAccountToggleClick di bawah) tetap bisa dipakai dgn gaya
+// `if (!await openLogoutConfirm()) return;` -- sama persis "rasanya"
+// dgn confirm() lama, cuma tampilannya yg diganti total.
+const logoutConfirmModal = document.getElementById('logoutConfirmOverlay');
+function openLogoutConfirm() {
+  return new Promise((resolve) => {
+    // Jaga-jaga kalau markup modal ini entah kenapa tidak ada di
+    // halaman (mis. versi index.html lama blm diperbarui) -- jangan
+    // sampai fitur logout jadi mati total, cukup anggap "dikonfirmasi"
+    // spt confirm() lama tanpa modal.
+    if (!logoutConfirmModal) { resolve(true); return; }
+    const btnYes = document.getElementById('btnConfirmLogout');
+    const btnNo = document.getElementById('btnCancelLogout');
+    function cleanup(result) {
+      btnYes.removeEventListener('click', onYes);
+      btnNo.removeEventListener('click', onNo);
+      logoutConfirmModal.removeEventListener('click', onOverlay);
+      closeModal(logoutConfirmModal);
+      resolve(result);
+    }
+    function onYes() { cleanup(true); }
+    function onNo() { cleanup(false); }
+    // Klik di luar kartu modal (di area overlay gelap) = sama dgn Batal,
+    // konsisten dgn perilaku #confirmOverlay (modal hapus) yg sudah ada.
+    function onOverlay(e) { if (e.target === logoutConfirmModal) cleanup(false); }
+    btnYes.addEventListener('click', onYes);
+    btnNo.addEventListener('click', onNo);
+    logoutConfirmModal.addEventListener('click', onOverlay);
+    openModal(logoutConfirmModal);
+  });
+}
 let accountToggleBusy = false; // cegah klik ganda (mis. tap 2x cepat di HP) memicu 2 proses logout bersamaan
 function setAccountButtonsDisabled(disabled) {
   ['btnAddMobile', 'miniLogoutBtn', 'settingsAccountBtn'].forEach(function (id) {
@@ -7115,7 +7152,8 @@ async function handleAccountToggleClick() {
   if (accountToggleBusy) return;
   if (typeof window.cloudIsLoggedIn === 'function' && window.cloudIsLoggedIn()) {
     if (typeof window.cloudSignOut !== 'function') return;
-    if (!confirm('Keluar dari akun ini?')) return;
+    const confirmedLogout = await openLogoutConfirm();
+    if (!confirmedLogout) return;
     accountToggleBusy = true;
     // Semua tombol yang bisa memicu logout (banner mobile, mini-topbar,
     // baris Pengaturan) sengaja dinonaktifkan bareng selama proses

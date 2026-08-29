@@ -8369,6 +8369,40 @@ select#categoryFilter[hidden]{display:none;}
   display:flex;align-items:center;justify-content:center;margin:0 auto 14px;
 }
 
+/* ---- Redesign popup konfirmasi KELUAR AKUN (lihat markup & catatan
+   panjangnya di index.html dekat #logoutConfirmOverlay) ---- */
+.logout-confirm-icon{
+  width:56px;height:56px;border-radius:50%;
+  background:color-mix(in srgb, var(--primary) 12%, white);color:var(--primary);
+  display:flex;align-items:center;justify-content:center;margin:0 auto 14px;
+  position:relative;
+}
+/* Ring tipis berdenyut pelan mengelilingi ikon -- warna ikut var(--primary)
+   juga supaya tetap senada apa pun tema yg dipilih user, bukan warna
+   statis yg bisa "nabrak" kalau user pakai tema selain oranye default. */
+.logout-confirm-icon::after{
+  content:'';position:absolute;inset:-6px;border-radius:50%;
+  border:1.5px solid color-mix(in srgb, var(--primary) 35%, transparent);
+  animation:logoutRingPulse 2.2s ease-out infinite;
+}
+@keyframes logoutRingPulse{
+  0%{transform:scale(.88);opacity:.9;}
+  70%{transform:scale(1.18);opacity:0;}
+  100%{transform:scale(1.18);opacity:0;}
+}
+/* Modal masuk dgn sedikit pantulan (spring) -- senada gaya .wallet-modal,
+   bukan fade+geser datar spt modal hapus di atas -- supaya konfirmasi
+   "netral" ini terasa lebih ringan/ramah, bukan serius/mengancam.
+   Selector 3-kelas ini SENGAJA ditaruh di sini (jauh di bawah aturan
+   generik ".modal-overlay.open .modal" dekat baris ~5651) supaya menang
+   lewat urutan sumber walau specificity-nya seri -- pola yg sama persis
+   dgn cara .wallet-modal menimpa transform generik. */
+.logout-confirm-modal{
+  transform:translateY(22px) scale(.92);
+  transition:transform .42s cubic-bezier(.34,1.5,.55,1), opacity .24s ease;
+}
+.modal-overlay.open .logout-confirm-modal{transform:translateY(0) scale(1);}
+
 /* ============ TOAST ============
    REDESIGN: sebelumnya kartu solid gelap (--forest-deep/--wine) dengan
    ikon polos & animasi slide-fade standar -- terasa generik, tidak
@@ -11332,6 +11366,39 @@ body.is-scrolling *{
     <div class="modal-actions">
       <button class="btn btn-ghost" id="btnCancelDelete">Batal</button>
       <button class="btn btn-danger" id="btnConfirmDelete">Ya, Hapus</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL KONFIRMASI KELUAR AKUN (REDESIGN) =====
+     SEBELUMNYA logout memakai confirm() bawaan BROWSER -- kotak abu-abu
+     polos "OK/Batal" milik OS/browser sendiri, sama sekali tidak senada
+     dgn tampilan ZAYAin, tidak bisa diberi warna/ikon/animasi apa pun
+     (lihat handleAccountToggleClick() di script.js, baris
+     `if (!confirm('Keluar dari akun ini?')) return;` yg sekarang
+     diganti dgn openLogoutConfirm() versi custom ini). Sengaja dibuat
+     modal TERPISAH dari #confirmOverlay (modal hapus di atas), bukan
+     numpang lewat kind baru di sana -- karena secara makna keduanya
+     beda: hapus = aksi DESTRUKTIF/permanen (makanya ikon & tombolnya
+     merah/--wine, warna "bahaya"), sedangkan keluar akun = aksi netral/
+     bisa dibatalkan kapan saja (data tetap aman di cloud, tinggal login
+     lagi) -- jadi ikon & tombolnya sengaja pakai warna AKSEN TEMA
+     (var(--primary), otomatis ikut warna tema yg dipilih user di
+     halaman Tema) supaya kesannya "netral & ramah", bukan alarm. Ring
+     tipis di sekeliling ikon berdenyut pelan (bukan diam) & modal
+     masuk dgn sedikit pantulan (spring, senada gaya .wallet-modal) --
+     detail kecil supaya terasa lebih "hidup" drpd modal hapus di atas
+     yg sengaja dibuat datar/serius. -->
+<div class="modal-overlay confirm-modal" id="logoutConfirmOverlay">
+  <div class="modal logout-confirm-modal">
+    <div class="logout-confirm-icon">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+    </div>
+    <h3 style="margin-bottom:6px;">Keluar dari akun ini?</h3>
+    <p style="color:var(--ink-soft);font-size:13.5px;margin-bottom:18px;">Kamu bisa masuk lagi kapan saja. Data yang sudah tersinkron ke cloud tetap aman tersimpan.</p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="btnCancelLogout" type="button">Batal</button>
+      <button class="btn btn-primary" id="btnConfirmLogout" type="button">Ya, Keluar</button>
     </div>
   </div>
 </div>
