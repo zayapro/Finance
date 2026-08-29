@@ -785,6 +785,18 @@
         if (!unlockedByBiometric) {
           await requirePinUnlock(currentUser, pinHash);
         }
+      } else if (window.zayaproAuth.isBiometricEnabled()) {
+        // Kondisi rusak/tidak konsisten: biometrik sempat diaktifkan
+        // padahal akun ini TIDAK PUNYA PIN (mis. diaktifkan sebelum
+        // pengecekan hasPin() ditambahkan di initBiometricToggle,
+        // lihat script.js). Tanpa pinHash, layar kunci di atas tidak
+        // akan pernah jalan sama sekali (baik PIN maupun sidik jari),
+        // sehingga app selalu langsung terbuka tanpa diminta apa pun
+        // -- padahal togglenya kelihatan ON di Pengaturan. Bersihkan
+        // kredensial biometrik lokal ini supaya togglenya kembali
+        // OFF dan mencerminkan kondisi sebenarnya, lalu user akan
+        // diminta set PIN dulu kalau mau mengaktifkannya lagi.
+        window.zayaproAuth.disableBiometric();
       }
 
       // Kalau halaman ini dimuat ulang SETELAH reset database

@@ -10062,6 +10062,19 @@ document.getElementById('pwForgotSendBtn')?.addEventListener('click', async func
       return;
     }
     if (toggle.checked) {
+      // PENTING: layar kunci saat app dibuka (lihat boot() di
+      // cloud-sync.js) HANYA jalan kalau akun sudah punya PIN
+      // (user_metadata.pin_hash) -- baik jalur PIN maupun jalur
+      // sidik jari sama-sama digantung di balik syarat itu. Kalau
+      // biometrik diaktifkan padahal PIN belum pernah diset, layar
+      // kunci itu di-skip TOTAL setiap app dibuka (bukan cuma
+      // sidik jarinya yang tidak jalan, tapi seluruh kuncinya tidak
+      // pernah muncul) -- itulah sebabnya wajib dicek dulu di sini.
+      if (!window.zayaproAuth.hasPin()) {
+        toggle.checked = false;
+        showToast('Atur PIN dulu lewat menu "Ubah PIN" sebelum mengaktifkan Login Biometrik.', 'err');
+        return;
+      }
       try {
         await window.zayaproAuth.enableBiometric();
         showToast('Login Biometrik diaktifkan di perangkat ini.');
