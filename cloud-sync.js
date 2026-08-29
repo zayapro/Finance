@@ -564,6 +564,7 @@
       const bioHint = document.getElementById('pinLockBioHint');
       const bioMsg = document.getElementById('pinLockBioMsg');
       const usePinBtn = document.getElementById('pinLockUsePinBtn');
+      const closePinBtn = document.getElementById('pinLockClosePinBtn');
       const dotsWrap = document.getElementById('pinLockDots');
       const dots = dotsWrap ? Array.prototype.slice.call(dotsWrap.querySelectorAll('.pin-dot')) : [];
       const msgBox2 = document.getElementById('pinLockMsg');
@@ -591,6 +592,12 @@
         if (bioView) bioView.classList.add('open');
         if (titleEl) titleEl.textContent = 'Buka dengan Sidik Jari';
       }
+      /* ---- Tombol tutup (×) di tampilan PIN cuma masuk akal kalau
+         ada tampilan Login sidik jari utk dituju balik -- makanya
+         cuma ditampilkan kalau Login Biometrik aktif di perangkat
+         ini. Kalau tidak aktif, PIN adalah satu-satunya cara masuk,
+         jadi tombol ini tetap disembunyikan (display:none bawaan). ---- */
+      if (closePinBtn) closePinBtn.style.display = bioEnabled ? 'flex' : 'none';
       function showPinView() {
         if (bioView) bioView.classList.remove('open');
         if (pinView) pinView.classList.add('open');
@@ -673,6 +680,7 @@
       }
       function onBioBtnClick() { attemptBio(); }
       function onUsePin() { showPinView(); }
+      function onClosePin() { showBioView(); }
       async function onBioRetry() {
         if (checking) return;
         const ok = await window.zayaproAuth.tryBiometricUnlock();
@@ -689,6 +697,7 @@
         if (bioRetryBtn) bioRetryBtn.removeEventListener('click', onBioRetry);
         if (bioBtn) bioBtn.removeEventListener('click', onBioBtnClick);
         if (usePinBtn) usePinBtn.removeEventListener('click', onUsePin);
+        if (closePinBtn) closePinBtn.removeEventListener('click', onClosePin);
       }
 
       keypad.addEventListener('click', onKeyClick);
@@ -697,6 +706,7 @@
       if (bioRetryBtn) bioRetryBtn.addEventListener('click', onBioRetry);
       if (bioBtn) bioBtn.addEventListener('click', onBioBtnClick);
       if (usePinBtn) usePinBtn.addEventListener('click', onUsePin);
+      if (closePinBtn) closePinBtn.addEventListener('click', onClosePin);
 
       entered = '';
       renderDots();
@@ -733,9 +743,13 @@
       (async function () {
         const isSupportedNow = bioEnabled && await window.zayaproAuth.biometricSupported();
         if (bioRetryBtn) bioRetryBtn.style.display = isSupportedNow ? 'flex' : 'none';
-        if (isSupportedNow) {
-          attemptBio();
-        } else {
+        // FIX: JANGAN langsung minta sidik jari/Face ID otomatis begitu
+        // popup terbuka -- tunggu sampai user BENAR-BENAR menekan tombol
+        // "Login" (ikon sidik jari) di layar. Kalau device/browser
+        // ternyata tidak mendukung sidik jari sama sekali, tetap
+        // langsung dialihkan ke tampilan PIN spt sebelumnya (bukan
+        // menampilkan tombol yg pasti gagal terus kalau ditekan).
+        if (!isSupportedNow) {
           if (bioEnabled) window.zayaproAuth.disableBiometric();
           showPinView();
         }

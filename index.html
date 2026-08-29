@@ -9921,64 +9921,83 @@ body.is-scrolling *{
 #pinLockOverlay{
   position:fixed; inset:0; z-index:99999;
   background:var(--paper,#F4F6F9);
-  overflow-y:auto;
-  -webkit-overflow-scrolling:touch;
+  display:flex; align-items:center; justify-content:center;
+  overflow:hidden;
 }
 #pinLockOverlay.hidden{ display:none; }
+/* ---- FIX "harus discroll utk lihat semua isi popup": sebelumnya
+   tinggi konten (header + tombol Login + preview menu, ATAU header +
+   keypad PIN lengkap) bisa melebihi tinggi layar di HP pendek/landscape,
+   dipaksa muat lewat overflow-y:auto di atas. Sekarang overlay dibuat
+   TANPA scroll sama sekali (overflow:hidden) -- sebagai gantinya,
+   seluruh jarak/padding/ukuran di bawah dibuat FLUID pakai clamp()
+   berbasis tinggi layar (dvh) + beberapa penyesuaian tambahan lewat
+   media query (max-height), supaya kontennya yg menyesuaikan diri
+   mengecil ke tinggi layar yg tersedia, bukan layarnya yg discroll.
+   height:100dvh dipasang dgn fallback 100vh dulu (browser lama), lalu
+   dibatasi max-height supaya di layar SANGAT tinggi (desktop) popup
+   tidak ikut melar aneh -- cukup rata tengah spt kartu telepon. ---- */
 .pin-lock-page{
-  min-height:100%; max-width:460px; margin:0 auto;
+  width:100%; max-width:460px; margin:0 auto;
+  height:100vh; height:100dvh; max-height:840px;
   display:flex; flex-direction:column;
+  overflow:hidden;
 }
 /* ---- Header gradasi (samakan dgn warna utama app) + kartu sapaan
    lebih terang di dalamnya, spt kartu "Hai, Ari / Makin Nyaman..."
    di gambar referensi. ---- */
 .pin-lock-hero{
   background:linear-gradient(160deg, var(--primary,#F2672B), var(--primary-deep,#C2410C));
-  padding:22px 20px 34px;
+  padding:clamp(14px,3.6dvh,22px) 20px clamp(18px,5dvh,34px);
   color:#fff;
+  flex-shrink:0;
 }
 .pin-lock-hero-topbar{
-  display:flex; align-items:center; justify-content:space-between; margin-bottom:18px;
+  display:flex; align-items:center; justify-content:space-between; margin-bottom:clamp(10px,2.2dvh,18px);
 }
 .pin-lock-hero-brand{
-  display:flex; align-items:center; gap:8px;
-  font-family:var(--font-display,'Poppins',sans-serif); font-weight:800; font-size:19px; letter-spacing:.2px;
+  display:flex; align-items:center; gap:7px;
+  font-family:var(--font-display,'Poppins',sans-serif); font-weight:700; font-size:17.5px; letter-spacing:.15px;
 }
 .pin-lock-hero-brand svg{ flex-shrink:0; }
 .pin-lock-hero-help{
-  width:34px; height:34px; border-radius:50%;
+  width:34px; height:34px; border-radius:50%; flex-shrink:0;
   display:flex; align-items:center; justify-content:center;
   background:rgba(255,255,255,.16); color:#fff;
 }
 .pin-lock-hero-greetcard{
   background:rgba(255,255,255,.16);
   border:1px solid rgba(255,255,255,.22);
-  border-radius:20px; padding:20px 20px 22px;
+  border-radius:20px; padding:clamp(12px,2.8dvh,20px) 20px clamp(14px,3.2dvh,22px);
 }
 .pin-lock-hero-hi{
-  margin:0 0 8px; font-size:14.5px; font-weight:600; opacity:.92;
+  margin:0 0 clamp(4px,1dvh,7px); font-size:13.5px; font-weight:600; opacity:.9; letter-spacing:.1px;
 }
 .pin-lock-hero-tagline{
-  margin:0; font-size:21px; font-weight:800; line-height:1.32;
+  margin:0; font-size:clamp(16px,4.4dvh,19px); font-weight:700; line-height:1.34;
   font-family:var(--font-display,'Poppins',sans-serif);
 }
 /* ---- Lembar putih membulat yg "menimpa" ujung bawah header,
    memberi kesan bottom-sheet spt referensi. ---- */
 .pin-lock-sheet{
-  flex:1; position:relative; z-index:1;
+  flex:1 1 auto; min-height:0; position:relative; z-index:1;
   background:var(--card,#FFFFFF);
   border-radius:26px 26px 0 0;
   margin-top:-20px;
-  padding:26px 22px 34px;
+  padding:clamp(16px,3.4dvh,26px) 22px clamp(16px,3.6dvh,34px);
   box-shadow:0 -8px 30px -18px rgba(0,0,0,.12);
+  display:flex; flex-direction:column;
+  overflow:hidden;
 }
 .pin-lock-card{
   max-width:none; width:100%; margin:0 auto;
   background:transparent; border:none; box-shadow:none; padding:0;
+  flex:1 1 auto; min-height:0;
+  display:flex; flex-direction:column;
 }
 .pin-dots{
   display:flex; align-items:center; justify-content:center; gap:14px;
-  margin:6px 0 18px;
+  margin:clamp(4px,1dvh,6px) 0 clamp(10px,2.4dvh,18px);
 }
 .pin-dot{
   width:14px; height:14px; border-radius:50%;
@@ -9998,14 +10017,22 @@ body.is-scrolling *{
   30%,50%,70%{ transform:translateX(-8px); }
   40%,60%{ transform:translateX(8px); }
 }
+/* ---- FIX bug ukuran tombol keypad membengkak jadi raksasa di layar
+   lebar (sebelumnya lebar tiap tombol = lebar penuh kartu dibagi 3,
+   tanpa batas atas -- jadi bisa >120px per tombol & bikin keypad
+   total 4 baris melebihi tinggi layar, itulah salah satu penyebab
+   utama popup ini butuh discroll). Sekarang keypad dibatasi lebar
+   maksimum & dirata-tengah, jadi ukurannya masuk akal & KONSISTEN di
+   HP kecil maupun tablet/desktop lebar. ---- */
 .pin-keypad{
-  display:grid; grid-template-columns:repeat(3,1fr); gap:12px;
-  margin:0 0 18px;
+  display:grid; grid-template-columns:repeat(3,1fr); gap:clamp(8px,2.4vw,14px);
+  margin:0 auto clamp(10px,2.2dvh,18px);
+  width:100%; max-width:288px;
 }
 .pin-key{
   aspect-ratio:1/1; border-radius:50%; border:1px solid var(--line,#E4E8EF);
   background:var(--paper,#F4F6F9); color:var(--ink,#131A2A);
-  font-size:19px; font-weight:700; cursor:pointer;
+  font-family:var(--font-display,'Poppins',sans-serif); font-size:18px; font-weight:600; cursor:pointer;
   display:flex; align-items:center; justify-content:center;
   transition:background .12s, transform .1s;
 }
@@ -10022,10 +10049,15 @@ body.is-scrolling *{
    "siap dipakai"), lalu berputar (spin) khusus saat status
    ".is-checking" (lagi menunggu hasil sidik jari/Face ID dari OS)
    supaya ada umpan balik visual selama menunggu. ---- */
-.pin-lock-bio-view{ display:none; flex-direction:column; align-items:center; }
-.pin-lock-bio-view.open{ display:flex; }
+.pin-lock-bio-view{ display:none; flex-direction:column; align-items:center; justify-content:center; }
+.pin-lock-bio-view.open{ display:flex; flex:1 1 auto; min-height:0; }
 .pin-lock-pin-view{ display:none; }
-.pin-lock-pin-view.open{ display:block; }
+.pin-lock-pin-view.open{ display:flex; flex-direction:column; justify-content:center; flex:1 1 auto; min-height:0; overflow:hidden; }
+/* ---- Preview menu (dekoratif) HANYA relevan saat tampilan Login
+   sidik jari sedang aktif -- saat keypad PIN terbuka, ruangnya sudah
+   habis dipakai keypad sendiri (4 baris tombol), jadi preview ini
+   otomatis disembunyikan supaya popup tetap muat tanpa scroll. ---- */
+.pin-lock-pin-view.open ~ .pin-lock-menu-preview{ display:none; }
 /* ---- Tombol "Login" berbentuk PIL (bukan lagi lingkaran besar) --
    niru tombol biru "Login [sidik jari]" di referensi, cuma dipakai
    warna utama app sendiri. Ikon sidik jari kecil di ujung kanan
@@ -10035,58 +10067,121 @@ body.is-scrolling *{
   border-radius:999px; border:none; cursor:pointer;
   display:flex; align-items:center; justify-content:center; gap:10px;
   background:linear-gradient(135deg, var(--primary,#F2672B), var(--primary-deep,#C2410C));
-  color:#fff; font-family:var(--font-display,'Poppins',sans-serif); font-size:15.5px; font-weight:700;
+  color:#fff; font-family:var(--font-display,'Poppins',sans-serif); font-size:16px; font-weight:600; letter-spacing:.15px;
   box-shadow:0 14px 30px -12px color-mix(in srgb, var(--primary-deep) 60%, transparent);
   transition:transform .15s ease, box-shadow .15s ease;
+  /* ---- GANTI gaya animasi: sebelumnya ring statis diam di pil (cuma
+     nyala pas checking). Sekarang pil punya animasi napas lembut
+     terus-menerus saat idle (glow melebar-menyempit pelan) supaya
+     jelas ini tombol utama yg "hidup"/siap diketuk, bukan elemen
+     diam. Animasi ini otomatis DIJEDA (lihat .is-checking di bawah)
+     begitu proses sidik jari/Face ID sedang berjalan, digantikan
+     loader ring yg berputar mulus. ---- */
+  animation:pinLockPillBreathe 2.6s ease-in-out infinite;
+}
+@keyframes pinLockPillBreathe{
+  0%,100%{
+    box-shadow:0 14px 30px -12px color-mix(in srgb, var(--primary-deep) 60%, transparent);
+    transform:scale(1);
+  }
+  50%{
+    box-shadow:0 16px 34px -8px color-mix(in srgb, var(--primary-deep) 70%, transparent),
+               0 0 0 7px color-mix(in srgb, var(--primary) 16%, transparent);
+    transform:scale(1.015);
+  }
 }
 .pin-lock-bio-btn:active{ transform:scale(.97); }
 .pin-lock-bio-btn svg{ position:relative; z-index:1; width:22px; height:22px; }
+/* ---- Loader saat status ".is-checking" (menunggu hasil sidik jari/
+   Face ID dari OS) -- sekarang berupa cincin tipis yg berputar mulus
+   (gaya spinner klasik, dua warna transparan+putih), GANTI dari
+   sebelumnya cincin putus-putus (dashed) yg statis lalu berputar. ---- */
 .pin-lock-bio-ring{
-  position:absolute; inset:-3px; border-radius:999px;
-  border:1.6px solid color-mix(in srgb, var(--primary) 55%, transparent);
+  position:absolute; inset:-4px; border-radius:999px;
+  border:2.4px solid transparent;
   opacity:0; pointer-events:none;
 }
+.pin-lock-bio-btn.is-checking{ animation:none; }
 .pin-lock-bio-btn.is-checking .pin-lock-bio-ring{
   opacity:1;
-  border-style:dashed;
-  animation:pinLockBioRingSpin 1s linear infinite;
+  border-top-color:#fff;
+  border-right-color:rgba(255,255,255,.55);
+  animation:pinLockBioRingSpin .75s linear infinite;
 }
 @keyframes pinLockBioRingSpin{ to{ transform:rotate(360deg); } }
 @media (prefers-reduced-motion:reduce){
+  .pin-lock-bio-btn{ animation:none; }
   .pin-lock-bio-ring{ animation:none; }
 }
 .pin-lock-bio-hint{
-  margin:0 0 4px; font-size:13px; color:var(--ink-soft,#5B6472);
+  margin:0 0 4px; font-size:12.5px; font-weight:500; color:var(--ink-soft,#5B6472);
   text-align:center; line-height:1.5;
 }
 #pinLockBioMsg.cloud-auth-msg.show{ margin-bottom:10px; }
 .pin-lock-use-pin-link{
   margin-top:14px; background:transparent; border:none; cursor:pointer;
-  font-size:13px; font-weight:700; color:var(--primary,#F2672B);
+  font-size:12.5px; font-weight:700; color:var(--primary,#F2672B);
   padding:8px 4px;
 }
 .pin-lock-use-pin-link:active{ opacity:.7; }
+/* ---- Tombol tutup (×) di tampilan keypad PIN -- dipakai utk KEMBALI
+   ke tombol "Login" sidik jari/Face ID, cuma tampil kalau Login
+   Biometrik memang aktif di perangkat ini (kalau tidak, PIN adalah
+   satu-satunya cara masuk, jadi tombol ini disembunyikan lewat JS). ---- */
+.pin-lock-pinview-head{
+  display:flex; justify-content:flex-end; margin:-6px -4px 2px 0;
+}
+.pin-lock-close-pin-btn{
+  width:32px; height:32px; border-radius:50%; border:none; cursor:pointer;
+  display:none; align-items:center; justify-content:center;
+  background:var(--paper,#F4F6F9); color:var(--ink-soft,#5B6472);
+  transition:background .15s, transform .12s;
+}
+.pin-lock-close-pin-btn:active{ transform:scale(.9); }
 /* ---- Preview menu utama ZAYAin di bawah tombol Login -- murni
    DEKORATIF (pointer-events:none), cuma supaya layar kunci terasa
    "mengintip" ke menu asli app spt di referensi (Transfer/E-Wallet/
    dst), memakai ikon & warna yg sama dgn nav bawah + FAB tambah
    transaksi milik app ini sendiri. ---- */
 .pin-lock-menu-preview{
-  display:grid; grid-template-columns:repeat(3,1fr); gap:22px 10px;
-  margin-top:30px; padding-top:26px; border-top:1px solid var(--line,#E4E8EF);
-  pointer-events:none;
+  display:grid; grid-template-columns:repeat(3,1fr); gap:clamp(12px,2.6dvh,22px) 10px;
+  margin-top:clamp(14px,3dvh,30px); padding-top:clamp(14px,2.8dvh,26px);
+  border-top:1px solid var(--line,#E4E8EF);
+  pointer-events:none; flex-shrink:0;
 }
-.plm-item{ display:flex; flex-direction:column; align-items:center; gap:8px; }
+.plm-item{ display:flex; flex-direction:column; align-items:center; gap:clamp(5px,1.2dvh,8px); }
 .plm-ic{
-  width:52px; height:52px; border-radius:16px;
+  width:clamp(42px,9dvh,52px); height:clamp(42px,9dvh,52px); border-radius:16px;
   display:flex; align-items:center; justify-content:center;
   background:color-mix(in srgb, var(--plm-c,var(--primary)) 12%, var(--paper,#F4F6F9));
   color:var(--plm-c,var(--primary));
   box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--plm-c,var(--primary)) 20%, transparent);
 }
+.plm-ic svg{ width:70%; height:70%; }
 .plm-label{
-  font-size:11px; font-weight:700; color:var(--ink-soft,#5B6472);
-  text-align:center; line-height:1.3;
+  font-size:11.5px; font-weight:600; color:var(--ink-soft,#5B6472);
+  text-align:center; line-height:1.28; letter-spacing:.05px;
+}
+/* ---- Jaring pengaman utk layar SANGAT pendek (mis. HP landscape,
+   atau HP jadul yg tingginya kecil) -- preview menu (murni dekoratif)
+   disembunyikan lebih dulu drpd elemen fungsional lain, supaya
+   tombol Login/keypad PIN yg WAJIB terlihat tetap dapat ruang penuh
+   tanpa perlu discroll. ---- */
+@media (max-height:680px){
+  .pin-lock-menu-preview{ display:none; }
+}
+@media (max-height:560px){
+  .pin-lock-hero-greetcard{ padding:10px 16px 12px; }
+  .pin-lock-hero-tagline{ font-size:15px; }
+  .pin-lock-bio-hint{ display:none; }
+  .pin-keypad{ max-width:250px; }
+}
+@media (max-height:460px){
+  .pin-lock-hero{ padding-top:10px; padding-bottom:12px; }
+  .pin-lock-hero-hi{ display:none; }
+  .pin-keypad{ max-width:216px; gap:6px; }
+  .pin-dots{ margin:2px 0 8px; gap:10px; }
+  .pin-dot{ width:11px; height:11px; }
 }
 
 /* ---- Tombol "Coba Sidik Jari / Face ID Lagi" di tampilan keypad PIN
@@ -13657,6 +13752,11 @@ body.is-scrolling *{
              "Gunakan PIN" / sidik jari gagal berkali-kali dari tampilan
              di atas. ---- -->
         <div id="pinLockPinView" class="pin-lock-pin-view">
+          <div class="pin-lock-pinview-head">
+            <button type="button" class="pin-lock-close-pin-btn" id="pinLockClosePinBtn" aria-label="Tutup, kembali ke Login sidik jari" style="display:none;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+          </div>
           <div class="pin-dots" id="pinLockDots">
             <span class="pin-dot"></span><span class="pin-dot"></span><span class="pin-dot"></span>
             <span class="pin-dot"></span><span class="pin-dot"></span><span class="pin-dot"></span>
