@@ -9904,6 +9904,94 @@ body.is-scrolling *{
 .pw-forgot-link{ display:inline-block; margin-top:2px; font-size:13px; font-weight:600; color:var(--primary-deep,#C2410C); text-decoration:none; cursor:pointer; }
 .pw-forgot-link:hover{ text-decoration:underline; }
 .pw-change-step[hidden]{ display:none; }
+
+/* ============================================================
+   REDESAIN ISI HALAMAN NOTIFIKASI (kartu putih) — mengikuti PERSIS
+   gambar referensi (daftar notifikasi ala app BRI): baris RATA/FLAT
+   tanpa kartu per item (tanpa border/shadow/radius sendiri-sendiri),
+   dipisah garis tipis antar-baris dalam tanggal yang sama, ikon
+   kotak kecil solid di kiri, judul tebal + subjudul + keterangan
+   waktu, dan lencana/gambar kotak kecil di kanan. Kartu ringkasan
+   nominal (chip "Tagihan Aktif"/"Hutang Aktif") DIHILANGKAN karena
+   tidak ada di referensi & itu yg paling terasa sbg "kartu lain" di
+   luar daftar notifikasi polos. Tab Tagihan/Hutang & tombol
+   Tambah/Lihat Semua di kaki halaman TETAP dipertahankan karena
+   perlu utk fungsi tambah data (tidak ada di gambar referensi sebab
+   itu cuma tangkapan layar app lain, bukan bagian dari daftar
+   notifikasinya sendiri). ============================================================ */
+
+/* Kartu ringkasan nominal dihilangkan */
+.notif-summary{display:none !important;}
+
+/* Daftar: tanpa jarak antar-item (dipisah garis, bukan gap kartu) */
+.notif-list{gap:0;}
+
+/* Judul pengelompokan tanggal: jeda lebih lega dari grup sebelumnya,
+   persis pola "29 Agustus 2026" / "28 Agustus 2026" di referensi */
+.notif-date-heading{
+  font-size:13px;font-weight:800;color:var(--ink);
+  padding:18px 0 10px;
+}
+.notif-date-heading:first-child{padding-top:0;}
+
+/* Baris notifikasi: RATA/FLAT, tanpa kartu (tanpa border keliling,
+   tanpa shadow, tanpa radius per-baris) — dipisah garis tipis di
+   bawah tiap baris, PERSIS pola daftar notifikasi pada referensi. */
+.notif-item{
+  align-items:flex-start;
+  padding:14px 0;gap:12px;
+  border-radius:0;border:none;box-shadow:none;background:transparent;
+  border-bottom:1px solid var(--line);
+  animation:none;
+}
+.notif-item:hover{transform:none;border-color:transparent;box-shadow:none;background:transparent;}
+.notif-item:active{transform:none;background:rgba(15,23,42,0.03);}
+/* Baris terakhir dlm satu grup tanggal (langsung diikuti judul grup
+   baru) atau baris terakhir di daftar: tanpa garis pemisah, biar
+   jeda antar-tanggal bersih tanpa garis dobel. */
+.notif-item:has(+ .notif-date-heading),
+.notif-item:last-child{border-bottom:none;}
+/* Baris yg butuh perhatian (jatuh tempo dekat/terlambat): rona
+   lembut MEMENUHI LEBAR PENUH kartu putih (nembus keluar padding
+   halaman), niru baris "disorot" pada referensi — tetap tanpa
+   kartu/bayangan, cuma warna latar. */
+.notif-item.soon,
+.notif-item.overdue{
+  margin:0 -18px;padding:14px 18px;border-radius:0;
+}
+.notif-item.soon{background:rgba(217,119,6,0.07);}
+.notif-item.overdue{background:rgba(225,29,72,0.07);}
+
+/* Ikon kiri: kotak kecil solid (bukan lingkaran/kotak besar
+   gradien), sejajar dgn baris judul — persis lencana "i" pada
+   referensi, warnanya tetap mengikuti kategori (tagihan/hutang/
+   terlambat) supaya makna semantiknya tidak hilang. */
+.notif-item-ic{
+  width:24px;height:24px;border-radius:7px;margin-top:2px;
+  background:#D97706;color:#fff;
+}
+.notif-item.type-hutang .notif-item-ic{background:#7C3AED;}
+.notif-item.overdue .notif-item-ic{background:var(--wine);}
+.notif-item-ic svg{width:13px;height:13px;}
+
+/* Judul + subjudul + keterangan waktu: pola 3-baris ala referensi
+   (judul tebal, subjudul abu-abu bisa 2 baris, keterangan waktu
+   kecil di bawahnya). */
+.notif-item-body .nm{font-size:14px;font-weight:700;line-height:1.35;}
+.notif-item-body .meta{margin-top:3px;gap:2px;}
+.notif-item-body .amt{
+  font-family:inherit;font-size:12.5px;font-weight:500;color:var(--ink-soft);
+  line-height:1.42;white-space:normal;max-width:100%;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+}
+.notif-item-body .due{font-size:11.5px;color:var(--ink-faint);font-weight:500;margin-top:1px;}
+.notif-item-body .due.due-soon{color:#B45309;}
+.notif-item-body .due.due-pill{color:var(--wine);}
+
+/* Lencana/gambar kanan: lebih rata, bayangan tipis saja (bukan
+   dramatis) supaya terasa seperti thumbnail foto kecil ala
+   referensi, bukan lencana ikon besar. */
+.notif-item-thumb{width:50px;height:50px;border-radius:13px;box-shadow:none;margin-top:1px;}
 </style>
 </head>
 <body>
