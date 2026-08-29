@@ -9621,10 +9621,17 @@ document.getElementById('dataDiriOpenBtn')?.addEventListener('click', openDataDi
 function updateAccountSettingsRow() {
   const btn = document.getElementById('settingsAccountBtn');
   const title = document.getElementById('settingsAccountBtnTitle');
+  const icon = document.getElementById('settingsAccountBtnIcon');
   if (!btn || !title) return;
   const loggedIn = typeof window.cloudIsLoggedIn === 'function' && window.cloudIsLoggedIn();
   title.textContent = loggedIn ? 'Logout' : 'Masuk / Daftar Akun';
   btn.classList.toggle('settings-row-danger', loggedIn);
+  if (icon) {
+    // Logout: panah keluar dari kotak (kotak di kiri). Login: panah masuk ke kotak (kotak di kanan).
+    icon.innerHTML = loggedIn
+      ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3"/><path d="M16 17l5-5-5-5M21 12H9"/></svg>'
+      : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5M15 12H3"/></svg>';
+  }
 }
 updateAccountSettingsRow();
 document.getElementById('settingsAccountBtn')?.addEventListener('click', handleAccountToggleClick);

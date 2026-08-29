@@ -3856,24 +3856,18 @@ tr.fade-up{animation:fadeRow .35s ease both;}
    visibility:hidden ikut ditambahkan sbg fix kedipan/tonjolan sudut
    melengkung saat sticky discroll di Safari/HP, sama seperti wrapper
    sticky lain. ---- */
-/* ---- UPDATE: fix sticky-header di atas awalnya sengaja dikhususkan
-   HANYA ke #temaOverlay (Data Diri saat itu belum diminta ikut sticky).
-   Sekarang diperluas juga ke "#dataDiriOverlay .lap-filter-head" supaya
-   gaya visual kedua halaman benar2 SAMA PERSIS lagi saat discroll
-   (bukan cuma sama di kondisi diam) -- popup Filter (#lapFilterOverlay)
-   TETAP sengaja tidak ikut disentuh, cuma 2 selector ini yg ditulis
-   eksplisit, bukan menimpa ".lap-filter-head" polos. ---- */
-/* ---- UPDATE: header Tema sekarang sticky lewat wrapper baru
-   ".tema-sticky-head" (dibungkus BARENG kartu Pratinjau, lihat catatan
-   lengkap & CSS-nya di dekat ".lap-filter-card") -- jadi "#temaOverlay"
-   DILEPAS dari selector di bawah ini supaya tidak dobel/konflik dgn
-   wrapper barunya. "#dataDiriOverlay" tetap dipertahankan apa adanya
-   (strukturnya tidak ikut berubah, headernya masih sticky sendiri). ---- */
-#dataDiriOverlay .lap-filter-head{
-  position:sticky;top:0;z-index:3;
-  transform:translateZ(0);-webkit-transform:translateZ(0);
-  backface-visibility:hidden;-webkit-backface-visibility:hidden;
-}
+/* ---- UPDATE: header Tema & header Data Diri SEKARANG SAMA-SAMA sticky
+   lewat wrapper baru ".tema-sticky-head" (dibungkus BARENG kartu
+   pertamanya -- kartu Pratinjau di Tema, kartu "Nama Web" di Data Diri;
+   lihat catatan lengkap & CSS wrapper ini di dekat ".lap-filter-card"
+   sebelum bertemu HTML masing2 halaman). Rule lama yg dulu nyticky-in
+   ".lap-filter-head" SENDIRIAN (tanpa ikut narik kartu putih
+   pertamanya) utk "#temaOverlay" & "#dataDiriOverlay" secara terpisah
+   sudah DIHAPUS dari sini krn digantikan penuh oleh wrapper tsb --
+   sekarang PERSIS 1 mekanisme yg sama dipakai ulang utk kedua halaman,
+   bukan 2 pendekatan beda yg kebetulan terlihat mirip. Popup Filter
+   (#lapFilterOverlay) TETAP tidak ikut disentuh/dibuat sticky sama
+   sekali, sesuai permintaan awal. ---- */
 .tema-section{
   background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
   padding:16px;box-shadow:var(--shadow-sm);
@@ -4551,9 +4545,17 @@ body.density-compact .income-cards-group{gap:10px;}
      discroll: wrapper INI-lah yang position:sticky (elemen yg benar2
      dipaksa browser re-composite tiap scroll), jadi paling perlu
      dipaku ke compositor layer sendiri -- pasangan dari fix yang sama
-     di .page-banner & .page-body (lihat catatan lengkap di sana). */
+     di .page-banner & .page-body (lihat catatan lengkap di sana).
+     FIX LANJUTAN "banner bocor saat discroll": isolation:isolate
+     ditambahkan supaya wrapper sticky ini (yang paling sering dipaksa
+     browser re-composite tiap frame scroll) benar2 dapat compositor
+     layer LENGKAP sama seperti .page-body -- sebelumnya cuma
+     translateZ+backface-visibility, tanpa isolation, jadi masih ada
+     celah kondisi yang bikin sudut lengkung oren-nya sesekali salah
+     gambar ulang. ---- */
   transform:translateZ(0);-webkit-transform:translateZ(0);
   backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  isolation:isolate;
 }
 /* Bagian atas (banner+tab+header) TIDAK butuh padding-bottom lagi di
    ujung bawahnya -- .lap-aktifitas-head di dalamnya sudah punya
@@ -6056,11 +6058,20 @@ tbody tr:last-child td{border-bottom:none;}
    belakang banner, lalu langsung memudar ke PUTIH POLOS (bukan
    melewati beberapa warna krem/tan seperti sebelumnya) -- supaya
    panel besar di bawah banner benar-benar putih bersih, cuma bagian
-   banner atasnya saja yang oranye. */
+   banner atasnya saja yang oranye.
+   FIX "bocor saat pergantian warna tema": sebelumnya warna oranye di
+   sini di-hardcode (#FA8B1E), TERPISAH dari var(--banner-orange) yang
+   dipakai .bd-page-banner tepat di atasnya. Akibatnya begitu warna
+   tema diganti lewat halaman Tema (applyGlobalTheme() men-set ulang
+   --banner-orange di script.js), banner-nya ikut berubah warna tapi
+   lapisan gradient latar overlay ini TIDAK ikut berubah -- sisa warna
+   oranye lama itu yang "bocor"/kelihatan di balik & sekitar sudut
+   lengkung kartu putih. Sekarang dipakaikan var(--banner-orange) yang
+   sama, jadi otomatis ikut sinkron warna apa pun yang dipilih. */
 #bdAllOverlay{
   background:linear-gradient(180deg,
-    #FA8B1E 0px,
-    #FA8B1E 155px,
+    var(--banner-orange) 0px,
+    var(--banner-orange) 155px,
     #FFFFFF 205px,
     #FFFFFF 100%);
 }
@@ -7130,9 +7141,15 @@ html.zp-app-loading .page-body > .settings-list{display:none;}
   z-index:calc(var(--z-mini-topbar) - 1);
   /* ---- FIX tonjolan runcing di sudut lengkung oren->putih saat
      discroll -- pasangan dari fix yang sama di .lap-sticky-top,
-     .page-banner & .page-body (lihat catatan lengkap di sana). ---- */
+     .page-banner & .page-body (lihat catatan lengkap di sana).
+     FIX LANJUTAN "banner bocor saat discroll": isolation:isolate
+     ditambahkan di sini juga (sebelumnya cuma translateZ+
+     backface-visibility) supaya wrapper sticky Pengaturan ini dapat
+     compositor layer LENGKAP sama seperti .page-body/.lap-sticky-top,
+     bukan cuma sebagian -- lihat catatan lengkap di .page-banner. ---- */
   transform:translateZ(0);-webkit-transform:translateZ(0);
   backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  isolation:isolate;
 }
 /* ---- Cap kosong (lihat catatan panjang di HTML #page-saya) -- anak
    .saya-sticky-top, satu stacking context dgn banner, jadi sudut
@@ -7543,20 +7560,22 @@ html.zp-app-loading .page-body > .lap-panel{display:none;}
   transform:translateZ(0);-webkit-transform:translateZ(0);
   backface-visibility:hidden;-webkit-backface-visibility:hidden;
 }
-/* ---- Varian "sisa konten" dari .lap-filter-card: dipakai KHUSUS di
-   #temaCard (section Warna Aksen/Gaya Font/Elemen Dekoratif/Bingkai
-   Avatar) sekarang kartu Pratinjau-nya sudah dipindah ke
-   .tema-preview-wrap DI ATAS (di dalam wrapper sticky terpisah).
-   Margin negatif & radius atas DINETRALKAN (sudah "dipakai" oleh
+/* ---- Varian "sisa konten" dari .lap-filter-card: dipakai di #temaCard
+   (section Warna Aksen/Gaya Font/Elemen Dekoratif/Bingkai Avatar) &
+   #dataDiriCard (section Logo/Favicon) -- di kedua halaman, kartu
+   pertamanya (Pratinjau di Tema, Nama Web di Data Diri) sudah dipindah
+   ke .tema-preview-wrap DI ATAS (di dalam wrapper sticky ".tema-sticky-head").
+   Margin negatif & radius atas DINETRALKAN di sini (sudah "dipakai" oleh
    .tema-preview-wrap di atasnya) supaya tidak terjadi tumpukan efek
    kartu dua kali -- persis pola ".bd-page-body-rest" thd ".bd-page-body"
    di Tagihan & Hutang. padding-top di-nol-kan krn jarak ke kartu
-   Pratinjau di atasnya sudah disediakan oleh padding-bottom
+   pertama di atasnya sudah disediakan oleh padding-bottom
    .tema-preview-wrap (16px, sama dgn gap:16px antar section lain via
    flex gap yg tetap berlaku di sini). Selector di-scope KHUSUS
    ".lap-filter-card.lap-filter-card--rest" (bukan menimpa
-   .lap-filter-card polos) supaya kartu putih di popup Filter & halaman
-   Data Diri (yg TIDAK ikut restrukturisasi ini) tidak ikut berubah. ---- */
+   .lap-filter-card polos) supaya kartu putih di popup Filter
+   (#lapFilterOverlay, yg TIDAK ikut restrukturisasi ini) tidak ikut
+   berubah. ---- */
 .lap-filter-card.lap-filter-card--rest{
   margin-top:0;border-radius:0;padding-top:0;
 }
@@ -8319,9 +8338,22 @@ select#categoryFilter[hidden]{display:none;}
      banner oren ini juga dipaksa ke compositor layer sendiri supaya
      tepinya tidak ikut "goyang" sepersekian pixel relatif terhadap
      kartu putih .page-body yang menumpang di atasnya saat discroll --
-     sumber tonjolan runcing di sudut kiri/kanan lengkungan. ---- */
+     sumber tonjolan runcing di sudut kiri/kanan lengkungan.
+     FIX LANJUTAN "banner bocor saat discroll" (Laporan/Dompet/
+     Pengaturan): sebelumnya cuma translateZ+backface-visibility di
+     sini -- TANPA isolation:isolate, padahal .page-body (kartu putih
+     yang menumpang di atas banner ini) SUDAH punya ketiganya sekaligus
+     (lihat .page-body di bawah). Ketimpangan itu (satu sisi lengkungan
+     dapat compositor layer LENGKAP, sisi satunya cuma sebagian) yang
+     bikin WebKit/Safari kadang masih salah menggambar ulang batas
+     lengkung oren->putih pas discroll, sekelebat warna oren "bocor"
+     nongol di baliknya. Sekarang banner ini disamakan PERSIS dgn
+     .page-body: transform+backface-visibility+isolation ketiganya
+     sekaligus, supaya kedua sisi lengkungan sama-sama stabil di layer
+     sendiri & tidak digambar ulang tiap frame scroll. ---- */
   transform:translateZ(0);-webkit-transform:translateZ(0);
   backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  isolation:isolate;
   /* Judul di-tengah-kan (text-align:center) supaya PERSIS sama posisi
      dengan judul halaman Tagihan & Hutang (.bd-page-banner-title-center)
      dan dengan referensi desain -- sebelumnya rata kiri, beda posisi
@@ -10273,23 +10305,39 @@ body.is-scrolling *{
        baca-tulis ke tempat penyimpanan yg sama. ===== -->
   <div class="detail-page-overlay lap-filter-overlay" id="dataDiriOverlay">
     <div class="lap-filter-page">
-      <div class="lap-filter-head">
-        <button class="lap-filter-back-btn" id="dataDiriBackBtn" type="button" aria-label="Tutup Data Diri">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
-        </button>
-        <h2>Data Diri</h2>
-        <span class="lap-filter-back-btn" style="visibility:hidden" aria-hidden="true"></span>
-      </div>
-
-      <div class="lap-filter-card" id="dataDiriCard">
-        <div class="tema-section">
-          <h3>Nama Web</h3>
-          <p>Nama ini tampil di banner, judul tab, hingga footer aplikasi. Bawaannya otomatis memakai nama akun kamu saat mendaftar, tapi bisa diganti bebas kapan saja.</p>
-          <div class="form-row">
-            <input type="text" id="ddAppNameInput" maxlength="24" placeholder="Nama akun saat mendaftar">
-          </div>
+      <!-- ---- UPDATE: perilaku scroll disamakan PERSIS dgn halaman Tema
+           (#temaOverlay) -- header oranye + kartu "Nama Web" (section
+           pertama) sekarang dibungkus SATU wrapper sticky ".tema-sticky-head"
+           (numpang PERSIS class yg sama dipakai Tema utk header+kartu
+           Pratinjau), supaya pas discroll, unit banner+kartu pertama ini
+           berhenti nempel di puncak layar bareng, bukan cuma headernya
+           doang spt sebelumnya. Section Logo & Favicon TETAP scroll normal
+           di ".lap-filter-card--rest" di bawah, persis pola section
+           Warna Aksen dst di Tema. Aturan lama "#dataDiriOverlay
+           .lap-filter-head{position:sticky}" (yg cuma nyticky-in headernya
+           sendiri) jadi tidak diperlukan lagi & dihapus dari CSS krn
+           digantikan wrapper ".tema-sticky-head" ini. ---- -->
+      <div class="tema-sticky-head" id="dataDiriStickyHead">
+        <div class="lap-filter-head">
+          <button class="lap-filter-back-btn" id="dataDiriBackBtn" type="button" aria-label="Tutup Data Diri">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <h2>Data Diri</h2>
+          <span class="lap-filter-back-btn" style="visibility:hidden" aria-hidden="true"></span>
         </div>
 
+        <div class="tema-preview-wrap">
+          <div class="tema-section">
+            <h3>Nama Web</h3>
+            <p>Nama ini tampil di banner, judul tab, hingga footer aplikasi. Bawaannya otomatis memakai nama akun kamu saat mendaftar, tapi bisa diganti bebas kapan saja.</p>
+            <div class="form-row">
+              <input type="text" id="ddAppNameInput" maxlength="24" placeholder="Nama akun saat mendaftar">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="lap-filter-card lap-filter-card--rest" id="dataDiriCard">
         <div class="tema-section">
           <h3>Logo</h3>
           <p>Dipakai di banner &amp; footer aplikasi. Kosongkan untuk pakai ikon bawaan.</p>
@@ -10768,7 +10816,7 @@ body.is-scrolling *{
                  App sendiri TETAP bisa dipakai penuh secara lokal tanpa
                  login sama sekali, baris ini murni opsional. -->
             <button type="button" class="settings-row settings-row-danger" id="settingsAccountBtn">
-              <span class="settings-row-icon">
+              <span class="settings-row-icon" id="settingsAccountBtnIcon">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3"/><path d="M16 17l5-5-5-5M21 12H9"/></svg>
               </span>
               <span class="settings-row-title" id="settingsAccountBtnTitle">Masuk / Daftar Akun</span>
