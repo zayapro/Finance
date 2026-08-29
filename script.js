@@ -10521,7 +10521,7 @@ function renderNotifPanel() {
             <span class="due${dueClass}">${due.text}</span>
           </div>
         </div>
-        <div class="notif-item-thumb">${icSvg}</div>
+        <svg class="notif-item-chevron" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"/></svg>
       </div>`;
   }).join('');
 }
@@ -10559,17 +10559,16 @@ function openNotifDetail(kind, id) {
   const due = dueLabel(item.dueDate);
   const dateFull = new Date(item.dueDate + 'T00:00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
 
-  notifDetailSheet.className = 'notif-detail-sheet type-' + kind + (due.overdue ? ' overdue' : '');
+  notifDetailSheet.className = 'modal notif-detail-modal type-' + kind + (due.overdue ? ' overdue' : '');
   document.getElementById('notifDetailBannerIc').innerHTML = NOTIF_DETAIL_ICONS[kind];
-  document.getElementById('notifDetailBannerTag').textContent = due.overdue
-    ? '⏰ Sudah Jatuh Tempo'
-    : (kind === 'tagihan' ? '🧾 Pengingat Tagihan' : '🤝 Pengingat Hutang');
   document.getElementById('notifDetailTitle').textContent = item.name;
   document.getElementById('notifDetailDate').textContent = `${due.text} · ${dateFull}`;
+  document.getElementById('notifDetailAmtLabel').textContent = kind === 'tagihan' ? 'Jumlah Tagihan' : 'Jumlah Hutang';
+  document.getElementById('notifDetailAmt').textContent = fmtRupiah(item.amount);
 
   const desc = kind === 'tagihan'
-    ? `Tagihan ${item.name} sebesar ${fmtRupiah(item.amount)} jatuh tempo pada ${dateFull}. ${due.overdue ? 'Sudah melewati jatuh tempo, segera lunasi agar tidak terkena denda keterlambatan.' : 'Segera lakukan pembayaran sebelum tanggal jatuh tempo.'}`
-    : `Hutang ${item.name} sebesar ${fmtRupiah(item.amount)} perlu dilunasi pada ${dateFull}. ${due.overdue ? 'Sudah melewati tenggat, segera bayar untuk menjaga catatan keuanganmu tetap rapi.' : 'Sisihkan dana agar bisa dilunasi tepat waktu.'}`;
+    ? `Tagihan ${item.name} jatuh tempo pada ${dateFull}. ${due.overdue ? 'Sudah melewati jatuh tempo, segera lunasi agar tidak terkena denda keterlambatan.' : 'Segera lakukan pembayaran sebelum tanggal jatuh tempo.'}`
+    : `Hutang ${item.name} perlu dilunasi pada ${dateFull}. ${due.overdue ? 'Sudah melewati tenggat, segera bayar untuk menjaga catatan keuanganmu tetap rapi.' : 'Sisihkan dana agar bisa dilunasi tepat waktu.'}`;
   document.getElementById('notifDetailDesc').textContent = item.note ? `${desc} Catatan: ${item.note}` : desc;
 
   const primaryBtn = document.getElementById('notifDetailPrimaryBtn');
@@ -10577,16 +10576,14 @@ function openNotifDetail(kind, id) {
   primaryBtn.style.display = item.status === 'belum' ? '' : 'none';
 
   notifDetailOverlay.classList.add('open');
-  notifDetailSheet.classList.add('open');
   lockBodyScroll();
 }
 function closeNotifDetail() {
   notifDetailOverlay.classList.remove('open');
-  notifDetailSheet.classList.remove('open');
   notifDetailCurrent = null;
   if (!notifPanel.classList.contains('open')) unlockBodyScroll();
 }
-notifDetailOverlay.addEventListener('click', closeNotifDetail);
+notifDetailOverlay.addEventListener('click', (e) => { if (e.target === notifDetailOverlay) closeNotifDetail(); });
 document.getElementById('notifDetailCloseBtn').addEventListener('click', closeNotifDetail);
 document.getElementById('notifDetailPrimaryBtn').addEventListener('click', () => {
   if (!notifDetailCurrent) return;
