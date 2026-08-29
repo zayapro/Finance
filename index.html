@@ -1175,20 +1175,22 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
 .notif-panel.open{visibility:visible;transform:translateX(0);}
 .notif-panel-overlay{display:none;}
 
-/* ---- Kepala halaman notifikasi: DISAMAKAN dengan header halaman
-   detail lain di web ini (Tagihan & Hutang "Lihat Semua", Laporan,
-   Dompet, Pengaturan) — latar putih/kartu polos, tombol kembali kotak
-   bersudut tumpul dengan border tipis (bukan lagi banner biru solid +
-   tombol kembali bulat transparan gaya aplikasi chat), judul rata kiri
-   tebal + subjudul abu-abu kecil di bawahnya. Lihat .detail-page-head /
-   .detail-back-btn untuk pola aslinya. ---- */
+/* ---- Kepala halaman notifikasi: DIKEMBALIKAN ke gaya banner warna +
+   tombol kembali bulat translucent (niru PERSIS pola .lap-filter-head/
+   .lap-filter-back-btn yang dipakai halaman Tema/Data Diri/Ubah PIN),
+   sesuai referensi desain user — bukan lagi header putih polos ala
+   .detail-page-head. Judul dipusatkan, dgn spacer tak-terlihat di
+   kanan (lebar sama dgn tombol kembali) supaya judul benar2 center. ---- */
 .notif-panel-head{
-  display:flex;align-items:center;gap:14px;flex-shrink:0;
-  padding:16px 18px;background:var(--card);border-bottom:1px solid var(--line);
+  display:flex;align-items:center;gap:10px;flex-shrink:0;
+  position:relative;z-index:1;
+  background:var(--nav-orange);color:#FFF8F1;
+  padding:calc(16px + env(safe-area-inset-top,0px)) 18px clamp(40px,9vw,56px);
 }
-.notif-panel-head-titles{flex:1;min-width:0;}
-.notif-panel-head-titles h3{font-size:19px;font-weight:800;color:var(--ink);letter-spacing:-0.01em;line-height:1.25;}
-.notif-panel-head-sub{margin:2px 0 0;font-size:12.5px;color:var(--ink-soft);font-weight:600;}
+.notif-panel-head-titles{flex:1;min-width:0;text-align:center;}
+.notif-panel-head-titles h3{font-size:clamp(16px,3.6vw,19px);font-weight:500;color:#FFF8F1;letter-spacing:-0.005em;line-height:1.25;font-family:'Poppins',sans-serif;}
+.notif-panel-head-sub{margin:2px 0 0;font-size:12px;color:rgba(255,248,241,0.78);font-weight:600;}
+.notif-panel-head-spacer{width:36px;height:36px;flex-shrink:0;}
 .notif-panel-head .modal-close{margin-top:1px;flex-shrink:0;}
 
 /* ---- Ringkasan: dua kartu bersaldo lembut, masing-masing untuk
@@ -1333,11 +1335,22 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
 
 /* ---- Isi halaman: pembungkus yang bisa discroll sendiri di bawah
    header banner biru (header tetap diam di atas / sticky). ---- */
+/* ---- Isi halaman: SEKARANG menumpang di atas banner warna lewat
+   margin negatif + sudut atas melengkung (niru PERSIS pola
+   .lap-filter-card/.bd-page-body), bukan lagi menyambung rata dengan
+   header putih. Tetap jadi wadah yang bisa discroll sendiri. ---- */
 .notif-page-body{
   flex:1 1 auto;min-width:0;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
   overscroll-behavior:contain;
-  padding:14px 18px calc(18px + env(safe-area-inset-bottom, 0px));
+  position:relative;z-index:2;
+  background:var(--card);
+  margin:-24px 0 0;
+  border-radius:28px 28px 0 0;
+  padding:22px 18px calc(18px + env(safe-area-inset-bottom, 0px));
   display:flex;flex-direction:column;gap:14px;
+  transform:translateZ(0);-webkit-transform:translateZ(0);
+  backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  isolation:isolate;
 }
 
 @media (max-width:600px){
@@ -1364,14 +1377,17 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
    dipakai halaman Laporan/Dompet/Pengaturan/Lihat Semua (kotak
    bersudut tumpul + border tipis + bayangan lembut), bukan lagi
    lingkaran kaca gaya app-bar biru. ---- */
+/* ---- Tombol kembali: bulat translucent di atas banner warna, niru
+   PERSIS .lap-filter-back-btn (bukan lagi kotak bersudut tumpul ala
+   .detail-back-btn — itu dipakai versi lama, sebelum dikembalikan ke
+   gaya banner sesuai referensi). ---- */
 .notif-back-btn{
-  width:38px;height:38px;border-radius:11px;flex-shrink:0;border:1px solid var(--line);
-  background:var(--card);color:var(--ink);
+  width:36px;height:36px;border-radius:50%;flex-shrink:0;border:none;
+  background:rgba(255,255,255,0.18);color:#fff;
   display:flex;align-items:center;justify-content:center;
-  box-shadow:var(--shadow-sm);
-  transition:background .15s ease, transform .15s ease, color .15s ease;touch-action:manipulation;
+  transition:background .15s ease, transform .12s ease;touch-action:manipulation;
 }
-.notif-back-btn:hover{background:var(--forest-deep);color:#fff;transform:translateX(-2px);}
+.notif-back-btn:hover{background:rgba(255,255,255,0.3);transform:none;}
 .notif-back-btn:active{transform:scale(0.94);}
 .notif-panel::before{display:none;}
 
@@ -12961,6 +12977,7 @@ body.is-scrolling *{
       <h3>Notifikasi</h3>
       <p class="notif-panel-head-sub">Tagihan &amp; hutang yang perlu kamu perhatikan</p>
     </div>
+    <span class="notif-panel-head-spacer" aria-hidden="true"></span>
   </div>
 
   <div class="notif-page-body" id="notifPageBody">
