@@ -10442,17 +10442,159 @@ function maybeShowDueReminder() {
 // warna lencana (amber=tagihan, ungu=hutang, merah=terlambat).
 const NOTIF_ITEM_ICON = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 11v6"/><circle cx="12" cy="7.2" r="0.6" fill="currentColor" stroke="none"/></svg>';
 
+/* ============ STATUS BACA/BELUM DIBACA NOTIFIKASI ============
+   Meniru pola aplikasi referensi (mis. app BRI): baris notifikasi
+   yang BELUM dibuka/dibaca dikasih rona latar biru muda + judul
+   lebih tegas, sedangkan yang SUDAH dibaca kembali polos/putih +
+   judul sedikit lebih ringan. Daftar id yang sudah dibaca disimpan
+   sebagai array JSON di cloudStorage (ikut tersinkron ke akun yang
+   sama di perangkat lain, sama seperti data lain di file ini) --
+   setiap entri disimpan sebagai "kind:id" supaya id tagihan & id
+   hutang yang kebetulan sama tidak saling tertukar. */
+const NOTIF_READ_KEY = 'alirin_notif_read_ids_v1';
+function getNotifReadSet() {
+  try {
+    const raw = cloudStorage.getItem(NOTIF_READ_KEY);
+    if (raw) return new Set(JSON.parse(raw));
+  } catch (e) { /* data korup/localStorage diblokir — anggap kosong */ }
+  return new Set();
+}
+function isNotifRead(kind, id) {
+  return getNotifReadSet().has(`${kind}:${id}`);
+}
+function markNotifRead(kind, id) {
+  const set = getNotifReadSet();
+  const key = `${kind}:${id}`;
+  if (set.has(key)) return; // sudah tercatat dibaca, tak perlu tulis ulang
+  set.add(key);
+  try { cloudStorage.setItem(NOTIF_READ_KEY, JSON.stringify([...set])); }
+  catch (e) { /* localStorage diblokir — abaikan, statusnya cuma tak tersimpan */ }
+}
+
+/* ============ WAKTU MASUK (JAM+TANGGAL) NOTIFIKASI ============
+   Notifikasi tagihan/hutang otomatis tidak punya "jam dikirim" bawaan
+   (cuma py tanggal jatuh tempo), jadi begitu sebuah tagihan/hutang
+   PERTAMA KALI muncul sbg notifikasi belum-lunas, momen itu dicatat
+   sbg "waktu masuk"-nya (jam+tanggal sebenarnya, bukan tanggal jatuh
+   tempo) dan disimpan permanen di cloudStorage supaya jamnya tidak
+   berubah-ubah tiap kali halaman dibuka ulang -- persis kayak
+   notifikasi asli yang begitu masuk, jamnya sudah terkunci. */
+const NOTIF_ARRIVED_KEY = 'alirin_notif_arrived_v1';
+function getNotifArrivedMap() {
+  try {
+    const raw = cloudStorage.getItem(NOTIF_ARRIVED_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) { /* data korup/localStorage diblokir — anggap kosong */ }
+  return {};
+}
+function getOrSetNotifArrival(kind, id) {
+  const map = getNotifArrivedMap();
+  const key = `${kind}:${id}`;
+  if (!map[key]) {
+    map[key] = new Date().toISOString();
+    try { cloudStorage.setItem(NOTIF_ARRIVED_KEY, JSON.stringify(map)); }
+    catch (e) { /* localStorage diblokir — abaikan, jam cuma tak tersimpan */ }
+  }
+  return map[key];
+}
+// Format "11.00 WIB" dari datetime ISO -- dipisah titik (bukan titik
+// dua) supaya konsisten dgn gaya jam yg lazim dipakai di notifikasi
+// aplikasi keuangan Indonesia, dan ditambah label "WIB" persis pola
+// pada gambar referensi.
+function notifTimeLabel(isoStr) {
+  try {
+    const d = new Date(isoStr);
+    const hh = String(d.getHours()).padStart(2, '0');
+    const mm = String(d.getMinutes()).padStart(2, '0');
+    return `${hh}.${mm}\u00A0WIB`;
+  } catch (e) { return ''; }
+}
+
+/* ============ NOTIFIKASI KUSTOM (generik) ============
+   Selain notifikasi otomatis dari tagihan/hutang, daftar Notifikasi
+   sekarang juga bisa menampilkan notifikasi bebas/kustom -- disimpan
+   sbg array JSON di cloudStorage (ikut tersinkron ke akun yang sama
+   di perangkat lain). Tiap entri py bentuk:
+     { id, source, title, body, icon (markup svg custom, opsional --
+       kalau kosong pakai NOTIF_ITEM_ICON standar), image (URL atau
+       data-URI, OPSIONAL -- kalau diisi dipakai sbg thumbnail kanan
+       menggantikan ikon, sesuai gambar yg dikirim), sentAt (datetime
+       ISO LENGKAP dgn jam, bukan cuma tanggal) }
+   Panggil pushCustomNotification({...}) dari mana saja -- termasuk
+   nanti dari fitur pengiriman notifikasi terpisah yang disebut di
+   permintaan -- utk menambah entri baru; otomatis tampil di daftar
+   begitu renderNotifPanel() dipanggil ulang (fungsi ini SUDAH
+   memanggilnya sendiri di akhir). */
+const NOTIF_CUSTOM_KEY = 'alirin_notif_custom_v1';
+function getCustomNotifs() {
+  try {
+    const raw = cloudStorage.getItem(NOTIF_CUSTOM_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) { /* data korup/localStorage diblokir — anggap kosong */ }
+  return [];
+}
+function saveCustomNotifs(list) {
+  try { cloudStorage.setItem(NOTIF_CUSTOM_KEY, JSON.stringify(list)); }
+  catch (e) { /* localStorage diblokir — abaikan, tak tersimpan */ }
+}
+function pushCustomNotification({ source, title, body = '', icon = null, image = null, sentAt = null } = {}) {
+  if (!title) return null; // judul wajib, selain itu semua opsional
+  const list = getCustomNotifs();
+  const entry = {
+    id: 'ntf_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8),
+    source: source || 'Sistem',
+    title, body, icon, image,
+    sentAt: sentAt || new Date().toISOString()
+  };
+  list.push(entry);
+  saveCustomNotifs(list);
+  if (document.getElementById('notifList')) renderNotifPanel();
+  return entry.id;
+}
+function deleteCustomNotification(id) {
+  saveCustomNotifs(getCustomNotifs().filter(n => n.id !== id));
+  renderNotifPanel();
+}
+// Diekspos ke window supaya bisa dipanggil dari luar file ini (mis.
+// oleh fitur pengiriman notifikasi terpisah yang akan dibangun nanti).
+window.pushCustomNotification = pushCustomNotification;
+
 function renderNotifPanel() {
   updateNotifBadge();
 
-  // Halaman ini sekarang murni daftar notifikasi (tanpa tab pemilih
-  // Tagihan/Hutang, tanpa tombol tambah/lihat semua) -- tagihan &
-  // hutang yang belum lunas digabung jadi satu feed kronologis,
-  // diurutkan berdasarkan tanggal jatuh tempo terdekat, persis pola
-  // notifikasi tunggal pada referensi.
-  const unpaidBills = bills.filter(b => b.status === 'belum').map(b => ({ ...b, kind: 'tagihan' }));
-  const unpaidDebts = debts.filter(d => d.status === 'belum').map(d => ({ ...d, kind: 'hutang' }));
-  const fullList = [...unpaidBills, ...unpaidDebts].sort((a, b) => a.dueDate.localeCompare(b.dueDate));
+  // Halaman ini murni satu feed notifikasi gabungan: tagihan & hutang
+  // yang belum lunas (otomatis, kind 'tagihan'/'hutang') DIGABUNG
+  // dengan notifikasi bebas/kustom (kind 'custom', lihat
+  // pushCustomNotification() di atas -- ini titik sambungnya utk
+  // fitur pengiriman notifikasi terpisah yang akan dibangun nanti).
+  // Tiap entri dinormalisasi py bentuk yg sama supaya bisa dirender
+  // dari satu template: source, title, body, image/ikon, arrivedAt
+  // (jam+tanggal SEBENARNYA notifikasi itu masuk -- BUKAN tanggal
+  // jatuh tempo -- persis pola notifikasi pada referensi), dan
+  // diurutkan dari yang PALING BARU MASUK di paling atas (lazimnya
+  // kotak masuk notifikasi), bukan lagi dari yg jatuh temponya
+  // paling dekat.
+  const unpaidBills = bills.filter(b => b.status === 'belum').map(b => ({
+    feedKind: 'tagihan', id: b.id, source: 'Tagihan',
+    title: b.name, body: fmtRupiah(b.amount), recurring: !!b.recurring,
+    dueDate: b.dueDate, image: null,
+    arrivedAt: getOrSetNotifArrival('tagihan', b.id)
+  }));
+  const unpaidDebts = debts.filter(d => d.status === 'belum').map(d => ({
+    feedKind: 'hutang', id: d.id, source: 'Hutang',
+    title: d.name, body: fmtRupiah(d.amount), recurring: !!d.recurring,
+    dueDate: d.dueDate, image: null,
+    arrivedAt: getOrSetNotifArrival('hutang', d.id)
+  }));
+  const customs = getCustomNotifs().map(c => ({
+    feedKind: 'custom', id: c.id, source: c.source || 'Sistem',
+    title: c.title, body: c.body || '', recurring: false,
+    dueDate: null, image: c.image || null, customIcon: c.icon || null,
+    arrivedAt: c.sentAt
+  }));
+
+  const fullList = [...unpaidBills, ...unpaidDebts, ...customs]
+    .sort((a, b) => new Date(b.arrivedAt) - new Date(a.arrivedAt));
 
   const listEl = document.getElementById('notifList');
 
@@ -10461,39 +10603,48 @@ function renderNotifPanel() {
       <div class="notif-empty-ic">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>
       </div>
-      <p>Tidak ada notifikasi tagihan atau hutang saat ini.</p>
+      <p>Tidak ada notifikasi saat ini.</p>
     </div>`;
     return;
   }
 
-  // ---- Kelompokkan daftar per tanggal jatuh tempo (mis. "29 Agustus
-  // 2026"), meniru pola notifikasi ala aplikasi mobile yang mengelompokkan
-  // entri per hari alih-alih daftar polos tanpa pemisah. Judul kelompok
-  // hanya dicetak sekali per tanggal yang sama (item sudah terurut
-  // menaik berdasarkan dueDate). ----
+  // ---- Kelompokkan daftar per tanggal MASUKNYA notifikasi (mis. "29
+  // Agustus 2026"), meniru pola notifikasi ala aplikasi mobile yang
+  // mengelompokkan entri per hari alih-alih daftar polos tanpa
+  // pemisah. Judul kelompok hanya dicetak sekali per tanggal yang
+  // sama (daftar sudah terurut dari yg paling baru masuk). ----
   let lastGroupDate = null;
   listEl.innerHTML = fullList.map(item => {
-    const due = dueLabel(item.dueDate);
-    const urgencyClass = due.overdue ? ' overdue' : (due.soon ? ' soon' : '');
-    const dueClass = due.overdue ? ' due-pill' : (due.soon ? ' due-soon' : '');
-    const groupLabel = notifGroupDateLabel(item.dueDate);
+    const hasDue = !!item.dueDate;
+    const due = hasDue ? dueLabel(item.dueDate) : null;
+    const urgencyClass = due && due.overdue ? ' overdue' : (due && due.soon ? ' soon' : '');
+    const dueClass = due && due.overdue ? ' due-pill' : (due && due.soon ? ' due-soon' : '');
+    const readClass = isNotifRead(item.feedKind, item.id) ? ' is-read' : ' unread';
+    const arrivedDateOnly = item.arrivedAt.slice(0, 10);
+    const groupLabel = notifGroupDateLabel(arrivedDateOnly);
     const groupHeading = groupLabel !== lastGroupDate
       ? `<div class="notif-date-heading">${escapeHtml(groupLabel)}</div>` : '';
     lastGroupDate = groupLabel;
+    const iconMarkup = item.feedKind === 'custom' && item.customIcon ? item.customIcon : NOTIF_ITEM_ICON;
+    const thumbMarkup = item.image
+      ? `<img src="${escapeHtmlAttr(item.image)}" alt="" loading="lazy">`
+      : iconMarkup;
     return `${groupHeading}
-      <div class="notif-item type-${item.kind}${urgencyClass}" data-notifopen="${item.id}" data-notifkind="${item.kind}" role="button" tabindex="0">
-        <div class="notif-item-ic">${NOTIF_ITEM_ICON}</div>
+      <div class="notif-item type-${item.feedKind}${urgencyClass}${readClass}" data-notifopen="${item.id}" data-notifkind="${item.feedKind}" role="button" tabindex="0">
+        <div class="notif-item-ic">${iconMarkup}</div>
         <div class="notif-item-body">
+          <div class="notif-item-source">${escapeHtml(item.source)}</div>
           <div class="nm">
-            <span class="nm-text" title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</span>
+            <span class="nm-text" title="${escapeHtml(item.title)}">${escapeHtml(item.title)}</span>
             ${item.recurring ? '<span class="notif-recur-badge" title="Berulang tiap bulan">↻ Bulanan</span>' : ''}
           </div>
           <div class="meta">
-            <span class="amt">${fmtRupiah(item.amount)}</span>
-            <span class="due${dueClass}">${due.text}</span>
+            ${item.body ? `<span class="amt">${escapeHtml(item.body)}</span>` : ''}
+            ${due ? `<span class="due${dueClass}">${due.text}</span>` : ''}
           </div>
+          <div class="notif-item-time">${notifTimeLabel(item.arrivedAt)}</div>
         </div>
-        <div class="notif-item-thumb">${NOTIF_ITEM_ICON}</div>
+        <div class="notif-item-thumb${item.image ? ' has-img' : ''}">${thumbMarkup}</div>
       </div>`;
   }).join('');
 }
@@ -10523,6 +10674,50 @@ const NOTIF_DETAIL_ICONS = {
 };
 
 function openNotifDetail(kind, id) {
+  // Begitu notifikasi dibuka, tandai langsung sebagai "sudah dibaca":
+  // baris di daftar (di belakang popup ini) diperbarui di tempat
+  // (tanpa render ulang seluruh daftar, biar tidak ada kedipan/lompat
+  // posisi scroll) supaya rona birunya langsung hilang begitu popup
+  // detail ditutup.
+  markNotifRead(kind, id);
+  const rowEl = document.querySelector(`.notif-item[data-notifkind="${kind}"][data-notifopen="${id}"]`);
+  if (rowEl) { rowEl.classList.remove('unread'); rowEl.classList.add('is-read'); }
+
+  const primaryBtn = document.getElementById('notifDetailPrimaryBtn');
+  const editBtn = document.getElementById('notifDetailEditBtn');
+  const delBtn = document.getElementById('notifDetailDelBtn');
+  const linksWrap = document.querySelector('.notif-detail-links');
+  const amtChip = document.querySelector('.notif-detail-amt-chip');
+  const bannerEl = document.getElementById('notifDetailBannerIc');
+
+  // ---- Notifikasi KUSTOM (bukan tagihan/hutang) -- popup detail
+  // versi ringkas: sumber+waktu masuk sbg "tanggal", gambar/ikonnya
+  // sendiri sbg banner (gambar dipasang sbg <img> penuh kalau ada),
+  // tanpa chip nominal & tanpa tombol "Tandai Lunas"/Edit (notifikasi
+  // kustom tidak py konsep lunas/edit) -- cuma tombol Hapus. ----
+  if (kind === 'custom') {
+    const item = getCustomNotifs().find(x => x.id === id);
+    if (!item) return;
+    notifDetailCurrent = { kind, id };
+
+    notifDetailSheet.className = 'modal notif-detail-modal type-custom';
+    bannerEl.innerHTML = item.image
+      ? `<img src="${escapeHtmlAttr(item.image)}" alt="">`
+      : (item.icon || NOTIF_ITEM_ICON);
+    document.getElementById('notifDetailTitle').textContent = item.title;
+    document.getElementById('notifDetailDate').textContent = `${item.source} · ${notifTimeLabel(item.sentAt)} · ${new Date(item.sentAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}`;
+    if (amtChip) amtChip.style.display = 'none';
+    document.getElementById('notifDetailDesc').textContent = item.body || '';
+    if (linksWrap) linksWrap.style.display = '';
+    editBtn.style.display = 'none';
+    delBtn.style.display = '';
+    primaryBtn.style.display = 'none';
+
+    notifDetailOverlay.classList.add('open');
+    lockBodyScroll();
+    return;
+  }
+
   const store = kind === 'tagihan' ? bills : debts;
   const item = store.find(x => x.id === id);
   if (!item) return;
@@ -10532,9 +10727,10 @@ function openNotifDetail(kind, id) {
   const dateFull = new Date(item.dueDate + 'T00:00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
 
   notifDetailSheet.className = 'modal notif-detail-modal type-' + kind + (due.overdue ? ' overdue' : '');
-  document.getElementById('notifDetailBannerIc').innerHTML = NOTIF_DETAIL_ICONS[kind];
+  bannerEl.innerHTML = NOTIF_DETAIL_ICONS[kind];
   document.getElementById('notifDetailTitle').textContent = item.name;
   document.getElementById('notifDetailDate').textContent = `${due.text} · ${dateFull}`;
+  if (amtChip) amtChip.style.display = '';
   document.getElementById('notifDetailAmtLabel').textContent = kind === 'tagihan' ? 'Jumlah Tagihan' : 'Jumlah Hutang';
   document.getElementById('notifDetailAmt').textContent = fmtRupiah(item.amount);
 
@@ -10543,7 +10739,9 @@ function openNotifDetail(kind, id) {
     : `Hutang ${item.name} perlu dilunasi pada ${dateFull}. ${due.overdue ? 'Sudah melewati tenggat, segera bayar untuk menjaga catatan keuanganmu tetap rapi.' : 'Sisihkan dana agar bisa dilunasi tepat waktu.'}`;
   document.getElementById('notifDetailDesc').textContent = item.note ? `${desc} Catatan: ${item.note}` : desc;
 
-  const primaryBtn = document.getElementById('notifDetailPrimaryBtn');
+  if (linksWrap) linksWrap.style.display = '';
+  editBtn.style.display = '';
+  delBtn.style.display = '';
   primaryBtn.textContent = 'Tandai Lunas';
   primaryBtn.style.display = item.status === 'belum' ? '' : 'none';
 
@@ -10565,6 +10763,7 @@ document.getElementById('notifDetailPrimaryBtn').addEventListener('click', () =>
 document.getElementById('notifDetailEditBtn').addEventListener('click', () => {
   if (!notifDetailCurrent) return;
   const { kind, id } = notifDetailCurrent;
+  if (kind === 'custom') return; // notifikasi kustom tidak py mode edit
   closeNotifDetail();
   closeNotifPanel();
   openEditBillModal(kind, id);
@@ -10574,6 +10773,7 @@ document.getElementById('notifDetailDelBtn').addEventListener('click', () => {
   const { kind, id } = notifDetailCurrent;
   closeNotifDetail();
   closeNotifPanel();
+  if (kind === 'custom') { deleteCustomNotification(id); return; }
   openDeleteConfirm(id, kind);
 });
 

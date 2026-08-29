@@ -1168,7 +1168,15 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
   transition:transform .38s cubic-bezier(.32,.72,0,1), visibility .38s;
   will-change:transform;
   display:flex;flex-direction:column;
-  overflow:hidden;
+  /* ---- SEKARANG discroll SATU KESATUAN (bukan lagi nested scroll
+     terpisah di .notif-page-body) -- niru PERSIS pola halaman lain
+     (.detail-page-overlay/#bdAllOverlay): kepala banner dibuat
+     position:sticky (lihat .notif-panel-head) supaya tetap menempel
+     di atas selama halaman ini digulir, sedangkan sudut atas
+     melengkung kartu putih (.notif-page-body) ikut tergulir & lenyap
+     di balik banner sticky begitu discroll -- BUKAN lagi radius yang
+     nempel diam permanen di bawah header seperti sebelumnya. ---- */
+  overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;
   -webkit-user-select:none;-moz-user-select:none;user-select:none;
   -webkit-touch-callout:none;
   -webkit-tap-highlight-color:transparent;
@@ -1185,10 +1193,15 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
    .lap-filter-back-btn yang dipakai halaman Tema/Data Diri/Ubah PIN),
    sesuai referensi desain user — bukan lagi header putih polos ala
    .detail-page-head. Judul dipusatkan, dgn spacer tak-terlihat di
-   kanan (lebar sama dgn tombol kembali) supaya judul benar2 center. ---- */
+   kanan (lebar sama dgn tombol kembali) supaya judul benar2 center.
+   SEKARANG position:sticky (bukan cuma relative) -- niru PERSIS pola
+   .bd-sticky-head/.lap-sticky-top: banner ini tetap menempel di atas
+   selama halaman digulir, dgn z-index LEBIH TINGGI drpd
+   .notif-page-body supaya kartu putih di bawahnya benar2 "masuk ke
+   balik" banner ini saat digulir, bukan malah menimpanya. ---- */
 .notif-panel-head{
   display:flex;align-items:center;gap:10px;flex-shrink:0;
-  position:relative;z-index:1;
+  position:sticky;top:0;z-index:3;
   background:var(--nav-orange);color:#FFF8F1;
   padding:calc(16px + env(safe-area-inset-top,0px)) 18px clamp(40px,9vw,56px);
 }
@@ -1312,6 +1325,10 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
 .notif-item-thumb svg{width:21px;height:21px;}
 .notif-item.type-hutang .notif-item-thumb{background:linear-gradient(135deg, #7C3AED, #5B21B6);box-shadow:0 5px 12px -5px rgba(124,58,237,0.55);}
 .notif-item.overdue .notif-item-thumb{background:linear-gradient(135deg, var(--wine), #9F1239);box-shadow:0 5px 12px -5px rgba(225,29,72,0.55);}
+/* Notifikasi kustom (PERMINTAAN BARU): ikon kiri & thumbnail kanan
+   ikut warna tema aplikasi (var(--primary)) selagi belum bawa gambar
+   sungguhan -- lihat .has-img di bawah utk kasus sudah bawa gambar. */
+.notif-item.type-custom .notif-item-thumb{background:linear-gradient(135deg, var(--primary), var(--primary-deep));box-shadow:0 5px 12px -5px color-mix(in srgb, var(--primary) 55%, transparent);}
 .notif-item-actions{display:flex;flex-direction:column;gap:5px;flex-shrink:0;}
 .notif-item-actions button{
   width:28px;height:28px;border-radius:9px;border:1px solid transparent;background:var(--paper);
@@ -1342,10 +1359,15 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
 /* ---- Isi halaman: SEKARANG menumpang di atas banner warna lewat
    margin negatif + sudut atas melengkung (niru PERSIS pola
    .lap-filter-card/.bd-page-body), bukan lagi menyambung rata dengan
-   header putih. Tetap jadi wadah yang bisa discroll sendiri. ---- */
+   header putih.
+   TIDAK LAGI py punya scroll bersarang sendiri (dulu overflow-y:auto
+   di sini) -- scroll SEKARANG ditangani satu pintu oleh .notif-panel
+   (niru pola .detail-page-overlay di halaman lain), supaya banner
+   di atas bisa position:sticky dgn benar & sudut membulat kartu
+   putih ini otomatis ikut tergulir/lenyap di baliknya, bukan lagi
+   nempel diam permanen di bawah header spt sebelumnya. ---- */
 .notif-page-body{
-  flex:1 1 auto;min-width:0;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
-  overscroll-behavior:contain;
+  flex:1 0 auto;min-width:0;
   position:relative;z-index:2;
   background:var(--card);
   margin:-24px 0 0;
@@ -1462,6 +1484,13 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
 }
 .notif-detail-modal.type-hutang #notifDetailBannerIc{background:linear-gradient(135deg, #7C3AED, #5B21B6);}
 .notif-detail-modal.overdue #notifDetailBannerIc{background:linear-gradient(135deg, var(--wine), #9F1239);}
+/* Notifikasi kustom (PERMINTAAN BARU): banner ikut warna tema
+   aplikasi (bukan amber/ungu bawaan tagihan/hutang) supaya terasa
+   netral/serbaguna, dan kalau notifikasinya bawa GAMBAR sungguhan,
+   gambar itu ditampilkan APA ADANYA memenuhi seluruh kotak banner
+   (menutupi gradiennya) alih-alih ikon. */
+.notif-detail-modal.type-custom #notifDetailBannerIc{background:linear-gradient(135deg, var(--primary), var(--primary-deep));}
+#notifDetailBannerIc img{width:100%;height:100%;object-fit:cover;position:relative;z-index:1;}
 #notifDetailBannerIc svg{width:44px;height:44px;color:#fff;position:relative;z-index:1;}
 .notif-detail-body{padding:18px 20px calc(20px + env(safe-area-inset-bottom, 0px));overflow-y:auto;}
 .notif-detail-body h3{font-size:18px;font-weight:800;color:var(--ink);letter-spacing:-0.01em;margin:0 0 4px;line-height:1.3;}
@@ -9956,13 +9985,54 @@ body.is-scrolling *{
 /* Baris yg butuh perhatian (jatuh tempo dekat/terlambat): rona
    lembut MEMENUHI LEBAR PENUH kartu putih (nembus keluar padding
    halaman), niru baris "disorot" pada referensi — tetap tanpa
-   kartu/bayangan, cuma warna latar. */
+   kartu/bayangan, cuma warna latar. Ini tetap didahulukan drpd rona
+   belum-dibaca di bawah (urgensi jatuh tempo lebih penting utk
+   terlihat drpd status baca). */
 .notif-item.soon,
 .notif-item.overdue{
   margin:0 -18px;padding:14px 18px;border-radius:0;
 }
 .notif-item.soon{background:rgba(217,119,6,0.07);}
 .notif-item.overdue{background:rgba(225,29,72,0.07);}
+
+/* ---- Status BELUM DIBACA vs SUDAH DIBAKA ----
+   Persis pola referensi (daftar notifikasi ala app BRI): baris yang
+   belum pernah dibuka diberi rona lembut MEMENUHI LEBAR PENUH
+   (nembus keluar padding halaman, sama seperti trik .soon/.overdue
+   di atas) + judul lebih tegas/gelap, sedangkan baris yang sudah
+   dibuka kembali polos/putih + judul sedikit lebih ringan biar mata
+   langsung tahu mana yang masih baru tanpa harus baca isinya.
+   Dipakai var(--primary-soft) -- BUKAN warna biru mati/color-mix
+   generik -- karena ini variabel racikan resmi per tema (lihat
+   PRESETS di <script> paling atas & deriveGlobalThemeShades() di
+   script.js): tiap tema (oranye/emerald/sapphire/teal/amethyst/gold/
+   custom) sudah py versi "soft"-nya sendiri yang serasi, jadi begitu
+   pengguna ganti tema, rona baris belum-dibaca ini IKUT BERUBAH
+   SEKETIKA tanpa perlu kode tambahan (CSS var live, sama seperti
+   var(--primary) di titik/dot judul di bawah). */
+.notif-item.unread:not(.soon):not(.overdue){
+  margin:0 -18px;padding:14px 18px;border-radius:0;
+  background:var(--primary-soft);
+}
+.notif-item.unread:not(.soon):not(.overdue):active{
+  background:color-mix(in srgb, var(--primary) 12%, var(--primary-soft));
+}
+.notif-item.is-read{background:transparent;}
+/* Titik penanda kecil di kiri judul, cuma tampil selagi belum
+   dibaca — bantu penanda tambahan selain warna latar saja, supaya
+   tetap jelas dibedakan walau di layar dgn kontras rendah. */
+.notif-item .nm::before{
+  content:'';width:6px;height:6px;border-radius:50%;
+  background:var(--primary);flex:none;
+  display:inline-block;margin-right:1px;
+}
+.notif-item.is-read .nm::before{display:none;}
+/* Bobot judul ikut dilonggarkan begitu sudah dibaca (persis pola
+   app chat/email: yg belum dibaca tebal & gelap, yg sudah dibaca
+   sedikit lebih ringan & abu-abu) — ini bagian dari perapian font
+   yg diminta, biar hierarki "baru vs lama" langsung kebaca dari
+   jauh tanpa perlu merhatikan rona latarnya juga. */
+.notif-item.is-read .nm-text{font-weight:600;color:var(--ink-soft);}
 
 /* Ikon kiri: kotak kecil solid (bukan lingkaran/kotak besar
    gradien), sejajar dgn baris judul — persis lencana "i" pada
@@ -9974,6 +10044,7 @@ body.is-scrolling *{
 }
 .notif-item.type-hutang .notif-item-ic{background:#7C3AED;}
 .notif-item.overdue .notif-item-ic{background:var(--wine);}
+.notif-item.type-custom .notif-item-ic{background:var(--primary);}
 .notif-item-ic svg{width:13px;height:13px;}
 
 /* Ikon di dalam lencana kanan (thumbnail) sengaja dibuat lebih besar
@@ -9995,12 +10066,41 @@ body.is-scrolling *{
 .notif-item-body .due.due-soon{color:#B45309;}
 .notif-item-body .due.due-pill{color:var(--wine);}
 
+/* Baris "sumber" (PERMINTAAN BARU): label kecil di atas judul yg
+   menandakan asal notifikasi (mis. "Tagihan"/"Hutang", atau nama
+   sumber bebas dari notifikasi kustom, mis. "Promo"/"Admin") --
+   dibuat kecil, huruf besar-renggang, warna redup, PERSIS gaya
+   eyebrow-label yg lazim dipakai di atas judul notifikasi aplikasi
+   (mis. nama app di atas judul notifikasi Android). */
+.notif-item-source{
+  font-size:10px;font-weight:700;color:var(--ink-faint);
+  text-transform:uppercase;letter-spacing:0.04em;
+  line-height:1.3;margin-bottom:2px;
+}
+/* Baris jam masuk notifikasi (PERMINTAAN BARU): kecil & paling
+   redup, ditaruh PALING BAWAH tiap baris (di bawah subjudul/nominal)
+   -- persis posisi "11:00 WIB" pada gambar referensi. */
+.notif-item-time{
+  font-size:11px;color:var(--ink-faint);font-weight:500;
+  margin-top:4px;
+}
+
 /* Lencana/gambar kanan: lebih rata, bayangan tipis saja (bukan
    dramatis) supaya terasa seperti thumbnail foto kecil ala
    referensi, bukan lencana ikon besar. */
 .notif-item-thumb{width:50px;height:50px;border-radius:13px;box-shadow:none;margin-top:1px;}
+/* Kalau notifikasi (kustom) membawa gambar sungguhan (PERMINTAAN
+   BARU): thumbnail kanan menampilkan gambar itu APA ADANYA (cover
+   penuh kotak 50x50, tanpa warna latar solid/ikon lagi) -- kalau
+   tidak ada gambar, tetap jatuh ke ikon+warna solid seperti semula. */
+.notif-item-thumb.has-img{background:var(--paper);}
+.notif-item-thumb img{
+  width:100%;height:100%;object-fit:cover;border-radius:inherit;
+  display:block;
+}
 </style>
 </head>
+
 <body>
 
 <!-- ===== NAVIGASI BAWAH ===== -->
