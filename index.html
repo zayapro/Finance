@@ -26,6 +26,112 @@ if ('scrollRestoration' in history) {
 }
 </script>
 
+<!-- FIX "ganti warna tema (mis. pilih hijau/biru/custom), tapi tiap
+     refresh/muat ulang warna ORANYE BAWAAN (default) masih sempat
+     kelihatan sekilas dulu sebelum berubah lagi ke warna tema yg
+     sudah dipilih": akar masalahnya SAMA PERSIS dgn fix
+     zp-tagihan-restore/zp-page-restore-* di bawah. Variabel warna
+     --primary/--primary-deep/--primary-light/--primary-soft/
+     --banner-orange/dst di <style> :root (lihat lebih bawah) memang
+     di-hardcode ke warna oranye default, dan baru ditimpa ke warna
+     tema tersimpan lewat applyGlobalTheme(loadGlobalTheme()) di
+     script.js. Masalahnya script.js baru dimuat & dijalankan
+     BELAKANGAN -- disisipkan secara DINAMIS oleh cloud-sync.js
+     SETELAH proses login + tarik data dari cloud selesai (lihat
+     cloud-sync.js > startAppOnce()), yang bisa berjeda cukup lama
+     terutama di koneksi lambat -- jauh setelah browser sudah sempat
+     menggambar frame pertama pakai warna oranye default apa adanya.
+     Di jeda itulah warna default "bocor" kelihatan sekilas sebelum
+     tertimpa lagi oleh warna tema yang sebenarnya tersimpan.
+     Diperbaiki dgn pola yang sama seperti fix2 di bawah: baca
+     localStorage (key-nya SENGAJA disamakan persis dgn GLOBAL_THEME_KEY
+     di script.js) SEPALING AWAL mungkin -- sebelum <style> :root di
+     bawah sempat dipakai browser utk menggambar apa pun -- lalu pasang
+     warnanya langsung sbg inline style di elemen <html>. Inline style
+     specificity-nya otomatis menang atas :root, jadi begitu script.js
+     menyusul jalan & memanggil applyGlobalTheme() lagi, hasilnya identik
+     (tidak ada perubahan/kedip terlihat) -- dia cuma "menimpa ulang"
+     nilai yang sudah benar dari awal. Rumus turunan shade (deep/light/
+     soft/banner/bannerDeep) utk pilihan warna custom SENGAJA disalin
+     persis sama dgn deriveGlobalThemeShades()/GLOBAL_THEME_PRESETS di
+     script.js supaya hasilnya identik, tidak "meleset" sedetik pun. -->
+<script>
+(function () {
+  try {
+    var KEY = 'alirin_global_theme_v1';
+    var PRESETS = {
+      orange:   { primary:'#F2672B', deep:'#C2410C', light:'#FFB088', soft:'#FFF1E7', banner:'#FA8B1E', bannerDeep:'#D97706' },
+      emerald:  { primary:'#10B981', deep:'#047857', light:'#6EE7B7', soft:'#ECFDF5', banner:'#34D399', bannerDeep:'#059669' },
+      sapphire: { primary:'#2563EB', deep:'#1D4ED8', light:'#93C5FD', soft:'#EFF6FF', banner:'#3B82F6', bannerDeep:'#1D4ED8' },
+      teal:     { primary:'#0D9488', deep:'#0F766E', light:'#5EEAD4', soft:'#F0FDFA', banner:'#14B8A6', bannerDeep:'#0F766E' },
+      amethyst: { primary:'#7C3AED', deep:'#5B21B6', light:'#C4B5FD', soft:'#F5F3FF', banner:'#8B5CF6', bannerDeep:'#6D28D9' },
+      gold:     { primary:'#D97706', deep:'#92400E', light:'#FCD34D', soft:'#FFFBEB', banner:'#F59E0B', bannerDeep:'#B45309' }
+    };
+    function hexToHsl(hex) {
+      var m = (hex || '').replace('#', '');
+      var full = m.length === 3 ? m.split('').map(function (c) { return c + c; }).join('') : m;
+      var r = parseInt(full.substring(0, 2), 16) / 255, g = parseInt(full.substring(2, 4), 16) / 255, b = parseInt(full.substring(4, 6), 16) / 255;
+      var max = Math.max(r, g, b), min = Math.min(r, g, b);
+      var h = 0, s = 0, l = (max + min) / 2;
+      if (max !== min) {
+        var d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        switch (max) {
+          case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+          case g: h = (b - r) / d + 2; break;
+          case b: h = (r - g) / d + 4; break;
+        }
+        h /= 6;
+      }
+      return { h: h * 360, s: s * 100, l: l * 100 };
+    }
+    function hslToHex(h, s, l) {
+      h = ((h % 360) + 360) % 360; s = Math.min(100, Math.max(0, s)) / 100; l = Math.min(100, Math.max(0, l)) / 100;
+      var c = (1 - Math.abs(2 * l - 1)) * s;
+      var x = c * (1 - Math.abs((h / 60) % 2 - 1));
+      var m = l - c / 2;
+      var r = 0, g = 0, b = 0;
+      if (h < 60) { r = c; g = x; b = 0; } else if (h < 120) { r = x; g = c; b = 0; }
+      else if (h < 180) { r = 0; g = c; b = x; } else if (h < 240) { r = 0; g = x; b = c; }
+      else if (h < 300) { r = x; g = 0; b = c; } else { r = c; g = 0; b = x; }
+      function toHex(v) { var s2 = Math.round((v + m) * 255).toString(16); return s2.length < 2 ? '0' + s2 : s2; }
+      return ('#' + toHex(r) + toHex(g) + toHex(b)).toUpperCase();
+    }
+    function deriveCustom(baseHex) {
+      var hsl = hexToHsl(baseHex);
+      return {
+        primary: baseHex,
+        deep: hslToHex(hsl.h, Math.min(100, hsl.s + 4), Math.max(18, hsl.l - 16)),
+        light: hslToHex(hsl.h, Math.max(35, hsl.s - 15), Math.min(88, hsl.l + 24)),
+        soft: hslToHex(hsl.h, Math.max(30, hsl.s - 25), Math.min(96, hsl.l + 40)),
+        banner: hslToHex(hsl.h + 6, Math.min(100, hsl.s + 8), Math.min(70, hsl.l + 4)),
+        bannerDeep: hslToHex(hsl.h + 3, Math.min(100, hsl.s + 6), Math.max(30, hsl.l - 12))
+      };
+    }
+    var raw = localStorage.getItem(KEY);
+    if (raw) {
+      var state = JSON.parse(raw);
+      var shades = (state.mode === 'custom')
+        ? deriveCustom(state.custom || '#EC4899')
+        : (PRESETS[state.mode] || PRESETS.orange);
+      var root = document.documentElement.style;
+      root.setProperty('--primary', shades.primary);
+      root.setProperty('--primary-deep', shades.deep);
+      root.setProperty('--primary-light', shades.light);
+      root.setProperty('--primary-soft', shades.soft);
+      root.setProperty('--banner-orange', shades.banner);
+      root.setProperty('--banner-orange-deep', shades.bannerDeep);
+      root.setProperty('--forest-glow', shades.primary);
+      // Disimpan di window supaya bisa dipakai lagi sebentar lagi utk
+      // menyamakan meta theme-color/dst (lihat script kecil tepat
+      // setelah tag <meta> terkait di bawah -- elemen <meta>-nya belum
+      // ada di DOM saat titik INI dieksekusi, jadi harus ditunda sedikit).
+      window.__zpEarlyThemeShades = shades;
+    }
+  } catch (e) { /* localStorage tidak tersedia (mode privat dsb) -- biarkan warna default, tidak fatal */ }
+})();
+</script>
+
 <!-- FIX "refresh di halaman Tagihan & Hutang masih kelihatan
      lompat/kedip ke Beranda sekilas": script + style di bawah ini
      SENGAJA dipasang PALING ATAS <head>, sebelum elemen/CSS/gambar
@@ -235,6 +341,26 @@ try {
      Windows sama seperti browser Chromium lainnya). -->
 <meta name="msapplication-TileColor" content="#FA8B1E">
 <meta name="msapplication-navbutton-color" content="#FA8B1E">
+<!-- Susulan dari fix "warna bawaan sempat kelihatan lagi tiap refresh"
+     di atas: elemen <meta> di atas baru ada di DOM SEKARANG (parser
+     baru sampai sini), jadi baru bisa disamakan ke warna tema tersimpan
+     di titik INI -- window.__zpEarlyThemeShades sudah dihitung lebih
+     awal (lihat script di atas <style> tadi), jadi masih SANGAT awal
+     (sebelum body/CSS render lain apa pun), tidak ada kedip terlihat. -->
+<script>
+(function () {
+  try {
+    var shades = window.__zpEarlyThemeShades;
+    if (!shades) return;
+    var metaTheme = document.querySelector('meta[name="theme-color"]');
+    if (metaTheme) metaTheme.setAttribute('content', shades.banner);
+    var metaTile = document.querySelector('meta[name="msapplication-TileColor"]');
+    if (metaTile) metaTile.setAttribute('content', shades.banner);
+    var metaNavBtn = document.querySelector('meta[name="msapplication-navbutton-color"]');
+    if (metaNavBtn) metaNavBtn.setAttribute('content', shades.banner);
+  } catch (e) { /* abaikan */ }
+})();
+</script>
 <!-- SDK resmi Telegram WebApp: dimuat lebih dulu (sebelum script.js)
      supaya window.Telegram.WebApp sudah tersedia saat initTelegramWebApp()
      dipanggil. Kalau halaman ini dibuka BUKAN dari dalam Telegram
@@ -8243,18 +8369,55 @@ select#categoryFilter[hidden]{display:none;}
   display:flex;align-items:center;justify-content:center;margin:0 auto 14px;
 }
 
-/* ============ TOAST ============ */
+/* ============ TOAST ============
+   REDESIGN: sebelumnya kartu solid gelap (--forest-deep/--wine) dengan
+   ikon polos & animasi slide-fade standar -- terasa generik, tidak
+   senada dengan bahasa visual ZAYAin di tempat lain (kartu PUTIH +
+   ikon bulat bertinta warna, lihat .settings-row-icon/.bd-item-ic).
+   Sekarang toast dibuat kartu putih senada, dengan:
+   - Ikon dibungkus chip bulat bertinta (hijau/--brass utk sukses,
+     merah/--wine utk error) -- pola yang sama seperti chip ikon di
+     seluruh app, bukan lagi ikon polos di atas latar solid.
+   - Animasi masuk "pop" (spring, sedikit overshoot) lewat cubic-bezier
+     -- terasa lebih hidup/responsif drpd sekadar fade+slide datar.
+   - Garis progress tipis di bagian bawah kartu yang mengecil dari
+     penuh ke kosong mengikuti durasi tampil toast -- penanda visual
+     "hitung mundur sebelum hilang", detail kecil yang lazim di toast
+     aplikasi finansial/perbankan modern. */
 .toast-wrap{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:10px;z-index:var(--z-toast);}
 @media (max-width:640px){.toast-wrap{left:16px;right:16px;bottom:calc(72px + 14px + env(safe-area-inset-bottom, 0px));align-items:stretch;z-index:var(--z-toast);}}
 .toast{
-  background:var(--forest-deep);color:#fff;padding:12px 16px;border-radius:10px;
-  font-size:13.5px;font-weight:600;display:flex;align-items:center;gap:9px;
+  position:relative;overflow:hidden;
+  background:var(--card);color:var(--ink);
+  padding:12px 16px 13px 12px;border-radius:16px;
+  font-size:13.5px;font-weight:600;display:flex;align-items:center;gap:11px;
+  border:1px solid var(--line);
   box-shadow:var(--shadow-md);
-  animation:toastIn .2s ease;
+  animation:toastPop .4s cubic-bezier(.34,1.56,.64,1);
   min-width:220px;
 }
-.toast.err{background:var(--wine);}
-@keyframes toastIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.toast-ic{
+  flex-shrink:0;width:28px;height:28px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  background:color-mix(in srgb, var(--brass) 15%, white);color:var(--brass);
+}
+.toast.err .toast-ic{background:color-mix(in srgb, var(--wine) 12%, white);color:var(--wine);}
+.toast-msg{flex:1;line-height:1.35;}
+/* Garis progress -- warnanya ikut menyesuaikan sukses/error seperti
+   chip ikon di atas, durasinya SENGAJA disamakan persis dgn jeda
+   sebelum showToast() memulai animasi keluar (lihat script.js). */
+.toast::after{
+  content:'';position:absolute;left:0;right:0;bottom:0;height:3px;
+  background:var(--brass);width:100%;
+  animation:toastCountdown 2.6s linear forwards;
+}
+.toast.err::after{background:var(--wine);}
+@keyframes toastPop{
+  0%{opacity:0;transform:translateY(18px) scale(.9);}
+  60%{opacity:1;transform:translateY(-2px) scale(1.015);}
+  100%{opacity:1;transform:translateY(0) scale(1);}
+}
+@keyframes toastCountdown{from{width:100%;}to{width:0%;}}
 
 .banner-add-btn{display:flex;}
 
@@ -9277,7 +9440,7 @@ body.is-scrolling *{
   /* ---- Tombol mengambang & lainnya ---- */
   .ai-fab{width:44px;height:44px;}
   .back-to-top{width:40px;height:40px;}
-  .toast{font-size:12.5px;padding:11px 14px;}
+  .toast{font-size:12.5px;padding:11px 14px 12px 10px;}
 
   /* ---- Footer ---- */
   .footer-brand-mark{width:32px;height:32px;border-radius:9px;}

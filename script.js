@@ -7105,6 +7105,12 @@ document.getElementById('btnAddDesktop')?.addEventListener('click', () => openAd
 // buka popup Masuk/Daftar (menggantikan aksi logout yang tidak relevan
 // buat guest).
 let accountToggleBusy = false; // cegah klik ganda (mis. tap 2x cepat di HP) memicu 2 proses logout bersamaan
+function setAccountButtonsDisabled(disabled) {
+  ['btnAddMobile', 'miniLogoutBtn', 'settingsAccountBtn'].forEach(function (id) {
+    const el = document.getElementById(id);
+    if (el) el.disabled = disabled;
+  });
+}
 async function handleAccountToggleClick() {
   if (accountToggleBusy) return;
   if (typeof window.cloudIsLoggedIn === 'function' && window.cloudIsLoggedIn()) {
@@ -7115,44 +7121,67 @@ async function handleAccountToggleClick() {
     // baris Pengaturan) sengaja dinonaktifkan bareng selama proses
     // berjalan, supaya tidak ada jalur lain yang ikut memicu logout
     // kedua sebelum yang pertama selesai.
-    ['btnAddMobile', 'miniLogoutBtn', 'settingsAccountBtn'].forEach(function (id) {
-      const el = document.getElementById(id);
-      if (el) el.disabled = true;
-    });
-    const result = await window.cloudSignOut();
-    if (result && result.ok === false) {
-      // Logout gagal (mis. tidak ada koneksi) -- sebelumnya error di
-      // sini diabaikan diam-diam & tombol bisa "macet" kelihatan aktif
-      // padahal sesi belum benar-benar berakhir. Sekarang user dikasih
-      // tahu lewat toast & tombol dikembalikan bisa diklik lagi supaya
-      // bisa dicoba ulang.
+    setAccountButtonsDisabled(true);
+    // FIX BUG "tombol Masuk/Daftar nyangkut mati permanen di mode tamu":
+    // SEBELUMNYA baris cloudSignOut() di bawah TIDAK dibungkus try/catch,
+    // dan pemulihan tombol (accountToggleBusy=false, disabled=false)
+    // HANYA dilakukan lewat 2 jalur: (a) di blok "result.ok===false" di
+    // bawah, atau (b) menyerahkan sepenuhnya ke location.reload() yang
+    // dipicu event SIGNED_OUT di cloud-sync.js begitu logout SUKSES.
+    // Kalau cloudSignOut() melempar exception (bukan sekadar
+    // mengembalikan {ok:false}, mis. galat jaringan yang tidak
+    // tertangkap di dalamnya) ATAU event SIGNED_OUT/reload itu karena
+    // sebab apa pun tidak pernah terjadi, TIDAK ADA jalur mana pun yang
+    // mengaktifkan lagi tombol2 ini -- tersangkut disabled selamanya,
+    // walau statusnya sebenarnya sudah balik ke tamu. Sekarang dibungkus
+    // try/catch/finally supaya tombol PASTI dipulihkan lagi apa pun yang
+    // terjadi (kalaupun reload tetap terjadi sesaat kemudian, pemulihan
+    // di sini tidak masalah -- toh halaman akan dimuat ulang dari nol).
+    try {
+      const result = await window.cloudSignOut();
+      if (result && result.ok === false) {
+        // Logout gagal (mis. tidak ada koneksi) -- beri tahu user lewat
+        // toast supaya bisa dicoba ulang.
+        showToast('Gagal logout, coba lagi. Periksa koneksi internet kamu.', 'err');
+      }
+      // Kalau ok:true, cloud-sync.js akan me-reload halaman (lewat event
+      // SIGNED_OUT) sesaat lagi -- blok finally di bawah tetap memulihkan
+      // tombol sekarang juga sbg jaga-jaga kalau reload itu telat/gagal.
+    } catch (err) {
+      console.error('Logout gagal (exception):', err);
       showToast('Gagal logout, coba lagi. Periksa koneksi internet kamu.', 'err');
+    } finally {
       accountToggleBusy = false;
-      ['btnAddMobile', 'miniLogoutBtn', 'settingsAccountBtn'].forEach(function (id) {
-        const el = document.getElementById(id);
-        if (el) el.disabled = false;
-      });
+      setAccountButtonsDisabled(false);
     }
-    // Kalau ok:true, tidak perlu reset accountToggleBusy/disabled di sini --
-    // cloud-sync.js akan me-reload halaman (lewat event SIGNED_OUT), yang
-    // otomatis membuat ulang semua state termasuk variabel ini.
   } else if (typeof window.cloudRequireLogin === 'function') {
     window.cloudRequireLogin('Masuk atau daftar untuk mengaktifkan sinkron cloud & fitur Tanya AI.');
   }
 }
 document.getElementById('btnAddMobile').addEventListener('click', handleAccountToggleClick);
-// Label tombol akun (banner & mini-topbar) disesuaikan sekali di awal
-// sesuai status login saat halaman dibuka -- cukup sekali karena
+// Label DAN ikon tombol akun (banner & mini-topbar) disesuaikan sekali
+// di awal sesuai status login saat halaman dibuka -- cukup sekali karena
 // begitu status login berubah (masuk/keluar), halaman selalu di-reload
-// oleh cloud-sync.js sehingga label ini ikut dihitung ulang dari nol.
+// oleh cloud-sync.js sehingga ini ikut dihitung ulang dari nol.
+// FIX "ikon tidak sesuai status": SEBELUMNYA cuma title/aria-label yang
+// disesuaikan di sini -- ikon SVG di dalam tombol tetap ikon Logout
+// (panah keluar) walau sedang mode tamu & tooltip-nya sudah benar
+// "Masuk / Daftar akun". Sekarang ikonnya ikut ditukar juga, memakai
+// pasangan ikon Login/Logout yang sama persis dengan yang sudah dipakai
+// di baris akun halaman Pengaturan (lihat updateAccountSettingsRow()).
 (function syncAccountToggleLabels() {
   const loggedIn = typeof window.cloudIsLoggedIn === 'function' && window.cloudIsLoggedIn();
   const label = loggedIn ? 'Keluar dari akun' : 'Masuk / Daftar akun';
+  // Logout: panah keluar dari kotak (kotak di kiri). Login: panah masuk ke kotak (kotak di kanan).
+  const iconSvg = loggedIn
+    ? '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>'
+    : '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5M15 12H3"/></svg>';
   ['btnAddMobile', 'miniLogoutBtn'].forEach(function (id) {
     const el = document.getElementById(id);
     if (!el) return;
     el.title = label;
     el.setAttribute('aria-label', label);
+    el.innerHTML = iconSvg;
   });
 })();
 // Tombol "+" di header "Semua Transaksi" halaman Laporan -- buka modal
@@ -10271,16 +10300,20 @@ function showToast(message, type = 'ok') {
   const wrap = document.getElementById('toastWrap');
   const el = document.createElement('div');
   el.className = 'toast' + (type === 'err' ? ' err' : '');
-  el.innerHTML = `${type === 'err'
-    ? '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>'
-    : '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M20 6 9 17l-5-5"/></svg>'
-    } ${message}`;
+  const iconSvg = type === 'err'
+    ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>'
+    : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg>';
+  el.innerHTML = `<span class="toast-ic">${iconSvg}</span><span class="toast-msg">${message}</span>`;
   wrap.appendChild(el);
   setTimeout(() => {
-    el.style.transition = 'opacity .25s ease, transform .25s ease';
+    // Animasi keluar disamakan gayanya dengan animasi masuk (toastPop di
+    // CSS): mengecil + geser turun sedikit, bukan cuma memudar datar --
+    // terasa sebagai satu bahasa gerak yang sama (masuk "pop" naik,
+    // keluar "surut" turun), bukan dua animasi yang tidak nyambung.
+    el.style.transition = 'opacity .22s ease-in, transform .22s ease-in';
     el.style.opacity = '0';
-    el.style.transform = 'translateY(6px)';
-    setTimeout(() => el.remove(), 250);
+    el.style.transform = 'translateY(10px) scale(.94)';
+    setTimeout(() => el.remove(), 220);
   }, 2600);
 }
 
