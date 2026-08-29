@@ -10561,6 +10561,9 @@ function openNotifDetail(kind, id) {
 
   notifDetailSheet.className = 'notif-detail-sheet type-' + kind + (due.overdue ? ' overdue' : '');
   document.getElementById('notifDetailBannerIc').innerHTML = NOTIF_DETAIL_ICONS[kind];
+  document.getElementById('notifDetailBannerTag').textContent = due.overdue
+    ? '⏰ Sudah Jatuh Tempo'
+    : (kind === 'tagihan' ? '🧾 Pengingat Tagihan' : '🤝 Pengingat Hutang');
   document.getElementById('notifDetailTitle').textContent = item.name;
   document.getElementById('notifDetailDate').textContent = `${due.text} · ${dateFull}`;
 
