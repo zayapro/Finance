@@ -587,13 +587,13 @@
          (cadangan). Judul halaman ikut berubah menyesuaikan tampilan
          yg sedang aktif. ---- */
       function showBioView() {
-        if (pinView) pinView.style.display = 'none';
-        if (bioView) bioView.style.display = '';
+        if (pinView) pinView.classList.remove('open');
+        if (bioView) bioView.classList.add('open');
         if (titleEl) titleEl.textContent = 'Buka dengan Sidik Jari';
       }
       function showPinView() {
-        if (bioView) bioView.style.display = 'none';
-        if (pinView) pinView.style.display = '';
+        if (bioView) bioView.classList.remove('open');
+        if (pinView) pinView.classList.add('open');
         if (titleEl) titleEl.textContent = 'Masukkan PIN';
         entered = '';
         clearErr();
@@ -714,11 +714,26 @@
       // (spt disableBiometric di boot() utk kasus serupa) & langsung
       // ke PIN drpd menampilkan tombol sidik jari yg pasti gagal
       // terus kalau diketuk.
+      // Pilih tampilan awal SEKARANG JUGA (sinkron, pakai flag bioEnabled
+      // yg sudah dibaca dari localStorage di atas) -- jangan tunggu hasil
+      // await biometricSupported() dulu, krn selama menunggu itu kedua
+      // view (#pinLockBioView & #pinLockPinView) sama2 belum diberi
+      // class 'open'/'tidak' oleh salah satu fungsi di atas, sehingga
+      // kalau CSS default salah satunya kepakai (spt sebelum fix ini),
+      // ATAU sekadar demi jaga2 di masa depan, keduanya bisa kelihatan
+      // bertumpuk sesaat. Dengan memilih tampilan dulu secara sinkron,
+      // layar SELALU cuma nampilin satu tampilan sejak overlay dibuka,
+      // lalu baru dikoreksi ke PIN kalau ternyata device sekarang tidak
+      // benar2 mendukung sidik jari/Face ID.
+      if (bioEnabled) {
+        showBioView();
+      } else {
+        showPinView();
+      }
       (async function () {
         const isSupportedNow = bioEnabled && await window.zayaproAuth.biometricSupported();
         if (bioRetryBtn) bioRetryBtn.style.display = isSupportedNow ? 'flex' : 'none';
         if (isSupportedNow) {
-          showBioView();
           attemptBio();
         } else {
           if (bioEnabled) window.zayaproAuth.disableBiometric();
