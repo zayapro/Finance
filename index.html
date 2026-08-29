@@ -9960,6 +9960,66 @@ body.is-scrolling *{
 .pin-key-empty{ background:transparent; border:none; cursor:default; }
 .pin-key-back{ color:var(--ink-soft,#5B6472); }
 
+/* ---- Tampilan utama "Login Biometrik" di layar kunci awal (dot
+   PIN & keypad digeser jadi tampilan cadangan, lihat .pin-lock-pin-view
+   di bawah) -- ikon sidik jari besar bulat jadi FOKUS utama, sengaja
+   dibuat besar & mengambang (box-shadow terangkat) supaya jelas ini
+   tombol utama yg bisa diketuk, bukan sekadar ikon dekorasi. Ring
+   tipis di sekelilingnya berdenyut pelan terus-menerus (menandakan
+   "siap dipakai"), lalu berputar (spin) khusus saat status
+   ".is-checking" (lagi menunggu hasil sidik jari/Face ID dari OS)
+   supaya ada umpan balik visual selama menunggu. ---- */
+.pin-lock-bio-view{ display:flex; flex-direction:column; align-items:center; }
+.pin-lock-bio-btn{
+  position:relative; width:96px; height:96px; margin:6px 0 18px;
+  border-radius:50%; border:none; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  background:linear-gradient(135deg, var(--primary,#F2672B), var(--primary-deep,#C2410C));
+  color:#fff;
+  box-shadow:0 14px 30px -10px color-mix(in srgb, var(--primary-deep) 55%, transparent);
+  transition:transform .15s ease, box-shadow .15s ease;
+}
+.pin-lock-bio-btn:active{ transform:scale(.95); }
+.pin-lock-bio-btn svg{ position:relative; z-index:1; }
+.pin-lock-bio-ring{
+  position:absolute; inset:-8px; border-radius:50%;
+  border:1.6px solid color-mix(in srgb, var(--primary) 45%, transparent);
+  animation:pinLockBioRingPulse 2.4s ease-out infinite;
+}
+@keyframes pinLockBioRingPulse{
+  0%{ transform:scale(.92); opacity:.9; }
+  70%{ transform:scale(1.22); opacity:0; }
+  100%{ transform:scale(1.22); opacity:0; }
+}
+.pin-lock-bio-btn.is-checking{ box-shadow:0 14px 30px -10px color-mix(in srgb, var(--primary-deep) 70%, transparent); }
+.pin-lock-bio-btn.is-checking .pin-lock-bio-ring{
+  animation:pinLockBioRingSpin 1s linear infinite;
+  border-style:dashed;
+}
+@keyframes pinLockBioRingSpin{ to{ transform:rotate(360deg); } }
+@media (prefers-reduced-motion:reduce){
+  .pin-lock-bio-ring{ animation:none; }
+}
+.pin-lock-bio-hint{
+  margin:0 0 4px; font-size:13px; color:var(--ink-soft,#5B6472);
+  text-align:center; line-height:1.5;
+}
+#pinLockBioMsg.cloud-auth-msg.show{ margin-bottom:10px; }
+.pin-lock-use-pin-link{
+  margin-top:14px; background:transparent; border:none; cursor:pointer;
+  font-size:13px; font-weight:700; color:var(--primary,#F2672B);
+  padding:8px 4px;
+}
+.pin-lock-use-pin-link:active{ opacity:.7; }
+
+/* ---- Tombol "Coba Sidik Jari / Face ID Lagi" di tampilan keypad PIN
+   (fallback dari tampilan biometrik di atas) -- gaya pil disamakan
+   dgn tombol pil lain di app (bukan lagi kotak sudut membulat 9px). */
+.pin-lock-retry-bio-btn{
+  margin-top:10px; width:100%; justify-content:center; gap:6px;
+  border-radius:999px; font-family:'Poppins',sans-serif; font-weight:500;
+}
+
 /* ============ HALAMAN "UBAH PIN" & "UBAH PASSWORD" (di Pengaturan > Keamanan) ============
    Ikon bundar besar di bottom sheet konfirmasi (mirip .confirm-icon
    tapi lebih besar & 2 varian warna: kuning utk peringatan "Ubah PIN",
@@ -13476,36 +13536,62 @@ body.is-scrolling *{
     <div class="cloud-auth-logo">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="10" rx="2"/><circle cx="12" cy="15" r="1.6"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
     </div>
-    <h2>Masukkan PIN</h2>
+    <h2 id="pinLockTitle">Masukkan PIN</h2>
     <p class="cloud-auth-tagline" id="pinLockGreeting">Selamat datang kembali</p>
-    <div class="pin-dots" id="pinLockDots">
-      <span class="pin-dot"></span><span class="pin-dot"></span><span class="pin-dot"></span>
-      <span class="pin-dot"></span><span class="pin-dot"></span><span class="pin-dot"></span>
+
+    <!-- ---- Tampilan UTAMA "Login Biometrik" (ikon sidik jari besar
+         di tengah) -- ditampilkan LEBIH DULU drpd keypad PIN kalau
+         akun ini sudah mengaktifkan Login Biometrik di perangkat ini.
+         Sidik jari/Face ID otomatis diminta begitu tampilan ini
+         terbuka (lihat initPinLockScreen di cloud-sync.js); ikon ini
+         jg bisa DIKETUK LANGSUNG kalau mau mengulang. PIN keypad
+         digeser jadi opsi cadangan lewat tautan kecil "Gunakan PIN"
+         di bawah, supaya sidik jari terasa sbg cara utama masuk,
+         bukan lagi keypad angka yg langsung tampil duluan. ---- -->
+    <div id="pinLockBioView" class="pin-lock-bio-view">
+      <button type="button" class="pin-lock-bio-btn" id="pinLockBioBtn" aria-label="Buka dengan sidik jari atau Face ID">
+        <span class="pin-lock-bio-ring"></span>
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a7 7 0 0 0-7 7v2c0 3.5-1 5.5-2 7"/><path d="M19 10v2c0 3-.6 5-1.5 6.5"/><path d="M12 3a7 7 0 0 1 7 7v2"/><path d="M8 10a4 4 0 0 1 8 0v2c0 2.5.5 4.5 1.5 6"/><path d="M12 10v3c0 3-1 5-3 7"/><path d="M12 13v1c0 2.5-.6 4.5-2 6"/></svg>
+      </button>
+      <p class="pin-lock-bio-hint" id="pinLockBioHint">Tap ikon untuk buka pakai sidik jari / Face ID</p>
+      <div class="cloud-auth-msg" id="pinLockBioMsg"></div>
+      <button type="button" class="pin-lock-use-pin-link" id="pinLockUsePinBtn">Gunakan PIN sebagai gantinya</button>
     </div>
-    <div class="cloud-auth-msg" id="pinLockMsg"></div>
-    <div class="pin-keypad" id="pinLockKeypad">
-      <button type="button" class="pin-key" data-num="1">1</button>
-      <button type="button" class="pin-key" data-num="2">2</button>
-      <button type="button" class="pin-key" data-num="3">3</button>
-      <button type="button" class="pin-key" data-num="4">4</button>
-      <button type="button" class="pin-key" data-num="5">5</button>
-      <button type="button" class="pin-key" data-num="6">6</button>
-      <button type="button" class="pin-key" data-num="7">7</button>
-      <button type="button" class="pin-key" data-num="8">8</button>
-      <button type="button" class="pin-key" data-num="9">9</button>
-      <span class="pin-key pin-key-empty" aria-hidden="true"></span>
-      <button type="button" class="pin-key" data-num="0">0</button>
-      <button type="button" class="pin-key pin-key-back" id="pinLockBackspace" aria-label="Hapus angka">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2Z"/><path d="M18 9l-6 6M12 9l6 6"/></svg>
+
+    <!-- ---- Tampilan cadangan keypad PIN -- tampil langsung kalau
+         Login Biometrik TIDAK aktif, atau kalau user menekan
+         "Gunakan PIN" / sidik jari gagal berkali-kali dari tampilan
+         di atas. ---- -->
+    <div id="pinLockPinView" class="pin-lock-pin-view">
+      <div class="pin-dots" id="pinLockDots">
+        <span class="pin-dot"></span><span class="pin-dot"></span><span class="pin-dot"></span>
+        <span class="pin-dot"></span><span class="pin-dot"></span><span class="pin-dot"></span>
+      </div>
+      <div class="cloud-auth-msg" id="pinLockMsg"></div>
+      <div class="pin-keypad" id="pinLockKeypad">
+        <button type="button" class="pin-key" data-num="1">1</button>
+        <button type="button" class="pin-key" data-num="2">2</button>
+        <button type="button" class="pin-key" data-num="3">3</button>
+        <button type="button" class="pin-key" data-num="4">4</button>
+        <button type="button" class="pin-key" data-num="5">5</button>
+        <button type="button" class="pin-key" data-num="6">6</button>
+        <button type="button" class="pin-key" data-num="7">7</button>
+        <button type="button" class="pin-key" data-num="8">8</button>
+        <button type="button" class="pin-key" data-num="9">9</button>
+        <span class="pin-key pin-key-empty" aria-hidden="true"></span>
+        <button type="button" class="pin-key" data-num="0">0</button>
+        <button type="button" class="pin-key pin-key-back" id="pinLockBackspace" aria-label="Hapus angka">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2Z"/><path d="M18 9l-6 6M12 9l6 6"/></svg>
+        </button>
+      </div>
+      <div class="cloud-auth-switch">
+        <a id="pinLockForgotLink">Lupa PIN? Keluar &amp; masuk ulang</a>
+      </div>
+      <button type="button" class="btn btn-ghost pin-lock-retry-bio-btn" id="pinLockBiometricRetryBtn" style="display:none;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a7 7 0 0 0-7 7v2c0 3.5-1 5.5-2 7"/><path d="M19 10v2c0 3-.6 5-1.5 6.5"/><path d="M12 3a7 7 0 0 1 7 7v2"/><path d="M8 10a4 4 0 0 1 8 0v2c0 2.5.5 4.5 1.5 6"/><path d="M12 10v3c0 3-1 5-3 7"/><path d="M12 13v1c0 2.5-.6 4.5-2 6"/></svg>
+        Coba Sidik Jari / Face ID Lagi
       </button>
     </div>
-    <div class="cloud-auth-switch">
-      <a id="pinLockForgotLink">Lupa PIN? Keluar &amp; masuk ulang</a>
-    </div>
-    <button type="button" class="btn btn-ghost" id="pinLockBiometricRetryBtn" style="display:none;margin-top:10px;width:100%;justify-content:center;gap:6px;">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a7 7 0 0 0-7 7v2c0 3.5-1 5.5-2 7"/><path d="M19 10v2c0 3-.6 5-1.5 6.5"/><path d="M12 3a7 7 0 0 1 7 7v2"/><path d="M8 10a4 4 0 0 1 8 0v2c0 2.5.5 4.5 1.5 6"/><path d="M12 10v3c0 3-1 5-3 7"/><path d="M12 13v1c0 2.5-.6 4.5-2 6"/></svg>
-      Coba Sidik Jari / Face ID Lagi
-    </button>
   </div>
 </div>
 

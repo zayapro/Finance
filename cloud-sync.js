@@ -557,6 +557,13 @@
   }
   function requirePinUnlock(user, expectedHash) {
     return new Promise(function (resolve) {
+      const titleEl = document.getElementById('pinLockTitle');
+      const bioView = document.getElementById('pinLockBioView');
+      const pinView = document.getElementById('pinLockPinView');
+      const bioBtn = document.getElementById('pinLockBioBtn');
+      const bioHint = document.getElementById('pinLockBioHint');
+      const bioMsg = document.getElementById('pinLockBioMsg');
+      const usePinBtn = document.getElementById('pinLockUsePinBtn');
       const dotsWrap = document.getElementById('pinLockDots');
       const dots = dotsWrap ? Array.prototype.slice.call(dotsWrap.querySelectorAll('.pin-dot')) : [];
       const msgBox2 = document.getElementById('pinLockMsg');
@@ -565,16 +572,32 @@
       const backspaceBtn = document.getElementById('pinLockBackspace');
       const forgotLink = document.getElementById('pinLockForgotLink');
       const bioRetryBtn = document.getElementById('pinLockBiometricRetryBtn');
+      const bioEnabled = window.zayaproAuth.isBiometricEnabled();
       let entered = '';
       let checking = false;
-
-      if (bioRetryBtn) {
-        bioRetryBtn.style.display = window.zayaproAuth.isBiometricEnabled() ? 'flex' : 'none';
-      }
+      let bioChecking = false;
 
       if (greeting) {
         const displayName = (user.user_metadata && user.user_metadata.full_name) || fallbackNameFromEmail(user.email);
         greeting.textContent = displayName ? ('Halo, ' + displayName) : 'Selamat datang kembali';
+      }
+
+      /* ---- Pindah antar 2 tampilan: biometrik (utama, kalau
+         Login Biometrik aktif di perangkat ini) & keypad PIN
+         (cadangan). Judul halaman ikut berubah menyesuaikan tampilan
+         yg sedang aktif. ---- */
+      function showBioView() {
+        if (pinView) pinView.style.display = 'none';
+        if (bioView) bioView.style.display = '';
+        if (titleEl) titleEl.textContent = 'Buka dengan Sidik Jari';
+      }
+      function showPinView() {
+        if (bioView) bioView.style.display = 'none';
+        if (pinView) pinView.style.display = '';
+        if (titleEl) titleEl.textContent = 'Masukkan PIN';
+        entered = '';
+        clearErr();
+        renderDots();
       }
 
       function renderDots() {
@@ -623,6 +646,33 @@
       function onForgot() {
         window.cloudSignOut();
       }
+      /* ---- Percobaan sidik jari/Face ID dari tampilan biometrik
+         utama -- dipicu OTOMATIS begitu tampilan ini terbuka (lihat
+         pemanggilan attemptBio() di paling bawah), & bisa diulang
+         kapan saja dgn mengetuk ikonnya langsung. Selama menunggu
+         hasil dari OS, ikon diberi status ".is-checking" (ring
+         berputar) sbg umpan balik supaya user tahu app sedang
+         menunggu, bukan diam macet. ---- */
+      async function attemptBio() {
+        if (bioChecking) return;
+        bioChecking = true;
+        if (bioBtn) bioBtn.classList.add('is-checking');
+        if (bioMsg) bioMsg.className = 'cloud-auth-msg';
+        if (bioHint) bioHint.textContent = 'Menunggu sidik jari / Face ID...';
+        const ok = await window.zayaproAuth.tryBiometricUnlock();
+        bioChecking = false;
+        if (bioBtn) bioBtn.classList.remove('is-checking');
+        if (ok) {
+          cleanup();
+          pinLockOverlay.classList.add('hidden');
+          resolve();
+          return;
+        }
+        if (bioHint) bioHint.textContent = 'Tap ikon untuk buka pakai sidik jari / Face ID';
+        if (bioMsg) { bioMsg.textContent = 'Gagal terbaca, coba lagi atau pakai PIN.'; bioMsg.className = 'cloud-auth-msg show err'; }
+      }
+      function onBioBtnClick() { attemptBio(); }
+      function onUsePin() { showPinView(); }
       async function onBioRetry() {
         if (checking) return;
         const ok = await window.zayaproAuth.tryBiometricUnlock();
@@ -637,17 +687,44 @@
         backspaceBtn.removeEventListener('click', onBackspace);
         forgotLink.removeEventListener('click', onForgot);
         if (bioRetryBtn) bioRetryBtn.removeEventListener('click', onBioRetry);
+        if (bioBtn) bioBtn.removeEventListener('click', onBioBtnClick);
+        if (usePinBtn) usePinBtn.removeEventListener('click', onUsePin);
       }
 
       keypad.addEventListener('click', onKeyClick);
       backspaceBtn.addEventListener('click', onBackspace);
       forgotLink.addEventListener('click', onForgot);
       if (bioRetryBtn) bioRetryBtn.addEventListener('click', onBioRetry);
+      if (bioBtn) bioBtn.addEventListener('click', onBioBtnClick);
+      if (usePinBtn) usePinBtn.addEventListener('click', onUsePin);
 
       entered = '';
       renderDots();
       clearErr();
       pinLockOverlay.classList.remove('hidden');
+
+      // Tampilan awal: biometrik dulu (lalu auto-diminta) kalau aktif
+      // di perangkat ini DAN perangkat/browser ini SAAT INI memang
+      // masih punya sensor sidik jari/Face ID -- dicek ulang di sini
+      // (bukan cuma percaya flag localStorage) utk jaga2 kondisi
+      // rusak: flag "aktif" sempat tersimpan tapi device SEKARANG
+      // ternyata tidak lagi mendukung (mis. sesudah update browser,
+      // atau data lokal disalin manual ke HP lain yg tidak punya
+      // sensor). Kalau ternyata tidak didukung, bersihkan flag itu
+      // (spt disableBiometric di boot() utk kasus serupa) & langsung
+      // ke PIN drpd menampilkan tombol sidik jari yg pasti gagal
+      // terus kalau diketuk.
+      (async function () {
+        const isSupportedNow = bioEnabled && await window.zayaproAuth.biometricSupported();
+        if (bioRetryBtn) bioRetryBtn.style.display = isSupportedNow ? 'flex' : 'none';
+        if (isSupportedNow) {
+          showBioView();
+          attemptBio();
+        } else {
+          if (bioEnabled) window.zayaproAuth.disableBiometric();
+          showPinView();
+        }
+      })();
     });
   }
 
@@ -816,15 +893,13 @@
       // email/password -- kalau akun ini sudah pernah mengatur PIN
       // saat daftar, minta PIN dulu di sini sbg kunci cepat sebelum
       // masuk ke app (menggantikan "ketik ulang email/password").
+      // Sidik jari/Face ID (kalau aktif) kini dicoba OTOMATIS DI DALAM
+      // requirePinUnlock() sendiri -- lihat tampilan #pinLockBioView --
+      // jadi tidak lagi dicoba dobel di sini sebelum layar kuncinya
+      // ditampilkan.
       const pinHash = currentUser.user_metadata && currentUser.user_metadata.pin_hash;
       if (pinHash) {
-        let unlockedByBiometric = false;
-        if (window.zayaproAuth.isBiometricEnabled()) {
-          unlockedByBiometric = await window.zayaproAuth.tryBiometricUnlock();
-        }
-        if (!unlockedByBiometric) {
-          await requirePinUnlock(currentUser, pinHash);
-        }
+        await requirePinUnlock(currentUser, pinHash);
       } else if (window.zayaproAuth.isBiometricEnabled()) {
         // Kondisi rusak/tidak konsisten: biometrik sempat diaktifkan
         // padahal akun ini TIDAK PUNYA PIN (mis. diaktifkan sebelum
