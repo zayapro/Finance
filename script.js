@@ -10638,29 +10638,17 @@ function markPaid(kind, id) {
   refreshAll();
 }
 
-function positionNotifPanel() {
-  if (window.innerWidth <= 600) {
-    notifPanel.style.top = '';
-    notifPanel.style.left = '';
-    notifPanel.style.right = '';
-    return;
-  }
-  const rect = notifBtn.getBoundingClientRect();
-  const panelWidth = notifPanel.offsetWidth || 340;
-  let left = rect.right - panelWidth;
-  left = Math.max(12, Math.min(left, window.innerWidth - panelWidth - 12));
-  notifPanel.style.top = (rect.bottom + 10) + 'px';
-  notifPanel.style.left = left + 'px';
-  notifPanel.style.right = 'auto';
-}
-
+// Halaman Notifikasi sekarang full-screen (menutupi seluruh layar,
+// bukan lagi panel kecil yang mengambang di dekat tombol), jadi tidak
+// perlu lagi dihitung posisinya relatif terhadap tombol pemicu.
 function openNotifPanel() {
-  positionNotifPanel();
   notifPanel.classList.add('open');
   notifPanelOverlay.classList.add('open');
   lockBodyScroll();
   renderNotifPanel();
-  positionNotifPanel();
+  notifPanel.scrollTop = 0;
+  const bodyEl = document.getElementById('notifPageBody');
+  if (bodyEl) bodyEl.scrollTop = 0;
 }
 function closeNotifPanel() {
   notifPanel.classList.remove('open');
@@ -10668,7 +10656,6 @@ function closeNotifPanel() {
   if (notifDetailSheet.classList.contains('open')) closeNotifDetail();
   unlockBodyScroll();
 }
-window.addEventListener('resize', () => { if (notifPanel.classList.contains('open')) positionNotifPanel(); });
 
 // Tombol "Riwayat Transaksi" lompat LANGSUNG ke tabel transaksinya
 // (#txTableWrap), bukan cuma ke awal section (yang sebelum tabel masih
