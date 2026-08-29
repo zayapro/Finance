@@ -10618,14 +10618,25 @@ function renderNotifPanel() {
     const hasDue = !!item.dueDate;
     const due = hasDue ? dueLabel(item.dueDate) : null;
     const urgencyClass = due && due.overdue ? ' overdue' : (due && due.soon ? ' soon' : '');
-    const dueClass = due && due.overdue ? ' due-pill' : (due && due.soon ? ' due-soon' : '');
+    // dueClass (due-pill/due-soon) tidak dipakai lagi di sini sejak teks
+    // jatuh tempo di baris daftar dihilangkan -- lihat catatan di bawah.
     const readClass = isNotifRead(item.feedKind, item.id) ? ' is-read' : ' unread';
     const arrivedDateOnly = item.arrivedAt.slice(0, 10);
     const groupLabel = notifGroupDateLabel(arrivedDateOnly);
     const groupHeading = groupLabel !== lastGroupDate
       ? `<div class="notif-date-heading">${escapeHtml(groupLabel)}</div>` : '';
     lastGroupDate = groupLabel;
-    const iconMarkup = item.feedKind === 'custom' && item.customIcon ? item.customIcon : NOTIF_ITEM_ICON;
+    // PERMINTAAN BARU: ikon kiri & thumbnail kanan tidak lagi seragam
+    // (dulu semua baris pakai NOTIF_ITEM_ICON polos, cuma warnanya yg
+    // beda lewat CSS .type-hutang) -- SEKARANG tagihan & hutang pakai
+    // bentuk ikon yg beda juga (pakai set ikon yg sama dgn banner popup
+    // detail, NOTIF_DETAIL_ICONS di bawah), supaya beda kategori
+    // langsung kelihatan dari bentuknya, bukan cuma warnanya. Notifikasi
+    // kustom tetap pakai customIcon-nya sendiri (atau NOTIF_ITEM_ICON
+    // polos sbg fallback kalau tidak bawa ikon).
+    const iconMarkup = item.feedKind === 'custom'
+      ? (item.customIcon || NOTIF_ITEM_ICON)
+      : (NOTIF_DETAIL_ICONS[item.feedKind] || NOTIF_ITEM_ICON);
     const thumbMarkup = item.image
       ? `<img src="${escapeHtmlAttr(item.image)}" alt="" loading="lazy">`
       : iconMarkup;
@@ -10640,8 +10651,13 @@ function renderNotifPanel() {
           </div>
           <div class="meta">
             ${item.body ? `<span class="amt">${escapeHtml(item.body)}</span>` : ''}
-            ${due ? `<span class="due${dueClass}">${due.text}</span>` : ''}
           </div>
+          <!-- PERMINTAAN: baris tanggal jatuh tempo ("X hari lagi"/
+               "Jatuh tempo hari ini"/dst) sengaja TIDAK ditampilkan lagi
+               di pesan daftar notifikasi ini -- variabel due di atas
+               tetap dihitung & dipertahankan krn masih dipakai utk
+               urgencyClass (rona latar soon/overdue), cuma teksnya saja
+               yg tidak dicetak di sini. -->
           <div class="notif-item-time">${notifTimeLabel(item.arrivedAt)}</div>
         </div>
         <div class="notif-item-thumb${item.image ? ' has-img' : ''}">${thumbMarkup}</div>

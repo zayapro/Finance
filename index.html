@@ -1493,7 +1493,9 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
 #notifDetailBannerIc img{width:100%;height:100%;object-fit:cover;position:relative;z-index:1;}
 #notifDetailBannerIc svg{width:44px;height:44px;color:#fff;position:relative;z-index:1;}
 .notif-detail-body{padding:18px 20px calc(20px + env(safe-area-inset-bottom, 0px));overflow-y:auto;}
-.notif-detail-body h3{font-size:18px;font-weight:800;color:var(--ink);letter-spacing:-0.01em;margin:0 0 4px;line-height:1.3;}
+/* PERMINTAAN: ketebalan judul & nominal di popup detail juga
+   dikurangi (800 -> 700), konsisten dgn .notif-date-heading di daftar. */
+.notif-detail-body h3{font-size:18px;font-weight:700;color:var(--ink);letter-spacing:-0.01em;margin:0 0 4px;line-height:1.3;}
 .notif-detail-date{font-size:12px;color:var(--ink-faint);font-weight:600;margin:0 0 12px;}
 .notif-detail-amt-chip{
   display:inline-flex;align-items:baseline;gap:7px;
@@ -1501,7 +1503,7 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
   padding:8px 12px;margin-bottom:12px;
 }
 .notif-detail-amt-chip span:first-child{font-size:10.5px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:0.03em;}
-.notif-detail-amt-chip span:last-child{font-family:'Poppins',sans-serif;font-size:15.5px;font-weight:800;color:var(--ink);}
+.notif-detail-amt-chip span:last-child{font-family:'Poppins',sans-serif;font-size:15.5px;font-weight:700;color:var(--ink);}
 .notif-detail-desc{font-size:12.5px;color:var(--ink-soft);line-height:1.6;margin:0 0 16px;}
 .notif-detail-links{display:flex;align-items:center;gap:8px;margin-bottom:12px;}
 .notif-detail-links button{background:none;border:none;padding:0;font-size:12px;font-weight:700;color:var(--ink-faint);cursor:pointer;touch-action:manipulation;}
@@ -9946,9 +9948,13 @@ body.is-scrolling *{
    kaki halaman SEMUA DIHILANGKAN (lihat index.html & script.js) —
    halaman ini sekarang murni daftar notifikasi tagihan+hutang yg
    digabung jadi satu feed kronologis, tanpa fitur tambah/kelola
-   data lagi. Ikon tiap baris diseragamkan jadi lencana "i" polos
-   (lihat NOTIF_ITEM_ICON di script.js), warnanya tetap mengikuti
-   kategori (amber=tagihan, ungu=hutang, merah=terlambat).
+   data lagi. Ikon tiap baris SEKARANG dibedakan BENTUKnya per
+   kategori (lihat NOTIF_DETAIL_ICONS di script.js -- tagihan pakai
+   ikon kwitansi, hutang pakai ikon lingkaran "Rp" ), bukan lagi
+   lencana "i" polos yg diseragamkan (NOTIF_ITEM_ICON kini cuma
+   fallback utk notifikasi kustom tanpa ikon sendiri). Warna latar
+   ikon tetap mengikuti kategori juga (amber=tagihan, ungu=hutang,
+   merah=terlambat).
    ============================================================ */
 
 /* Kartu ringkasan nominal dihilangkan */
@@ -9960,7 +9966,10 @@ body.is-scrolling *{
 /* Judul pengelompokan tanggal: jeda lebih lega dari grup sebelumnya,
    persis pola "29 Agustus 2026" / "28 Agustus 2026" di referensi */
 .notif-date-heading{
-  font-size:13px;font-weight:800;color:var(--ink);
+  /* PERMINTAAN: dikurangi ketebalannya dari 800 -> 700 (800 kelihatan
+     terlalu tebal utk teks sentence-case sebesar ini dibanding label
+     kecil huruf-kapital ala .isp-date-group-head). */
+  font-size:13px;font-weight:700;color:var(--ink);
   padding:18px 0 10px;
 }
 .notif-date-heading:first-child{padding-top:0;}
