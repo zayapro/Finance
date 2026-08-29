@@ -9912,13 +9912,15 @@ body.is-scrolling *{
    dipisah garis tipis antar-baris dalam tanggal yang sama, ikon
    kotak kecil solid di kiri, judul tebal + subjudul + keterangan
    waktu, dan lencana/gambar kotak kecil di kanan. Kartu ringkasan
-   nominal (chip "Tagihan Aktif"/"Hutang Aktif") DIHILANGKAN karena
-   tidak ada di referensi & itu yg paling terasa sbg "kartu lain" di
-   luar daftar notifikasi polos. Tab Tagihan/Hutang & tombol
-   Tambah/Lihat Semua di kaki halaman TETAP dipertahankan karena
-   perlu utk fungsi tambah data (tidak ada di gambar referensi sebab
-   itu cuma tangkapan layar app lain, bukan bagian dari daftar
-   notifikasinya sendiri). ============================================================ */
+   nominal (chip "Tagihan Aktif"/"Hutang Aktif"), tab pemilih
+   Tagihan/Hutang, dan tombol "+ Tambah Tagihan"/"Lihat Semua" di
+   kaki halaman SEMUA DIHILANGKAN (lihat index.html & script.js) —
+   halaman ini sekarang murni daftar notifikasi tagihan+hutang yg
+   digabung jadi satu feed kronologis, tanpa fitur tambah/kelola
+   data lagi. Ikon tiap baris diseragamkan jadi lencana "i" polos
+   (lihat NOTIF_ITEM_ICON di script.js), warnanya tetap mengikuti
+   kategori (amber=tagihan, ungu=hutang, merah=terlambat).
+   ============================================================ */
 
 /* Kartu ringkasan nominal dihilangkan */
 .notif-summary{display:none !important;}
@@ -9973,6 +9975,11 @@ body.is-scrolling *{
 .notif-item.type-hutang .notif-item-ic{background:#7C3AED;}
 .notif-item.overdue .notif-item-ic{background:var(--wine);}
 .notif-item-ic svg{width:13px;height:13px;}
+
+/* Ikon di dalam lencana kanan (thumbnail) sengaja dibuat lebih besar
+   drpd ikon kiri, biar kotak 50x50-nya tidak terasa kosong (ikon
+   kecilnya sama, cuma ukuran tampilnya dibedakan lewat CSS). */
+.notif-item-thumb svg{width:22px;height:22px;}
 
 /* Judul + subjudul + keterangan waktu: pola 3-baris ala referensi
    (judul tebal, subjudul abu-abu bisa 2 baris, keterangan waktu
@@ -13072,32 +13079,7 @@ body.is-scrolling *{
   </div>
 
   <div class="notif-page-body" id="notifPageBody">
-    <div class="notif-summary" id="notifSummary"></div>
-
-    <div class="notif-tabs" id="notifTabs">
-      <button class="notif-tab-btn active" data-notiftab="tagihan">
-        <svg class="tab-ic" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.2"/><path d="M7 9h10M7 13h6"/></svg>
-        Tagihan <span class="cnt" id="notifCntTagihan">0</span>
-      </button>
-      <button class="notif-tab-btn" data-notiftab="hutang">
-        <svg class="tab-ic" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 15.5c0 1.1 1 2 2.5 2s2.5-.9 2.5-2-1-1.7-2.5-2.1S9.5 12.6 9.5 11.5s1-2 2.5-2 2.5.9 2.5 2"/></svg>
-        Hutang <span class="cnt" id="notifCntHutang">0</span>
-      </button>
-    </div>
-
     <div class="notif-list" id="notifList"></div>
-    <div class="notif-list-more" id="notifListMore" style="display:none;"></div>
-
-    <div class="notif-panel-foot">
-      <button class="btn btn-primary notif-add-btn" id="notifAddBtn" type="button">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 5v14M5 12h14"/></svg>
-        <span id="notifAddBtnLabel">Tambah Tagihan</span>
-      </button>
-      <button class="notif-viewall-btn" id="notifViewAllBtn" type="button" title="Lihat semua tagihan &amp; hutang">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2.4"/><path d="M3 10h18M9 10v10"/></svg>
-        Lihat Semua
-      </button>
-    </div>
   </div>
 </div>
 

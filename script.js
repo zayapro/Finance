@@ -759,7 +759,6 @@ let historyVisibleGroups = HISTORY_GROUPS_PER_PAGE;
 ========================================================== */
 const STORAGE_KEY_BILLS = 'alirin_bills_v1';
 const STORAGE_KEY_DEBTS = 'alirin_debts_v1';
-let notifTab = 'tagihan';
 
 // Sengaja dikosongkan -- database baru/default tidak berisi contoh
 // tagihan/hutang apa pun, user menambahkan sendiri lewat tombol
@@ -10435,60 +10434,36 @@ function maybeShowDueReminder() {
   try { cloudStorage.setItem(NOTIF_REMINDER_FLAG_KEY, todayStr()); } catch (e) { /* abaikan */ }
 }
 
+// Ikon notifikasi diseragamkan jadi lencana "i" polos (persis gaya
+// ikon notifikasi pada referensi) alih-alih ikon per-kategori yang
+// berbeda-beda — sekarang halaman ini murni daftar notifikasi
+// (tanpa tab pemilih kategori), jadi ikonnya cukup satu bentuk yang
+// sama utk semua baris; makna kategori tetap tersampaikan lewat
+// warna lencana (amber=tagihan, ungu=hutang, merah=terlambat).
+const NOTIF_ITEM_ICON = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 11v6"/><circle cx="12" cy="7.2" r="0.6" fill="currentColor" stroke="none"/></svg>';
+
 function renderNotifPanel() {
   updateNotifBadge();
 
-  const unpaidBills = bills.filter(b => b.status === 'belum');
-  const unpaidDebts = debts.filter(d => d.status === 'belum');
-  const totalBills = unpaidBills.reduce((s, b) => s + Number(b.amount || 0), 0);
-  const totalDebts = unpaidDebts.reduce((s, d) => s + Number(d.amount || 0), 0);
-
-  document.getElementById('notifSummary').innerHTML = `
-    <div class="notif-summary-chip${unpaidBills.some(b => daysUntil(b.dueDate) < 0) ? ' warn' : ''}">
-      <div class="k">Tagihan Aktif <span class="cnt">(${unpaidBills.length})</span></div>
-      <div class="v">${fmtRupiah(totalBills)}</div>
-    </div>
-    <div class="notif-summary-chip${unpaidDebts.some(d => daysUntil(d.dueDate) < 0) ? ' warn' : ''}">
-      <div class="k">Hutang Aktif <span class="cnt">(${unpaidDebts.length})</span></div>
-      <div class="v">${fmtRupiah(totalDebts)}</div>
-    </div>`;
-
-  document.querySelectorAll('.notif-tab-btn').forEach(b => b.classList.toggle('active', b.dataset.notiftab === notifTab));
-  document.getElementById('notifAddBtnLabel').textContent = notifTab === 'tagihan' ? 'Tambah Tagihan' : 'Tambah Hutang';
-  document.getElementById('notifCntTagihan').textContent = unpaidBills.length;
-  document.getElementById('notifCntHutang').textContent = unpaidDebts.length;
-
-  const fullList = (notifTab === 'tagihan' ? unpaidBills : unpaidDebts)
-    .sort((a, b) => a.dueDate.localeCompare(b.dueDate));
-
-  // Popup hanya menampilkan pratinjau item paling mendesak (jatuh tempo
-  // terdekat). Daftar lengkap (termasuk yang sudah lunas) hanya bisa
-  // dilihat lewat halaman "Lihat Semua" supaya popup tetap ringkas
-  // walau jumlah tagihan/hutang yang ditambahkan sudah banyak.
-  const NOTIF_PREVIEW_LIMIT = 5;
-  const list = fullList.slice(0, NOTIF_PREVIEW_LIMIT);
-  const remaining = fullList.length - list.length;
+  // Halaman ini sekarang murni daftar notifikasi (tanpa tab pemilih
+  // Tagihan/Hutang, tanpa tombol tambah/lihat semua) -- tagihan &
+  // hutang yang belum lunas digabung jadi satu feed kronologis,
+  // diurutkan berdasarkan tanggal jatuh tempo terdekat, persis pola
+  // notifikasi tunggal pada referensi.
+  const unpaidBills = bills.filter(b => b.status === 'belum').map(b => ({ ...b, kind: 'tagihan' }));
+  const unpaidDebts = debts.filter(d => d.status === 'belum').map(d => ({ ...d, kind: 'hutang' }));
+  const fullList = [...unpaidBills, ...unpaidDebts].sort((a, b) => a.dueDate.localeCompare(b.dueDate));
 
   const listEl = document.getElementById('notifList');
-  const moreEl = document.getElementById('notifListMore');
 
   if (fullList.length === 0) {
     listEl.innerHTML = `<div class="notif-empty">
       <div class="notif-empty-ic">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>
       </div>
-      <p>${notifTab === 'tagihan' ? 'Tidak ada tagihan yang belum dibayar.' : 'Tidak ada hutang yang belum lunas.'}</p>
+      <p>Tidak ada notifikasi tagihan atau hutang saat ini.</p>
     </div>`;
-    moreEl.style.display = 'none';
     return;
-  }
-
-  if (remaining > 0) {
-    moreEl.style.display = 'block';
-    moreEl.style.cursor = 'pointer';
-    moreEl.textContent = `+${remaining} ${notifTab} lainnya · lihat semua →`;
-  } else {
-    moreEl.style.display = 'none';
   }
 
   // ---- Kelompokkan daftar per tanggal jatuh tempo (mis. "29 Agustus
@@ -10497,7 +10472,7 @@ function renderNotifPanel() {
   // hanya dicetak sekali per tanggal yang sama (item sudah terurut
   // menaik berdasarkan dueDate). ----
   let lastGroupDate = null;
-  listEl.innerHTML = list.map(item => {
+  listEl.innerHTML = fullList.map(item => {
     const due = dueLabel(item.dueDate);
     const urgencyClass = due.overdue ? ' overdue' : (due.soon ? ' soon' : '');
     const dueClass = due.overdue ? ' due-pill' : (due.soon ? ' due-soon' : '');
@@ -10505,12 +10480,9 @@ function renderNotifPanel() {
     const groupHeading = groupLabel !== lastGroupDate
       ? `<div class="notif-date-heading">${escapeHtml(groupLabel)}</div>` : '';
     lastGroupDate = groupLabel;
-    const icSvg = notifTab === 'tagihan'
-      ? '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>'
-      : '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="9"/><path d="M9.5 15.5c0 1.1 1 2 2.5 2s2.5-.9 2.5-2-1-1.7-2.5-2.1S9.5 12.6 9.5 11.5s1-2 2.5-2 2.5.9 2.5 2"/></svg>';
     return `${groupHeading}
-      <div class="notif-item type-${notifTab}${urgencyClass}" data-notifopen="${item.id}" data-notifkind="${notifTab}" role="button" tabindex="0">
-        <div class="notif-item-ic">${icSvg}</div>
+      <div class="notif-item type-${item.kind}${urgencyClass}" data-notifopen="${item.id}" data-notifkind="${item.kind}" role="button" tabindex="0">
+        <div class="notif-item-ic">${NOTIF_ITEM_ICON}</div>
         <div class="notif-item-body">
           <div class="nm">
             <span class="nm-text" title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</span>
@@ -10521,7 +10493,7 @@ function renderNotifPanel() {
             <span class="due${dueClass}">${due.text}</span>
           </div>
         </div>
-        <div class="notif-item-thumb">${icSvg}</div>
+        <div class="notif-item-thumb">${NOTIF_ITEM_ICON}</div>
       </div>`;
   }).join('');
 }
@@ -10694,12 +10666,6 @@ document.getElementById('miniNotifBtn').addEventListener('click', (e) => {
 });
 document.getElementById('notifCloseBtn').addEventListener('click', closeNotifPanel);
 notifPanelOverlay.addEventListener('click', closeNotifPanel);
-document.getElementById('notifTabs').addEventListener('click', (e) => {
-  const btn = e.target.closest('.notif-tab-btn');
-  if (!btn) return;
-  notifTab = btn.dataset.notiftab;
-  renderNotifPanel();
-});
 document.getElementById('notifList').addEventListener('click', (e) => {
   const row = e.target.closest('[data-notifopen]');
   if (row) openNotifDetail(row.dataset.notifkind, row.dataset.notifopen);
@@ -10708,10 +10674,6 @@ document.getElementById('notifList').addEventListener('keydown', (e) => {
   const row = e.target.closest('[data-notifopen]');
   if (row && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openNotifDetail(row.dataset.notifkind, row.dataset.notifopen); }
 });
-document.getElementById('notifAddBtn').addEventListener('click', () => {
-  closeNotifPanel();
-  openBillModal(notifTab);
-});
 document.addEventListener('click', (e) => {
   if (!notifPanel.classList.contains('open')) return;
   // Panel sekarang berada di luar .notif-wrap (dipindah ke level teratas
@@ -10719,16 +10681,6 @@ document.addEventListener('click', (e) => {
   // itu sendiri juga harus dianggap "di dalam", bukan cuma tombol pemicunya.
   if (!e.target.closest('.notif-wrap') && !e.target.closest('#notifPanel') && !e.target.closest('#notifDetailSheet') && !e.target.closest('#notifDetailOverlay')) closeNotifPanel();
 });
-document.getElementById('notifViewAllBtn').addEventListener('click', () => {
-  closeNotifPanel();
-  openBdAllPage(notifTab);
-});
-document.getElementById('notifListMore').addEventListener('click', () => {
-  const tabToOpen = notifTab;
-  closeNotifPanel();
-  openBdAllPage(tabToOpen);
-});
-
 /* ==========================================================
    HALAMAN "SEMUA TAGIHAN & HUTANG"
    Menampilkan seluruh data tagihan & hutang yang pernah
