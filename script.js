@@ -9819,7 +9819,18 @@ function pcGoToStep(step) {
 function openPinChangeOverlay() {
   pcOldOk = false;
   pcNewPin = '';
-  pcGoToStep('old');
+  // Kalau akun ini BELUM PERNAH punya PIN sama sekali (mis. dibuat
+  // sebelum fitur PIN ada, atau lewat jalur yang tidak mewajibkan
+  // PIN saat daftar), tidak ada "PIN lama" yang bisa diverifikasi --
+  // langsung lompat ke step buat PIN baru, drpd memaksa user
+  // memasukkan PIN yang memang tidak pernah ada (dead end).
+  const hasExistingPin = window.zayaproAuth && window.zayaproAuth.hasPin();
+  if (hasExistingPin) {
+    pcGoToStep('old');
+  } else {
+    pcOldOk = true;
+    pcGoToStep('new');
+  }
   document.getElementById('pinChangeOverlay').classList.add('open');
   lockBodyScroll();
 }
