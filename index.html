@@ -7995,6 +7995,100 @@ html.zp-app-loading .page-body > .lap-panel{display:none;}
    pada gambar referensi yang diminta, beda dgn section Transaksi &
    Kategori di bawahnya yang tetap pakai gaya kartu biasa. ---- */
 .lap-filter-section--flat{background:transparent;border:none;box-shadow:none;padding:0;}
+
+/* ================================================================
+   HALAMAN "PUSAT BANTUAN" (#bantuanOverlay) -- lihat markup & catatan
+   lengkap di HTML. Header .bantuan-head + .bantuan-hero SENGAJA
+   dipakaikan warna yg SAMA PERSIS dgn .lap-filter-head (var(--nav-orange),
+   otomatis ikut berubah kalau warna tema aplikasi diganti lewat
+   halaman Tema) supaya kelihatan menyatu jadi SATU banner, bukan dua
+   blok warna terpisah. ---- */
+.bantuan-head{padding-bottom:14px;}
+.bantuan-hero{
+  position:relative;z-index:1;
+  background:var(--nav-orange);color:#FFF8F1;
+  padding:2px 20px clamp(36px,8vw,50px);
+}
+.bantuan-hero-title{
+  margin:6px 0 14px;font-family:'Poppins',sans-serif;font-size:19px;font-weight:500;
+  letter-spacing:-0.01em;color:#FFF8F1;
+}
+.bantuan-search{
+  display:flex;align-items:center;gap:9px;
+  background:rgba(255,248,241,0.95);border-radius:999px;
+  padding:12px 16px;box-shadow:0 6px 18px rgba(15,23,42,0.12);
+}
+.bantuan-search .search-ic{color:var(--ink-faint);flex-shrink:0;display:flex;}
+.bantuan-search input[type="search"]{
+  flex:1;min-width:0;border:none;background:transparent;padding:1px 0;
+  font-family:'Poppins',sans-serif;letter-spacing:-0.005em;font-size:14.5px;color:var(--ink);
+}
+.bantuan-search input[type="search"]:focus{outline:none;}
+.bantuan-search input[type="search"]::-webkit-search-cancel-button{display:none;}
+.bantuan-search input[type="search"]::placeholder{color:var(--ink-faint);}
+/* Kartu putih menumpang di ujung bawah hero -- reuse .lap-filter-card
+   polos (margin negatif + radius 28px atas), TANPA modifier --rest,
+   krn di sini dialah yg bertugas bikin lengkungnya sendiri (beda dgn
+   #dataDiriOverlay/#temaOverlay yg lengkungnya sudah dipakai duluan
+   oleh .tema-preview-wrap). */
+.bantuan-card{gap:20px;}
+.bantuan-section{display:flex;flex-direction:column;gap:10px;}
+.bantuan-list{display:flex;flex-direction:column;gap:10px;}
+/* ---- Tiap item menu = KARTU PUTIH SENDIRI, radius/shadow/border SAMA
+   PERSIS dgn kartu2 lain di seluruh app (var(--card)/var(--line)/
+   var(--radius)/var(--shadow-sm)) -- sesuai permintaan "gaya kartu
+   putih radius yang sama seperti halaman saya". ---- */
+.bantuan-row{
+  display:flex;align-items:center;gap:12px;width:100%;
+  background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  box-shadow:var(--shadow-sm);padding:13px 14px;text-align:left;cursor:pointer;
+  text-decoration:none;color:inherit;font-family:inherit;
+  transition:background .15s ease, transform .15s ease;
+}
+.bantuan-row:hover{background:var(--paper);}
+.bantuan-row:active{transform:scale(0.99);}
+.bantuan-row-ic{
+  width:40px;height:40px;flex-shrink:0;border-radius:12px;
+  display:flex;align-items:center;justify-content:center;
+  background:color-mix(in srgb, var(--primary) 12%, white);color:var(--primary);
+}
+.bantuan-row-text{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;}
+.bantuan-row-text strong{
+  font-family:'Poppins',sans-serif;font-weight:500;letter-spacing:-0.005em;
+  font-size:14px;color:var(--ink);
+}
+.bantuan-row-text span{font-size:12px;color:var(--ink-soft);line-height:1.35;}
+.bantuan-row-chevron{flex-shrink:0;color:var(--ink-faint);}
+.bantuan-faq-chevron{transition:transform .18s ease;}
+#bantuanFaqToggleBtn[aria-expanded="true"] .bantuan-faq-chevron{transform:rotate(90deg);}
+/* ---- Daftar FAQ (accordion), muncul di bawah baris "FAQ" saat dibuka.
+   Tiap pertanyaan jadi kartu putih juga (konsisten dgn .bantuan-row),
+   jawabannya toggle lewat class .open (lihat initBantuanPage() di
+   script.js). ---- */
+.bantuan-faq-list{display:flex;flex-direction:column;gap:10px;margin-top:2px;}
+.bantuan-faq-list[hidden]{display:none;}
+.bantuan-faq-item{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  box-shadow:var(--shadow-sm);overflow:hidden;
+}
+.bantuan-faq-item[hidden]{display:none;}
+.bantuan-faq-q{
+  width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;
+  background:none;border:none;padding:13px 14px;text-align:left;cursor:pointer;
+  font-family:'Poppins',sans-serif;font-weight:500;letter-spacing:-0.005em;
+  font-size:13.5px;color:var(--ink);
+}
+.bantuan-faq-caret{flex-shrink:0;color:var(--ink-faint);transition:transform .18s ease;}
+.bantuan-faq-item.open .bantuan-faq-caret{transform:rotate(180deg);}
+.bantuan-faq-a{
+  max-height:0;overflow:hidden;padding:0 14px;margin:0;
+  font-size:12.5px;color:var(--ink-soft);line-height:1.55;
+  transition:max-height .2s ease, padding .2s ease;
+}
+.bantuan-faq-item.open .bantuan-faq-a{max-height:220px;padding:0 14px 14px;}
+.bantuan-empty{text-align:center;font-size:12.5px;color:var(--ink-faint);padding:10px 4px 2px;}
+.bantuan-empty[hidden]{display:none;}
+/* ================================================================ */
 /* ---- Kotak "Pilih Bulan" / "Pilih Tanggal": muncul menempel tepat di
    bawah baris radio terkait begitu radio itu dipilih (bukan dipisah ke
    popup kalender sendiri) -- memakai <input type="month">/"date"> bawaan
@@ -11382,6 +11476,165 @@ body.is-scrolling *{
   </div>
   <!-- ===== /HALAMAN "DATA DIRI" ===== -->
 
+  <!-- ===== HALAMAN "PUSAT BANTUAN" (#bantuanOverlay) =====
+       Struktur & pola animasi (slide dari kanan, header warna tema +
+       kartu putih melengkung menumpang di bawahnya) SAMA PERSIS dgn
+       #dataDiriOverlay/#temaOverlay di atas (.detail-page-overlay
+       .lap-filter-overlay > .lap-filter-page > .lap-filter-head +
+       .lap-filter-card), supaya konsisten dgn halaman penuh lain di
+       app ini. Bedanya, di sini area warna header DILANJUTKAN sedikit
+       lebih panjang (.bantuan-hero, background sama var(--nav-orange)
+       spt .lap-filter-head, jadi kelihatan MENYATU jadi satu banner)
+       untuk menampung judul sapaan + kolom pencarian, meniru susunan
+       gambar referensi (Pusat Bantuan BRImo) -- lalu kartu putihnya
+       (.lap-filter-card) menumpang di ujung bawah hero itu persis
+       seperti biasa. Setiap item menu di bawah SENGAJA dibuat jadi
+       kartu putih sendiri-sendiri (bukan cuma baris bergaris pemisah
+       spt .settings-row) -- pakai var(--card)/var(--line)/var(--radius)/
+       var(--shadow-sm) yg SAMA PERSIS dgn kartu-kartu lain di seluruh
+       app (mis. .lap-filter-section, .detail-total-card), sesuai
+       permintaan "gaya kartu putih radius yang sama seperti halaman
+       saya". Isi FAQ dibuat accordion beneran (buka/tutup + bisa
+       difilter dari kolom pencarian di hero) supaya halaman ini tidak
+       cuma tampilan kosong, lihat initBantuanPage() di script.js. -->
+  <div class="detail-page-overlay lap-filter-overlay" id="bantuanOverlay">
+    <div class="lap-filter-page">
+      <div class="lap-filter-head bantuan-head">
+        <button class="lap-filter-back-btn" id="bantuanBackBtn" type="button" aria-label="Tutup Pusat Bantuan">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <h2>Pusat Bantuan</h2>
+        <span class="lap-filter-back-btn" style="visibility:hidden" aria-hidden="true"></span>
+      </div>
+
+      <div class="bantuan-hero">
+        <p class="bantuan-hero-title">Ada yang bisa kami bantu?</p>
+        <div class="bantuan-search">
+          <span class="search-ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span>
+          <input type="search" id="bantuanSearchInput" placeholder="Cari pertanyaan atau bantuan...">
+        </div>
+      </div>
+
+      <div class="lap-filter-card bantuan-card">
+
+        <div class="bantuan-section" id="bantuanUmumSection">
+          <span class="settings-section-label">Pengaduan &amp; Pertanyaan Umum</span>
+          <div class="bantuan-list">
+            <button type="button" class="bantuan-row" id="bantuanAjukanBtn">
+              <span class="bantuan-row-ic">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3.5h6l4 4v13a1.5 1.5 0 0 1-1.5 1.5h-8.5a1.5 1.5 0 0 1-1.5-1.5v-15A1.5 1.5 0 0 1 8 3.5Z"/><path d="M14 3.5V8h4"/><path d="M9 13h6M9 16.5h4"/><circle cx="17.5" cy="16.5" r="3.2"/><path d="M17.5 15.2v1.3l.9.9" stroke-linecap="round"/></svg>
+              </span>
+              <span class="bantuan-row-text">
+                <strong>Ajukan Pengaduan</strong>
+                <span>Buat tiket untuk melaporkan keluhanmu</span>
+              </span>
+              <svg class="bantuan-row-chevron" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"/></svg>
+            </button>
+
+            <button type="button" class="bantuan-row" id="bantuanPantauBtn">
+              <span class="bantuan-row-ic">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3.5h6l4 4v13a1.5 1.5 0 0 1-1.5 1.5h-8.5a1.5 1.5 0 0 1-1.5-1.5v-15A1.5 1.5 0 0 1 8 3.5Z"/><path d="M14 3.5V8h4"/><path d="m9.3 14 1.7 1.7 3.7-3.7"/></svg>
+              </span>
+              <span class="bantuan-row-text">
+                <strong>Pantau Pengaduan</strong>
+                <span>Pantau status tiket bantuanmu di sini</span>
+              </span>
+              <svg class="bantuan-row-chevron" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"/></svg>
+            </button>
+
+            <button type="button" class="bantuan-row" id="bantuanFaqToggleBtn" aria-expanded="false" aria-controls="bantuanFaqList">
+              <span class="bantuan-row-ic">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.2 9.3a2.8 2.8 0 1 1 3.9 2.6c-.8.35-1.1.85-1.1 1.6v.3" stroke-linecap="round"/><circle cx="12" cy="16.9" r="1" fill="currentColor" stroke="none"/></svg>
+              </span>
+              <span class="bantuan-row-text">
+                <strong>FAQ</strong>
+                <span>Seputar pertanyaanmu, ada di sini</span>
+              </span>
+              <svg class="bantuan-row-chevron bantuan-faq-chevron" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"/></svg>
+            </button>
+          </div>
+
+          <!-- ---- Daftar FAQ (accordion): tersembunyi default, terbuka
+               saat baris "FAQ" di atas ditekan. Tiap pertanyaan bisa
+               dibuka/ditutup sendiri-sendiri, & seluruh daftar ini ikut
+               tersaring saat kolom pencarian di hero diisi (lihat
+               initBantuanPage() di script.js). ---- -->
+          <div class="bantuan-faq-list" id="bantuanFaqList" hidden>
+            <div class="bantuan-faq-item" data-faq-q="bagaimana cara menambah transaksi pemasukan pengeluaran baru">
+              <button type="button" class="bantuan-faq-q">
+                <span>Bagaimana cara menambah transaksi baru?</span>
+                <svg class="bantuan-faq-caret" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m6 9 6 6 6-6"/></svg>
+              </button>
+              <p class="bantuan-faq-a">Tekan tombol tambah (+) di halaman Beranda, lalu isi nominal, kategori, dan keterangan transaksi. Data langsung tersimpan dan tampil di ringkasan Beranda &amp; Laporan.</p>
+            </div>
+            <div class="bantuan-faq-item" data-faq-q="lupa pin ubah pin ganti pin password keamanan">
+              <button type="button" class="bantuan-faq-q">
+                <span>Bagaimana jika saya lupa PIN atau ingin menggantinya?</span>
+                <svg class="bantuan-faq-caret" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m6 9 6 6 6-6"/></svg>
+              </button>
+              <p class="bantuan-faq-a">Buka Pengaturan &gt; Keamanan &gt; Ubah PIN. Kamu perlu memverifikasi PIN atau password lama sebelum bisa mengganti dengan yang baru.</p>
+            </div>
+            <div class="bantuan-faq-item" data-faq-q="ekspor unduh laporan excel pdf export">
+              <button type="button" class="bantuan-faq-q">
+                <span>Bagaimana cara mengekspor laporan keuangan?</span>
+                <svg class="bantuan-faq-caret" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m6 9 6 6 6-6"/></svg>
+              </button>
+              <p class="bantuan-faq-a">Buka halaman Laporan, lalu tekan ikon unduh di pojok atas untuk mengunduh data dalam format Excel (XLSX) atau PDF.</p>
+            </div>
+            <div class="bantuan-faq-item" data-faq-q="login biometrik sidik jari face id aman data tersimpan cloud sinkron">
+              <button type="button" class="bantuan-faq-q">
+                <span>Apakah data keuanganku aman &amp; tersimpan di mana?</span>
+                <svg class="bantuan-faq-caret" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m6 9 6 6 6-6"/></svg>
+              </button>
+              <p class="bantuan-faq-a">Data tersimpan di perangkatmu. Jika kamu masuk/daftar akun, data juga disinkronkan aman ke cloud agar tetap tersedia walau ganti perangkat. Kamu juga bisa mengaktifkan Login Biometrik lewat Pengaturan &gt; Keamanan untuk perlindungan tambahan.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="bantuan-section">
+          <span class="settings-section-label">Kontak Kami</span>
+          <div class="bantuan-list">
+            <a class="bantuan-row" href="https://wa.me/6280000000000" target="_blank" rel="noopener">
+              <span class="bantuan-row-ic">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20.5 5.3 16A8.4 8.4 0 1 1 8.6 19.2Z"/><path d="M8.7 8.6c.2-.5.4-.5.7-.5h.5c.2 0 .4 0 .6.4.2.5.7 1.6.7 1.8.1.2.1.3 0 .5-.1.2-.2.3-.4.5-.2.2-.3.3-.1.6.2.4.9 1.4 1.9 2.2 1.3 1 2.3 1.3 2.6 1.5.3.1.5.1.7-.1.2-.2.7-.8.9-1.1.2-.3.4-.2.6-.1.2.1 1.5.7 1.8.8.3.1.5.2.5.4 0 .2 0 1-.4 1.5-.4.6-1.5 1.1-2.1 1.1-.6 0-1.6-.2-3.5-1.2-2.4-1.3-4-3.8-4.1-4Z" fill="currentColor" stroke="none"/></svg>
+              </span>
+              <span class="bantuan-row-text">
+                <strong>WhatsApp</strong>
+                <span>Chat langsung dengan tim dukungan</span>
+              </span>
+              <svg class="bantuan-row-chevron" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"/></svg>
+            </a>
+
+            <a class="bantuan-row" href="tel:1500017">
+              <span class="bantuan-row-ic">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4.5h3.2l1.3 4-2 1.5a11.5 11.5 0 0 0 5.5 5.5l1.5-2 4 1.3V18a1.5 1.5 0 0 1-1.6 1.5C10.9 19 4.5 12.6 3.5 5.9A1.5 1.5 0 0 1 5 4.5Z"/></svg>
+              </span>
+              <span class="bantuan-row-text">
+                <strong>Telepon Bantuan</strong>
+                <span>Layanan dikenakan tarif pulsa normal</span>
+              </span>
+              <svg class="bantuan-row-chevron" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"/></svg>
+            </a>
+
+            <a class="bantuan-row" href="mailto:cs@zayain.app?subject=Pengaduan%20-%20ZAYAin">
+              <span class="bantuan-row-ic">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5.5" width="18" height="13" rx="2"/><path d="m4 7 8 6 8-6"/></svg>
+              </span>
+              <span class="bantuan-row-text">
+                <strong>Email</strong>
+                <span>cs@zayain.app</span>
+              </span>
+              <svg class="bantuan-row-chevron" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"/></svg>
+            </a>
+          </div>
+        </div>
+
+        <p class="bantuan-empty" id="bantuanEmptyState" hidden>Tidak ada hasil yang cocok dengan pencarianmu.</p>
+      </div>
+    </div>
+  </div>
+  <!-- ===== /HALAMAN "PUSAT BANTUAN" ===== -->
+
   <!-- ===== BOTTOM SHEET: KONFIRMASI UBAH PIN =====
        Dipicu dari baris "Ubah PIN" di Pengaturan > Keamanan. Tombol
        "Ubah PIN" di sini menutup sheet & membuka halaman penuh
@@ -11776,7 +12029,7 @@ body.is-scrolling *{
         <div class="settings-section">
           <span class="settings-section-label">Kontak</span>
           <div class="settings-group">
-            <button type="button" class="settings-row" disabled>
+            <button type="button" class="settings-row" id="bantuanOpenBtn">
               <span class="settings-row-icon">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13v-1a8 8 0 0 1 16 0v1"/><rect x="2.5" y="13" width="4.5" height="6" rx="1.6"/><rect x="17" y="13" width="4.5" height="6" rx="1.6"/><path d="M20 19v1a3 3 0 0 1-3 3h-3.5"/></svg>
               </span>

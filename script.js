@@ -9757,6 +9757,96 @@ document.getElementById('dataDiriCancelBtn')?.addEventListener('click', closeDat
 document.getElementById('dataDiriDoneBtn')?.addEventListener('click', confirmDataDiriOverlay);
 
 /* ==========================================================
+   PENGATURAN > KONTAK — Pusat Bantuan (#bantuanOverlay).
+   Pola buka/tutup SAMA PERSIS dgn openDataDiriOverlay/closeDataDiriOverlay
+   di atas. Selain itu ada 2 fitur kecil yg beneran jalan (bukan cuma
+   tampilan): accordion FAQ (buka/tutup per pertanyaan) & kolom
+   pencarian di hero yg menyaring baris "Pengaduan & Pertanyaan Umum"
+   + daftar FAQ sekaligus berdasarkan kata kunci yg diketik. ---- */
+function openBantuanOverlay() {
+  document.getElementById('bantuanOverlay')?.classList.add('open');
+  lockBodyScroll();
+}
+function closeBantuanOverlay() {
+  document.getElementById('bantuanOverlay')?.classList.remove('open');
+  unlockBodyScroll();
+}
+document.getElementById('bantuanOpenBtn')?.addEventListener('click', openBantuanOverlay);
+document.getElementById('bantuanBackBtn')?.addEventListener('click', closeBantuanOverlay);
+
+function initBantuanPage() {
+  const faqToggleBtn = document.getElementById('bantuanFaqToggleBtn');
+  const faqList = document.getElementById('bantuanFaqList');
+  const faqItems = Array.from(document.querySelectorAll('#bantuanFaqList .bantuan-faq-item'));
+  const searchInput = document.getElementById('bantuanSearchInput');
+  const umumRows = Array.from(document.querySelectorAll('#bantuanUmumSection .bantuan-row'));
+  const emptyState = document.getElementById('bantuanEmptyState');
+
+  // Baris "FAQ": buka/tutup seluruh daftar accordion di bawahnya.
+  faqToggleBtn?.addEventListener('click', () => {
+    const willOpen = faqList.hasAttribute('hidden');
+    faqList.toggleAttribute('hidden', !willOpen);
+    faqToggleBtn.setAttribute('aria-expanded', String(willOpen));
+  });
+
+  // Tiap pertanyaan FAQ: buka/tutup jawabannya sendiri-sendiri, tidak
+  // saling menutup satu sama lain (bisa beberapa terbuka sekaligus).
+  faqItems.forEach((item) => {
+    item.querySelector('.bantuan-faq-q')?.addEventListener('click', () => {
+      item.classList.toggle('open');
+    });
+  });
+
+  // Placeholder untuk "Ajukan Pengaduan" & "Pantau Pengaduan": belum
+  // ada backend tiket sungguhan di app ini, jadi sementara cukup
+  // diarahkan lewat toast + kanal kontak di bawah (WhatsApp/Email),
+  // konsisten dgn pola baris "belum difungsikan" lain di app ini.
+  document.getElementById('bantuanAjukanBtn')?.addEventListener('click', () => {
+    showToast('Fitur tiket pengaduan segera hadir. Sementara, hubungi kami lewat WhatsApp atau Email di bawah ya.');
+  });
+  document.getElementById('bantuanPantauBtn')?.addEventListener('click', () => {
+    showToast('Fitur pantau status tiket segera hadir.');
+  });
+
+  // Kolom pencarian di hero: menyaring baris "Pengaduan & Pertanyaan
+  // Umum" (dari judul+deskripsinya) sekaligus daftar FAQ (dari
+  // data-faq-q, ditambah pertanyaan & jawabannya) berdasarkan kata
+  // kunci yg diketik. Kalau ada hasil dari FAQ, daftarnya otomatis
+  // dibuka supaya tidak perlu tekan "FAQ" dulu.
+  searchInput?.addEventListener('input', () => {
+    const q = searchInput.value.trim().toLowerCase();
+    let anyVisible = false;
+
+    umumRows.forEach((row) => {
+      const text = row.textContent.toLowerCase();
+      const match = !q || text.includes(q);
+      row.style.display = match ? '' : 'none';
+      if (match) anyVisible = true;
+    });
+
+    let anyFaqMatch = false;
+    faqItems.forEach((item) => {
+      const haystack = (item.dataset.faqQ || '') + ' ' + item.textContent.toLowerCase();
+      const match = !q || haystack.toLowerCase().includes(q);
+      item.toggleAttribute('hidden', !match);
+      if (match) { anyFaqMatch = true; anyVisible = true; }
+    });
+
+    if (q && anyFaqMatch) {
+      faqList.removeAttribute('hidden');
+      faqToggleBtn?.setAttribute('aria-expanded', 'true');
+    } else if (!q) {
+      faqList.setAttribute('hidden', '');
+      faqToggleBtn?.setAttribute('aria-expanded', 'false');
+      faqItems.forEach((item) => item.classList.remove('open'));
+    }
+
+    emptyState?.toggleAttribute('hidden', anyVisible || !q);
+  });
+}
+initBantuanPage();
+
+/* ==========================================================
    PENGATURAN > KEAMANAN — Ubah PIN, Ubah Password, Login Biometrik.
    Semua operasi otentikasi sesungguhnya (verifikasi/ubah PIN & password,
    kirim email reset, WebAuthn) dilempar ke window.zayaproAuth yang
