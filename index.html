@@ -7544,6 +7544,22 @@ html.zp-app-loading .page-body > .settings-list{display:none;}
    dipakai oleh cap), padding-top diberi sedikit jarak pengganti. */
 .page-body.saya-page-body-rest{margin-top:0;border-radius:0;box-shadow:none;padding-top:14px;}
 .page-body.saya-page-body-rest::before{display:none;}
+
+/* ---- Halaman Dompet (#page-dompet): pola sticky SAMA PERSIS dgn
+   .saya-sticky-top di atas (lihat catatan lengkap di sana) -- disalin
+   apa adanya, cuma nama class-nya diganti "dompet" supaya scoped ke
+   halaman ini sendiri & tidak bentrok kalau suatu saat Pengaturan &
+   Dompet perlu dibedakan lagi. ---- */
+.dompet-sticky-top{
+  position:sticky;top:0;
+  z-index:calc(var(--z-mini-topbar) - 1);
+  transform:translateZ(0);-webkit-transform:translateZ(0);
+  backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  isolation:isolate;
+}
+.page-body.dompet-page-body-cap{padding-bottom:0;}
+.page-body.dompet-page-body-rest{margin-top:0;border-radius:0;box-shadow:none;padding-top:14px;}
+.page-body.dompet-page-body-rest::before{display:none;}
 /* Blok daftar menu (.settings-list) jadi .page-body TERPISAH DI LUAR
    wrapper sticky di atas -- margin negatif/radius/shadow "kartu
    menumpang di atas banner" (lengkungan dkk) DIMATIKAN TOTAL di sini
@@ -9583,6 +9599,7 @@ select#categoryFilter[hidden]{display:none;}
      tetap rata & tidak numpang lagi walau nilai margin/radius dasar
      .page-body berubah khusus di breakpoint ini (-16px/26px). */
   .page-body.saya-page-body-rest{margin-top:0;border-radius:0;box-shadow:none;}
+  .page-body.dompet-page-body-rest{margin-top:0;border-radius:0;box-shadow:none;}
 }
 /* ---- Rapikan header banner di HP ----
    Sebelumnya kolom tanggal+kurs (banner-date-col) ikut di-center
@@ -12522,11 +12539,25 @@ body.is-scrolling *{
 
   <!-- ===== HALAMAN: DOMPET ===== -->
   <div class="app-page" id="page-dompet" data-page="dompet">
-    <div class="page-banner">
-      <h1>Dompet</h1>
-      <p>Perangkat dan akun sosial media kamu</p>
+    <!-- ---- PERMINTAAN: banner oren "Dompet" dibuat MENEMPEL (position:
+         sticky) di atas layar saat isinya discroll -- niru PERSIS pola
+         yang sudah dipakai di halaman Pengaturan (.saya-sticky-top) &
+         Laporan (.lap-sticky-top): banner dibungkus wrapper sticky
+         tersendiri (.dompet-sticky-top) beserta "cap" kosong (potongan
+         kartu putih tanpa isi, cuma utk menampilkan lengkungannya, biar
+         satu stacking context dgn banner -- lihat catatan panjang di
+         .saya-page-body-cap kalau mau tau kenapa perlu dipisah begini),
+         sedangkan isi aslinya jadi .page-body TERPISAH di luar wrapper
+         sticky (.dompet-page-body-rest) yg scroll normal seperti biasa
+         -- itulah "batas scroll"-nya, persis di radius kartu putih. ---- -->
+    <div class="dompet-sticky-top" id="dompetStickyTop">
+      <div class="page-banner">
+        <h1>Dompet</h1>
+        <p>Perangkat dan akun sosial media kamu</p>
+      </div>
+      <div class="page-body dompet-page-body-cap" aria-hidden="true"></div>
     </div>
-    <div class="page-body">
+    <div class="page-body dompet-page-body-rest">
       <div class="zp-page-skel" aria-hidden="true">
         <div class="zp-skel-card">
           <div class="bd-skel-bar" style="width:35%;height:14px;"></div>

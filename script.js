@@ -8494,6 +8494,27 @@ function applyAppSettings(settings) {
   const pinLockMarkEl = document.getElementById('pinLockBrandMarkIcon');
   if (pinLockMarkEl) pinLockMarkEl.innerHTML = logoHtml;
 
+  // ---- Avatar kartu profil "Manajemen Device" (#deviceMgmtAvatar) ----
+  // App ini belum punya field "foto profil" pribadi yg terpisah -- yg
+  // paling dekat maknanya adalah Logo di halaman Data Diri (settings.logo,
+  // field yg SAMA dgn dipakai brand mark banner/footer/PIN di atas). Jadi
+  // begitu user mengganti Logo itu, avatar di kartu profil Manajemen
+  // Device ikut berubah otomatis (SAMA persis logoHtml yg dipakai brand
+  // mark lain, cuma alt text-nya dibedakan jadi "Foto profil").
+  // Kalau user BELUM PERNAH mengganti Logo (settings.logo kosong), SENGAJA
+  // tetap pakai ikon orang generik bawaan (markup asli #deviceMgmtAvatar
+  // di index.html) -- BUKAN ikut fallback iconPreset.svg spt brand mark
+  // lain di atas, krn ikon itu identitas APLIKASI, beda konteks dgn avatar
+  // profil user di sini.
+  const deviceMgmtAvatarEl = document.getElementById('deviceMgmtAvatar');
+  if (deviceMgmtAvatarEl && settings.logo) {
+    deviceMgmtAvatarEl.innerHTML = `<img src="${settings.logo}" alt="Foto profil">`;
+  } else if (deviceMgmtAvatarEl && !settings.logo) {
+    // Logo baru saja dihapus (mis. tombol "Hapus" di Data Diri) -- balikkan
+    // avatar ke ikon orang generik bawaan, jangan biarkan gambar lama nyangkut.
+    deviceMgmtAvatarEl.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.2" r="3.4"/><path d="M5 19.2c.9-3.4 3.6-5.1 7-5.1s6.1 1.7 7 5.1"/></svg>';
+  }
+
   /* --forest-glow SENGAJA TIDAK lagi di-set di sini -- sumbernya kini
      TUNGGAL dari applyGlobalTheme() (halaman Tema), supaya "Warna
      Aksen" beneran berlaku ke SELURUH aplikasi (termasuk elemen2 yg
