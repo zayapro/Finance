@@ -8476,6 +8476,10 @@ function applyAppSettings(settings) {
   // yg sedang aktif juga (bukan lagi teks "ZAYAin" hardcode).
   const pinLockNameEl = document.getElementById('pinLockBrandNameText');
   if (pinLockNameEl) pinLockNameEl.textContent = name;
+  // Kartu identitas app di halaman "Tentang" -- nama ikut nama aplikasi
+  // yg sedang aktif juga, sama seperti elemen brand lain di atas.
+  const tentangNameEl = document.getElementById('tentangBrandNameText');
+  if (tentangNameEl) tentangNameEl.textContent = name;
 
   const iconPreset = APP_ICON_PRESETS.find(i => i.key === settings.icon) || APP_ICON_PRESETS[0];
   const logoHtml = settings.logo ? `<img src="${settings.logo}" alt="Logo ${escapeHtml(name)}">` : iconPreset.svg;
@@ -8493,6 +8497,8 @@ function applyAppSettings(settings) {
   // Logo Aplikasi sendiri lewat Pengaturan Aplikasi.
   const pinLockMarkEl = document.getElementById('pinLockBrandMarkIcon');
   if (pinLockMarkEl) pinLockMarkEl.innerHTML = logoHtml;
+  const tentangMarkEl = document.getElementById('tentangBrandMarkIcon');
+  if (tentangMarkEl) tentangMarkEl.innerHTML = logoHtml;
 
   /* --forest-glow SENGAJA TIDAK lagi di-set di sini -- sumbernya kini
      TUNGGAL dari applyGlobalTheme() (halaman Tema), supaya "Warna
@@ -9845,6 +9851,45 @@ function initBantuanPage() {
   });
 }
 initBantuanPage();
+
+/* ==========================================================
+   PENGATURAN > INFORMASI — "Tentang" (#tentangOverlay) & 2 halaman
+   detailnya, "Kebijakan Privasi" (#tentangPrivasiOverlay) & "Syarat &
+   Ketentuan" (#tentangSyaratOverlay). Pola buka/tutup SAMA PERSIS dgn
+   openBantuanOverlay/closeBantuanOverlay di atas. Dari daftar
+   #tentangOverlay, menekan salah satu baris membuka overlay detailnya
+   MENUMPUK di atas #tentangOverlay (bukan menggantikannya) supaya
+   saat ditutup, pengguna kembali ke daftar "Tentang", bukan langsung
+   ke Pengaturan -- niru alur "halaman di dalam halaman" pada gambar
+   referensi. ---- */
+function openTentangOverlay() {
+  document.getElementById('tentangOverlay')?.classList.add('open');
+  lockBodyScroll();
+}
+function closeTentangOverlay() {
+  document.getElementById('tentangOverlay')?.classList.remove('open');
+  unlockBodyScroll();
+}
+document.getElementById('tentangOpenBtn')?.addEventListener('click', openTentangOverlay);
+document.getElementById('tentangBackBtn')?.addEventListener('click', closeTentangOverlay);
+
+function openTentangPrivasiOverlay() {
+  document.getElementById('tentangPrivasiOverlay')?.classList.add('open');
+}
+function closeTentangPrivasiOverlay() {
+  document.getElementById('tentangPrivasiOverlay')?.classList.remove('open');
+}
+document.getElementById('tentangPrivasiOpenBtn')?.addEventListener('click', openTentangPrivasiOverlay);
+document.getElementById('tentangPrivasiBackBtn')?.addEventListener('click', closeTentangPrivasiOverlay);
+
+function openTentangSyaratOverlay() {
+  document.getElementById('tentangSyaratOverlay')?.classList.add('open');
+}
+function closeTentangSyaratOverlay() {
+  document.getElementById('tentangSyaratOverlay')?.classList.remove('open');
+}
+document.getElementById('tentangSyaratOpenBtn')?.addEventListener('click', openTentangSyaratOverlay);
+document.getElementById('tentangSyaratBackBtn')?.addEventListener('click', closeTentangSyaratOverlay);
 
 /* ==========================================================
    PENGATURAN > KEAMANAN — Ubah PIN, Ubah Password, Login Biometrik.

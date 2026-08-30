@@ -8146,6 +8146,61 @@ html.zp-app-loading .page-body > .lap-panel{display:none;}
 .bantuan-faq-item.open .bantuan-faq-a{max-height:220px;padding:0 14px 14px;}
 .bantuan-empty{text-align:center;font-size:12.5px;color:var(--ink-faint);padding:10px 4px 2px;}
 .bantuan-empty[hidden]{display:none;}
+/* ================================================================
+   PENGATURAN > INFORMASI — "Tentang" (#tentangOverlay) & 2 halaman
+   detailnya, "Kebijakan Privasi" (#tentangPrivasiOverlay) & "Syarat &
+   Ketentuan" (#tentangSyaratOverlay). Ketiganya niru PERSIS gambar
+   referensi yang dikirim (halaman "Tentang" -> daftar 2 baris ->
+   masing2 buka halaman teks panjang, header biru gradasi + kartu
+   putih), tapi warnanya DISESUAIKAN memakai var(--nav-orange) (ikut
+   tema app, sama seperti #bantuanOverlay/.lap-filter-head lain),
+   bukan biru seperti gambar aslinya, dan isi tulisannya ditulis ulang
+   khusus utk ZAYAin (bukan menyalin teks bank di gambar). Struktur
+   markup memakai class .detail-page-overlay .lap-filter-overlay yang
+   sama dgn #bantuanOverlay/#dataDiriOverlay supaya animasi meluncur
+   dari kanan & lengkungan kartu putihnya konsisten dgn halaman penuh
+   lain. ---- */
+/* Kartu identitas app di puncak #tentangOverlay: ikon+nama+versi,
+   dipisah dari daftar menu di bawahnya lewat kartu putih sendiri. */
+.tentang-brand-card{
+  display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px;
+  background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  box-shadow:var(--shadow-sm);padding:22px 16px 18px;
+}
+.tentang-brand-mark{
+  width:52px;height:52px;border-radius:16px;flex-shrink:0;margin-bottom:6px;
+  display:flex;align-items:center;justify-content:center;
+  background:color-mix(in srgb, var(--primary) 14%, white);color:var(--primary);
+}
+.tentang-brand-name{
+  font-family:'Poppins',sans-serif;font-weight:600;letter-spacing:-0.005em;
+  font-size:16px;color:var(--ink);
+}
+.tentang-brand-tag{font-size:12.5px;color:var(--ink-soft);line-height:1.4;max-width:240px;}
+.tentang-brand-version{font-size:11.5px;color:var(--ink-faint);margin-top:6px;}
+/* Baris menu "Kebijakan Privasi" / "Syarat & Ketentuan": reuse gaya
+   kartu putih .bantuan-row apa adanya supaya konsisten dgn baris menu
+   lain di app ini (Pusat Bantuan dsb). */
+/* Halaman teks panjang (Kebijakan Privasi / Syarat & Ketentuan):
+   kartu putih tunggal berisi heading + paragraf + list bernomor,
+   tipografi disamakan dgn pola teks lain di app ini (Poppins utk
+   heading, ink-soft utk isi) supaya enak dibaca utk dokumen panjang. */
+.tentang-doc{display:flex;flex-direction:column;gap:4px;}
+.tentang-doc-updated{
+  font-size:11.5px;color:var(--ink-faint);margin:-6px 0 10px;
+}
+.tentang-doc h3{
+  margin:14px 0 6px;font-family:'Poppins',sans-serif;font-weight:600;
+  letter-spacing:-0.005em;font-size:14px;color:var(--ink);
+}
+.tentang-doc h3:first-child{margin-top:0;}
+.tentang-doc p{margin:0 0 10px;font-size:13px;line-height:1.65;color:var(--ink-soft);}
+.tentang-doc ol,.tentang-doc ul{
+  margin:0 0 10px;padding-left:19px;display:flex;flex-direction:column;gap:8px;
+}
+.tentang-doc li{font-size:13px;line-height:1.6;color:var(--ink-soft);}
+.tentang-doc li strong{color:var(--ink);font-weight:600;}
+.tentang-doc a{color:var(--primary);font-weight:500;text-decoration:underline;}
 /* ================================================================ */
 /* ---- Kotak "Pilih Bulan" / "Pilih Tanggal": muncul menempel tepat di
    bawah baris radio terkait begitu radio itu dipilih (bukan dipisah ke
@@ -11704,6 +11759,175 @@ body.is-scrolling *{
   </div>
   <!-- ===== /HALAMAN "PUSAT BANTUAN" ===== -->
 
+  <!-- ===== HALAMAN "TENTANG" (#tentangOverlay) =====
+       Dibuka dari baris "Tentang" di Pengaturan > Informasi. Daftar
+       ini SENGAJA cuma 2 baris (Kebijakan Privasi & Syarat &
+       Ketentuan) niru PERSIS gambar referensi, ditambah kartu
+       identitas app (ikon+nama+versi) di atasnya sbg pemanis khas
+       halaman "Tentang". Reuse .bantuan-row apa adanya utk baris
+       menunya spy konsisten dgn Pusat Bantuan. -->
+  <div class="detail-page-overlay lap-filter-overlay" id="tentangOverlay">
+    <div class="lap-filter-page">
+      <div class="lap-filter-head">
+        <button class="lap-filter-back-btn" id="tentangBackBtn" type="button" aria-label="Tutup Tentang">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <h2>Tentang</h2>
+        <span class="lap-filter-back-btn" style="visibility:hidden" aria-hidden="true"></span>
+      </div>
+
+      <div class="lap-filter-card">
+        <div class="tentang-brand-card">
+          <span class="tentang-brand-mark" id="tentangBrandMarkIcon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>
+          </span>
+          <span class="tentang-brand-name" id="tentangBrandNameText">ZAYAin</span>
+          <span class="tentang-brand-tag">Pengelola Uang Masuk &amp; Keluar</span>
+          <span class="tentang-brand-version">Versi Aplikasi <strong>1.0.0</strong></span>
+        </div>
+
+        <div class="bantuan-list">
+          <button type="button" class="bantuan-row" id="tentangPrivasiOpenBtn">
+            <span class="bantuan-row-ic">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5 5 6.3v5.4c0 4.6 3 8.2 7 9.3 4-1.1 7-4.7 7-9.3V6.3L12 3.5Z"/><path d="m9.3 12.4 1.8 1.8 3.6-3.8" stroke-linecap="round"/></svg>
+            </span>
+            <span class="bantuan-row-text">
+              <strong>Kebijakan Privasi</strong>
+              <span>Bagaimana kami menjaga data pribadimu</span>
+            </span>
+            <svg class="bantuan-row-chevron" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"/></svg>
+          </button>
+
+          <button type="button" class="bantuan-row" id="tentangSyaratOpenBtn">
+            <span class="bantuan-row-ic">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3.5h6l4 4v13a1.5 1.5 0 0 1-1.5 1.5h-8.5a1.5 1.5 0 0 1-1.5-1.5v-15A1.5 1.5 0 0 1 8 3.5Z"/><path d="M14 3.5V8h4"/><path d="M9 13h6M9 16.5h4M9 9.5h2"/></svg>
+            </span>
+            <span class="bantuan-row-text">
+              <strong>Syarat &amp; Ketentuan</strong>
+              <span>Ketentuan penggunaan aplikasi ZAYAin</span>
+            </span>
+            <svg class="bantuan-row-chevron" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- ===== /HALAMAN "TENTANG" ===== -->
+
+  <!-- ===== HALAMAN "KEBIJAKAN PRIVASI" (#tentangPrivasiOverlay) =====
+       Dibuka dari baris "Kebijakan Privasi" di #tentangOverlay. Isi
+       ditulis ulang khusus utk ZAYAin sesuai cara app ini benar2
+       menyimpan data (localStorage di perangkat, opsional sinkron ke
+       Supabase kalau login) -- BUKAN salinan teks bank di gambar
+       referensi, cuma strukturnya (heading + paragraf + poin
+       bernomor) yg diikutin. -->
+  <div class="detail-page-overlay lap-filter-overlay" id="tentangPrivasiOverlay">
+    <div class="lap-filter-page">
+      <div class="lap-filter-head">
+        <button class="lap-filter-back-btn" id="tentangPrivasiBackBtn" type="button" aria-label="Kembali ke Tentang">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <h2>Kebijakan Privasi</h2>
+        <span class="lap-filter-back-btn" style="visibility:hidden" aria-hidden="true"></span>
+      </div>
+
+      <div class="lap-filter-card">
+        <div class="tentang-doc">
+          <p class="tentang-doc-updated">Berlaku efektif 30 Agustus 2026</p>
+
+          <p>ZAYAin ("Kami") menghargai privasi Anda ("Pengguna"). Kebijakan Privasi ini menjelaskan data apa saja yang Kami kumpulkan, bagaimana data itu digunakan &amp; disimpan, serta hak Anda atas data tersebut selama menggunakan aplikasi ZAYAin.</p>
+
+          <h3>1. Data yang Dikumpulkan</h3>
+          <ol>
+            <li><strong>Data transaksi keuangan</strong> — catatan uang masuk &amp; keluar, kategori, nominal, keterangan, dan foto struk/bukti yang Anda masukkan sendiri ke aplikasi.</li>
+            <li><strong>Data profil dasar</strong> — nama, alamat email, dan foto/logo yang Anda isikan di menu Data Diri atau saat mendaftar akun.</li>
+            <li><strong>Data teknis perangkat</strong> — jenis perangkat &amp; browser, secukupnya untuk membuat tampilan aplikasi berjalan normal.</li>
+          </ol>
+
+          <h3>2. Cara Penyimpanan Data</h3>
+          <ol>
+            <li>Selama Anda <strong>tidak masuk/mendaftar akun</strong>, seluruh data tersimpan lokal di penyimpanan (localStorage) perangkat Anda sendiri dan tidak Kami kirim ke server mana pun.</li>
+            <li>Jika Anda <strong>memilih masuk/mendaftar akun</strong>, data disinkronkan secara terenkripsi ke basis data cloud (Supabase) agar tetap tersedia saat berganti perangkat, dan dilindungi lewat pemisahan akses per akun.</li>
+            <li>Anda dapat menghapus seluruh data kapan saja lewat perangkat Anda; jika sudah tersinkron ke cloud, penghapusan akun akan ikut menghapus salinan datanya di server.</li>
+          </ol>
+
+          <h3>3. Penggunaan Data</h3>
+          <p>Data yang Anda masukkan hanya digunakan untuk menjalankan fungsi aplikasi (menghitung ringkasan, laporan, leaderboard opsional, &amp; fitur Tanya AI bila diaktifkan). Kami <strong>tidak menjual</strong> data pribadi Anda kepada pihak ketiga, dan tidak menampilkan iklan pihak ketiga di dalam aplikasi.</p>
+
+          <h3>4. Berbagi Data ke Pihak Ketiga</h3>
+          <p>Data hanya diteruskan ke penyedia layanan yang menopang jalannya aplikasi (mis. Supabase sebagai penyedia basis data cloud, atau penyedia model AI saat fitur Tanya AI dipakai atas permintaan Anda sendiri), sebatas yang diperlukan agar fitur tersebut berfungsi.</p>
+
+          <h3>5. Keamanan</h3>
+          <p>Kami menerapkan langkah keamanan yang wajar (autentikasi akun, pemisahan data per pengguna, opsi Login Biometrik) untuk melindungi data Anda, namun tidak ada sistem elektronik yang 100% bebas risiko sepenuhnya.</p>
+
+          <h3>6. Hak Anda</h3>
+          <p>Anda berhak melihat, mengubah, mengekspor, atau menghapus data Anda sendiri kapan saja langsung dari dalam aplikasi, tanpa perlu mengajukan permintaan ke pihak lain.</p>
+
+          <h3>7. Perubahan Kebijakan</h3>
+          <p>Kebijakan ini dapat diperbarui sewaktu-waktu mengikuti perkembangan fitur aplikasi. Perubahan penting akan diinformasikan di dalam aplikasi.</p>
+
+          <h3>8. Hubungi Kami</h3>
+          <p>Pertanyaan seputar privasi dapat disampaikan lewat <a href="mailto:cs@zayain.app">cs@zayain.app</a> atau menu Pusat Bantuan.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- ===== /HALAMAN "KEBIJAKAN PRIVASI" ===== -->
+
+  <!-- ===== HALAMAN "SYARAT & KETENTUAN" (#tentangSyaratOverlay) =====
+       Dibuka dari baris "Syarat & Ketentuan" di #tentangOverlay. Isi
+       juga ditulis ulang khusus utk ZAYAin (aplikasi pencatat
+       keuangan pribadi, bukan produk perbankan), bukan salinan teks
+       bank di gambar referensi. -->
+  <div class="detail-page-overlay lap-filter-overlay" id="tentangSyaratOverlay">
+    <div class="lap-filter-page">
+      <div class="lap-filter-head">
+        <button class="lap-filter-back-btn" id="tentangSyaratBackBtn" type="button" aria-label="Kembali ke Tentang">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <h2>Syarat &amp; Ketentuan</h2>
+        <span class="lap-filter-back-btn" style="visibility:hidden" aria-hidden="true"></span>
+      </div>
+
+      <div class="lap-filter-card">
+        <div class="tentang-doc">
+          <p class="tentang-doc-updated">Berlaku efektif 30 Agustus 2026</p>
+
+          <p>Dengan menggunakan aplikasi ZAYAin, Anda dianggap telah membaca, memahami, dan menyetujui seluruh Syarat &amp; Ketentuan berikut ini.</p>
+
+          <h3>1. Tentang Layanan</h3>
+          <p>ZAYAin adalah aplikasi pencatat &amp; pengelola uang masuk-keluar pribadi. Aplikasi ini bukan produk perbankan, tidak menyimpan atau memindahkan dana sungguhan, dan hanya berfungsi sebagai alat bantu pencatatan keuangan Anda sendiri.</p>
+
+          <h3>2. Akun Pengguna</h3>
+          <ol>
+            <li>Aplikasi ini dapat digunakan sepenuhnya <strong>tanpa akun</strong> (data tersimpan lokal di perangkat), atau dengan <strong>membuat akun</strong> untuk mengaktifkan sinkronisasi data &amp; fitur tambahan.</li>
+            <li>Anda bertanggung jawab menjaga kerahasiaan PIN, kata sandi, dan perangkat yang digunakan untuk mengakses akun Anda.</li>
+            <li>Kami berhak menolak atau menutup akses akun yang terindikasi disalahgunakan untuk merugikan pengguna lain atau mengganggu jalannya layanan.</li>
+          </ol>
+
+          <h3>3. Tanggung Jawab Pengguna</h3>
+          <p>Keakuratan data transaksi, kategori, dan nominal yang dicatat sepenuhnya menjadi tanggung jawab Anda sebagai pengguna. Kami tidak bertanggung jawab atas keputusan keuangan yang diambil berdasarkan catatan atau laporan di dalam aplikasi.</p>
+
+          <h3>4. Fitur Tanya AI</h3>
+          <p>Jawaban dari fitur Tanya AI bersifat bantuan otomatis dan dapat saja keliru. Fitur ini bukan pengganti nasihat keuangan profesional, dan keputusan akhir tetap ada di tangan Anda.</p>
+
+          <h3>5. Perubahan Layanan</h3>
+          <p>Kami dapat menambah, mengubah, atau menghentikan sebagian fitur aplikasi dari waktu ke waktu untuk peningkatan layanan, dengan pemberitahuan di dalam aplikasi bila perubahan tersebut bersifat signifikan.</p>
+
+          <h3>6. Batasan Tanggung Jawab</h3>
+          <p>Aplikasi disediakan "sebagaimana adanya". Kami berupaya menjaga layanan tetap berjalan normal &amp; data tetap aman, namun tidak menjamin aplikasi akan selalu bebas dari gangguan teknis atau kesalahan sepenuhnya.</p>
+
+          <h3>7. Perubahan Ketentuan</h3>
+          <p>Syarat &amp; Ketentuan ini dapat diperbarui sewaktu-waktu. Penggunaan aplikasi setelah pembaruan dianggap sebagai persetujuan atas ketentuan yang baru.</p>
+
+          <h3>8. Hubungi Kami</h3>
+          <p>Pertanyaan seputar ketentuan ini dapat disampaikan lewat <a href="mailto:cs@zayain.app">cs@zayain.app</a> atau menu Pusat Bantuan.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- ===== /HALAMAN "SYARAT & KETENTUAN" ===== -->
+
   <!-- ===== BOTTOM SHEET: KONFIRMASI UBAH PIN =====
        Dipicu dari baris "Ubah PIN" di Pengaturan > Keamanan. Tombol
        "Ubah PIN" di sini menutup sheet & membuka halaman penuh
@@ -12111,7 +12335,7 @@ body.is-scrolling *{
         <div class="settings-section">
           <span class="settings-section-label">Informasi</span>
           <div class="settings-group">
-            <button type="button" class="settings-row" disabled>
+            <button type="button" class="settings-row" id="tentangOpenBtn">
               <span class="settings-row-icon">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5" stroke-linecap="round"/><circle cx="12" cy="7.6" r="1.05" fill="currentColor" stroke="none"/></svg>
               </span>
