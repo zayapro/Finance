@@ -10366,7 +10366,15 @@ function openDeviceDetailSheet(id) {
     forgetBtn.style.display = 'none';
   } else {
     forgetBtn.style.display = '';
-    forgetBtn.onclick = () => deviceMgmtForgetDevice(d.id, d.label || 'perangkat ini', null);
+    // FIX "popup konfirmasi hapus muncul ketumpuk/tersembunyi": sheet
+    // Detail Perangkat ini (.lap-sheet-overlay, z-index 800) SEBELUMNYA
+    // dibiarkan tetap terbuka saat popup konfirmasi (.modal-overlay,
+    // z-index cuma 200) dibuka -- akibatnya konfirmasi render DI BAWAH
+    // sheet Detail yg masih terbuka, kelihatan spt "muncul di tempat
+    // lain"/ketutup. Sheet Detail ditutup DULU di sini (label perangkat
+    // sudah dibawa ke judul popup konfirmasi, jadi konteksnya tidak
+    // hilang) sebelum konfirmasi dibuka.
+    forgetBtn.onclick = () => { closeDeviceDetailSheet(); deviceMgmtForgetDevice(d.id, d.label || 'perangkat ini', null); };
   }
 
   document.getElementById('deviceDetailSheetOverlay')?.classList.add('open');
