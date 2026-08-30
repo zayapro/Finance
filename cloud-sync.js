@@ -60,7 +60,18 @@
   // (setiap refresh/buka app dgn sesi aktif) krn dianggap "key lokal
   // yg sudah tidak ada di cloud" -- itulah sebabnya toggle Login
   // Biometrik kembali OFF sendiri tiap kali di-refresh. (Bug fix)
-  const CLOUD_EXCLUDE_PREFIX = ['alirin_news_cache_v1_', 'sb-', 'zayapro_biometric_cred_'];
+  // 'zayapro_pin_lock_off_' = preferensi toggle "Kunci PIN" (lihat
+  // isPinLockEnabled()/setPinLockEnabled() di window.zayaproAuth) --
+  // pola SAMA PERSIS dgn zayapro_biometric_cred_ di atas: sengaja
+  // device-local (matikan Kunci PIN di HP ini tidak boleh ikut
+  // mematikannya di perangkat lain) & memang TIDAK PERNAH di-push ke
+  // kv_store. SEBELUMNYA key ini belum dikecualikan di sini, jadi
+  // ikut terhapus setiap pullAllFromCloud() jalan (setiap refresh/
+  // buka app dgn sesi aktif) krn dianggap "key lokal yg sudah tidak
+  // ada di cloud" -- akibatnya toggle "Kunci PIN" yang sudah
+  // dimatikan kembali ON sendiri (jadi PIN/sidik jari diminta lagi
+  // saat awal masuk) tiap kali app di-refresh/dibuka ulang. (Bug fix)
+  const CLOUD_EXCLUDE_PREFIX = ['alirin_news_cache_v1_', 'sb-', 'zayapro_biometric_cred_', 'zayapro_pin_lock_off_'];
   function isCloudExcluded(key) {
     if (CLOUD_EXCLUDE_EXACT.indexOf(key) !== -1) return true;
     return CLOUD_EXCLUDE_PREFIX.some(function (p) { return key.indexOf(p) === 0; });
