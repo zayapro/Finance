@@ -8290,6 +8290,22 @@ html.zp-app-loading .page-body > .lap-panel{display:none;}
 .device-mgmt-list{display:flex;flex-direction:column;gap:10px;margin-top:12px;}
 .device-mgmt-row{
   display:flex;align-items:center;gap:12px;background:var(--paper);border-radius:12px;padding:12px;
+  border:1px solid transparent;
+  transition:background .15s ease,border-color .15s ease,opacity .22s ease,transform .22s ease,margin .22s ease,padding .22s ease,max-height .22s ease;
+  max-height:120px;overflow:hidden;
+}
+.device-mgmt-row:hover{background:var(--card);border-color:var(--line);}
+/* ---- Animasi hapus perangkat: dipasang sesaat sebelum baris dibuang
+   dari DOM (lihat listener "deviceMgmtList" click di script.js) supaya
+   baris memudar+menciut halus, bukan langsung meloncat hilang begitu
+   re-render terjadi. Baris "Device ini" tidak pernah kena class ini
+   (tidak punya tombol Hapus). ---- */
+.device-mgmt-row.is-removing{
+  opacity:0;transform:translateX(10px) scale(.98);
+  max-height:0;padding-top:0;padding-bottom:0;margin-top:-10px;pointer-events:none;
+}
+@media (prefers-reduced-motion:reduce){
+  .device-mgmt-row{transition:none;}
 }
 .device-mgmt-row-ic{
   width:40px;height:40px;border-radius:10px;flex-shrink:0;
@@ -8304,8 +8320,16 @@ html.zp-app-loading .page-body > .lap-panel{display:none;}
   border-radius:999px;padding:2.5px 8px;line-height:1.4;flex-shrink:0;
 }
 .device-mgmt-row-meta{font-size:11.5px;color:var(--ink-faint);display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
-.device-mgmt-row-meta .is-online{color:var(--brass);font-weight:600;}
+.device-mgmt-row-meta .is-online{color:var(--brass);font-weight:600;display:inline-flex;align-items:center;gap:5px;}
+.device-mgmt-row-meta .is-online::before{
+  content:'';width:6px;height:6px;border-radius:50%;background:var(--brass);flex-shrink:0;
+  animation:deviceMgmtPulse 1.8s ease-in-out infinite;
+}
 .device-mgmt-row-meta .is-offline{color:var(--ink-faint);}
+@keyframes deviceMgmtPulse{0%,100%{opacity:1;}50%{opacity:.35;}}
+@media (prefers-reduced-motion:reduce){
+  .device-mgmt-row-meta .is-online::before{animation:none;}
+}
 .device-mgmt-row-forget{
   flex-shrink:0;border:none;background:none;color:var(--wine);font-size:12px;font-weight:600;
   padding:8px 4px;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;
@@ -12068,7 +12092,7 @@ body.is-scrolling *{
         <div class="device-mgmt-card">
           <div class="device-mgmt-card-head">
             <span class="device-mgmt-card-ic">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.6"/></svg>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="3.5" width="14" height="10.5" rx="1.6"/><path d="M6.5 17.5h6M9.5 14v3.5"/><rect x="16" y="9" width="6" height="10.5" rx="1.4"/><path d="M18.2 17h1.6"/></svg>
             </span>
             <span class="device-mgmt-card-head-text">
               <strong>Device Aktif</strong>

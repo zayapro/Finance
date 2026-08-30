@@ -10093,14 +10093,41 @@ document.getElementById('deviceMgmtRefreshBtn')?.addEventListener('click', funct
 // Tombol "Hapus" per baris perangkat (event delegation, krn baris
 // dibuat ulang tiap render) -- membuang perangkat itu dari daftar
 // bersama (lihat catatan FAQ "Apa yang terjadi kalau saya hapus...").
+// Konfirmasi SENGAJA pakai confirm() bawaan browser, mengikuti pola
+// PERSIS aksi destruktif lain di app ini (lihat catatan di blok
+// "ZONA BERBAHAYA" -- confirm() bawaan lebih aman lintas perangkat
+// drpd modal custom). Sebelum baris benar2 hilang dari DOM, dikasih
+// class "is-removing" dulu supaya CSS transition (lihat .device-mgmt-
+// row.is-removing di index.html) mainkan animasi fade+collapse
+// singkat -- baris tidak lagi "meloncat hilang" begitu saja.
 document.getElementById('deviceMgmtList')?.addEventListener('click', function (e) {
   const btn = e.target.closest('[data-forgetdevice]');
   if (!btn) return;
   const id = btn.dataset.forgetdevice;
-  const list = deviceMgmtLoadSessions().filter((d) => d.id !== id);
-  deviceMgmtPersistSessions(list);
-  showToast('Perangkat dihapus dari daftar.');
-  renderDeviceMgmtPage();
+  const row = btn.closest('.device-mgmt-row');
+  const label = row?.querySelector('.device-mgmt-row-title strong')?.textContent || 'perangkat ini';
+  const ok = confirm(`Hapus "${label}" dari daftar perangkat?\n\nPerangkat ini tidak akan "dipaksa keluar" -- kalau masih dipakai, ia akan otomatis terdaftar ulang begitu ZAYAin dibuka lagi di sana.`);
+  if (!ok) return;
+
+  btn.disabled = true;
+  let done = false;
+  const finishRemoval = () => {
+    if (done) return; // jaring pengaman: transitionend & setTimeout bisa
+    done = true;       // sama2 tertembak, cukup eksekusi sekali saja.
+    const list = deviceMgmtLoadSessions().filter((d) => d.id !== id);
+    deviceMgmtPersistSessions(list);
+    showToast('Perangkat dihapus dari daftar.');
+    renderDeviceMgmtPage();
+  };
+  if (row) {
+    row.classList.add('is-removing');
+    row.addEventListener('transitionend', finishRemoval, { once: true });
+    // Jaring pengaman kalau transitionend tidak pernah tertembak (mis.
+    // prefers-reduced-motion menonaktifkan transition durasinya jadi 0).
+    setTimeout(finishRemoval, 260);
+  } else {
+    finishRemoval();
+  }
 });
 
 // Accordion FAQ (pola SAMA PERSIS dgn initBantuanPage() di atas).
