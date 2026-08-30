@@ -10018,6 +10018,26 @@ body.is-scrolling *{
   flex:1 1 auto; min-height:0;
   display:flex; flex-direction:column;
 }
+/* ---- FIX \"bulatan PIN ikut naik ke atas saat PIN salah\": sebelumnya
+   pesan error (#pinLockMsg) adalah elemen BIASA yg ikut mengambil
+   ruang di dalam .pin-lock-pin-view (flex column, justify-content:
+   center) -- begitu teks error muncul (display:block + padding),
+   TINGGI TOTAL isi bertambah, dan krn semuanya dirata-tengah, seluruh
+   blok (termasuk bulatan PIN di atasnya) ikut tergeser naik supaya
+   tetap center. Sekarang bulatan PIN + pesan error dibungkus 1
+   wrapper ".pin-lock-dots-wrap" (position:relative), lalu #pinLockMsg
+   dilepas dari alur normal (position:absolute, ditempel PERSIS di
+   bawah bulatan lewat top:100%) -- jadi kemunculan/teksnya TIDAK lagi
+   menambah tinggi wrapper, posisi bulatan PIN & keypad di bawahnya
+   tetap diam, cuma teksnya sendiri yg "mengambang" pas di bawah
+   bulatan. ---- */
+.pin-lock-dots-wrap{ position:relative; flex-shrink:0; margin-bottom:22px; }
+#pinLockMsg.cloud-auth-msg{
+  position:absolute; left:50%; top:100%; transform:translateX(-50%);
+  margin:8px 0 0; width:max-content; max-width:calc(100vw - 60px);
+  text-align:center; font-size:12.5px; font-weight:600; line-height:1.35;
+  z-index:2; pointer-events:none;
+}
 .pin-dots{
   display:flex; align-items:center; justify-content:center; gap:14px;
   margin:clamp(4px,1dvh,6px) 0 clamp(10px,2.4dvh,18px);
@@ -10206,6 +10226,7 @@ body.is-scrolling *{
   .pin-lock-bio-hint{ display:none; }
   .pin-keypad{ max-width:206px; gap:6px; }
   .pin-dots{ margin:2px 0 10px; }
+  .pin-lock-dots-wrap{ margin-bottom:18px; }
 }
 @media (max-height:460px){
   .pin-lock-hero{ padding-top:10px; padding-bottom:12px; }
@@ -10214,6 +10235,7 @@ body.is-scrolling *{
   .pin-dots{ margin:2px 0 8px; gap:10px; }
   .pin-dot{ width:11px; height:11px; }
   .pin-key-cancel{ font-size:10.5px; }
+  .pin-lock-dots-wrap{ margin-bottom:14px; }
 }
 
 /* ---- Tombol "Coba Sidik Jari / Face ID Lagi" terpisah SUDAH
@@ -13781,11 +13803,13 @@ body.is-scrolling *{
              "Gunakan PIN" / sidik jari gagal berkali-kali dari tampilan
              di atas. ---- -->
         <div id="pinLockPinView" class="pin-lock-pin-view">
-          <div class="pin-dots" id="pinLockDots">
-            <span class="pin-dot"></span><span class="pin-dot"></span><span class="pin-dot"></span>
-            <span class="pin-dot"></span><span class="pin-dot"></span><span class="pin-dot"></span>
+          <div class="pin-lock-dots-wrap">
+            <div class="pin-dots" id="pinLockDots">
+              <span class="pin-dot"></span><span class="pin-dot"></span><span class="pin-dot"></span>
+              <span class="pin-dot"></span><span class="pin-dot"></span><span class="pin-dot"></span>
+            </div>
+            <div class="cloud-auth-msg" id="pinLockMsg"></div>
           </div>
-          <div class="cloud-auth-msg" id="pinLockMsg"></div>
           <div class="pin-keypad" id="pinLockKeypad">
             <button type="button" class="pin-key" data-num="1">1</button>
             <button type="button" class="pin-key" data-num="2">2</button>
@@ -13803,7 +13827,6 @@ body.is-scrolling *{
             <button type="button" class="pin-key pin-key-back" id="pinLockBackspace" aria-label="Hapus angka">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2Z"/><path d="M18 9l-6 6M12 9l6 6"/></svg>
             </button>
-            <button type="button" class="pin-key pin-key-cancel" id="pinLockClosePinBtn" aria-label="Batal, kembali ke Login sidik jari" style="display:none;">Batal</button>
           </div>
           <div class="cloud-auth-switch">
             <a id="pinLockForgotLink">Lupa PIN? Keluar &amp; masuk ulang</a>

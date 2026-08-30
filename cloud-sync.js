@@ -556,6 +556,47 @@
       .map(function (w) { return w.charAt(0).toUpperCase() + w.slice(1); }).join(' ');
   }
   function requirePinUnlock(user, expectedHash) {
+    /* ---- FIX \"ikon logo di header popup PIN cuma kelihatan kotak
+       putih kosong\": popup PIN ini (& ikonnya) sudah ada di HTML sejak
+       awal, tapi yg BIASANYA mengisi ikon/logo ke dalamnya adalah
+       applyAppSettings() di script.js -- padahal script.js SENGAJA
+       baru dimuat SETELAH PIN berhasil (lihat startAppOnce() &
+       komentar \"HARUS dimuat SEBELUM script.js\" di atas file ini),
+       supaya popup kunci ini bisa tampil secepat mungkin tanpa nunggu
+       seluruh app dimuat dulu. Akibatnya selama popup ini terbuka,
+       applyAppSettings() belum pernah jalan sama sekali -> elemen
+       ikonnya kosong melompong, cuma keliatan kotak putih polos
+       (.brand-mark punya background putih bawaan). Di sini ikon/logo
+       yg SAMA (Ikon Bawaan atau Logo Aplikasi custom, tersimpan di key
+       localStorage yg sama dgn APP_SETTINGS_KEY milik script.js)
+       diisi ulang SENDIRI langsung dari sini -- tanpa perlu nunggu
+       script.js -- supaya ikon yg tampil di popup kunci ini SELALU
+       sinkron dgn Pengaturan Aplikasi, persis spt di tempat lain. ---- */
+    (function renderPinLockBrandIcon() {
+      const el = document.getElementById('pinLockBrandMarkIcon');
+      if (!el) return;
+      const DEFAULT_ICON_SVG = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>';
+      const ICON_PRESETS = {
+        pulse: DEFAULT_ICON_SVG,
+        wallet: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h12a1 1 0 0 1 1 1v2"/><path d="M3 7v11a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2H8"/><circle cx="16.5" cy="14" r="1.4"/></svg>',
+        trending: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>',
+        chart: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M12 20V4M20 20v-7"/></svg>',
+        shield: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 5-3.5 8-7 9-3.5-1-7-4-7-9V6l7-3Z"/><path d="M9 12l2 2 4-4"/></svg>',
+        coin: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M9 12h6M12 8.5v7"/></svg>'
+      };
+      try {
+        const raw = localStorage.getItem('alirin_app_settings_v1');
+        const settings = raw ? JSON.parse(raw) : {};
+        if (settings.logo) {
+          el.innerHTML = '<img src="' + settings.logo + '" alt="Logo">';
+        } else {
+          el.innerHTML = ICON_PRESETS[settings.icon] || DEFAULT_ICON_SVG;
+        }
+      } catch (e) {
+        el.innerHTML = DEFAULT_ICON_SVG;
+      }
+    })();
+
     /* ---- Kunci/lepas-kunci scroll halaman UTAMA selama popup PIN ini
        terbuka -- dibuat TAHAN BANTING utk iOS Safari (sekadar
        `overflow:hidden` di <body> gampang gagal/"bocor" di sana kalau
@@ -592,7 +633,6 @@
       const bioHint = document.getElementById('pinLockBioHint');
       const bioMsg = document.getElementById('pinLockBioMsg');
       const usePinBtn = document.getElementById('pinLockUsePinBtn');
-      const closePinBtn = document.getElementById('pinLockClosePinBtn');
       const dotsWrap = document.getElementById('pinLockDots');
       const dots = dotsWrap ? Array.prototype.slice.call(dotsWrap.querySelectorAll('.pin-dot')) : [];
       const msgBox2 = document.getElementById('pinLockMsg');
@@ -636,7 +676,6 @@
          cuma ditampilkan kalau Login Biometrik aktif di perangkat
          ini. Kalau tidak aktif, PIN adalah satu-satunya cara masuk,
          jadi tombol ini tetap disembunyikan (display:none bawaan). ---- */
-      if (closePinBtn) closePinBtn.style.display = bioEnabled ? 'flex' : 'none';
       function showPinView() {
         if (bioView) bioView.classList.remove('open');
         if (pinView) pinView.classList.add('open');
@@ -719,7 +758,6 @@
       }
       function onBioBtnClick() { attemptBio(); }
       function onUsePin() { showPinView(); }
-      function onClosePin() { showBioView(); }
       async function onBioRetry() {
         if (checking) return;
         const ok = await window.zayaproAuth.tryBiometricUnlock();
@@ -736,7 +774,6 @@
         if (keypadBioBtn) keypadBioBtn.removeEventListener('click', onBioRetry);
         if (bioBtn) bioBtn.removeEventListener('click', onBioBtnClick);
         if (usePinBtn) usePinBtn.removeEventListener('click', onUsePin);
-        if (closePinBtn) closePinBtn.removeEventListener('click', onClosePin);
         unlockBodyScrollForPinLock();
       }
 
@@ -746,7 +783,6 @@
       if (keypadBioBtn) keypadBioBtn.addEventListener('click', onBioRetry);
       if (bioBtn) bioBtn.addEventListener('click', onBioBtnClick);
       if (usePinBtn) usePinBtn.addEventListener('click', onUsePin);
-      if (closePinBtn) closePinBtn.addEventListener('click', onClosePin);
 
       entered = '';
       renderDots();
