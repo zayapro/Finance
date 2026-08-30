@@ -6381,113 +6381,54 @@ tbody tr:last-child td{border-bottom:none;}
 
 /* ============================================================
    POPUP "TAMBAH/EDIT TAGIHAN & HUTANG" (.bill-modal) — REDESIGN
-   PENUH (menggantikan versi sebelumnya yg cuma header putih polos +
-   pil toggle datar). Konsep baru: "kartu tagihan" bergaya kartu
-   bank/invoice modern --
-     1) Banner gradasi penuh warna di puncak popup (oranye Tagihan /
-        ungu Hutang), dgn ikon & judul putih di atasnya.
-     2) Saklar jenis (Tagihan/Hutang) jadi pil putih yg MELAYANG
-        menumpuk di batas bawah banner (margin negatif menarik naik),
-        dgn "thumb" warna yg meluncur (sliding) di baliknya saat
-        digonta-ganti -- bukan lagi dua kotak background sendiri².
-     3) Nominal ditonjolkan jadi "kartu hero" tersendiri (angka besar
-        di tengah), bukan lagi salah satu sel biasa dlm grid 2 kolom.
-     4) Input Jatuh Tempo dilengkapi chip preset cepat (Besok/+7 hari/
-        +30 hari/Akhir bulan).
-     5) Baris "Ulangi otomatis" jadi kartu dgn ikon + toggle switch
-        bulat, senada gaya toggle di Pengaturan > Keamanan.
-   Semua warna aksen tetap otomatis ikut jenis yg aktif lewat class
-   .kind-hutang (ditoggle JS di setBillKind(), lihat script.js) --
-   oranye (#D97706/#B45309) utk Tagihan (default), ungu (#7C3AED) utk
-   Hutang, TIDAK ada nilai warna yg hardcode di luar 2 kondisi ini. */
+   PENUH v2 ("SLIP TAGIHAN"). Menggantikan versi sebelumnya yg
+   memakai banner gradasi penuh warna + saklar melayang di atasnya.
+   Prinsip baru:
+     1) Kepala popup TENANG -- ikon lencana bulat/kotak + judul +
+        subjudul berjejer datar (pola .modal-head-left yg sama
+        dipakai .wallet-modal), TANPA gradasi/banner besar lagi.
+        Popup ini sekarang benar² satu bahasa visual dgn .tx-modal
+        & .wallet-modal, bukan lagi "pengecualian" yg gayanya sendiri.
+     2) Saklar jenis (Tagihan/Hutang) jadi pil datar sederhana --
+        tombol aktif berlatar putih + bayangan tipis, PERSIS pola
+        .type-toggle di .tx-modal (bukan lagi melayang dgn thumb
+        geser & margin negatif menumpuk banner).
+     3) Nominal jadi kartu "SLIP SOBEKAN" (ticket stub) -- signature
+        visual baru: dua lubang "gigitan" bulat di kiri-kanan tepi
+        bawah kartu + garis putus² di atasnya, meniru sobekan struk/
+        tagihan fisik sungguhan -- relevan langsung dgn konteks
+        halaman ini (tagihan/hutang = dokumen finansial), dgn
+        catatan kecil ("Otomatis dipisah titik ribuan...") duduk di
+        bawah garis putus² tsb, bukan sekadar dekorasi kosong.
+   Semua warna aksen TETAP otomatis ikut jenis aktif via class
+   .kind-hutang (ditoggle JS di setBillKind()) -- oranye
+   (var(--banner-orange-deep) / #B45309) utk Tagihan (default), ungu
+   (#7C3AED) utk Hutang -- TIDAK ada nilai warna baru di luar 2
+   kondisi ini. ============================================== */
 
-/* ---- 1) Banner gradasi ---- */
-.bill-modal-banner{
-  position:relative;overflow:hidden;
-  margin:-16px -16px 0;padding:14px 16px 28px;
-  border-radius:18px 18px 0 0;
-  background:linear-gradient(135deg,var(--banner-orange),var(--banner-orange-deep));
-  transition:background .3s ease;
+/* ---- 1) Kepala popup tenang (ikon lencana ikut warna jenis aktif
+   lewat aturan .bill-modal.kind-hutang .modal-head-icon yg sudah
+   ada di atas bareng .tx-modal/.wallet-modal) ---- */
+.bill-modal .modal-head-left{display:flex;align-items:center;gap:12px;min-width:0;}
+
+/* ---- 2) Saklar jenis datar -- warna teks aktif ikut jenis, latar
+   putih + bayangan tipis sama seperti .sel-in/.sel-out di tx-modal ---- */
+.bill-modal .bill-kind-switch{margin-bottom:16px;}
+.bill-modal .type-toggle button.sel-bill.active{
+  background:#fff;color:var(--banner-orange-deep);box-shadow:0 2px 8px -2px rgba(15,23,42,0.16);
 }
-.bill-modal.kind-hutang .bill-modal-banner{
-  background:linear-gradient(135deg,var(--violet-light),var(--violet));
-}
-/* Dekorasi lingkaran radial samar, senada pola dekorasi popup lain
-   di app ini (mis. sheen/blob pojok pada .modal-head-icon versi
-   lama) -- cuma tekstur halus, TIDAK mengganggu keterbacaan teks di
-   atasnya krn opacity-nya sangat rendah & berada di belakang (z-index
-   konten header semua diberi z-index:2 di bawah). */
-.bill-modal-banner::before,
-.bill-modal-banner::after{content:'';position:absolute;border-radius:50%;background:rgba(255,255,255,0.14);pointer-events:none;}
-.bill-modal-banner::before{width:130px;height:130px;top:-58px;right:-36px;}
-.bill-modal-banner::after{width:74px;height:74px;bottom:-32px;left:18px;background:rgba(255,255,255,0.1);}
-.bill-modal-banner .modal-close{
-  position:absolute;top:13px;right:13px;z-index:2;
-  width:26px;height:26px;border-radius:50%;
-  background:rgba(255,255,255,0.22);color:#fff;
-  display:flex;align-items:center;justify-content:center;
-  transition:background .16s ease;
-}
-.bill-modal-banner .modal-close:hover{background:rgba(255,255,255,0.36);}
-.bill-modal-banner .modal-head-icon{
-  position:relative;z-index:2;
-  width:37px;height:37px;border-radius:12px;margin-bottom:9px;
-  background:rgba(255,255,255,0.22);
-  display:flex;align-items:center;justify-content:center;color:#fff;
-}
-.bill-modal-banner .modal-head-icon svg{width:18px;height:18px;}
-.bill-modal-banner-titles{position:relative;z-index:2;}
-.bill-modal-banner-titles h3{
-  font-family:'Poppins',sans-serif;font-weight:600;font-size:16.5px;
-  letter-spacing:-0.005em;line-height:1.25;color:#fff;margin:0 0 2px;
-}
-.bill-modal-banner-titles .modal-head-sub{
-  font-family:var(--font-body);font-size:11px;font-weight:500;color:rgba(255,255,255,0.85);
+.bill-modal .type-toggle button.sel-debt.active{
+  background:#fff;color:#7C3AED;box-shadow:0 2px 8px -2px rgba(15,23,42,0.16);
 }
 
-/* ---- 2) Saklar jenis melayang, sliding thumb ---- */
-.bill-modal .bill-kind-switch{
-  position:relative;z-index:3;gap:0;
-  margin:-18px 16px 14px;padding:3px;
-  background:#fff;border-radius:12px;
-  display:grid;grid-template-columns:1fr 1fr;
-  box-shadow:0 14px 28px -14px rgba(15,23,42,0.38), 0 2px 8px rgba(15,23,42,0.06);
-}
-.bill-modal .bill-kind-switch button{padding:8px 6px;font-size:12.5px;}
-.bill-kind-switch-thumb{
-  position:absolute;top:4px;left:4px;z-index:0;
-  width:calc(50% - 4px);height:calc(100% - 8px);border-radius:10px;
-  background:#D97706;
-  transition:transform .3s cubic-bezier(.22,1,.36,1), background .2s ease;
-}
-.bill-modal.kind-hutang .bill-kind-switch-thumb{transform:translateX(100%);background:#7C3AED;}
-.bill-modal .bill-kind-switch button{position:relative;z-index:1;}
-.bill-modal .bill-kind-switch button.sel-bill.active,
-.bill-modal .bill-kind-switch button.sel-debt.active{
-  background:transparent;border-color:transparent;box-shadow:none;color:#fff;
-}
-
-/* ---- 3) Kartu hero nominal — REDESIGN lanjutan ----
-   Sebelumnya latarnya abu polos (var(--paper)) sama utk kedua jenis,
-   & tata letak "Rp" + angka mengandalkan text-align:center pasif
-   (bill-amount-wrap BUKAN flex, cuma numpang rata-tengah dari induk)
-   -- jarak antara prefix & angka jadi tidak konsisten/agak "nempel".
-   Sekarang:
-   1) Latar dikasih gradasi TIPIS senada warna jenis aktif (oranye
-      tipis utk Tagihan / ungu tipis utk Hutang, via color-mix supaya
-      otomatis konsisten dgn --banner-orange-deep/--violet tanpa nilai
-      baru), jadi kartu ini kerasa "hero" & langsung ketauan jenisnya
-      sekilas, bukan cuma kotak abu netral.
-   2) Label "Jumlah" diberi ikon koin kecil di sampingnya (svg inline
-      di HTML) & dibuat flex row rapi, bukan cuma teks polos.
-   3) "Rp" & angka sekarang betul2 flex+baseline dgn gap tetap 6px
-      supaya jaraknya presisi & konsisten di semua ukuran layar,
-      bukan lagi mengandalkan spasi kosong antar tag di HTML.
-   4) Warna kursor ketik (caret) ikut warna jenis aktif, detail kecil
-      yg bikin terasa lebih "disengaja"/dipoles. ---- */
+/* ---- 3) Kartu nominal "slip sobekan" ----
+   Latar gradasi tipis senada jenis aktif (dipertahankan dari versi
+   sebelumnya, cuma via color-mix jadi otomatis konsisten), TAPI
+   sekarang diberi ruang ekstra di bawah utk garis putus² + 2 lubang
+   gigitan + catatan kecil format ribuan. */
 .bill-amount-hero{
-  text-align:center;margin-bottom:12px;padding:12px 14px 14px;
-  border-radius:14px;
+  position:relative;text-align:center;margin:0 0 16px;padding:14px 16px 14px;
+  border-radius:16px;overflow:visible;
   background:linear-gradient(180deg, color-mix(in srgb, var(--banner-orange-deep) 7%, #fff) 0%, color-mix(in srgb, var(--banner-orange-deep) 3%, var(--paper)) 100%);
   border:1.5px solid color-mix(in srgb, var(--banner-orange-deep) 20%, var(--line));
   transition:border-color .16s ease, box-shadow .16s ease, background .2s ease;
@@ -6500,7 +6441,7 @@ tbody tr:last-child td{border-bottom:none;}
 .bill-modal.kind-hutang .bill-amount-hero:focus-within{border-color:#7C3AED;box-shadow:0 0 0 4px rgba(124,58,237,0.1);}
 .bill-amount-hero-label{
   display:inline-flex;align-items:center;justify-content:center;gap:5px;
-  font-size:10.5px;font-weight:700;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;
+  font-size:10.5px;font-weight:700;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;
 }
 .bill-amount-hero-label svg{width:11px;height:11px;flex-shrink:0;opacity:.8;color:var(--banner-orange-deep);}
 .bill-modal.kind-hutang .bill-amount-hero-label svg{color:#7C3AED;}
@@ -6512,7 +6453,7 @@ tbody tr:last-child td{border-bottom:none;}
 .bill-amount-hero .amount-prefix{font-family:'Poppins',sans-serif;font-weight:700;font-size:16px;color:var(--ink-faint);}
 .bill-amount-hero #billAmount{
   border:none;background:transparent;padding:0;font-family:'Poppins',sans-serif;
-  font-size:25px;font-weight:700;color:var(--ink);letter-spacing:-0.01em;
+  font-size:27px;font-weight:700;color:var(--ink);letter-spacing:-0.01em;
   width:auto;max-width:180px;min-width:38px;text-align:center;
   caret-color:#D97706;
 }
@@ -6520,25 +6461,60 @@ tbody tr:last-child td{border-bottom:none;}
 .bill-amount-hero #billAmount:focus{box-shadow:none;background:transparent;}
 .bill-amount-hero #billAmount::placeholder{color:var(--ink-faint);opacity:.5;font-weight:600;}
 
+/* ---- Garis putus² "sobekan" + catatan format ribuan di bawahnya ---- */
+.bill-amount-perf{
+  display:block;margin:12px auto 8px;width:calc(100% - 4px);
+  border-top:1.5px dashed color-mix(in srgb, var(--banner-orange-deep) 35%, var(--line));
+}
+.bill-modal.kind-hutang .bill-amount-perf{border-top-color:color-mix(in srgb, #7C3AED 35%, var(--line));}
+.bill-amount-hint{
+  display:block;font-family:var(--font-body);font-size:10px;font-weight:600;color:var(--ink-faint);
+}
+
+/* ---- Dua lubang "gigitan" bulat di tepi kiri-kanan kartu, sejajar
+   dgn garis putus² -- diwarnai SAMA PERSIS dgn latar popup (#fff, sisi
+   luar kartu bill-modal) supaya kelihatan spt benar² "dilubangi". ---- */
+.bill-amount-hero::before,
+.bill-amount-hero::after{
+  content:'';position:absolute;top:calc(100% - 40px);width:15px;height:15px;border-radius:50%;
+  background:#fff;
+  border:1.5px solid color-mix(in srgb, var(--banner-orange-deep) 20%, var(--line));
+  z-index:1;
+}
+.bill-modal.kind-hutang .bill-amount-hero::before,
+.bill-modal.kind-hutang .bill-amount-hero::after{border-color:color-mix(in srgb, #7C3AED 20%, var(--line));}
+.bill-amount-hero::before{left:-8px;}
+.bill-amount-hero::after{right:-8px;}
+
 /* ---- Fokus field biasa (nama/tanggal/catatan) tetap ikut warna jenis aktif ---- */
 .bill-modal .form-row input:focus,
 .bill-modal .form-row textarea:focus{border-color:#D97706;box-shadow:0 0 0 4px rgba(217,119,6,0.1);}
 .bill-modal.kind-hutang .form-row input:focus,
 .bill-modal.kind-hutang .form-row textarea:focus{border-color:#7C3AED;box-shadow:0 0 0 4px rgba(124,58,237,0.1);}
 
-/* ---- 4) Chip preset Jatuh Tempo ---- */
+/* ---- 4) Chip preset Jatuh Tempo -- ditambah ikon centang kecil yg
+   cuma tampil (scale dari 0) saat chip aktif, bukan cuma ganti warna
+   latar polos spt sebelumnya -- penanda "terpilih" jadi lebih eksplisit. ---- */
 .bill-due-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px;}
 .bill-due-chip{
+  display:inline-flex;align-items:center;gap:4px;
   padding:5px 10px;border-radius:999px;border:1px solid var(--line);background:#fff;
   font-family:var(--font-body);font-size:11px;font-weight:600;color:var(--ink-soft);
   transition:all .15s ease;
+}
+.bill-due-chip-check{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:0;opacity:0;overflow:hidden;transform:scale(0);
+  transition:width .15s ease, opacity .15s ease, transform .15s ease;
 }
 .bill-due-chip:hover{border-color:#D97706;color:#B45309;background:rgba(217,119,6,0.06);}
 .bill-modal.kind-hutang .bill-due-chip:hover{border-color:#7C3AED;color:#7C3AED;background:rgba(124,58,237,0.06);}
 .bill-due-chip.active{background:#D97706;border-color:#D97706;color:#fff;}
 .bill-modal.kind-hutang .bill-due-chip.active{background:#7C3AED;border-color:#7C3AED;}
+.bill-due-chip.active .bill-due-chip-check{width:9px;opacity:1;transform:scale(1);}
 
-/* ---- 5) Baris "Ulangi otomatis" -- kartu + toggle switch ---- */
+/* ---- 5) Baris "Ulangi otomatis" -- kartu + toggle switch (tampilan
+   dipertahankan, cuma disamakan tone-nya dgn kepala popup yg baru) ---- */
 .bill-recurring-row{
   display:flex;align-items:center;gap:10px;cursor:pointer;
   padding:10px 12px;margin-bottom:12px;border-radius:12px;
@@ -6577,70 +6553,26 @@ tbody tr:last-child td{border-bottom:none;}
 .bill-modal.kind-hutang .modal-actions .btn-primary{background:#7C3AED;box-shadow:0 8px 18px -8px rgba(109,40,217,0.45);}
 .bill-modal.kind-hutang .modal-actions .btn-primary:hover{background:#6D28D9;}
 
-/* ---- REVISI UKURAN: dibuat lebih ringkas/padat (khusus popup ini
-   saja, class "bill-modal" -- TIDAK menyentuh ".tx-modal" popup
-   "Tambah Transaksi" yg berbagi beberapa selector dgn popup ini).
-   Padding badan popup, jarak antar-baris form, & tombol aksi
-   dikecilkan supaya popup terasa lebih pendek/tidak makan banyak
-   ruang, tanpa membuang elemen apa pun. ---- */
+/* ---- Ukuran ringkas (khusus popup ini saja) ---- */
 .bill-modal{padding:16px 16px 16px;border-radius:18px;}
 .bill-modal .form-row{margin-bottom:10px;}
 .bill-modal .modal-actions{margin-top:10px;}
 .bill-modal .modal-actions .btn{padding:11px;font-size:14px;}
 
 @media (max-width:600px){
-  .bill-modal{padding:14px 14px 14px;border-radius:16px;}
-  .bill-modal-banner{margin:-14px -14px 0;padding:12px 14px 24px;border-radius:16px 16px 0 0;}
-  .bill-modal .bill-kind-switch{margin:-16px 14px 12px;}
+  .bill-modal{padding:18px 18px 18px;border-radius:20px;}
   .bill-amount-hero #billAmount{font-size:22px;}
 }
-
-/* ---- Posisi & tinggi popup di layar HP (<=640px, sama dgn
-   breakpoint munculnya .bottom-nav) --
-   SEBELUMNYA popup ini melayang di TENGAH layar (align-items:center
-   bawaan .modal-overlay) dgn jarak atas & bawah SAMA RATA (padding
-   20px kiri-kanan-atas-bawah), tanpa memperhitungkan menu navigasi
-   bawah (.bottom-nav, tinggi ±72px + safe-area, z-index 600 -- lebih
-   tinggi dari overlay popup ini yg cuma z-index:200) -- akibatnya
-   kalau isi form sedang panjang, badan popup bisa mentok/ketutup
-   sebagian di BALIK nav bawah (nav menang tampil di atasnya krn
-   z-index lebih tinggi), sisi bawah popup jadi "hilang".
-   Sekarang overlay khusus popup ini (#billModalOverlay, TIDAK
-   memengaruhi popup lain yg masih pakai .modal-overlay generik)
-   diubah jadi pola "bottom sheet": kartu di-anchor ke BAWAH
-   (align-items:flex-end) dgn jarak bawah persis setinggi nav + celah
-   kecil (pola sama dgn .toast-wrap yg sudah lebih dulu pakai
-   "72px + 14px + safe-area-inset-bottom" di atas), sehingga tepi
-   bawah kartu SELALU berhenti tepat di atas nav, tidak pernah
-   tertutup. Jarak atas dibuat tipis (+ aman dari notch/status bar
-   lewat safe-area-inset-top) supaya kartu leluasa "naik" mengisi
-   ruang setinggi mungkin ke atas kalau isi formnya panjang, radius
-   putih di puncak kartu tetap kelihatan rapi menempel dekat tepi
-   atas layar alih-alih nongkrong di tengah dgn jarak kosong sama
-   besar di atas & bawah spt sebelumnya. ---- */
-/* ---- Pengaman ekstra khusus HP paling sempit (mis. iPhone SE
-   gen-1, lebar layar 320px, sama spt breakpoint 380px yg sudah
-   dipakai konsisten di elemen lain pada file ini) -- di lebar
-   sesempit ini, ukuran versi ">600px" di atas masih terasa longgar
-   (padding kartu nominal & saklar jenis kepotong mepet, teks chip
-   & baris "Ulangi otomatis" beresiko turun baris jelek). Diperkecil
-   lagi sedikit di sini SUPAYA seluruh isi popup tetap muat rapi
-   dalam satu kolom tanpa ada teks yg terpotong/tumpang tindih. ---- */
 @media (max-width:380px){
   .bill-modal{padding:12px 12px 12px;}
-  .bill-modal-banner{margin:-12px -12px 0;padding:11px 12px 22px;}
-  .bill-modal-banner::before{width:88px;height:88px;top:-38px;right:-24px;}
-  .bill-modal-banner::after{width:50px;height:50px;bottom:-20px;left:12px;}
-  .bill-modal-banner .modal-head-icon{width:34px;height:34px;margin-bottom:7px;}
-  .bill-modal-banner .modal-head-icon svg{width:16px;height:16px;}
-  .bill-modal-banner-titles h3{font-size:15.5px;}
-  .bill-modal .bill-kind-switch{margin:-14px 12px 11px;}
-  .bill-modal .bill-kind-switch button{padding:7px 4px;font-size:12px;gap:4px;}
-  .bill-modal .bill-kind-switch button svg{width:11px;height:11px;}
-  .bill-amount-hero{padding:10px 10px 12px;margin-bottom:10px;}
-  .bill-amount-hero-label{font-size:10px;margin-bottom:4px;}
+  .bill-modal .modal-head-icon{width:36px;height:36px;}
+  .bill-amount-hero{padding:11px 12px 12px;margin-bottom:10px;}
+  .bill-amount-hero-label{font-size:10px;margin-bottom:5px;}
   .bill-amount-hero .amount-prefix{font-size:14px;}
   .bill-amount-hero #billAmount{font-size:20px;max-width:145px;}
+  .bill-amount-perf{margin:9px auto 6px;}
+  .bill-amount-hint{font-size:9.5px;}
+  .bill-amount-hero::before,.bill-amount-hero::after{width:13px;height:13px;top:calc(100% - 34px);}
   .bill-modal .form-row{margin-bottom:8px;}
   .bill-due-chips{gap:4px;}
   .bill-due-chip{padding:4px 9px;font-size:10.5px;}
@@ -6654,33 +6586,20 @@ tbody tr:last-child td{border-bottom:none;}
   .bill-recurring-row input:checked ~ .bill-recurring-toggle-track .bill-recurring-toggle-thumb{transform:translateX(13px);}
   .bill-modal .modal-actions .btn{padding:10px;font-size:13px;}
 }
-/* ---- Layar PENDEK (mis. HP dalam mode landscape, atau HP kecil
-   dgn tinggi <680px) -- popup ini isinya cukup panjang (banner +
-   saklar + nominal + nama + tanggal + chip + catatan + toggle +
-   tombol), jadi di layar pendek ia lebih sering mentok ke
-   max-height:86vh milik .modal & butuh discroll. Jarak vertikal
-   dipadatkan di sini (margin-bottom tiap blok & padding banner)
-   supaya scroll yg dibutuhkan lebih pendek & lebih banyak konten
-   langsung kelihatan tanpa discroll dulu -- TANPA memotong ukuran
-   lebar/horizontal apa pun (murni penghematan tinggi). ---- */
+/* ---- Layar PENDEK (HP landscape / HP kecil <680px tinggi) --
+   dipadatkan spy scroll internal lebih pendek, tanpa memotong lebar. ---- */
 @media (max-height:680px){
-  .bill-modal-banner{padding-top:10px;padding-bottom:20px;}
-  .bill-modal .bill-kind-switch{margin-top:-13px;margin-bottom:10px;}
-  .bill-amount-hero{padding-top:9px;padding-bottom:10px;margin-bottom:9px;}
+  .bill-modal .bill-kind-switch{margin-bottom:12px;}
+  .bill-amount-hero{padding-top:11px;padding-bottom:11px;margin-bottom:11px;}
+  .bill-amount-perf{margin:9px auto 6px;}
   .bill-modal .form-row{margin-bottom:7px;}
   .bill-recurring-row{padding-top:7px;padding-bottom:7px;margin-bottom:9px;}
 }
 
 /* ---- Posisi popup di HP (bottom-sheet, nempel di atas nav) DAN
-   pemadatan ukuran isinya, diletakkan PALING TERAKHIR di antara
-   semua media query bill-modal di atas SUPAYA selalu MENANG di
-   cascade (spesifisitas selector-nya sama dgn blok 380px/tinggi
-   pendek di atas, jadi yg menang murni ditentukan urutan file) --
-   tanpa ini, blok "<380px" & "tinggi<680px" yg beberapa nilainya
-   masih lebih besar/longgar bisa menimpa balik jadi lebih besar lagi
-   di HP yg sangat sempit/pendek, membuat total tinggi isi form
-   melebihi ruang yg tersedia (di atas nav) & scroll pun muncul lagi
-   -- padahal tujuannya justru MENGHILANGKAN scroll itu. ---- */
+   pemadatan ukuran isinya -- diletakkan PALING TERAKHIR supaya selalu
+   menang di cascade drpd blok 380px/tinggi-pendek di atas (spesifisitas
+   sama, jadi urutan file yg menentukan pemenang). ---- */
 @media (max-width:640px){
   #billModalOverlay{
     align-items:flex-end;
@@ -6691,17 +6610,14 @@ tbody tr:last-child td{border-bottom:none;}
     max-height:calc(100vh - 72px - 14px - env(safe-area-inset-bottom,0px) - 10px - env(safe-area-inset-top,0px));
     max-height:calc(100dvh - 72px - 14px - env(safe-area-inset-bottom,0px) - 10px - env(safe-area-inset-top,0px));
   }
-  .bill-modal-banner{padding:10px 12px 16px;}
-  .bill-modal-banner .modal-head-icon{width:30px;height:30px;margin-bottom:5px;}
-  .bill-modal-banner .modal-head-icon svg{width:15px;height:15px;}
-  .bill-modal-banner-titles h3{font-size:14.5px;}
-  .bill-modal-banner-titles .modal-head-sub{font-size:10px;}
-  .bill-modal .bill-kind-switch{margin:-13px 12px 9px;}
-  .bill-modal .bill-kind-switch button{padding:6px 4px;font-size:11.5px;gap:4px;}
-  .bill-amount-hero{padding:9px 10px 10px;margin-bottom:9px;}
-  .bill-amount-hero-label{font-size:9.5px;margin-bottom:3px;}
+  .bill-modal .bill-kind-switch{margin-bottom:12px;}
+  .bill-amount-hero{padding:10px 12px 11px;margin-bottom:10px;}
+  .bill-amount-hero-label{font-size:9.5px;margin-bottom:5px;}
   .bill-amount-hero .amount-prefix{font-size:13px;}
   .bill-amount-hero #billAmount{font-size:21px;max-width:150px;}
+  .bill-amount-perf{margin:9px auto 6px;}
+  .bill-amount-hint{font-size:9.5px;}
+  .bill-amount-hero::before,.bill-amount-hero::after{width:13px;height:13px;top:calc(100% - 32px);}
   .bill-modal .form-row{margin-bottom:8px;}
   .bill-modal .form-row label{margin-bottom:4px;}
   .bill-modal .form-row input,
@@ -13689,48 +13605,53 @@ body.is-scrolling *{
 <!-- ===== /POPUP: BUKTI TRANSAKSI ===== -->
 
 <!-- ===== MODAL TAMBAH/EDIT TAGIHAN & HUTANG (terpisah dari transaksi) -----
-     Gaya popup ini DISAMAKAN dgn popup "Tambah Transaksi" (.tx-modal) --
-     class "bill-modal" menambahkan sheen gradasi di atas, dekorasi
-     lingkaran radial di pojok (warna otomatis ikut kind aktif: oranye
-     utk Tagihan / ungu utk Hutang lewat class .kind-hutang yg ditoggle
-     JS di setBillKind()), serta animasi masuk & staggered field yg
-     sama persis gayanya dgn tx-modal (lihat blok CSS .bill-modal). ===== -->
+     REDESIGN PENUH (menggantikan versi "banner gradasi penuh warna +
+     saklar melayang" sebelumnya). Konsep baru: "SLIP TAGIHAN" --
+     kepala popup dibuat TENANG (ikon lencana bulat/kotak + judul &
+     subjudul, TANPA gradasi/banner besar lagi), satu bahasa visual
+     PERSIS dgn popup "Tambah Transaksi" (.tx-modal) & "Bank/E-Wallet"
+     (.wallet-modal) yg sudah lebih dulu bergaya bersih -- lihat class
+     bersama .modal-head/.modal-head-left/.modal-head-icon di CSS.
+     Warna aksen (ikon, saklar aktif, kartu nominal, tombol Simpan)
+     TETAP otomatis ikut jenis yg dipilih lewat class .kind-hutang yg
+     ditoggle JS di setBillKind() -- oranye utk Tagihan, ungu utk
+     Hutang -- cuma cara menampilkannya yg diperhalus (tint lembut &
+     ikon, bukan lagi gradasi solid selayar header).
+     Class modal-head-icon & id billModalTitle/billModalSub SENGAJA
+     dipertahankan krn setBillKind() di script.js masih meng-query
+     elemen² ini utk mengganti ikon/judul/subjudul saat jenis diganti. -->
 <div class="modal-overlay" id="billModalOverlay">
   <div class="modal bill-modal">
-    <!-- ---- Banner gradasi penuh warna di puncak popup (oranye utk
-         Tagihan / ungu utk Hutang lewat class .kind-hutang di setBillKind()),
-         menggantikan header putih polos sebelumnya -- supaya jenis yg
-         sedang dipilih langsung "terasa" dari warna begitu popup dibuka,
-         bukan cuma dari teks/pil kecil. Class modal-head-icon & modal-head-sub
-         SENGAJA dipertahankan (bukan diganti nama) krn setBillKind() di
-         script.js masih meng-query elemen ini via class tsb utk mengganti
-         ikon & subjudul saat jenis diganti -- lihat komentar di CSS-nya. ---- -->
-    <div class="bill-modal-banner">
+    <div class="modal-head">
+      <div class="modal-head-left">
+        <span class="modal-head-icon">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
+        </span>
+        <div class="modal-head-titles">
+          <h3 id="billModalTitle">Tambah Tagihan</h3>
+          <span class="modal-head-sub" id="billModalSub">Atur pengingat tagihan kamu</span>
+        </div>
+      </div>
       <button class="modal-close" id="billModalCloseBtn" type="button">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M18 6 6 18M6 6l12 12"/></svg>
       </button>
-      <span class="modal-head-icon">
-        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
-      </span>
-      <div class="bill-modal-banner-titles">
-        <h3 id="billModalTitle">Tambah Tagihan</h3>
-        <span class="modal-head-sub" id="billModalSub">Atur pengingat tagihan kamu</span>
-      </div>
     </div>
 
     <form id="billForm">
       <input type="hidden" id="billId">
       <input type="hidden" id="billKind" value="tagihan">
 
-      <!-- ---- Saklar jenis (Tagihan/Hutang) sekarang berbentuk pil putih
-           yg MELAYANG menumpuk di batas bawah banner (margin negatif),
-           dgn "thumb" warna yg meluncur di baliknya -- bukan lagi dua
-           kotak bersebelahan berwarna sendiri-sendiri. Class "type-toggle"
-           TETAP dipertahankan (selain class baru "bill-kind-switch") krn
-           script.js men-query tombolnya lewat selector
-           "#billForm .type-toggle button". ---- -->
+      <!-- ---- Saklar jenis (Tagihan/Hutang) SEKARANG rata datar (bukan
+           lagi melayang menumpuk banner) -- pil abu-abu dgn tombol aktif
+           berlatar putih + bayangan tipis, PERSIS pola .type-toggle yg
+           sudah dipakai di popup "Tambah Transaksi" (.tx-modal), supaya
+           kedua popup benar² satu keluarga visual. Class "type-toggle"
+           TETAP dipertahankan krn script.js men-query tombolnya lewat
+           selector "#billForm .type-toggle button". Thumb geser (yg
+           dulu ada) DIHAPUS -- warna aktif sekarang cukup lewat class
+           .sel-bill.active / .sel-debt.active per-tombol, konsisten dgn
+           cara .sel-in/.sel-out di tx-modal diwarnai. ---- -->
       <div class="type-toggle bill-kind-switch">
-        <span class="bill-kind-switch-thumb" aria-hidden="true"></span>
         <button type="button" class="sel-bill active" data-billkind="tagihan">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
           Tagihan
@@ -13741,20 +13662,16 @@ body.is-scrolling *{
         </button>
       </div>
 
-      <!-- ---- Nominal sekarang jadi "kartu hero" tersendiri di paling
-           atas form (angka besar di tengah), bukan lagi salah satu sel
-           dlm grid 2 kolom bersama Jatuh Tempo -- ditonjolkan krn ini
-           info terpenting dari sebuah tagihan/hutang. REDESIGN lanjutan:
-           input diberi titik pemisah ribuan OTOMATIS saat mengetik
-           (mis. "150.000" bukan angka polos "150000") lewat JS
-           (initBillAmountFormat() di script.js) supaya nominal besar
-           tetap gampang dibaca sekilas -- persis kebiasaan input
-           nominal di aplikasi finansial pada umumnya. Krn butuh
-           menyisipkan titik saat mengetik, type diubah dari "number"
-           ke "text" + inputmode="numeric" (tetap memunculkan keypad
-           angka di HP), NILAI ASLI (tanpa titik) tetap disimpan &
-           dibaca sbg angka biasa oleh submit handler (lihat comment
-           di script.js). ---- -->
+      <!-- ---- Nominal sekarang berbentuk "SLIP SOBEKAN" (ticket stub) --
+           kartu besar di tengah dgn dua lubang "gigitan" bulat di kiri-
+           kanan tepi bawah + garis putus² memisahkan angka dari catatan
+           kecil di bawahnya, meniru sobekan struk/tagihan sungguhan --
+           signature visual baru popup ini, sekaligus paling relevan dgn
+           konteksnya sendiri (tagihan/hutang = dokumen finansial). Input
+           tetap diberi titik pemisah ribuan OTOMATIS saat mengetik lewat
+           JS (initBillAmountFormat() di script.js), type "text" +
+           inputmode="numeric", nilai murni (tanpa titik) yg disimpan --
+           TIDAK ada yg berubah dari sisi logic/JS, murni visual. ---- -->
       <div class="bill-amount-hero">
         <span class="bill-amount-hero-label">
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.5c0-1.1 1.1-2 2.5-2s2.5.8 2.5 1.8-1 1.5-2.5 1.9-2.5.9-2.5 1.9S10.6 15 12 15s2.5-.6 2.5-1.7"/></svg>
@@ -13764,6 +13681,8 @@ body.is-scrolling *{
           <span class="amount-prefix">Rp</span>
           <input type="text" inputmode="numeric" autocomplete="off" id="billAmount" placeholder="0" required>
         </div>
+        <span class="bill-amount-perf" aria-hidden="true"></span>
+        <span class="bill-amount-hint">Otomatis dipisah titik ribuan saat diketik</span>
       </div>
 
       <div class="form-row">
@@ -13779,10 +13698,10 @@ body.is-scrolling *{
              (initBillDueChips() di script.js) kalau nilai tanggal
              sekarang PERSIS cocok dgn salah satu preset. ---- -->
         <div class="bill-due-chips" id="billDueChips">
-          <button type="button" class="bill-due-chip" data-due-preset="1">Besok</button>
-          <button type="button" class="bill-due-chip" data-due-preset="7">+7 hari</button>
-          <button type="button" class="bill-due-chip" data-due-preset="30">+30 hari</button>
-          <button type="button" class="bill-due-chip" data-due-preset="eom">Akhir bulan</button>
+          <button type="button" class="bill-due-chip" data-due-preset="1"><span class="bill-due-chip-check" aria-hidden="true"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Besok</button>
+          <button type="button" class="bill-due-chip" data-due-preset="7"><span class="bill-due-chip-check" aria-hidden="true"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>+7 hari</button>
+          <button type="button" class="bill-due-chip" data-due-preset="30"><span class="bill-due-chip-check" aria-hidden="true"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>+30 hari</button>
+          <button type="button" class="bill-due-chip" data-due-preset="eom"><span class="bill-due-chip-check" aria-hidden="true"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Akhir bulan</button>
         </div>
       </div>
 
