@@ -6559,6 +6559,41 @@ tbody tr:last-child td{border-bottom:none;}
   .bill-modal .bill-kind-switch{margin:-16px 14px 12px;}
   .bill-amount-hero #billAmount{font-size:22px;}
 }
+
+/* ---- Posisi & tinggi popup di layar HP (<=640px, sama dgn
+   breakpoint munculnya .bottom-nav) --
+   SEBELUMNYA popup ini melayang di TENGAH layar (align-items:center
+   bawaan .modal-overlay) dgn jarak atas & bawah SAMA RATA (padding
+   20px kiri-kanan-atas-bawah), tanpa memperhitungkan menu navigasi
+   bawah (.bottom-nav, tinggi ±72px + safe-area, z-index 600 -- lebih
+   tinggi dari overlay popup ini yg cuma z-index:200) -- akibatnya
+   kalau isi form sedang panjang, badan popup bisa mentok/ketutup
+   sebagian di BALIK nav bawah (nav menang tampil di atasnya krn
+   z-index lebih tinggi), sisi bawah popup jadi "hilang".
+   Sekarang overlay khusus popup ini (#billModalOverlay, TIDAK
+   memengaruhi popup lain yg masih pakai .modal-overlay generik)
+   diubah jadi pola "bottom sheet": kartu di-anchor ke BAWAH
+   (align-items:flex-end) dgn jarak bawah persis setinggi nav + celah
+   kecil (pola sama dgn .toast-wrap yg sudah lebih dulu pakai
+   "72px + 14px + safe-area-inset-bottom" di atas), sehingga tepi
+   bawah kartu SELALU berhenti tepat di atas nav, tidak pernah
+   tertutup. Jarak atas dibuat tipis (+ aman dari notch/status bar
+   lewat safe-area-inset-top) supaya kartu leluasa "naik" mengisi
+   ruang setinggi mungkin ke atas kalau isi formnya panjang, radius
+   putih di puncak kartu tetap kelihatan rapi menempel dekat tepi
+   atas layar alih-alih nongkrong di tengah dgn jarak kosong sama
+   besar di atas & bawah spt sebelumnya. ---- */
+@media (max-width:640px){
+  #billModalOverlay{
+    align-items:flex-end;
+    padding:calc(10px + env(safe-area-inset-top,0px)) 10px calc(72px + 14px + env(safe-area-inset-bottom,0px));
+  }
+  #billModalOverlay .bill-modal{
+    width:100%;
+    max-height:calc(100vh - 72px - 14px - env(safe-area-inset-bottom,0px) - 10px - env(safe-area-inset-top,0px));
+    max-height:calc(100dvh - 72px - 14px - env(safe-area-inset-bottom,0px) - 10px - env(safe-area-inset-top,0px));
+  }
+}
 /* ---- Pengaman ekstra khusus HP paling sempit (mis. iPhone SE
    gen-1, lebar layar 320px, sama spt breakpoint 380px yg sudah
    dipakai konsisten di elemen lain pada file ini) -- di lebar
