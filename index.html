@@ -6379,36 +6379,173 @@ tbody tr:last-child td{border-bottom:none;}
   .tx-modal #txAmount{font-size:21px;}
 }
 
-/* ---- Popup "Tambah/Edit Tagihan & Hutang" (.bill-modal) -- pakai
-   struktur & warna aksen yg SAMA dgn .tx-modal di atas (lihat blok
-   gabungan .tx-modal,.bill-modal), cuma warna aksennya oranye
-   (Tagihan, default) / ungu (Hutang, class .kind-hutang) mengikuti
-   jenis yg dipilih -- bukan lagi sheen berjalan & kartu ikon besar. */
-.bill-modal .type-toggle button.sel-bill.active{background:#fff;color:#B45309;box-shadow:0 2px 8px -2px rgba(15,23,42,0.16);}
-.bill-modal .type-toggle button.sel-debt.active{background:#fff;color:#7C3AED;box-shadow:0 2px 8px -2px rgba(15,23,42,0.16);}
+/* ============================================================
+   POPUP "TAMBAH/EDIT TAGIHAN & HUTANG" (.bill-modal) — REDESIGN
+   PENUH (menggantikan versi sebelumnya yg cuma header putih polos +
+   pil toggle datar). Konsep baru: "kartu tagihan" bergaya kartu
+   bank/invoice modern --
+     1) Banner gradasi penuh warna di puncak popup (oranye Tagihan /
+        ungu Hutang), dgn ikon & judul putih di atasnya.
+     2) Saklar jenis (Tagihan/Hutang) jadi pil putih yg MELAYANG
+        menumpuk di batas bawah banner (margin negatif menarik naik),
+        dgn "thumb" warna yg meluncur (sliding) di baliknya saat
+        digonta-ganti -- bukan lagi dua kotak background sendiri².
+     3) Nominal ditonjolkan jadi "kartu hero" tersendiri (angka besar
+        di tengah), bukan lagi salah satu sel biasa dlm grid 2 kolom.
+     4) Input Jatuh Tempo dilengkapi chip preset cepat (Besok/+7 hari/
+        +30 hari/Akhir bulan).
+     5) Baris "Ulangi otomatis" jadi kartu dgn ikon + toggle switch
+        bulat, senada gaya toggle di Pengaturan > Keamanan.
+   Semua warna aksen tetap otomatis ikut jenis yg aktif lewat class
+   .kind-hutang (ditoggle JS di setBillKind(), lihat script.js) --
+   oranye (#D97706/#B45309) utk Tagihan (default), ungu (#7C3AED) utk
+   Hutang, TIDAK ada nilai warna yg hardcode di luar 2 kondisi ini. */
 
-.bill-modal .bill-amount-wrap{
-  display:flex;align-items:baseline;gap:6px;
-  background:var(--paper);border:1.5px solid var(--line);border-radius:12px;padding:11px 13px;
+/* ---- 1) Banner gradasi ---- */
+.bill-modal-banner{
+  position:relative;overflow:hidden;
+  margin:-22px -22px 0;padding:20px 22px 40px;
+  border-radius:22px 22px 0 0;
+  background:linear-gradient(135deg,var(--banner-orange),var(--banner-orange-deep));
+  transition:background .3s ease;
+}
+.bill-modal.kind-hutang .bill-modal-banner{
+  background:linear-gradient(135deg,var(--violet-light),var(--violet));
+}
+/* Dekorasi lingkaran radial samar, senada pola dekorasi popup lain
+   di app ini (mis. sheen/blob pojok pada .modal-head-icon versi
+   lama) -- cuma tekstur halus, TIDAK mengganggu keterbacaan teks di
+   atasnya krn opacity-nya sangat rendah & berada di belakang (z-index
+   konten header semua diberi z-index:2 di bawah). */
+.bill-modal-banner::before,
+.bill-modal-banner::after{content:'';position:absolute;border-radius:50%;background:rgba(255,255,255,0.14);pointer-events:none;}
+.bill-modal-banner::before{width:130px;height:130px;top:-58px;right:-36px;}
+.bill-modal-banner::after{width:74px;height:74px;bottom:-32px;left:18px;background:rgba(255,255,255,0.1);}
+.bill-modal-banner .modal-close{
+  position:absolute;top:16px;right:16px;z-index:2;
+  width:29px;height:29px;border-radius:50%;
+  background:rgba(255,255,255,0.22);color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .16s ease;
+}
+.bill-modal-banner .modal-close:hover{background:rgba(255,255,255,0.36);}
+.bill-modal-banner .modal-head-icon{
+  position:relative;z-index:2;
+  width:44px;height:44px;border-radius:14px;margin-bottom:12px;
+  background:rgba(255,255,255,0.22);
+  display:flex;align-items:center;justify-content:center;color:#fff;
+}
+.bill-modal-banner .modal-head-icon svg{width:21px;height:21px;}
+.bill-modal-banner-titles{position:relative;z-index:2;}
+.bill-modal-banner-titles h3{
+  font-family:'Poppins',sans-serif;font-weight:600;font-size:18.5px;
+  letter-spacing:-0.005em;line-height:1.25;color:#fff;margin:0 0 2px;
+}
+.bill-modal-banner-titles .modal-head-sub{
+  font-family:var(--font-body);font-size:12px;font-weight:500;color:rgba(255,255,255,0.85);
+}
+
+/* ---- 2) Saklar jenis melayang, sliding thumb ---- */
+.bill-modal .bill-kind-switch{
+  position:relative;z-index:3;gap:0;
+  margin:-24px 22px 20px;padding:4px;
+  background:#fff;border-radius:14px;
+  display:grid;grid-template-columns:1fr 1fr;
+  box-shadow:0 14px 28px -14px rgba(15,23,42,0.38), 0 2px 8px rgba(15,23,42,0.06);
+}
+.bill-kind-switch-thumb{
+  position:absolute;top:4px;left:4px;z-index:0;
+  width:calc(50% - 4px);height:calc(100% - 8px);border-radius:10px;
+  background:#D97706;
+  transition:transform .3s cubic-bezier(.22,1,.36,1), background .2s ease;
+}
+.bill-modal.kind-hutang .bill-kind-switch-thumb{transform:translateX(100%);background:#7C3AED;}
+.bill-modal .bill-kind-switch button{position:relative;z-index:1;}
+.bill-modal .bill-kind-switch button.sel-bill.active,
+.bill-modal .bill-kind-switch button.sel-debt.active{
+  background:transparent;border-color:transparent;box-shadow:none;color:#fff;
+}
+
+/* ---- 3) Kartu hero nominal ---- */
+.bill-amount-hero{
+  text-align:center;margin-bottom:16px;padding:16px 16px 18px;
+  border-radius:16px;background:var(--paper);border:1.5px solid var(--line);
   transition:border-color .16s ease, box-shadow .16s ease, background .16s ease;
 }
-.bill-modal .bill-amount-wrap:focus-within{border-color:#D97706;background:#fff;box-shadow:0 0 0 4px rgba(217,119,6,0.1);}
-.bill-modal.kind-hutang .bill-amount-wrap:focus-within{border-color:#7C3AED;box-shadow:0 0 0 4px rgba(124,58,237,0.1);}
-.bill-modal .bill-amount-wrap .amount-prefix{font-family:'Poppins',sans-serif;font-weight:700;font-size:15px;color:var(--ink-faint);}
-.bill-modal .bill-amount-wrap #billAmount{
+.bill-amount-hero:focus-within{border-color:#D97706;background:#fff;box-shadow:0 0 0 4px rgba(217,119,6,0.1);}
+.bill-modal.kind-hutang .bill-amount-hero:focus-within{border-color:#7C3AED;box-shadow:0 0 0 4px rgba(124,58,237,0.1);}
+.bill-amount-hero-label{display:block;font-size:11px;font-weight:700;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;}
+.bill-amount-hero .bill-amount-wrap{background:transparent;border:none;padding:0;justify-content:center;}
+.bill-amount-hero .bill-amount-wrap:focus-within{border:none;background:transparent;box-shadow:none;}
+.bill-amount-hero .amount-prefix{font-family:'Poppins',sans-serif;font-weight:700;font-size:19px;color:var(--ink-faint);}
+.bill-amount-hero #billAmount{
   border:none;background:transparent;padding:0;font-family:'Poppins',sans-serif;
-  font-size:19px;font-weight:700;color:var(--ink);width:100%;
+  font-size:32px;font-weight:700;color:var(--ink);width:auto;max-width:210px;text-align:center;
 }
-.bill-modal .bill-amount-wrap #billAmount:focus{box-shadow:none;background:transparent;}
+.bill-amount-hero #billAmount:focus{box-shadow:none;background:transparent;}
+
+/* ---- Fokus field biasa (nama/tanggal/catatan) tetap ikut warna jenis aktif ---- */
 .bill-modal .form-row input:focus,
 .bill-modal .form-row textarea:focus{border-color:#D97706;box-shadow:0 0 0 4px rgba(217,119,6,0.1);}
 .bill-modal.kind-hutang .form-row input:focus,
 .bill-modal.kind-hutang .form-row textarea:focus{border-color:#7C3AED;box-shadow:0 0 0 4px rgba(124,58,237,0.1);}
 
+/* ---- 4) Chip preset Jatuh Tempo ---- */
+.bill-due-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px;}
+.bill-due-chip{
+  padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:#fff;
+  font-family:var(--font-body);font-size:11.5px;font-weight:600;color:var(--ink-soft);
+  transition:all .15s ease;
+}
+.bill-due-chip:hover{border-color:#D97706;color:#B45309;background:rgba(217,119,6,0.06);}
+.bill-modal.kind-hutang .bill-due-chip:hover{border-color:#7C3AED;color:#7C3AED;background:rgba(124,58,237,0.06);}
+.bill-due-chip.active{background:#D97706;border-color:#D97706;color:#fff;}
+.bill-modal.kind-hutang .bill-due-chip.active{background:#7C3AED;border-color:#7C3AED;}
+
+/* ---- 5) Baris "Ulangi otomatis" -- kartu + toggle switch ---- */
+.bill-recurring-row{
+  display:flex;align-items:center;gap:12px;cursor:pointer;
+  padding:12px 14px;margin-bottom:16px;border-radius:14px;
+  background:var(--paper);border:1.5px solid var(--line);
+  transition:border-color .15s ease, background .15s ease;
+}
+.bill-recurring-row input{position:absolute;opacity:0;width:0;height:0;}
+.bill-recurring-row:has(input:checked){border-color:#D97706;background:rgba(217,119,6,0.06);}
+.bill-modal.kind-hutang .bill-recurring-row:has(input:checked){border-color:#7C3AED;background:rgba(124,58,237,0.06);}
+.bill-recurring-row-icon{
+  width:34px;height:34px;flex-shrink:0;border-radius:10px;background:#fff;
+  display:flex;align-items:center;justify-content:center;color:#B45309;
+  box-shadow:0 1px 3px rgba(15,23,42,0.08);
+}
+.bill-modal.kind-hutang .bill-recurring-row-icon{color:#7C3AED;}
+.bill-recurring-row-text{
+  flex:1;min-width:0;font-family:var(--font-body);font-size:13.5px;font-weight:600;color:var(--ink);line-height:1.3;
+}
+.bill-recurring-row-sub{display:block;font-size:11.5px;font-weight:400;color:var(--ink-faint);margin-top:2px;}
+.bill-recurring-toggle-track{
+  flex-shrink:0;width:40px;height:23px;border-radius:999px;background:var(--line);
+  display:inline-flex;align-items:center;padding:2.5px;box-sizing:border-box;
+  transition:background .2s ease;
+}
+.bill-recurring-toggle-thumb{
+  width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(15,23,42,0.25);
+  transition:transform .2s cubic-bezier(.22,1,.36,1);
+}
+.bill-recurring-row input:checked ~ .bill-recurring-toggle-track{background:#D97706;}
+.bill-modal.kind-hutang .bill-recurring-row input:checked ~ .bill-recurring-toggle-track{background:#7C3AED;}
+.bill-recurring-row input:checked ~ .bill-recurring-toggle-track .bill-recurring-toggle-thumb{transform:translateX(17px);}
+
+/* ---- Tombol aksi -- warna primer ikut jenis aktif ---- */
 .bill-modal .modal-actions .btn-primary{background:#D97706;box-shadow:0 8px 18px -8px rgba(180,83,9,0.5);transition:background .16s ease;}
 .bill-modal .modal-actions .btn-primary:hover{background:#B45309;}
 .bill-modal.kind-hutang .modal-actions .btn-primary{background:#7C3AED;box-shadow:0 8px 18px -8px rgba(109,40,217,0.45);}
 .bill-modal.kind-hutang .modal-actions .btn-primary:hover{background:#6D28D9;}
+
+@media (max-width:600px){
+  .bill-modal-banner{margin:-18px -18px 0;padding:18px 18px 36px;border-radius:20px 20px 0 0;}
+  .bill-modal .bill-kind-switch{margin:-22px 18px 18px;}
+  .bill-amount-hero #billAmount{font-size:27px;}
+}
 
 .wallet-preview-card{transition:box-shadow .25s ease;}
 .wallet-modal .wallet-category-toggle button{transition:all .2s cubic-bezier(.22,.9,.3,1);}
@@ -13387,25 +13524,40 @@ body.is-scrolling *{
      sama persis gayanya dgn tx-modal (lihat blok CSS .bill-modal). ===== -->
 <div class="modal-overlay" id="billModalOverlay">
   <div class="modal bill-modal">
-    <div class="modal-head">
-      <div class="modal-head-left">
-        <span class="modal-head-icon">
-          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
-        </span>
-        <div class="modal-head-titles">
-          <h3 id="billModalTitle">Tambah Tagihan</h3>
-          <span class="modal-head-sub" id="billModalSub">Kelola tagihan &amp; hutang kamu</span>
-        </div>
-      </div>
+    <!-- ---- Banner gradasi penuh warna di puncak popup (oranye utk
+         Tagihan / ungu utk Hutang lewat class .kind-hutang di setBillKind()),
+         menggantikan header putih polos sebelumnya -- supaya jenis yg
+         sedang dipilih langsung "terasa" dari warna begitu popup dibuka,
+         bukan cuma dari teks/pil kecil. Class modal-head-icon & modal-head-sub
+         SENGAJA dipertahankan (bukan diganti nama) krn setBillKind() di
+         script.js masih meng-query elemen ini via class tsb utk mengganti
+         ikon & subjudul saat jenis diganti -- lihat komentar di CSS-nya. ---- -->
+    <div class="bill-modal-banner">
       <button class="modal-close" id="billModalCloseBtn" type="button">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M18 6 6 18M6 6l12 12"/></svg>
       </button>
+      <span class="modal-head-icon">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
+      </span>
+      <div class="bill-modal-banner-titles">
+        <h3 id="billModalTitle">Tambah Tagihan</h3>
+        <span class="modal-head-sub" id="billModalSub">Atur pengingat tagihan kamu</span>
+      </div>
     </div>
+
     <form id="billForm">
       <input type="hidden" id="billId">
       <input type="hidden" id="billKind" value="tagihan">
 
-      <div class="type-toggle bill-type-toggle">
+      <!-- ---- Saklar jenis (Tagihan/Hutang) sekarang berbentuk pil putih
+           yg MELAYANG menumpuk di batas bawah banner (margin negatif),
+           dgn "thumb" warna yg meluncur di baliknya -- bukan lagi dua
+           kotak bersebelahan berwarna sendiri-sendiri. Class "type-toggle"
+           TETAP dipertahankan (selain class baru "bill-kind-switch") krn
+           script.js men-query tombolnya lewat selector
+           "#billForm .type-toggle button". ---- -->
+      <div class="type-toggle bill-kind-switch">
+        <span class="bill-kind-switch-thumb" aria-hidden="true"></span>
         <button type="button" class="sel-bill active" data-billkind="tagihan">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
           Tagihan
@@ -13416,25 +13568,35 @@ body.is-scrolling *{
         </button>
       </div>
 
+      <!-- ---- Nominal sekarang jadi "kartu hero" tersendiri di paling
+           atas form (angka besar di tengah), bukan lagi salah satu sel
+           dlm grid 2 kolom bersama Jatuh Tempo -- ditonjolkan krn ini
+           info terpenting dari sebuah tagihan/hutang. ---- -->
+      <div class="bill-amount-hero">
+        <span class="bill-amount-hero-label">Jumlah</span>
+        <div class="amount-input-wrap bill-amount-wrap">
+          <span class="amount-prefix">Rp</span>
+          <input type="number" id="billAmount" min="0" step="1" placeholder="0" required>
+        </div>
+      </div>
+
       <div class="form-row">
         <label for="billName" id="billNameLabel">Nama Tagihan</label>
         <input type="text" id="billName" placeholder="Contoh: Tagihan Listrik PLN" required>
       </div>
 
-      <div class="form-grid-2">
-        <div class="form-row">
-          <label for="billAmount">Jumlah (Rp)</label>
-          <!-- ---- Input "Jumlah" DIPERKAYA gayanya seperti input nominal
-               di popup Tambah Transaksi (.amount-input-wrap): prefix "Rp"
-               + angka besar bold, bukan lagi kotak input polos. ---- -->
-          <div class="amount-input-wrap bill-amount-wrap">
-            <span class="amount-prefix">Rp</span>
-            <input type="number" id="billAmount" min="0" step="1" placeholder="0" required>
-          </div>
-        </div>
-        <div class="form-row">
-          <label for="billDueDate">Jatuh Tempo</label>
-          <input type="date" id="billDueDate" required>
+      <div class="form-row">
+        <label for="billDueDate">Jatuh Tempo</label>
+        <input type="date" id="billDueDate" required>
+        <!-- ---- Chip preset cepat -- isi tanggal umum sekali ketuk tanpa
+             perlu buka date picker. Ditandai "aktif" lewat JS
+             (initBillDueChips() di script.js) kalau nilai tanggal
+             sekarang PERSIS cocok dgn salah satu preset. ---- -->
+        <div class="bill-due-chips" id="billDueChips">
+          <button type="button" class="bill-due-chip" data-due-preset="1">Besok</button>
+          <button type="button" class="bill-due-chip" data-due-preset="7">+7 hari</button>
+          <button type="button" class="bill-due-chip" data-due-preset="30">+30 hari</button>
+          <button type="button" class="bill-due-chip" data-due-preset="eom">Akhir bulan</button>
         </div>
       </div>
 
@@ -13443,9 +13605,24 @@ body.is-scrolling *{
         <textarea id="billNote" rows="2" placeholder="Contoh: Dicicil 3x, hubungi sebelum tanggal 5"></textarea>
       </div>
 
+      <!-- ---- Baris "Ulangi otomatis" didesain ulang jadi kartu dgn
+           ikon + toggle switch bulat (pola visual sama dgn toggle
+           Pengaturan > Keamanan), bukan lagi checkbox kotak polos +
+           teks panjang. Input checkbox (id="billRecurring", dibaca
+           persis sama oleh script.js via .checked) disembunyikan
+           visual (opacity:0) tapi tetap elemen pertama di dalam
+           <label>, jadi mengetuk di mana pun pada kartu ini tetap
+           menoggle-nya seperti sebelumnya. ---- -->
       <label class="bill-recurring-row">
         <input type="checkbox" id="billRecurring">
-        <span>Ulangi otomatis tiap bulan (tagihan/hutang rutin)</span>
+        <span class="bill-recurring-row-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 15.3-6.4L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.3 6.4L3 16"/><path d="M3 21v-5h5"/></svg>
+        </span>
+        <span class="bill-recurring-row-text">
+          Ulangi otomatis tiap bulan
+          <span class="bill-recurring-row-sub">Cocok untuk tagihan/hutang rutin</span>
+        </span>
+        <span class="bill-recurring-toggle-track"><span class="bill-recurring-toggle-thumb"></span></span>
       </label>
 
       <div class="modal-actions">

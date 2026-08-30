@@ -7272,6 +7272,7 @@ function openBillModal(kind) {
   document.getElementById('billDueDate').value = todayStr();
   document.getElementById('billRecurring').checked = false;
   setBillKind(kind || 'tagihan');
+  window.zayaSyncBillDueChips && window.zayaSyncBillDueChips();
   openModal(billModal);
 }
 
@@ -7287,6 +7288,7 @@ function openEditBillModal(kind, id) {
   document.getElementById('billNote').value = item.note || '';
   document.getElementById('billRecurring').checked = !!item.recurring;
   setBillKind(kind);
+  window.zayaSyncBillDueChips && window.zayaSyncBillDueChips();
   openModal(billModal);
 }
 
@@ -7328,6 +7330,41 @@ document.querySelectorAll('#billForm .type-toggle button').forEach(btn => {
 document.getElementById('billModalCloseBtn').addEventListener('click', () => closeModal(billModal));
 document.getElementById('btnBillCancel').addEventListener('click', () => closeModal(billModal));
 billModal.addEventListener('click', (e) => { if (e.target === billModal) closeModal(billModal); });
+
+/* ---- Chip preset cepat "Jatuh Tempo" (Besok/+7 hari/+30 hari/Akhir
+   bulan) di popup Tambah/Edit Tagihan & Hutang -- biar user tidak
+   selalu harus buka date picker cuma utk tanggal umum spt ini. Status
+   "aktif" pada chip SELALU dihitung ulang dari nilai #billDueDate
+   saat ini (bukan diingat dari klik terakhir), supaya tetap jujur
+   kalau usernya lanjut mengetik/mengganti tanggal manual lewat date
+   picker setelah menekan salah satu chip. ---- */
+(function initBillDueChips() {
+  const dateInput = document.getElementById('billDueDate');
+  const chipsWrap = document.getElementById('billDueChips');
+  if (!dateInput || !chipsWrap) return;
+  const chips = Array.from(chipsWrap.querySelectorAll('.bill-due-chip'));
+
+  function toDateStr(d) {
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function presetValue(preset) {
+    const d = new Date();
+    if (preset === 'eom') return toDateStr(new Date(d.getFullYear(), d.getMonth() + 1, 0));
+    d.setDate(d.getDate() + parseInt(preset, 10));
+    return toDateStr(d);
+  }
+  function syncActiveChip() {
+    chips.forEach((c) => c.classList.toggle('active', presetValue(c.dataset.duePreset) === dateInput.value));
+  }
+  chips.forEach((c) => {
+    c.addEventListener('click', () => {
+      dateInput.value = presetValue(c.dataset.duePreset);
+      syncActiveChip();
+    });
+  });
+  dateInput.addEventListener('input', syncActiveChip);
+  window.zayaSyncBillDueChips = syncActiveChip;
+})();
 
 /* ==========================================================
    PERANGKAT SAYA — render kartu + modal tambah/edit
