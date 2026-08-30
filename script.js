@@ -10450,18 +10450,27 @@ document.getElementById('manajemenDeviceBackBtn')?.addEventListener('click', clo
 //    SENGAJA cuma jalan sekali otomatis saat halaman pertama dibuka --
 //    reset flag-nya di sini supaya klik manual tidak sia-sia kalau lookup
 //    pertama tadi kebetulan gagal/network sempat putus).
-// Ikon berputar TERUS (bukan cuma sekali) selama proses berjalan (lihat
-// animasi "infinite" di CSS), tombol dinonaktifkan sementara utk cegah
-// klik ganda, & toast singkat menandai hasilnya -- supaya jelas kapan
-// prosesnya benar2 selesai, bukan cuma efek visual kosong.
+// Efek loading SEKARANG bukan cuma ikon yg berputar terus (bukan cuma
+// sekali), tapi jg isi kartu (angka ringkasan + daftar perangkat) ikut
+// meredup & tidak bisa diklik selama proses berjalan (class "is-refreshing"
+// di #deviceMgmtActiveCard, lihat CSS-nya di index.html) + subjudul kartu
+// sementara berganti "Menyegarkan..." -- supaya user yg tidak sempat
+// melihat ikon kecilnya pun tetap sadar sedang ada proses berjalan, bukan
+// app yg terlihat diam/macet. Tombol jg dinonaktifkan sementara utk cegah
+// klik ganda, & toast singkat menandai hasilnya di akhir.
 document.getElementById('deviceMgmtRefreshBtn')?.addEventListener('click', async function () {
   const btn = this;
   if (btn.disabled) return;
+  const card = document.getElementById('deviceMgmtActiveCard');
+  const subtitleEl = document.getElementById('deviceMgmtSubtitle');
+  const prevSubtitle = subtitleEl ? subtitleEl.textContent : '';
   btn.disabled = true;
   btn.setAttribute('aria-busy', 'true');
   btn.classList.remove('is-spinning');
   void btn.offsetWidth; // restart animasi kalau diklik berkali-kali
   btn.classList.add('is-spinning');
+  card?.classList.add('is-refreshing');
+  if (subtitleEl) subtitleEl.textContent = 'Menyegarkan daftar perangkat...';
   try {
     const loggedIn = typeof window.cloudIsLoggedIn === 'function' && window.cloudIsLoggedIn();
     if (loggedIn && typeof window.cloudPullKeys === 'function') {
@@ -10473,29 +10482,71 @@ document.getElementById('deviceMgmtRefreshBtn')?.addEventListener('click', async
     deviceMgmtModelEnrichStarted = false;
     deviceMgmtClientHintsPromise = null;
     await Promise.all([deviceMgmtEnrichThisDeviceIpLocation(), deviceMgmtEnrichThisDeviceModel()]);
+    // renderDeviceMgmtPage() di bawah menulis ulang subtitleEl sesuai status
+    // login terkini apa adanya -- teks loading di atas otomatis tertimpa,
+    // tidak perlu dikembalikan manual ke prevSubtitle di sini.
     await renderDeviceMgmtPage();
     showToast('Daftar perangkat diperbarui.');
   } catch (e) {
     console.error('Gagal menyegarkan daftar perangkat:', e);
     showToast('Gagal menyegarkan daftar perangkat.', 'err');
+    if (subtitleEl) subtitleEl.textContent = prevSubtitle; // gagal SEBELUM sempat render ulang -- kembalikan teks lama drpd nyangkut di "Menyegarkan..."
     renderDeviceMgmtPage(); // tetap gambar ulang dari data yg ada supaya UI tidak macet
   } finally {
     btn.classList.remove('is-spinning');
     btn.removeAttribute('aria-busy');
     btn.disabled = false;
+    card?.classList.remove('is-refreshing');
   }
 });
+
+// ---- Redesign popup konfirmasi HAPUS PERANGKAT (Manajemen Device) ----
+// SEBELUMNYA pakai confirm() bawaan browser -- kotak abu-abu polos milik
+// OS/browser, tidak senada sama sekali dgn tampilan ZAYAin & nama
+// perangkatnya tidak bisa ditonjolkan apa pun di dalamnya. Sekarang diganti
+// modal custom (#deviceForgetConfirmOverlay, lihat markup + catatan
+// desainnya di index.html), dibungkus jadi fungsi berbasis Promise persis
+// pola openLogoutConfirm() di atas, supaya pemanggilnya (deviceMgmtForgetDevice
+// di bawah) tetap bisa dipakai dgn gaya `if (!await openDeviceForgetConfirm(label)) return;`
+// -- sama persis "rasanya" dgn confirm() lama, cuma tampilannya diganti total.
+const deviceForgetConfirmModal = document.getElementById('deviceForgetConfirmOverlay');
+function openDeviceForgetConfirm(label) {
+  return new Promise((resolve) => {
+    // Jaga-jaga kalau markup modal ini entah kenapa tidak ada di halaman
+    // (mis. versi index.html lama blm diperbarui) -- jangan sampai fitur
+    // hapus perangkat jadi mati total, cukup anggap "dikonfirmasi" spt
+    // confirm() lama tanpa modal.
+    if (!deviceForgetConfirmModal) { resolve(true); return; }
+    const titleEl = document.getElementById('deviceForgetConfirmTitle');
+    if (titleEl) titleEl.textContent = `Hapus "${label}" dari daftar perangkat?`;
+    const btnYes = document.getElementById('btnConfirmDeviceForget');
+    const btnNo = document.getElementById('btnCancelDeviceForget');
+    function cleanup(result) {
+      btnYes.removeEventListener('click', onYes);
+      btnNo.removeEventListener('click', onNo);
+      deviceForgetConfirmModal.removeEventListener('click', onOverlay);
+      closeModal(deviceForgetConfirmModal);
+      resolve(result);
+    }
+    function onYes() { cleanup(true); }
+    function onNo() { cleanup(false); }
+    // Klik di luar kartu modal (di area overlay gelap) = sama dgn Batal,
+    // konsisten dgn perilaku #confirmOverlay/#logoutConfirmOverlay yg sudah ada.
+    function onOverlay(e) { if (e.target === deviceForgetConfirmModal) cleanup(false); }
+    btnYes.addEventListener('click', onYes);
+    btnNo.addEventListener('click', onNo);
+    deviceForgetConfirmModal.addEventListener('click', onOverlay);
+    openModal(deviceForgetConfirmModal);
+  });
+}
 
 // Tombol "Hapus" per baris perangkat (event delegation, krn baris
 // dibuat ulang tiap render) -- membuang perangkat itu dari daftar
 // bersama (lihat catatan FAQ "Apa yang terjadi kalau saya hapus...").
-// Konfirmasi SENGAJA pakai confirm() bawaan browser, mengikuti pola
-// PERSIS aksi destruktif lain di app ini (lihat catatan di blok
-// "ZONA BERBAHAYA" -- confirm() bawaan lebih aman lintas perangkat
-// drpd modal custom). Sebelum baris benar2 hilang dari DOM, dikasih
-// class "is-removing" dulu supaya CSS transition (lihat .device-mgmt-
-// row.is-removing di index.html) mainkan animasi fade+collapse
-// singkat -- baris tidak lagi "meloncat hilang" begitu saja.
+// Sebelum baris benar2 hilang dari DOM, dikasih class "is-removing" dulu
+// supaya CSS transition (lihat .device-mgmt-row.is-removing di index.html)
+// mainkan animasi fade+collapse singkat -- baris tidak lagi "meloncat
+// hilang" begitu saja.
 // Dipisah jadi fungsi sendiri (SEBELUMNYA inline di dalam listener
 // klik daftar) supaya bisa dipanggil dari DUA tempat: tombol "Hapus"
 // inline di tiap baris daftar, MAUPUN tombol "Hapus Perangkat" di
@@ -10503,9 +10554,17 @@ document.getElementById('deviceMgmtRefreshBtn')?.addEventListener('click', async
 // openDeviceDetailSheet() di bawah. `row` boleh null (dipanggil dari
 // popup, bukan dari baris daftar itu sendiri) -- kalau null, animasi
 // fade+collapse dilewati & penghapusan terjadi langsung.
-function deviceMgmtForgetDevice(id, label, row) {
-  const ok = confirm(`Hapus "${label}" dari daftar perangkat?\n\nPerangkat ini tidak akan "dipaksa keluar" -- kalau masih dipakai, ia akan otomatis terdaftar ulang begitu ZAYAin dibuka lagi di sana.`);
-  if (!ok) return;
+// SEKARANG async (sebelumnya sync, krn confirm() bawaan browser blocking) --
+// konfirmasinya sudah diganti modal custom di atas yg berbasis Promise.
+async function deviceMgmtForgetDevice(id, label, row) {
+  const ok = await openDeviceForgetConfirm(label);
+  if (!ok) {
+    // User membatalkan -- balikkan tombol "Hapus" baris ini spt semula
+    // (listener klik daftar di bawah men-disable tombolnya duluan SEBELUM
+    // modal ini terbuka, guna cegah klik ganda selagi modal masih terbuka).
+    row?.querySelector('[data-forgetdevice]')?.removeAttribute('disabled');
+    return;
+  }
 
   let done = false;
   const finishRemoval = () => {
@@ -10527,6 +10586,7 @@ function deviceMgmtForgetDevice(id, label, row) {
     finishRemoval();
   }
 }
+
 
 // Klik baris daftar perangkat: tombol "Hapus" inline tetap menghapus
 // LANGSUNG dari daftar (perilaku lama dipertahankan supaya tidak perlu

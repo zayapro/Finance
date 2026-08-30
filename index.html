@@ -8284,14 +8284,29 @@ html.zp-app-loading .page-body > .lap-panel{display:none;}
 }
 .device-mgmt-refresh-btn:hover{background:var(--line);}
 .device-mgmt-refresh-btn:disabled{opacity:.55;cursor:default;}
-/* Diganti dari 1x putaran (.6s linear tanpa infinite) -> berputar TERUS
-   selama tombolnya masih ber-class "is-spinning": prosesnya sekarang
-   benar2 async (tarik data cloud + lookup IP/Client Hints, lihat
-   listener #deviceMgmtRefreshBtn di script.js) yg durasinya tidak pasti,
-   jadi ikon harus tetap berputar sampai class ini dilepas manual saat
-   prosesnya benar2 selesai -- bukan berhenti sendiri di tengah proses. */
+/* Efek loading tombol refresh (Diganti dari 1x putaran (.6s linear tanpa
+   infinite) -> berputar TERUS selama tombolnya masih ber-class
+   "is-spinning": prosesnya sekarang benar2 async (tarik data cloud +
+   lookup IP/Client Hints, lihat listener #deviceMgmtRefreshBtn di
+   script.js) yg durasinya tidak pasti, jadi ikon harus tetap berputar
+   sampai class ini dilepas manual saat prosesnya benar2 selesai -- bukan
+   berhenti sendiri di tengah proses. */
 .device-mgmt-refresh-btn.is-spinning svg{animation:deviceMgmtSpin .6s linear infinite;}
 @keyframes deviceMgmtSpin{to{transform:rotate(360deg);}}
+/* Efek loading TAMBAHAN saat refresh -- SEBELUMNYA cuma ikon yg berputar,
+   isi kartu (angka ringkasan + daftar perangkat) diam saja spt biasa
+   selama proses berlangsung, jadi kurang terasa "sedang memuat" kalau
+   user tidak sempat melihat ikonnya. Sekarang seluruh isi kartu #2 ikut
+   meredup + tidak bisa diklik (pointer-events:none, cegah klik baris/
+   tombol Hapus di tengah proses refresh yg datanya sedang diganti)
+   selama class "is-refreshing" ini ada di kartunya (lihat listener
+   #deviceMgmtRefreshBtn di script.js yg pasang/lepas class ini). */
+.device-mgmt-card.is-refreshing .device-mgmt-stats,
+.device-mgmt-card.is-refreshing .device-mgmt-list{
+  opacity:.4;pointer-events:none;transition:opacity .2s ease;
+  filter:grayscale(20%);
+}
+.device-mgmt-stats,.device-mgmt-list{transition:opacity .2s ease;}
 .device-mgmt-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;}
 .device-mgmt-stat{
   background:var(--paper);border-radius:11px;padding:11px 12px;display:flex;flex-direction:column;gap:6px;min-width:0;
@@ -8348,6 +8363,11 @@ html.zp-app-loading .page-body > .lap-panel{display:none;}
   padding:8px 4px;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;
 }
 .device-mgmt-row-forget:hover{text-decoration:underline;}
+/* Tombol "Hapus Perangkat" di popup detail (#deviceDetailForgetBtn) pakai
+   class ".btn" umum yg default-nya font-weight:700 (tebal) -- diturunkan
+   di sini jadi 600 khusus utk tombol ini supaya tidak terkesan terlalu
+   tebal/menonjol dibanding tombol lain di popup yg sama. */
+#deviceDetailForgetBtn{font-weight:600;}
 .device-mgmt-empty{padding:10px 2px;text-align:center;font-size:12.5px;color:var(--ink-faint);}
 /* ---- FAQ & Ketentuan: reuse .bantuan-row/.bantuan-faq-* apa adanya
    (sama seperti Pusat Bantuan) supaya satu bahasa visual & interaksi.
@@ -8992,6 +9012,18 @@ select#categoryFilter[hidden]{display:none;}
   transition:transform .42s cubic-bezier(.34,1.5,.55,1), opacity .24s ease;
 }
 .modal-overlay.open .logout-confirm-modal{transform:translateY(0) scale(1);}
+
+/* ---- Redesign popup konfirmasi HAPUS PERANGKAT (Manajemen Device) ----
+   Lihat markup & catatan panjangnya di index.html dekat
+   #deviceForgetConfirmOverlay. Masuk dgn fade+geser tipis biasa (SAMA spt
+   #confirmOverlay bawaan, TIDAK pakai pantulan/spring spt modal Keluar Akun
+   di atas) -- krn aksi ini tetap destruktif/permanen, jadi kesannya sengaja
+   dibuat tenang & serius, bukan "ramah" spt logout. Yang dibedakan cuma
+   bobot font judul & tombol konfirmasinya, diturunkan dari weight 600/700
+   bawaan (h3 & .btn) jadi lebih ringan supaya tidak terkesan terlalu
+   tebal/berat dibanding modal hapus transaksi biasa. */
+.device-forget-confirm-modal h3{font-weight:500;}
+.device-forget-confirm-modal #btnConfirmDeviceForget{font-weight:600;}
 
 /* ============ TOAST ============
    REDESIGN: sebelumnya kartu solid gelap (--forest-deep/--wine) dengan
@@ -12116,7 +12148,7 @@ body.is-scrolling *{
         </div>
 
         <!-- Kartu 2: Device Aktif -- ringkasan + daftar perangkat -->
-        <div class="device-mgmt-card">
+        <div class="device-mgmt-card" id="deviceMgmtActiveCard">
           <div class="device-mgmt-card-head">
             <span class="device-mgmt-card-ic">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="3.5" width="14" height="10.5" rx="1.6"/><path d="M6.5 17.5h6M9.5 14v3.5"/><rect x="16" y="9" width="6" height="10.5" rx="1.4"/><path d="M18.2 17h1.6"/></svg>
@@ -13012,6 +13044,38 @@ body.is-scrolling *{
     <div class="modal-actions">
       <button class="btn btn-ghost" id="btnCancelDelete">Batal</button>
       <button class="btn btn-danger" id="btnConfirmDelete">Ya, Hapus</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL KONFIRMASI HAPUS PERANGKAT (Manajemen Device) — REDESIGN =====
+     SEBELUMNYA pakai confirm() bawaan browser (lihat catatan lama di
+     deviceMgmtForgetDevice() di script.js) -- kotak abu-abu polos milik
+     OS/browser, tidak senada sama sekali dgn tampilan ZAYAin & teksnya
+     (nama perangkat) tidak bisa diberi penekanan apa pun. Sekarang diganti
+     modal custom, dibungkus jadi fungsi berbasis Promise (openDeviceForgetConfirm())
+     persis pola openLogoutConfirm() di atas, supaya pemanggilnya tetap bisa
+     dipakai dgn gaya `if (!await openDeviceForgetConfirm(label)) return;`.
+     Sengaja dibuat modal TERPISAH dari #confirmOverlay (bukan numpang kind
+     baru di sana) krn #confirmOverlay dipakai utk fitur LAIN yang juga
+     bernama "device" (daftar perangkat yang dijual, lihat DELETE_CONFIRM_TEXT
+     di script.js) -- kalau digabung, keduanya bisa saling tabrak.
+     Ikon & tombol tetap wine/merah (aksi ini sifatnya menghapus dari daftar,
+     sama spt modal hapus lain), tapi judulnya SENGAJA dibuat dinamis
+     (menyebut nama perangkatnya langsung) & bobot font judul+tombolnya
+     diturunkan sedikit (lihat .device-forget-confirm-modal h3 & tombol
+     "Ya, Hapus" bawah) supaya tidak terkesan terlalu tebal/berat drpd modal
+     hapus transaksi biasa. -->
+<div class="modal-overlay confirm-modal" id="deviceForgetConfirmOverlay">
+  <div class="modal device-forget-confirm-modal">
+    <div class="confirm-icon">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6h16Z"/></svg>
+    </div>
+    <h3 id="deviceForgetConfirmTitle" style="margin-bottom:6px;">Hapus perangkat ini?</h3>
+    <p style="color:var(--ink-soft);font-size:13.5px;margin-bottom:18px;">Perangkat ini tidak akan "dipaksa keluar" — kalau masih dipakai, ia akan otomatis terdaftar ulang begitu ZAYAin dibuka lagi di sana.</p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="btnCancelDeviceForget" type="button">Batal</button>
+      <button class="btn btn-danger" id="btnConfirmDeviceForget" type="button">Ya, Hapus</button>
     </div>
   </div>
 </div>
