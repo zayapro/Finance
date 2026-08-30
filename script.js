@@ -9927,9 +9927,68 @@ function deviceMgmtGetLocalId() {
   return id;
 }
 
+// Peta kode model Android -> nama merek, dipakai deviceMgmtGuessAndroidBrand()
+// di bawah -- daftar heuristik "cukup umum" (bukan library khusus spt
+// device-detector.js), cukup utk kasus mayoritas HP yang beredar di
+// Indonesia. Urutan pengecekan penting: prefix yang lebih SPESIFIK
+// (mis. "POCO"/"Redmi", sub-brand Xiaomi) ditaruh SEBELUM prefix umum
+// (mis. "Mi ") supaya tidak salah ke-generalisir ke induknya duluan.
+const ANDROID_BRAND_RULES = [
+  { re: /^SM-|^GT-/i, brand: 'Samsung' },
+  { re: /^Pixel/i, brand: 'Google' },
+  { re: /^POCO/i, brand: 'POCO' },
+  { re: /^Redmi/i, brand: 'Redmi' },
+  { re: /^Mi\s|^MI\s|^M20\d{2}/i, brand: 'Xiaomi' },
+  { re: /^RMX/i, brand: 'Realme' },
+  { re: /^CPH/i, brand: 'Oppo' },
+  { re: /^V\d{4}/i, brand: 'vivo' },
+  { re: /^ONEPLUS|^GM1|^KB20|^LE22|^CPH1|^CPH2/i, brand: 'OnePlus' },
+  { re: /^ASUS/i, brand: 'Asus' },
+  { re: /^Infinix/i, brand: 'Infinix' },
+  { re: /^TECNO/i, brand: 'Tecno' },
+  { re: /^itel/i, brand: 'Itel' },
+  { re: /^moto\s|^Moto\s|^XT\d{4}/i, brand: 'Motorola' },
+  { re: /^HUAWEI|^ANE-|^VOG-|^ELE-|^HMA-/i, brand: 'Huawei' },
+  { re: /^LM-|^LG-/i, brand: 'LG' },
+  { re: /^SH-|^SO-/i, brand: 'Sony' },
+  { re: /^Nokia/i, brand: 'Nokia' },
+];
+
+// Coba tebak kode model Android dari User-Agent, mis. UA mengandung
+// "...; Android 13; SM-A536E Build/TP1A...)" -> model = "SM-A536E".
+// SENGAJA "best-effort", bukan jaminan akurat: sejak beberapa versi
+// Chrome terbaru menerapkan "User-Agent Reduction" (kebijakan privasi
+// Google sendiri), sebagian UA Android modern SUDAH TIDAK menyertakan
+// kode model lagi -- kalau itu terjadi, fungsi ini mengembalikan null
+// & pemanggilnya otomatis jatuh balik ke label umum "Android" saja
+// (persis perilaku SEBELUM fitur ini ada, tidak ada yang rusak).
+function deviceMgmtGuessAndroidBrand(ua) {
+  const match = ua.match(/Android\s+[\d.]+\s*;\s*([^;)]+?)\s*(?:Build\/|\))/i);
+  const rawModel = match ? match[1].trim() : '';
+  // Sebagian UA menaruh "wv" (WebView) atau kode bahasa (mis. "K")
+  // menggantikan model kalau device policy-nya menyembunyikan model --
+  // buang hasil yang jelas bukan kode model asli.
+  if (!rawModel || /^wv$/i.test(rawModel) || rawModel.length < 3) return null;
+  const rule = ANDROID_BRAND_RULES.find((r) => r.re.test(rawModel));
+  if (!rule) return { model: rawModel, brand: null };
+  // Sebagian kode model SUDAH menyertakan nama mereknya sendiri (mis.
+  // "Redmi Note 11", "POCO X5 5G") -- kalau digabung mentah2 dgn
+  // rule.brand di pemanggilnya, hasilnya dobel ("Redmi Redmi Note 11").
+  // Guard ini mengecek apakah rawModel SUDAH diawali nama merek; kalau
+  // sudah, "brand" dikosongkan supaya pemanggil cukup pakai rawModel
+  // apa adanya (lihat deviceMgmtDetectLabel()).
+  const alreadyHasBrand = new RegExp('^' + rule.brand, 'i').test(rawModel);
+  return { model: rawModel, brand: alreadyHasBrand ? null : rule.brand };
+}
+
 // Parser User-Agent SEDERHANA (cukup utk label "Browser on OS", tidak
 // perlu akurat 100% seperti library khusus) -- dipakai jg utk memilih
-// ikon (desktop/mobile) & badge tipe perangkat.
+// ikon (desktop/mobile) & badge tipe perangkat. Utk Android, dicoba jg
+// baca merek/kode model (lihat deviceMgmtGuessAndroidBrand() di atas)
+// supaya labelnya lebih spesifik drpd cuma "Android" polos -- iOS/iPadOS
+// & desktop SENGAJA tetap generik (browser+OS saja), krn Apple tidak
+// menyertakan model di UA sama sekali (dibatasi demi privasi, bukan
+// keterbatasan parser ini) & "merek" tidak relevan utk desktop.
 function deviceMgmtDetectLabel() {
   const ua = navigator.userAgent || '';
   let browser = 'Browser';
@@ -9945,7 +10004,11 @@ function deviceMgmtDetectLabel() {
   if (/Windows NT 10/.test(ua)) os = 'Windows 10/11';
   else if (/Windows NT/.test(ua)) os = 'Windows';
   else if (/Mac OS X/.test(ua) && !/iPhone|iPad|iPod/.test(ua)) os = 'macOS';
-  else if (/Android/.test(ua)) os = 'Android';
+  else if (/Android/.test(ua)) {
+    os = 'Android';
+    const guess = deviceMgmtGuessAndroidBrand(ua);
+    if (guess) os = guess.brand ? `${guess.brand} ${guess.model}` : guess.model;
+  }
   else if (/iPhone/.test(ua)) os = 'iOS';
   else if (/iPad/.test(ua)) os = 'iPadOS';
   else if (/Linux/.test(ua)) os = 'Linux';

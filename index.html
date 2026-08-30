@@ -8186,6 +8186,12 @@ html.zp-app-loading .page-body > .lap-panel{display:none;}
    28px atas) & padding atas bawaannya, padding-bottom+shadow dinolkan
    krn tidak ada konten apa pun di dalamnya -- persis .bantuan-card-cap. */
 .lap-filter-card.tentang-doc-cap{padding-top:28px;padding-bottom:0;box-shadow:none;}
+/* Kartu asli halaman "Manajemen Device": lengkungannya sudah "dipakai"
+   cap di .tentang-doc-sticky-head (dibungkus bareng header via markup),
+   diratakan lewat .lap-filter-card--rest (bawaan), diberi sedikit
+   padding-top pengganti -- pola PERSIS .tentang-page-card.lap-filter-
+   card--rest di atas. */
+.device-mgmt-page-card.lap-filter-card--rest{padding-top:14px;}
 /* Kartu asli (DI LUAR wrapper sticky): lengkungannya sudah "dipakai"
    cap di atas, diratakan lewat .lap-filter-card--rest (bawaan), diberi
    sedikit padding-top pengganti spy jaraknya konsisten -- persis
@@ -12047,9 +12053,13 @@ body.is-scrolling *{
 
   <!-- ===== HALAMAN "MANAJEMEN DEVICE" (#manajemenDeviceOverlay) =====
        Dibuka dari baris "Manajemen Device" di Pengaturan > Pengaturan.
-       Pola buka/tutup & markup header SAMA PERSIS dgn #tentangOverlay/
-       #bantuanOverlay di atas (.detail-page-overlay.lap-filter-overlay
-       > .lap-filter-page > .lap-filter-head + .lap-filter-card).
+       Pola buka/tutup & markup header SAMA PERSIS dgn halaman dokumen
+       Kebijakan Privasi/Syarat & Ketentuan di atas (.detail-page-
+       overlay.lap-filter-overlay > .lap-filter-page > .tentang-doc-
+       sticky-head [header + cap] + .lap-filter-card.lap-filter-card--
+       rest [isi sesungguhnya]) -- header oranyenya MENEMPEL (sticky)
+       di puncak layar saat isi discroll, konsisten dgn halaman penuh
+       lain di app ini.
 
        ISI halaman ini mengikuti STRUKTUR referensi gambar yang diminta
        (kartu profil akun, kartu "Device Aktif" dgn 2 kotak ringkasan +
@@ -12067,15 +12077,25 @@ body.is-scrolling *{
        persis "Manajemen Device" pada umumnya. ---- -->
   <div class="detail-page-overlay lap-filter-overlay" id="manajemenDeviceOverlay">
     <div class="lap-filter-page">
-      <div class="lap-filter-head">
-        <button class="lap-filter-back-btn" id="manajemenDeviceBackBtn" type="button" aria-label="Tutup Manajemen Device">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
-        </button>
-        <h2>Manajemen Device</h2>
-        <span class="lap-filter-back-btn" style="visibility:hidden" aria-hidden="true"></span>
+      <!-- ---- Header oranye dibuat MENEMPEL (sticky) di puncak layar
+           saat kartu-kartu di bawahnya discroll -- pola PERSIS
+           .tentang-doc-sticky-head (Kebijakan Privasi/Syarat &
+           Ketentuan) supaya konsisten dgn halaman penuh lain di app
+           ini: wrapper sticky sendiri + cap kosong yg menampilkan
+           lengkungan atas kartu putih, TIDAK ikut hilang ke atas layar
+           spt sebelumnya. ---- -->
+      <div class="tentang-doc-sticky-head" id="manajemenDeviceStickyHead">
+        <div class="lap-filter-head">
+          <button class="lap-filter-back-btn" id="manajemenDeviceBackBtn" type="button" aria-label="Tutup Manajemen Device">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <h2>Manajemen Device</h2>
+          <span class="lap-filter-back-btn" style="visibility:hidden" aria-hidden="true"></span>
+        </div>
+        <div class="lap-filter-card tentang-doc-cap" aria-hidden="true"></div>
       </div>
 
-      <div class="lap-filter-card">
+      <div class="lap-filter-card lap-filter-card--rest device-mgmt-page-card">
 
         <!-- Kartu 1: Profil akun -- diisi renderDeviceMgmtPage() -->
         <div class="device-mgmt-card device-mgmt-profile">
