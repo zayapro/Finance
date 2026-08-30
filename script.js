@@ -9886,6 +9886,243 @@ document.getElementById('tentangSyaratOpenBtn')?.addEventListener('click', openT
 document.getElementById('tentangSyaratBackBtn')?.addEventListener('click', closeTentangSyaratOverlay);
 
 /* ==========================================================
+   PENGATURAN > PENGATURAN — "Manajemen Device" (#manajemenDeviceOverlay).
+   Fitur ini menampilkan daftar perangkat/browser yang pernah dipakai
+   membuka ZAYAin dgn akun yang sedang login, mengikuti struktur
+   referensi (kartu profil + kartu ringkasan & daftar perangkat + FAQ +
+   Ketentuan) yang sudah disesuaikan ke konteks ZAYAin (bukan app
+   VIP/streaming). Alurnya:
+
+   1. Tiap perangkat/browser punya ID acak sendiri yg dibuat SEKALI &
+      disimpan murni lokal (localStorage biasa, BUKAN cloudStorage --
+      lihat deviceMgmtGetLocalId()) supaya ID ini TIDAK ikut sinkron
+      antar perangkat (kalau ikut sinkron, semua perangkat akan
+      dianggap 1 perangkat yg sama, salah total).
+   2. Daftar SELURUH perangkat (nama, waktu aktif terakhir, dst) itu
+      sendiri DIsimpan lewat cloudStorage di bawah key
+      STORAGE_KEY_DEVICE_SESSIONS -- kalau user sedang login akun
+      cloud, daftar ini otomatis tersinkron & sama persis di semua
+      perangkat yg login dgn akun yg sama (persis cara kerja
+      "Manajemen Device" pada umumnya). Kalau belum login, daftar ini
+      cuma tersimpan lokal & isinya cuma perangkat ini sendiri.
+   3. Setiap overlay ini dibuka (atau tombol refresh ditekan),
+      deviceMgmtTouchThisDevice() mendaftarkan/memperbarui entri
+      perangkat ini (label browser+OS, waktu aktif) di daftar, baru
+      renderDeviceMgmtPage() menggambar ulang seluruh kartu.
+========================================================== */
+const DEVICE_MGMT_LOCAL_ID_KEY = 'zayapro_this_device_id';
+const STORAGE_KEY_DEVICE_SESSIONS = 'zayapro_device_sessions_v1';
+const DEVICE_MGMT_MAX_SLOTS = 5;
+const DEVICE_MGMT_ONLINE_WINDOW_MS = 5 * 60 * 1000; // 5 menit -> dianggap "Online"
+
+// ID perangkat ini sendiri -- SENGAJA baca/tulis langsung ke
+// `localStorage` (bukan `cloudStorage`) supaya murni lokal per
+// browser, tidak pernah ikut terdorong ke kv_store/perangkat lain.
+function deviceMgmtGetLocalId() {
+  let id = localStorage.getItem(DEVICE_MGMT_LOCAL_ID_KEY);
+  if (!id) {
+    id = 'dev_' + cryptoId();
+    localStorage.setItem(DEVICE_MGMT_LOCAL_ID_KEY, id);
+  }
+  return id;
+}
+
+// Parser User-Agent SEDERHANA (cukup utk label "Browser on OS", tidak
+// perlu akurat 100% seperti library khusus) -- dipakai jg utk memilih
+// ikon (desktop/mobile) & badge tipe perangkat.
+function deviceMgmtDetectLabel() {
+  const ua = navigator.userAgent || '';
+  let browser = 'Browser';
+  if (/Edg\//.test(ua)) browser = 'Edge';
+  else if (/OPR\//.test(ua) || /Opera/.test(ua)) browser = 'Opera';
+  else if (/Chrome\//.test(ua) && !/Edg\//.test(ua)) browser = 'Chrome';
+  else if (/CriOS\//.test(ua)) browser = 'Chrome';
+  else if (/FxiOS\//.test(ua) || /Firefox\//.test(ua)) browser = 'Firefox';
+  else if (/Safari\//.test(ua) && /Version\//.test(ua)) browser = 'Safari';
+
+  let os = 'Perangkat';
+  let isMobile = /Mobi|Android|iPhone|iPad|iPod/.test(ua);
+  if (/Windows NT 10/.test(ua)) os = 'Windows 10/11';
+  else if (/Windows NT/.test(ua)) os = 'Windows';
+  else if (/Mac OS X/.test(ua) && !/iPhone|iPad|iPod/.test(ua)) os = 'macOS';
+  else if (/Android/.test(ua)) os = 'Android';
+  else if (/iPhone/.test(ua)) os = 'iOS';
+  else if (/iPad/.test(ua)) os = 'iPadOS';
+  else if (/Linux/.test(ua)) os = 'Linux';
+
+  return { label: `${browser} on ${os}`, isMobile };
+}
+
+function deviceMgmtLoadSessions() {
+  try {
+    const raw = cloudStorage.getItem(STORAGE_KEY_DEVICE_SESSIONS);
+    if (raw) return JSON.parse(raw);
+  } catch (e) { console.error('Gagal memuat daftar perangkat', e); }
+  return [];
+}
+function deviceMgmtPersistSessions(list) {
+  try { cloudStorage.setItem(STORAGE_KEY_DEVICE_SESSIONS, JSON.stringify(list)); }
+  catch (e) { console.error('Gagal menyimpan daftar perangkat', e); }
+}
+
+// Daftarkan/perbarui entri perangkat INI di daftar (dipanggil tiap
+// halaman dibuka & tiap tombol refresh ditekan), lalu buang entri
+// yang sudah melewati batas slot (paling lama tidak aktif dibuang
+// duluan) supaya daftar tidak membengkak tanpa batas.
+function deviceMgmtTouchThisDevice() {
+  const id = deviceMgmtGetLocalId();
+  const { label, isMobile } = deviceMgmtDetectLabel();
+  const now = new Date().toISOString();
+  let list = deviceMgmtLoadSessions();
+  const existing = list.find((d) => d.id === id);
+  if (existing) {
+    existing.label = label;
+    existing.isMobile = isMobile;
+    existing.lastActive = now;
+  } else {
+    list.push({ id, label, isMobile, firstSeen: now, lastActive: now });
+  }
+  // Urutkan terbaru aktif dulu, lalu potong sesuai batas slot --
+  // perangkat INI selalu dipertahankan walau daftar penuh.
+  list.sort((a, b) => new Date(b.lastActive) - new Date(a.lastActive));
+  if (list.length > DEVICE_MGMT_MAX_SLOTS) {
+    const kept = list.filter((d) => d.id === id);
+    const rest = list.filter((d) => d.id !== id).slice(0, DEVICE_MGMT_MAX_SLOTS - 1);
+    list = kept.concat(rest).sort((a, b) => new Date(b.lastActive) - new Date(a.lastActive));
+  }
+  deviceMgmtPersistSessions(list);
+  return list;
+}
+
+function deviceMgmtIconSvg(isMobile) {
+  return isMobile
+    ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2.5" width="10" height="19" rx="2.2"/><path d="M11 18.2h2"/></svg>'
+    : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4.5" width="19" height="12.5" rx="1.8"/><path d="M8.5 21h7M12 17v4"/></svg>';
+}
+
+// Menggambar ulang SELURUH isi #manajemenDeviceOverlay (profil, kartu
+// ringkasan, daftar perangkat) berdasarkan status login saat ini +
+// daftar perangkat yg tersimpan. Dipanggil tiap overlay dibuka & tiap
+// refresh/hapus perangkat.
+async function renderDeviceMgmtPage() {
+  const nameEl = document.getElementById('deviceMgmtName');
+  const statusEl = document.getElementById('deviceMgmtStatus');
+  const subtitleEl = document.getElementById('deviceMgmtSubtitle');
+  const listEl = document.getElementById('deviceMgmtList');
+  const countEl = document.getElementById('deviceMgmtStatCount');
+  const limitEl = document.getElementById('deviceMgmtStatLimit');
+  const todayEl = document.getElementById('deviceMgmtStatToday');
+  if (!nameEl || !listEl) return;
+
+  const loggedIn = typeof window.cloudIsLoggedIn === 'function' && window.cloudIsLoggedIn();
+  const thisId = deviceMgmtGetLocalId();
+  const list = deviceMgmtTouchThisDevice();
+
+  // ---- Kartu profil ----
+  if (loggedIn && window._sb && window._sb.auth) {
+    try {
+      const { data } = await window._sb.auth.getSession();
+      const email = data && data.session && data.session.user ? data.session.user.email : null;
+      nameEl.textContent = email || 'Akun ZAYAin';
+    } catch (e) { nameEl.textContent = 'Akun ZAYAin'; }
+    statusEl.innerHTML = '<span class="dot"></span>Tersinkron ke akun cloud';
+    statusEl.classList.add('is-online');
+    subtitleEl.textContent = 'Kelola perangkat yang tersinkron ke akun kamu';
+  } else {
+    nameEl.textContent = 'Mode Lokal (Tanpa Akun)';
+    statusEl.innerHTML = '<span class="dot"></span>Belum masuk / daftar akun';
+    statusEl.classList.remove('is-online');
+    subtitleEl.textContent = 'Masuk akun supaya daftar ini tersinkron ke semua perangkatmu';
+  }
+
+  // ---- Kartu ringkasan ----
+  const todayStr = new Date().toDateString();
+  const activeToday = list.filter((d) => new Date(d.lastActive).toDateString() === todayStr).length;
+  countEl.textContent = String(list.length);
+  limitEl.textContent = String(DEVICE_MGMT_MAX_SLOTS);
+  todayEl.textContent = String(activeToday);
+
+  // ---- Daftar perangkat ----
+  if (!list.length) {
+    listEl.innerHTML = '<p class="device-mgmt-empty">Belum ada perangkat untuk ditampilkan.</p>';
+    return;
+  }
+  listEl.innerHTML = list.map((d) => {
+    const isThis = d.id === thisId;
+    const online = (Date.now() - new Date(d.lastActive).getTime()) < DEVICE_MGMT_ONLINE_WINDOW_MS;
+    const statusHtml = isThis
+      ? '<span class="is-online">Online</span>'
+      : (online ? '<span class="is-online">Online</span>' : `<span class="is-offline">Terakhir aktif ${timeAgoId(d.lastActive)}</span>`);
+    return `
+      <div class="device-mgmt-row" data-deviceid="${escapeHtmlAttr(d.id)}">
+        <span class="device-mgmt-row-ic">${deviceMgmtIconSvg(d.isMobile)}</span>
+        <div class="device-mgmt-row-body">
+          <div class="device-mgmt-row-title">
+            <strong>${escapeHtml(d.label)}</strong>
+            ${isThis ? '<span class="device-mgmt-badge">Device ini</span>' : ''}
+          </div>
+          <div class="device-mgmt-row-meta">${statusHtml}</div>
+        </div>
+        ${isThis ? '' : `<button type="button" class="device-mgmt-row-forget" data-forgetdevice="${escapeHtmlAttr(d.id)}">Hapus</button>`}
+      </div>`;
+  }).join('');
+}
+
+function openManajemenDeviceOverlay() {
+  document.getElementById('manajemenDeviceOverlay')?.classList.add('open');
+  lockBodyScroll();
+  renderDeviceMgmtPage();
+}
+function closeManajemenDeviceOverlay() {
+  document.getElementById('manajemenDeviceOverlay')?.classList.remove('open');
+  unlockBodyScroll();
+}
+document.getElementById('manajemenDeviceOpenBtn')?.addEventListener('click', openManajemenDeviceOverlay);
+document.getElementById('manajemenDeviceBackBtn')?.addEventListener('click', closeManajemenDeviceOverlay);
+
+// Tombol refresh: putar ikon sebentar + gambar ulang daftar dari data
+// terbaru (berguna kalau perangkat lain baru saja login/aktif & sudah
+// tersinkron ke cloud di latar belakang).
+document.getElementById('deviceMgmtRefreshBtn')?.addEventListener('click', function () {
+  this.classList.remove('is-spinning');
+  void this.offsetWidth; // restart animasi kalau diklik berkali-kali
+  this.classList.add('is-spinning');
+  renderDeviceMgmtPage();
+});
+
+// Tombol "Hapus" per baris perangkat (event delegation, krn baris
+// dibuat ulang tiap render) -- membuang perangkat itu dari daftar
+// bersama (lihat catatan FAQ "Apa yang terjadi kalau saya hapus...").
+document.getElementById('deviceMgmtList')?.addEventListener('click', function (e) {
+  const btn = e.target.closest('[data-forgetdevice]');
+  if (!btn) return;
+  const id = btn.dataset.forgetdevice;
+  const list = deviceMgmtLoadSessions().filter((d) => d.id !== id);
+  deviceMgmtPersistSessions(list);
+  showToast('Perangkat dihapus dari daftar.');
+  renderDeviceMgmtPage();
+});
+
+// Accordion FAQ (pola SAMA PERSIS dgn initBantuanPage() di atas).
+document.getElementById('deviceMgmtFaqToggleBtn')?.addEventListener('click', function () {
+  const list = document.getElementById('deviceMgmtFaqList');
+  const willOpen = list.hasAttribute('hidden');
+  list.toggleAttribute('hidden', !willOpen);
+  this.setAttribute('aria-expanded', String(willOpen));
+});
+document.querySelectorAll('#deviceMgmtFaqList .bantuan-faq-item .bantuan-faq-q').forEach((q) => {
+  q.addEventListener('click', () => q.closest('.bantuan-faq-item').classList.toggle('open'));
+});
+
+// Reveal polos kartu Ketentuan (tanpa animasi max-height).
+document.getElementById('deviceMgmtTermsToggleBtn')?.addEventListener('click', function () {
+  const body = document.getElementById('deviceMgmtTermsBody');
+  const willOpen = body.hasAttribute('hidden');
+  body.toggleAttribute('hidden', !willOpen);
+  this.setAttribute('aria-expanded', String(willOpen));
+});
+
+/* ==========================================================
    PENGATURAN > KEAMANAN — Ubah PIN, Ubah Password, Login Biometrik.
    Semua operasi otentikasi sesungguhnya (verifikasi/ubah PIN & password,
    kirim email reset, WebAuthn) dilempar ke window.zayaproAuth yang

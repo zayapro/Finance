@@ -8168,6 +8168,40 @@ html.zp-app-loading .page-body > .lap-panel{display:none;}
    bernomor mengalir, tipografi disamakan dgn pola teks lain di app
    ini (Poppins utk judul, ink-soft utk isi) supaya enak dibaca utk
    dokumen panjang. */
+/* Header oranye halaman dokumen dibuat MENEMPEL (sticky) di puncak
+   layar saat kartu dokumen di bawahnya discroll -- pola PERSIS
+   .bantuan-sticky-top/.tema-sticky-head (lihat catatan lengkap di
+   sana): wrapper sticky sendiri + cap kosong yg menampilkan lengkungan
+   atas kartu putih, transform+backface-visibility+isolation utk fix
+   sudut "bocor" saat discroll di Safari/WebKit mobile (bug rendering
+   yg sama spt semua wrapper sticky lain di app ini). */
+.tentang-doc-sticky-head{
+  position:sticky;top:0;z-index:6;
+  transform:translateZ(0);-webkit-transform:translateZ(0);
+  backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  isolation:isolate;
+}
+.tentang-doc-sticky-head .lap-filter-head{position:relative;z-index:1;}
+/* Cap kosong: reuse lengkungan .lap-filter-card (margin -24px + radius
+   28px atas) & padding atas bawaannya, padding-bottom+shadow dinolkan
+   krn tidak ada konten apa pun di dalamnya -- persis .bantuan-card-cap. */
+.lap-filter-card.tentang-doc-cap{padding-top:28px;padding-bottom:0;box-shadow:none;}
+/* Kartu asli (DI LUAR wrapper sticky): lengkungannya sudah "dipakai"
+   cap di atas, diratakan lewat .lap-filter-card--rest (bawaan), diberi
+   sedikit padding-top pengganti spy jaraknya konsisten -- persis
+   .bantuan-card.lap-filter-card--rest. */
+.tentang-page-card.lap-filter-card--rest{padding-top:14px;}
+/* Halaman dokumen (Kebijakan Privasi / Syarat & Ketentuan): dibungkus
+   kartu putih beradius sendiri (var(--card)/var(--line)/var(--radius)/
+   var(--shadow-sm)) -- pola PERSIS .lap-filter-section yang dipakai
+   di halaman Laporan/Tema dsb, supaya SEMUA halaman penuh di app ini
+   konsisten selalu punya "kartu putih radius" pembungkus kontennya,
+   bukan cuma teks lepas duduk langsung di atas kartu besar
+   .lap-filter-card. */
+.tentang-doc-card{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  box-shadow:var(--shadow-sm);padding:18px 16px;
+}
 .tentang-doc{display:flex;flex-direction:column;}
 .tentang-doc-title{
   margin:2px 0 4px;text-align:center;font-family:'Poppins',sans-serif;
@@ -8182,6 +8216,114 @@ html.zp-app-loading .page-body > .lap-panel{display:none;}
 }
 .tentang-doc li{font-size:13px;line-height:1.65;color:var(--ink-soft);}
 .tentang-doc a{color:var(--primary);font-weight:500;text-decoration:underline;}
+/* Baris menu "Kebijakan Privasi" / "Syarat & Ketentuan" di #tentangOverlay:
+   reuse kartu putih beradius .bantuan-row (sama persis dgn baris menu
+   Pusat Bantuan), varian .tentang-row menghilangkan kotak ikon di kiri
+   (baris ini tidak butuh ikon, cuma judul + panah) tapi tetap
+   mempertahankan bingkai/radius/shadow kartunya. */
+.tentang-row .bantuan-row-text{flex-direction:row;align-items:center;}
+.tentang-row .bantuan-row-text strong{font-size:14px;}
+/* ================================================================ */
+/* ============================================================
+   HALAMAN "MANAJEMEN DEVICE" (#manajemenDeviceOverlay) -- isi
+   konten mengikuti referensi gambar yang diberikan (kartu profil +
+   kartu "Device Aktif" berisi 2 kotak ringkasan & daftar perangkat +
+   kartu FAQ & Ketentuan berbentuk accordion), TAPI di-reskin total
+   ke bahasa visual ZAYAin (kartu putih beradius var(--radius) di
+   atas var(--paper), BUKAN kartu gelap seperti referensi) supaya
+   konsisten dgn seluruh halaman lain di app ini. Karena ZAYAin
+   bukan app streaming/VIP, istilah "Streaming" & "Ketentuan Layanan
+   VIP" di referensi ikut disesuaikan jadi konsep yg relevan (jumlah
+   perangkat yg tersimpan di akun cloud + ketentuan keamanan
+   perangkat), lihat renderDeviceMgmtPage() di script.js. ---- */
+.device-mgmt-card{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  box-shadow:var(--shadow-sm);padding:16px;
+}
+/* ---- Kartu profil akun paling atas (avatar bulat + nama + status) ---- */
+.device-mgmt-profile{display:flex;align-items:center;gap:12px;}
+.device-mgmt-avatar{
+  width:48px;height:48px;border-radius:50%;flex-shrink:0;
+  background:var(--paper);color:var(--ink-soft);
+  display:flex;align-items:center;justify-content:center;
+  border:1.5px solid var(--line);overflow:hidden;
+}
+.device-mgmt-avatar img{width:100%;height:100%;object-fit:cover;}
+.device-mgmt-profile-info{min-width:0;display:flex;flex-direction:column;gap:3px;}
+.device-mgmt-profile-info strong{
+  font-family:'Poppins',sans-serif;font-weight:600;letter-spacing:-0.005em;font-size:15px;color:var(--ink);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.device-mgmt-status{font-size:12.5px;color:var(--ink-faint);display:flex;align-items:center;gap:5px;}
+.device-mgmt-status .dot{width:7px;height:7px;border-radius:50%;background:var(--ink-faint);flex-shrink:0;}
+.device-mgmt-status.is-online{color:var(--brass);}
+.device-mgmt-status.is-online .dot{background:var(--brass);}
+/* ---- Kartu "Device Aktif": header ikon+judul+refresh, 2 kotak
+   ringkasan, lalu daftar baris perangkat. ---- */
+.device-mgmt-card-head{display:flex;align-items:flex-start;gap:10px;}
+.device-mgmt-card-ic{
+  width:34px;height:34px;border-radius:10px;flex-shrink:0;
+  background:var(--primary-soft);color:var(--primary-deep);
+  display:flex;align-items:center;justify-content:center;
+}
+.device-mgmt-card-head-text{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;}
+.device-mgmt-card-head-text strong{
+  font-family:'Poppins',sans-serif;font-weight:600;letter-spacing:-0.005em;font-size:14.5px;color:var(--ink);
+}
+.device-mgmt-card-head-text span{font-size:12px;color:var(--ink-soft);line-height:1.4;}
+.device-mgmt-refresh-btn{
+  flex-shrink:0;width:32px;height:32px;border-radius:9px;border:1px solid var(--line);
+  background:var(--paper);color:var(--ink-soft);display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:transform .5s ease,background .15s ease;touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+}
+.device-mgmt-refresh-btn:hover{background:var(--line);}
+.device-mgmt-refresh-btn.is-spinning svg{animation:deviceMgmtSpin .6s linear;}
+@keyframes deviceMgmtSpin{to{transform:rotate(360deg);}}
+.device-mgmt-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;}
+.device-mgmt-stat{
+  background:var(--paper);border-radius:11px;padding:11px 12px;display:flex;flex-direction:column;gap:6px;min-width:0;
+}
+.device-mgmt-stat-label{font-size:11.5px;font-weight:600;color:var(--ink-soft);}
+.device-mgmt-stat--alt .device-mgmt-stat-label{color:var(--violet);}
+.device-mgmt-stat-value{font-family:'Poppins',sans-serif;font-size:19px;font-weight:700;color:var(--ink);display:flex;align-items:baseline;gap:3px;}
+.device-mgmt-stat-value em{font-style:normal;font-size:13px;font-weight:600;color:var(--ink-faint);}
+.device-mgmt-list{display:flex;flex-direction:column;gap:10px;margin-top:12px;}
+.device-mgmt-row{
+  display:flex;align-items:center;gap:12px;background:var(--paper);border-radius:12px;padding:12px;
+}
+.device-mgmt-row-ic{
+  width:40px;height:40px;border-radius:10px;flex-shrink:0;
+  background:var(--card);border:1px solid var(--line);color:var(--ink-soft);
+  display:flex;align-items:center;justify-content:center;
+}
+.device-mgmt-row-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;}
+.device-mgmt-row-title{display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
+.device-mgmt-row-title strong{font-family:'Poppins',sans-serif;font-weight:600;font-size:13.5px;letter-spacing:-0.005em;color:var(--ink);}
+.device-mgmt-badge{
+  font-size:10.5px;font-weight:600;color:var(--primary-deep);background:var(--primary-soft);
+  border-radius:999px;padding:2.5px 8px;line-height:1.4;flex-shrink:0;
+}
+.device-mgmt-row-meta{font-size:11.5px;color:var(--ink-faint);display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
+.device-mgmt-row-meta .is-online{color:var(--brass);font-weight:600;}
+.device-mgmt-row-meta .is-offline{color:var(--ink-faint);}
+.device-mgmt-row-forget{
+  flex-shrink:0;border:none;background:none;color:var(--wine);font-size:12px;font-weight:600;
+  padding:8px 4px;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+}
+.device-mgmt-row-forget:hover{text-decoration:underline;}
+.device-mgmt-empty{padding:10px 2px;text-align:center;font-size:12.5px;color:var(--ink-faint);}
+/* ---- FAQ & Ketentuan: reuse .bantuan-row/.bantuan-faq-* apa adanya
+   (sama seperti Pusat Bantuan) supaya satu bahasa visual & interaksi.
+   Cuma perlu 3 aturan tambahan di sini: rotasi chevron utk toggle FAQ
+   & Ketentuan (masing2 ID baru, beda dari #bantuanFaqToggleBtn), &
+   kartu isi Ketentuan yg di-reveal polos (tanpa animasi max-height,
+   pola SAMA PERSIS dgn cara #bantuanFaqList disembunyikan/ditampilkan
+   di initBantuanPage()). ---- */
+#deviceMgmtFaqToggleBtn[aria-expanded="true"] .bantuan-faq-chevron{transform:rotate(90deg);}
+.device-mgmt-terms-toggle .bantuan-row-chevron{transition:transform .18s ease;}
+.device-mgmt-terms-toggle[aria-expanded="true"] .bantuan-row-chevron{transform:rotate(90deg);}
+.device-mgmt-terms-body{margin-top:-6px;}
+.device-mgmt-terms-body[hidden]{display:none;}
 /* ================================================================ */
 /* ---- Kotak "Pilih Bulan" / "Pilih Tanggal": muncul menempel tepat di
    bawah baris radio terkait begitu radio itu dipilih (bukan dipisah ke
@@ -11759,14 +11901,14 @@ body.is-scrolling *{
       </div>
 
       <div class="lap-filter-card">
-        <div class="settings-group">
-          <button type="button" class="settings-row" id="tentangPrivasiOpenBtn">
-            <span class="settings-row-title">Kebijakan Privasi</span>
-            <svg class="settings-row-chevron" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"/></svg>
+        <div class="bantuan-list">
+          <button type="button" class="bantuan-row tentang-row" id="tentangPrivasiOpenBtn">
+            <span class="bantuan-row-text"><strong>Kebijakan Privasi</strong></span>
+            <svg class="bantuan-row-chevron" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"/></svg>
           </button>
-          <button type="button" class="settings-row" id="tentangSyaratOpenBtn">
-            <span class="settings-row-title">Syarat dan Ketentuan ZAYAin</span>
-            <svg class="settings-row-chevron" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"/></svg>
+          <button type="button" class="bantuan-row tentang-row" id="tentangSyaratOpenBtn">
+            <span class="bantuan-row-text"><strong>Syarat dan Ketentuan ZAYAin</strong></span>
+            <svg class="bantuan-row-chevron" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"/></svg>
           </button>
         </div>
 
@@ -11785,15 +11927,27 @@ body.is-scrolling *{
        ISINYA ditulis ulang khusus utk ZAYAin (bukan salinan teks BRI). -->
   <div class="detail-page-overlay lap-filter-overlay" id="tentangPrivasiOverlay">
     <div class="lap-filter-page">
-      <div class="lap-filter-head">
-        <button class="lap-filter-back-btn" id="tentangPrivasiBackBtn" type="button" aria-label="Kembali ke Tentang">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
-        </button>
-        <h2>Kebijakan Privasi</h2>
-        <span class="lap-filter-back-btn" style="visibility:hidden" aria-hidden="true"></span>
+      <!-- ---- Header oranye dibuat MENEMPEL (sticky) di puncak layar
+           saat kartu dokumen di bawahnya discroll -- pola PERSIS
+           .bantuan-sticky-top/.tema-sticky-head (lihat catatan lengkap
+           di sana): dibungkus wrapper sticky TERSENDIRI + cap kosong
+           (menampilkan lengkungan atas kartu putih) supaya konsisten
+           dgn halaman penuh lain di app ini (Pusat Bantuan, Data Diri,
+           Tema, dsb), bukan cuma diam di puncak dokumen tanpa ikut
+           discroll spt sebelumnya. -->
+      <div class="tentang-doc-sticky-head" id="tentangPrivasiStickyHead">
+        <div class="lap-filter-head">
+          <button class="lap-filter-back-btn" id="tentangPrivasiBackBtn" type="button" aria-label="Kembali ke Tentang">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <h2>Kebijakan Privasi</h2>
+          <span class="lap-filter-back-btn" style="visibility:hidden" aria-hidden="true"></span>
+        </div>
+        <div class="lap-filter-card tentang-doc-cap" aria-hidden="true"></div>
       </div>
 
-      <div class="lap-filter-card">
+      <div class="lap-filter-card lap-filter-card--rest tentang-page-card">
+        <div class="tentang-doc-card">
         <div class="tentang-doc">
           <p class="tentang-doc-title">PEMBERITAHUAN PRIVASI<br>ZAYAin</p>
           <p class="tentang-doc-updated">Tanggal Efektif Berlaku: 30 Agustus 2026</p>
@@ -11813,6 +11967,7 @@ body.is-scrolling *{
             <li>Pertanyaan seputar privasi dapat disampaikan lewat <a href="mailto:cs@zayain.app">cs@zayain.app</a> atau menu Pusat Bantuan.</li>
           </ol>
         </div>
+        </div>
       </div>
     </div>
   </div>
@@ -11826,15 +11981,21 @@ body.is-scrolling *{
        bukan produk perbankan). -->
   <div class="detail-page-overlay lap-filter-overlay" id="tentangSyaratOverlay">
     <div class="lap-filter-page">
-      <div class="lap-filter-head">
-        <button class="lap-filter-back-btn" id="tentangSyaratBackBtn" type="button" aria-label="Kembali ke Tentang">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
-        </button>
-        <h2>Syarat &amp; Ketentuan</h2>
-        <span class="lap-filter-back-btn" style="visibility:hidden" aria-hidden="true"></span>
+      <!-- ---- Header oranye dibuat sticky, pola PERSIS #tentangPrivasiOverlay
+           di atas (lihat catatan lengkap di sana). ---- -->
+      <div class="tentang-doc-sticky-head" id="tentangSyaratStickyHead">
+        <div class="lap-filter-head">
+          <button class="lap-filter-back-btn" id="tentangSyaratBackBtn" type="button" aria-label="Kembali ke Tentang">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <h2>Syarat &amp; Ketentuan</h2>
+          <span class="lap-filter-back-btn" style="visibility:hidden" aria-hidden="true"></span>
+        </div>
+        <div class="lap-filter-card tentang-doc-cap" aria-hidden="true"></div>
       </div>
 
-      <div class="lap-filter-card">
+      <div class="lap-filter-card lap-filter-card--rest tentang-page-card">
+        <div class="tentang-doc-card">
         <div class="tentang-doc">
           <p class="tentang-doc-title">SYARAT DAN KETENTUAN<br>ZAYAin</p>
           <p class="tentang-doc-updated">Tanggal Efektif Berlaku: 30 Agustus 2026</p>
@@ -11854,10 +12015,156 @@ body.is-scrolling *{
             <li>Syarat &amp; Ketentuan ini dapat diperbarui sewaktu-waktu, &amp; penggunaan aplikasi setelah pembaruan dianggap sebagai persetujuan saya atas ketentuan yang baru. Pertanyaan dapat disampaikan lewat <a href="mailto:cs@zayain.app">cs@zayain.app</a> atau menu Pusat Bantuan.</li>
           </ol>
         </div>
+        </div>
       </div>
     </div>
   </div>
   <!-- ===== /HALAMAN "SYARAT & KETENTUAN" ===== -->
+
+  <!-- ===== HALAMAN "MANAJEMEN DEVICE" (#manajemenDeviceOverlay) =====
+       Dibuka dari baris "Manajemen Device" di Pengaturan > Pengaturan.
+       Pola buka/tutup & markup header SAMA PERSIS dgn #tentangOverlay/
+       #bantuanOverlay di atas (.detail-page-overlay.lap-filter-overlay
+       > .lap-filter-page > .lap-filter-head + .lap-filter-card).
+
+       ISI halaman ini mengikuti STRUKTUR referensi gambar yang diminta
+       (kartu profil akun, kartu "Device Aktif" dgn 2 kotak ringkasan +
+       daftar perangkat, kartu FAQ, kartu Ketentuan) TAPI kontennya
+       disesuaikan ke konteks ZAYAin (app pencatat keuangan, bukan app
+       VIP/streaming): "Perangkat Tersimpan" menggantikan "Login Aktif"
+       & "Aktif Hari Ini" menggantikan "Streaming", "Ketentuan Layanan
+       VIP" jadi "Ketentuan Keamanan Perangkat". Semua nilai (nama akun,
+       status, daftar perangkat, statistik) diisi DINAMIS oleh
+       renderDeviceMgmtPage() di script.js -- markup di bawah cuma
+       kerangka + skeleton awal, bukan angka statis. Daftar perangkat
+       disimpan lewat cloudStorage (lihat STORAGE_KEY_DEVICE_SESSIONS
+       di script.js), jadi kalau user login akun cloud, daftar ini
+       otomatis sama di semua perangkat yang login dgn akun tsb --
+       persis "Manajemen Device" pada umumnya. ---- -->
+  <div class="detail-page-overlay lap-filter-overlay" id="manajemenDeviceOverlay">
+    <div class="lap-filter-page">
+      <div class="lap-filter-head">
+        <button class="lap-filter-back-btn" id="manajemenDeviceBackBtn" type="button" aria-label="Tutup Manajemen Device">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <h2>Manajemen Device</h2>
+        <span class="lap-filter-back-btn" style="visibility:hidden" aria-hidden="true"></span>
+      </div>
+
+      <div class="lap-filter-card">
+
+        <!-- Kartu 1: Profil akun -- diisi renderDeviceMgmtPage() -->
+        <div class="device-mgmt-card device-mgmt-profile">
+          <span class="device-mgmt-avatar" id="deviceMgmtAvatar">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.2" r="3.4"/><path d="M5 19.2c.9-3.4 3.6-5.1 7-5.1s6.1 1.7 7 5.1"/></svg>
+          </span>
+          <div class="device-mgmt-profile-info">
+            <strong id="deviceMgmtName">Memuat akun…</strong>
+            <span class="device-mgmt-status" id="deviceMgmtStatus"><span class="dot"></span>Memeriksa status…</span>
+          </div>
+        </div>
+
+        <!-- Kartu 2: Device Aktif -- ringkasan + daftar perangkat -->
+        <div class="device-mgmt-card">
+          <div class="device-mgmt-card-head">
+            <span class="device-mgmt-card-ic">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.6"/></svg>
+            </span>
+            <span class="device-mgmt-card-head-text">
+              <strong>Device Aktif</strong>
+              <span id="deviceMgmtSubtitle">Kelola perangkat yang tersimpan di akun kamu</span>
+            </span>
+            <button type="button" class="device-mgmt-refresh-btn" id="deviceMgmtRefreshBtn" aria-label="Segarkan daftar perangkat" title="Segarkan daftar">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3"/><path d="M18 4v4h-4M6 20v-4h4"/></svg>
+            </button>
+          </div>
+
+          <div class="device-mgmt-stats">
+            <div class="device-mgmt-stat">
+              <span class="device-mgmt-stat-label">Perangkat Tersimpan</span>
+              <span class="device-mgmt-stat-value"><strong id="deviceMgmtStatCount">0</strong><em>/ <span id="deviceMgmtStatLimit">5</span></em></span>
+            </div>
+            <div class="device-mgmt-stat device-mgmt-stat--alt">
+              <span class="device-mgmt-stat-label">Aktif Hari Ini</span>
+              <span class="device-mgmt-stat-value"><strong id="deviceMgmtStatToday">0</strong></span>
+            </div>
+          </div>
+
+          <div class="device-mgmt-list" id="deviceMgmtList">
+            <p class="device-mgmt-empty">Memuat daftar perangkat…</p>
+          </div>
+        </div>
+
+        <!-- Kartu 3: FAQ (accordion) -- reuse pola PERSIS FAQ Pusat Bantuan -->
+        <button type="button" class="bantuan-row" id="deviceMgmtFaqToggleBtn" aria-expanded="false" aria-controls="deviceMgmtFaqList">
+          <span class="bantuan-row-ic">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.2 9.3a2.8 2.8 0 1 1 3.9 2.6c-.8.35-1.1.85-1.1 1.6v.3" stroke-linecap="round"/><circle cx="12" cy="16.9" r="1" fill="currentColor" stroke="none"/></svg>
+          </span>
+          <span class="bantuan-row-text">
+            <strong>FAQ Manajemen Device</strong>
+            <span>Pelajari cara mengelola device kamu</span>
+          </span>
+          <svg class="bantuan-row-chevron bantuan-faq-chevron" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"/></svg>
+        </button>
+        <div class="bantuan-faq-list" id="deviceMgmtFaqList" hidden>
+          <div class="bantuan-faq-item">
+            <button type="button" class="bantuan-faq-q">
+              <span>Apa itu Perangkat Tersimpan?</span>
+              <svg class="bantuan-faq-caret" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+            <p class="bantuan-faq-a">Daftar browser/perangkat yang pernah kamu pakai untuk membuka ZAYAin dengan akun ini. Kalau kamu belum masuk/daftar akun, daftar ini cuma menampilkan perangkat yang sedang kamu pakai sekarang.</p>
+          </div>
+          <div class="bantuan-faq-item">
+            <button type="button" class="bantuan-faq-q">
+              <span>Kenapa ada batas jumlah perangkat?</span>
+              <svg class="bantuan-faq-caret" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+            <p class="bantuan-faq-a">Batas ini murni langkah keamanan supaya kamu bisa memantau kalau ada perangkat asing yang ikut mengakses akunmu. Kamu tetap bisa menghapus perangkat lama kapan saja untuk memberi ruang perangkat baru.</p>
+          </div>
+          <div class="bantuan-faq-item">
+            <button type="button" class="bantuan-faq-q">
+              <span>Apa yang terjadi kalau saya hapus sebuah perangkat?</span>
+              <svg class="bantuan-faq-caret" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+            <p class="bantuan-faq-a">Perangkat itu hilang dari daftar ini di semua perangkatmu. Ini bukan mematikan sesi login-nya secara paksa -- kalau perangkat itu masih ingin dipakai, cukup buka ZAYAin lagi di sana, perangkat itu akan otomatis terdaftar ulang.</p>
+          </div>
+          <div class="bantuan-faq-item">
+            <button type="button" class="bantuan-faq-q">
+              <span>Kenapa perangkat ini menunjukkan status "Offline"?</span>
+              <svg class="bantuan-faq-caret" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+            <p class="bantuan-faq-a">Status "Online" hanya berarti perangkat itu membuka ZAYAin dalam 5 menit terakhir. Kalau sudah lebih lama dari itu (atau tidak dibuka lagi), statusnya berubah jadi "Offline" -- perangkatnya tetap tersimpan di daftar.</p>
+          </div>
+        </div>
+
+        <!-- Kartu 4: Ketentuan Keamanan Perangkat -- reveal polos (tanpa
+             animasi max-height), pola SAMA dgn cara #bantuanFaqList
+             ditampilkan/disembunyikan di initBantuanPage(). -->
+        <button type="button" class="bantuan-row device-mgmt-terms-toggle" id="deviceMgmtTermsToggleBtn" aria-expanded="false" aria-controls="deviceMgmtTermsBody">
+          <span class="bantuan-row-ic">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3.5h7l4 4v13a1.5 1.5 0 0 1-1.5 1.5h-9.5A1.5 1.5 0 0 1 5.5 20.5v-15A1.5 1.5 0 0 1 7 3.5Z"/><path d="M14 3.5V8h4M8.5 12.5h7M8.5 16h5"/></svg>
+          </span>
+          <span class="bantuan-row-text">
+            <strong>Ketentuan Keamanan Perangkat</strong>
+            <span>Syarat &amp; ketentuan pengelolaan perangkat</span>
+          </span>
+          <svg class="bantuan-row-chevron" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"/></svg>
+        </button>
+        <div class="tentang-doc-card device-mgmt-terms-body" id="deviceMgmtTermsBody" hidden>
+          <p style="margin:0 0 10px;font-size:12.5px;line-height:1.65;color:var(--ink-soft);">Fitur Manajemen Device membantu kamu memantau perangkat mana saja yang mengakses akun ZAYAin kamu. Dengan menggunakan fitur ini, kamu memahami &amp; menyetujui:</p>
+          <ol style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:8px;">
+            <li style="font-size:12.5px;line-height:1.65;color:var(--ink-soft);">Daftar perangkat hanya tersinkron ke akun cloud kamu apabila kamu sudah masuk/daftar akun -- tanpa akun, daftar ini hanya menampilkan perangkat yang sedang kamu pakai.</li>
+            <li style="font-size:12.5px;line-height:1.65;color:var(--ink-soft);">Batas jumlah perangkat bersifat panduan keamanan, bukan pembatasan berbayar/VIP -- kamu bebas menghapus perangkat lama kapan saja.</li>
+            <li style="font-size:12.5px;line-height:1.65;color:var(--ink-soft);">Menghapus perangkat dari daftar ini tidak menghapus data transaksi/keuanganmu -- data tetap aman &amp; tersinkron seperti biasa.</li>
+            <li style="font-size:12.5px;line-height:1.65;color:var(--ink-soft);">Kalau kamu melihat perangkat asing yang tidak kamu kenali, segera hapus perangkat tsb dari daftar &amp; ganti PIN/Password kamu lewat Pengaturan &gt; Keamanan.</li>
+          </ol>
+        </div>
+
+      </div>
+    </div>
+  </div>
+  <!-- ===== /HALAMAN "MANAJEMEN DEVICE" ===== -->
+
 
   <!-- ===== BOTTOM SHEET: KONFIRMASI UBAH PIN =====
        Dipicu dari baris "Ubah PIN" di Pengaturan > Keamanan. Tombol
@@ -12215,6 +12522,21 @@ body.is-scrolling *{
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="13" rx="2.2"/><path d="M2.5 10.5h19"/><circle cx="17.3" cy="14.6" r="1.15" fill="currentColor" stroke="none"/></svg>
               </span>
               <span class="settings-row-title">Sumber Dana Utama</span>
+              <svg class="settings-row-chevron" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"/></svg>
+            </button>
+            <!-- ---- FITUR: "Manajemen Device" -- baris ini aktif (tanpa
+                 atribut "disabled"), membuka halaman penuh
+                 #manajemenDeviceOverlay, mengikuti pola PERSIS baris
+                 "Tentang"/"Pusat Bantuan" di atas (id *OpenBtn + fungsi
+                 open/close overlay di script.js). Isi halaman (kartu
+                 profil akun, ringkasan & daftar perangkat, FAQ,
+                 Ketentuan) dirender dinamis oleh renderDeviceMgmtPage()
+                 di script.js, dipanggil setiap overlay ini dibuka. ---- -->
+            <button type="button" class="settings-row" id="manajemenDeviceOpenBtn">
+              <span class="settings-row-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2.2"/><path d="M9 5.2h6M11 18.4h2"/></svg>
+              </span>
+              <span class="settings-row-title">Manajemen Device</span>
               <svg class="settings-row-chevron" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"/></svg>
             </button>
           </div>
