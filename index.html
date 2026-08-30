@@ -7517,7 +7517,16 @@ html.zp-app-loading .page-body > .settings-list{display:none;}
      ditambahkan di sini juga (sebelumnya cuma translateZ+
      backface-visibility) supaya wrapper sticky Pengaturan ini dapat
      compositor layer LENGKAP sama seperti .page-body/.lap-sticky-top,
-     bukan cuma sebagian -- lihat catatan lengkap di .page-banner. ---- */
+     bukan cuma sebagian -- lihat catatan lengkap di .page-banner.
+     FIX TAMBAHAN "radius kartu sempat kelihatan rata pas discroll" --
+     wrapper sticky ini jadi tempat menumpang bareng .page-banner &
+     .page-body.saya-page-body-cap (lihat catatan lengkap ttg
+     -webkit-mask-image di .page-body) -- mask kosong yang sama
+     dipasang juga di sini supaya SELURUH wrapper (bukan cuma
+     .page-body anaknya) ikut dipaksa re-composite dgn benar oleh
+     Safari, karena wrapper inilah yang sesungguhnya position:sticky
+     & jadi compositor layer paling luar saat discroll. */
+  -webkit-mask-image:-webkit-radial-gradient(white, white);
   transform:translateZ(0);-webkit-transform:translateZ(0);
   backface-visibility:hidden;-webkit-backface-visibility:hidden;
   isolation:isolate;
@@ -9274,7 +9283,14 @@ select#categoryFilter[hidden]{display:none;}
      nongol di baliknya. Sekarang banner ini disamakan PERSIS dgn
      .page-body: transform+backface-visibility+isolation ketiganya
      sekaligus, supaya kedua sisi lengkungan sama-sama stabil di layer
-     sendiri & tidak digambar ulang tiap frame scroll. ---- */
+     sendiri & tidak digambar ulang tiap frame scroll.
+     FIX TAMBAHAN "radius sudut sempat kelihatan rata pas discroll" --
+     mask kosong yang sama dipasang di sini juga (lihat catatan lengkap
+     ttg -webkit-mask-image di .page-body) supaya sisi banner-nya juga
+     ikut dipaksa Safari untuk re-composite dengan benar setiap frame,
+     bukan cuma sisi .page-body-nya saja -- kedua sisi lengkungan jadi
+     benar-benar simetris lagi, termasuk urusan mask ini. ---- */
+  -webkit-mask-image:-webkit-radial-gradient(white, white);
   transform:translateZ(0);-webkit-transform:translateZ(0);
   backface-visibility:hidden;-webkit-backface-visibility:hidden;
   isolation:isolate;
@@ -9343,7 +9359,24 @@ select#categoryFilter[hidden]{display:none;}
      (paling kelihatan di sudut kiri). Dipaksa naik ke compositor
      layer-nya sendiri (translateZ) + backface-visibility:hidden supaya
      lengkungnya digambar SEKALI di layer stabil sendiri, tidak ikut
-     digambar ulang tiap frame scroll -> tonjolan runcing itu hilang. */
+     digambar ulang tiap frame scroll -> tonjolan runcing itu hilang.
+     FIX TAMBAHAN "sudut lengkung sempat terlihat RATA/kotak (radius
+     hilang sesaat) waktu discroll" -- keluhan user: translateZ+
+     backface-visibility+isolation di atas SUDAH menstabilkan layer-nya,
+     TAPI khusus di WebKit/Safari itu belum cukup untuk memaksa
+     clipping border-radius ikut re-composite dengan benar di layer
+     GPU terpisah itu -- compositor Safari kadang menggambar ulang
+     kotak PERSEGI dulu (radius belum "kepasang") baru sepersekian
+     frame kemudian radiusnya menyusul, jadi sudut kelihatan sempat
+     rata pas gerakan scroll cepat. -webkit-mask-image di bawah ini
+     adalah trik standar utk kasus ini: begitu elemen punya mask,
+     Safari WAJIB menggambar clip (termasuk border-radius-nya) di
+     compositor layer yang sama setiap frame -- bukan cuma sekali di
+     awal -- jadi radius tidak pernah "telat menyusul" lagi. Mask-nya
+     sendiri putih penuh (gradient putih->putih, bukan potong apa pun)
+     supaya HANYA efek pemaksaan re-render radius ini yang dipakai,
+     tanpa mengubah tampilan kartu sama sekali. */
+  -webkit-mask-image:-webkit-radial-gradient(white, white);
   transform:translateZ(0);-webkit-transform:translateZ(0);
   backface-visibility:hidden;-webkit-backface-visibility:hidden;
   isolation:isolate;
