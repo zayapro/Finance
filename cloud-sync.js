@@ -556,6 +556,34 @@
       .map(function (w) { return w.charAt(0).toUpperCase() + w.slice(1); }).join(' ');
   }
   function requirePinUnlock(user, expectedHash) {
+    /* ---- Kunci/lepas-kunci scroll halaman UTAMA selama popup PIN ini
+       terbuka -- dibuat TAHAN BANTING utk iOS Safari (sekadar
+       `overflow:hidden` di <body> gampang gagal/"bocor" di sana kalau
+       ada elemen fixed lain di halaman, spt kasus kita). Triknya: pas
+       dikunci, <body> dipindah jadi position:fixed dgn `top` negatif
+       sebesar posisi scroll saat itu (jadi VISUALNYA diam persis di
+       posisi yg sama), lalu pas dilepas, scroll dikembalikan persis
+       ke posisi semula. Dipasang di level modul (bukan di dalam
+       Promise) supaya aman dipanggil berulang tanpa duplikasi listener,
+       & dihitung ulang tiap kali dipanggil (bisa saja ukuran halaman
+       berubah antar sesi buka-tutup). ---- */
+    let pinLockSavedScrollY = 0;
+    function lockBodyScrollForPinLock() {
+      pinLockSavedScrollY = window.scrollY || document.documentElement.scrollTop || 0;
+      document.body.style.position = 'fixed';
+      document.body.style.top = (-pinLockSavedScrollY) + 'px';
+      document.body.style.left = '0';
+      document.body.style.right = '0';
+      document.body.style.width = '100%';
+    }
+    function unlockBodyScrollForPinLock() {
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.left = '';
+      document.body.style.right = '';
+      document.body.style.width = '';
+      window.scrollTo(0, pinLockSavedScrollY);
+    }
     return new Promise(function (resolve) {
       const titleEl = document.getElementById('pinLockTitle');
       const bioView = document.getElementById('pinLockBioView');
@@ -572,15 +600,26 @@
       const keypad = document.getElementById('pinLockKeypad');
       const backspaceBtn = document.getElementById('pinLockBackspace');
       const forgotLink = document.getElementById('pinLockForgotLink');
-      const bioRetryBtn = document.getElementById('pinLockBiometricRetryBtn');
+      const keypadBioBtn = document.getElementById('pinLockKeypadBioBtn');
       const bioEnabled = window.zayaproAuth.isBiometricEnabled();
       let entered = '';
       let checking = false;
       let bioChecking = false;
 
+      /* ---- Sapaan sekarang menyesuaikan WAKTU (bukan nama/email lagi):
+         "Halo, Selamat Pagi/Siang/Sore/Malam" mengikuti jam perangkat
+         saat popup ini dibuka. Batas waktunya pakai kebiasaan umum
+         Indonesia: 05.00-10.59 Pagi, 11.00-14.59 Siang, 15.00-18.59
+         Sore, sisanya (malam & dini hari) Malam. ---- */
+      function greetingWordByHour() {
+        const h = new Date().getHours();
+        if (h >= 5 && h < 11) return 'Pagi';
+        if (h >= 11 && h < 15) return 'Siang';
+        if (h >= 15 && h < 19) return 'Sore';
+        return 'Malam';
+      }
       if (greeting) {
-        const displayName = (user.user_metadata && user.user_metadata.full_name) || fallbackNameFromEmail(user.email);
-        greeting.textContent = displayName ? ('Halo, ' + displayName) : 'Selamat datang kembali';
+        greeting.textContent = 'Halo, Selamat ' + greetingWordByHour();
       }
 
       /* ---- Pindah antar 2 tampilan: biometrik (utama, kalau
@@ -590,7 +629,7 @@
       function showBioView() {
         if (pinView) pinView.classList.remove('open');
         if (bioView) bioView.classList.add('open');
-        if (titleEl) titleEl.textContent = 'Buka dengan Sidik Jari';
+        if (titleEl) titleEl.textContent = 'Atur Keuanganmu dengan ZAYAin Sekarang';
       }
       /* ---- Tombol tutup (×) di tampilan PIN cuma masuk akal kalau
          ada tampilan Login sidik jari utk dituju balik -- makanya
@@ -694,16 +733,17 @@
         keypad.removeEventListener('click', onKeyClick);
         backspaceBtn.removeEventListener('click', onBackspace);
         forgotLink.removeEventListener('click', onForgot);
-        if (bioRetryBtn) bioRetryBtn.removeEventListener('click', onBioRetry);
+        if (keypadBioBtn) keypadBioBtn.removeEventListener('click', onBioRetry);
         if (bioBtn) bioBtn.removeEventListener('click', onBioBtnClick);
         if (usePinBtn) usePinBtn.removeEventListener('click', onUsePin);
         if (closePinBtn) closePinBtn.removeEventListener('click', onClosePin);
+        unlockBodyScrollForPinLock();
       }
 
       keypad.addEventListener('click', onKeyClick);
       backspaceBtn.addEventListener('click', onBackspace);
       forgotLink.addEventListener('click', onForgot);
-      if (bioRetryBtn) bioRetryBtn.addEventListener('click', onBioRetry);
+      if (keypadBioBtn) keypadBioBtn.addEventListener('click', onBioRetry);
       if (bioBtn) bioBtn.addEventListener('click', onBioBtnClick);
       if (usePinBtn) usePinBtn.addEventListener('click', onUsePin);
       if (closePinBtn) closePinBtn.addEventListener('click', onClosePin);
@@ -711,6 +751,22 @@
       entered = '';
       renderDots();
       clearErr();
+      // ---- FIX BUG "gulir ke atas malah kelihatan menu navigasi bawah
+      // (#bottomNav) menyembul": akar masalahnya halaman UTAMA di
+      // belakang popup ini TIDAK PERNAH dikunci scroll-nya -- jadi
+      // walau popup ini `position:fixed` menutupi seluruh layar,
+      // konten di baliknya (termasuk nav bawah yg jg fixed) tetap ikut
+      // bergerak/di-repaint tiap kali jari menggulir, dan di beberapa
+      // browser (terutama WebKit/Safari mobile, PERSIS pola bug yg
+      // sama dgn "banner bocor saat discroll" yg sudah pernah diperbaiki
+      // di elemen lain pada file ini) repaint elemen fixed itu sempat
+      // TIDAK SINKRON sepersekian frame, membuat nav bawah "menyembul"
+      // sesaat menembus popup. Sekarang scroll halaman utama BENAR2
+      // dikunci total (bukan cuma overflow:hidden yg gampang gagal di
+      // iOS Safari) selama popup ini terbuka, & posisi gulir sebelumnya
+      // disimpan supaya dikembalikan persis setelah PIN/biometrik
+      // berhasil (lihat unlockBodyScrollForPinLock di cleanup()).
+      lockBodyScrollForPinLock();
       pinLockOverlay.classList.remove('hidden');
 
       // Tampilan awal: biometrik dulu (lalu auto-diminta) kalau aktif
@@ -742,7 +798,13 @@
       }
       (async function () {
         const isSupportedNow = bioEnabled && await window.zayaproAuth.biometricSupported();
-        if (bioRetryBtn) bioRetryBtn.style.display = isSupportedNow ? 'flex' : 'none';
+        // ---- Ikon sidik jari kecil di slot kosong keypad PIN (pojok
+        // kiri-bawah, sebelum angka 0) -- shortcut cepat spy user yg
+        // sudah masuk ke tampilan PIN TETAP bisa langsung coba sidik
+        // jari lagi tanpa harus pencet "Tutup" dulu utk balik ke
+        // tampilan Login. Cuma tampil kalau Login Biometrik aktif &
+        // didukung device ini SEKARANG.
+        if (keypadBioBtn) keypadBioBtn.style.display = isSupportedNow ? 'flex' : 'none';
         // FIX: JANGAN langsung minta sidik jari/Face ID otomatis begitu
         // popup terbuka -- tunggu sampai user BENAR-BENAR menekan tombol
         // "Login" (ikon sidik jari) di layar. Kalau device/browser

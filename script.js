@@ -8472,6 +8472,10 @@ function applyAppSettings(settings) {
   // aplikasi yang sedang aktif walau penggunanya menggantinya kapan saja.
   const receiptNameEl = document.getElementById('receiptBrandNameText');
   if (receiptNameEl) receiptNameEl.textContent = name;
+  // Header popup PIN/Login Biometrik -- nama brand ikut nama aplikasi
+  // yg sedang aktif juga (bukan lagi teks "ZAYAin" hardcode).
+  const pinLockNameEl = document.getElementById('pinLockBrandNameText');
+  if (pinLockNameEl) pinLockNameEl.textContent = name;
 
   const iconPreset = APP_ICON_PRESETS.find(i => i.key === settings.icon) || APP_ICON_PRESETS[0];
   const logoHtml = settings.logo ? `<img src="${settings.logo}" alt="Logo ${escapeHtml(name)}">` : iconPreset.svg;
@@ -8483,6 +8487,12 @@ function applyAppSettings(settings) {
   if (miniMarkEl) miniMarkEl.innerHTML = logoHtml;
   const receiptMarkEl = document.getElementById('receiptBrandMarkIcon');
   if (receiptMarkEl) receiptMarkEl.innerHTML = logoHtml;
+  // ---- Ikon di header popup PIN/Login Biometrik ikut disamakan dgn
+  // ikon/logo resmi aplikasi (bukan lagi ikon buku-kas hardcode) --
+  // otomatis ikut berubah kalau user ganti Ikon Bawaan atau unggah
+  // Logo Aplikasi sendiri lewat Pengaturan Aplikasi.
+  const pinLockMarkEl = document.getElementById('pinLockBrandMarkIcon');
+  if (pinLockMarkEl) pinLockMarkEl.innerHTML = logoHtml;
 
   /* --forest-glow SENGAJA TIDAK lagi di-set di sini -- sumbernya kini
      TUNGGAL dari applyGlobalTheme() (halaman Tema), supaya "Warna
