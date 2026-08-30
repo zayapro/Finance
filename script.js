@@ -10450,14 +10450,13 @@ document.getElementById('manajemenDeviceBackBtn')?.addEventListener('click', clo
 //    SENGAJA cuma jalan sekali otomatis saat halaman pertama dibuka --
 //    reset flag-nya di sini supaya klik manual tidak sia-sia kalau lookup
 //    pertama tadi kebetulan gagal/network sempat putus).
-// Efek loading SEKARANG bukan cuma ikon yg berputar terus (bukan cuma
-// sekali), tapi jg isi kartu (angka ringkasan + daftar perangkat) ikut
-// meredup & tidak bisa diklik selama proses berjalan (class "is-refreshing"
-// di #deviceMgmtActiveCard, lihat CSS-nya di index.html) + subjudul kartu
-// sementara berganti "Menyegarkan..." -- supaya user yg tidak sempat
-// melihat ikon kecilnya pun tetap sadar sedang ada proses berjalan, bukan
-// app yg terlihat diam/macet. Tombol jg dinonaktifkan sementara utk cegah
-// klik ganda, & toast singkat menandai hasilnya di akhir.
+// Efek loading: overlay + spinner di KARTU "Device Aktif" (lihat
+// #deviceMgmtActiveLoading & CSS "is-refreshing" di index.html), bukan di
+// ikon tombolnya. Toast hasil SENGAJA dimatikan (permintaan user) -- kartu
+// yg meredup+spinner lalu kembali normal sudah cukup jadi penanda proses
+// selesai, tanpa perlu notifikasi tambahan yg menumpuk. Kegagalan tetap
+// dicatat ke console.error utk keperluan debug, cuma tidak lagi
+// ditampilkan ke user lewat toast.
 document.getElementById('deviceMgmtRefreshBtn')?.addEventListener('click', async function () {
   const btn = this;
   if (btn.disabled) return;
@@ -10466,9 +10465,6 @@ document.getElementById('deviceMgmtRefreshBtn')?.addEventListener('click', async
   const prevSubtitle = subtitleEl ? subtitleEl.textContent : '';
   btn.disabled = true;
   btn.setAttribute('aria-busy', 'true');
-  btn.classList.remove('is-spinning');
-  void btn.offsetWidth; // restart animasi kalau diklik berkali-kali
-  btn.classList.add('is-spinning');
   card?.classList.add('is-refreshing');
   if (subtitleEl) subtitleEl.textContent = 'Menyegarkan daftar perangkat...';
   try {
@@ -10486,14 +10482,11 @@ document.getElementById('deviceMgmtRefreshBtn')?.addEventListener('click', async
     // login terkini apa adanya -- teks loading di atas otomatis tertimpa,
     // tidak perlu dikembalikan manual ke prevSubtitle di sini.
     await renderDeviceMgmtPage();
-    showToast('Daftar perangkat diperbarui.');
   } catch (e) {
     console.error('Gagal menyegarkan daftar perangkat:', e);
-    showToast('Gagal menyegarkan daftar perangkat.', 'err');
     if (subtitleEl) subtitleEl.textContent = prevSubtitle; // gagal SEBELUM sempat render ulang -- kembalikan teks lama drpd nyangkut di "Menyegarkan..."
     renderDeviceMgmtPage(); // tetap gambar ulang dari data yg ada supaya UI tidak macet
   } finally {
-    btn.classList.remove('is-spinning');
     btn.removeAttribute('aria-busy');
     btn.disabled = false;
     card?.classList.remove('is-refreshing');

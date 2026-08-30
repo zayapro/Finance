@@ -8284,29 +8284,30 @@ html.zp-app-loading .page-body > .lap-panel{display:none;}
 }
 .device-mgmt-refresh-btn:hover{background:var(--line);}
 .device-mgmt-refresh-btn:disabled{opacity:.55;cursor:default;}
-/* Efek loading tombol refresh (Diganti dari 1x putaran (.6s linear tanpa
-   infinite) -> berputar TERUS selama tombolnya masih ber-class
-   "is-spinning": prosesnya sekarang benar2 async (tarik data cloud +
-   lookup IP/Client Hints, lihat listener #deviceMgmtRefreshBtn di
-   script.js) yg durasinya tidak pasti, jadi ikon harus tetap berputar
-   sampai class ini dilepas manual saat prosesnya benar2 selesai -- bukan
-   berhenti sendiri di tengah proses. */
-.device-mgmt-refresh-btn.is-spinning svg{animation:deviceMgmtSpin .6s linear infinite;}
 @keyframes deviceMgmtSpin{to{transform:rotate(360deg);}}
-/* Efek loading TAMBAHAN saat refresh -- SEBELUMNYA cuma ikon yg berputar,
-   isi kartu (angka ringkasan + daftar perangkat) diam saja spt biasa
-   selama proses berlangsung, jadi kurang terasa "sedang memuat" kalau
-   user tidak sempat melihat ikonnya. Sekarang seluruh isi kartu #2 ikut
-   meredup + tidak bisa diklik (pointer-events:none, cegah klik baris/
-   tombol Hapus di tengah proses refresh yg datanya sedang diganti)
-   selama class "is-refreshing" ini ada di kartunya (lihat listener
-   #deviceMgmtRefreshBtn di script.js yg pasang/lepas class ini). */
-.device-mgmt-card.is-refreshing .device-mgmt-stats,
-.device-mgmt-card.is-refreshing .device-mgmt-list{
-  opacity:.4;pointer-events:none;transition:opacity .2s ease;
-  filter:grayscale(20%);
+/* ---- Efek loading REDESIGN: dipindah dari ikon tombol refresh ke KARTU
+   "Device Aktif" itu sendiri (lihat markup #deviceMgmtActiveLoading di
+   index.html & listener #deviceMgmtRefreshBtn di script.js yg
+   pasang/lepas class "is-refreshing" ini) -- lapisan semi-transparan +
+   spinner bulat menutupi SELURUH isi kartu (ringkasan + daftar) selama
+   proses refresh berjalan, jauh lebih kelihatan drpd cuma ikon kecil yg
+   berputar di pojok spt sebelumnya. `position:relative` di-scope ke ID
+   kartu ini saja (bukan `.device-mgmt-card` umum) supaya kartu profil
+   akun di atasnya tidak ikut berubah jadi acuan posisi. */
+#deviceMgmtActiveCard{position:relative;}
+.device-mgmt-card-loading{
+  position:absolute;inset:0;border-radius:inherit;
+  background:color-mix(in srgb, var(--card) 85%, transparent);
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity .18s ease;
+  z-index:2;
 }
-.device-mgmt-stats,.device-mgmt-list{transition:opacity .2s ease;}
+.device-mgmt-card.is-refreshing .device-mgmt-card-loading{opacity:1;pointer-events:auto;}
+.device-mgmt-spinner{
+  width:30px;height:30px;border-radius:50%;
+  border:3px solid var(--line);border-top-color:var(--primary);
+  animation:deviceMgmtSpin .7s linear infinite;
+}
 .device-mgmt-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;}
 .device-mgmt-stat{
   background:var(--paper);border-radius:11px;padding:11px 12px;display:flex;flex-direction:column;gap:6px;min-width:0;
@@ -12149,6 +12150,17 @@ body.is-scrolling *{
 
         <!-- Kartu 2: Device Aktif -- ringkasan + daftar perangkat -->
         <div class="device-mgmt-card" id="deviceMgmtActiveCard">
+          <!-- Overlay loading -- REDESIGN: SEBELUMNYA efek loading cuma ikon
+               kecil di tombol refresh yg berputar, kurang kelihatan. Sekarang
+               dipindah ke KARTU ini sendiri: lapisan semi-transparan +
+               spinner bulat di tengah, menutupi seluruh isi kartu (ringkasan
+               + daftar) selama proses refresh berjalan (class "is-refreshing"
+               dipasang/lepas oleh listener #deviceMgmtRefreshBtn di
+               script.js) -- jauh lebih jelas terlihat "sedang memuat" drpd
+               cuma ikon kecil di pojok. -->
+          <div class="device-mgmt-card-loading" id="deviceMgmtActiveLoading" aria-hidden="true">
+            <span class="device-mgmt-spinner"></span>
+          </div>
           <div class="device-mgmt-card-head">
             <span class="device-mgmt-card-ic">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="3.5" width="14" height="10.5" rx="1.6"/><path d="M6.5 17.5h6M9.5 14v3.5"/><rect x="16" y="9" width="6" height="10.5" rx="1.4"/><path d="M18.2 17h1.6"/></svg>
