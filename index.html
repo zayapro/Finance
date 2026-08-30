@@ -7535,16 +7535,39 @@ html.zp-app-loading .page-body > .settings-list{display:none;}
      alasan will-change dilepas di banner Beranda. ---- */
   will-change:transform;
 }
+/* ---- FIX LANJUTAN #3 "banner bocor saat discroll" -- PERMINTAAN:
+   perbesar kanvas oren di BELAKANG kartu radius putih sbg buffer
+   ekstra terhadap sliver/seam rendering WebKit di sudut lengkung.
+   Caranya: padding-bawah .page-banner Pengaturan ditambah 8px (cuma
+   khusus di sini, scoped ke ".saya-sticky-top .page-banner" -- TIDAK
+   menyentuh .page-banner dasar yg dipakai bareng Laporan/Dompet).
+   INI ADA 3 ANGKA YANG WAJIB SELALU DIUBAH BARENG-BARENG (kalau tidak,
+   bagian bawah banner akan "tumpah" keluar wrapper-nya -- pernah
+   kejadian persis begini waktu pertama nyoba fix ini):
+     1) padding-bottom EKSTRA di sini (+8px)
+     2) margin-top cap (.saya-page-body-cap di bawah) -- HARUS jadi
+        -(24+8) = -32px, supaya sudut lengkungnya (bagian ATAS cap)
+        tetap mulai di posisi PERSIS SAMA seperti sebelum fix ini
+        (supaya panjang strip oren yg kelihatan tidak berubah).
+     3) padding-top cap (tinggi kotak cap itu sendiri) -- HARUS jadi
+        24+8 = 32px juga (BUKAN dibiarkan 24px lawas!), supaya bagian
+        BAWAH cap tetap menyentuh PERSIS bagian bawah banner yg baru
+        (yg sekarang 8px lebih tinggi) -- kalau angka ini lupa
+        disesuaikan (cuma margin-top yg diubah, tinggi cap dibiarkan),
+        cap akan berhenti LEBIH CEPAT drpd bagian bawah banner yg baru,
+        dan sisa oren di bawahnya akan nongol/tumpah ke luar wrapper,
+        kelihatan sbg strip oren yg salah tempat.
+   Konsekuensi sampingan yg disengaja & disadari: area putih kosong di
+   dalam cap (sebelum baris menu pertama) jadi ~8px sedikit lebih
+   tinggi drpd sebelumnya -- itu "harga" fisik dari oren ekstra yang
+   sekarang tertanam di baliknya (ruang ekstra itu HARUS ada di suatu
+   tempat; disini sengaja ditaruh di area cap yg memang kosong/putih
+   polos, supaya tidak mengganggu apa pun). ---- */
+.saya-sticky-top .page-banner{padding-bottom:calc(clamp(44px,9vw,68px) + 8px);}
 /* ---- Cap kosong (lihat catatan panjang di HTML #page-saya) -- anak
    .saya-sticky-top, satu stacking context dgn banner, jadi sudut
    melengkungnya TIDAK ketutup balik oleh z-index tinggi milik wrapper
-   sticky. Tidak perlu konten/tinggi minimum khusus: padding bawaan
-   ".page-body" (24px atas) + radius 26-28px sudah cukup menampilkan
-   lengkungnya secara penuh, persis seperti sudut atas kartu di
-   Laporan/Dompet. padding-bottom dinolkan krn cap ini tidak punya
-   konten apa pun -- kalau tidak, akan ada celah putih kosong tambahan
-   di antara cap ini dgn daftar menu asli (.saya-page-body-rest) di
-   bawahnya.
+   sticky.
    FIX LANJUTAN "banner bocor saat discroll": overflow:hidden ditambah
    supaya sudut lengkung cap ini benar-benar DIPOTONG KERAS (hard clip)
    oleh browser, bukan cuma mengandalkan border-radius sbg "background-
@@ -7553,8 +7576,12 @@ html.zp-app-loading .page-body > .settings-list{display:none;}
    lengkung sempat "salah potong" & nyisain sliver oren di baliknya
    pas layer di-repaint tiap frame scroll). Aman ditambah di sini krn
    cap ini kosong (aria-hidden, tanpa konten sama sekali) -- tidak ada
-   isi apa pun yang berisiko ikut kepotong tak sengaja. ---- */
-.page-body.saya-page-body-cap{padding-bottom:0;overflow:hidden;}
+   isi apa pun yang berisiko ikut kepotong tak sengaja.
+   margin-top & padding-top DIUBAH BARENG dari basis 24px/-24px jadi
+   32px/-32px -- PASANGAN WAJIB dari +8px padding-bawah ekstra di
+   ".saya-sticky-top .page-banner" tepat di atas (lihat catatan
+   lengkap & PERINGATAN 3-angka di sana kalau mau ubah salah satu). */
+.page-body.saya-page-body-cap{margin-top:-32px;padding-top:32px;padding-bottom:0;overflow:hidden;}
 /* ---- Potongan KEDUA (.saya-page-body-rest, daftar menu asli) HARUS
    diratakan -- sebelumnya tidak ada override sama sekali di sini
    sehingga masih ikut style dasar .page-body (margin-top:-24px +
