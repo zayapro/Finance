@@ -8021,11 +8021,29 @@ html.zp-app-loading .page-body > .lap-panel{display:none;}
   backface-visibility:hidden;-webkit-backface-visibility:hidden;
   isolation:isolate;
 }
-.bantuan-head{padding-bottom:14px;}
+.bantuan-head{
+  padding-bottom:14px;
+  transform:translateZ(0);-webkit-transform:translateZ(0);
+  backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  isolation:isolate;
+}
 .bantuan-hero{
   position:relative;z-index:1;
   background:var(--nav-orange);color:#FFF8F1;
   padding:2px 20px clamp(36px,8vw,50px);
+  /* ---- FIX "garis oren bocor di lengkungan": .bantuan-card-cap (kartu
+     putih yg menumpang di ujung bawah hero ini lewat margin negatif,
+     lihat CSS-nya) SUDAH dapat compositor layer sendiri (transform+
+     backface-visibility+isolation, ikut bawaan .lap-filter-card).
+     Hero oren ini SEBELUMNYA tidak dikasih ketiganya sama sekali --
+     ketimpangan itu (satu sisi lengkungan dapat layer GPU sendiri,
+     sisi satunya tidak) yang bikin WebKit/Safari salah gambar ulang
+     batas oren->putih pas discroll, sekelebat oren "bocor" nongol di
+     lengkungan. SAMA PERSIS pasangan fix .page-banner vs .page-body
+     (lihat catatan lengkap di sana) -- disamakan di sini juga. ---- */
+  transform:translateZ(0);-webkit-transform:translateZ(0);
+  backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  isolation:isolate;
 }
 .bantuan-hero-title{
   margin:6px 0 14px;font-family:'Poppins',sans-serif;font-size:19px;font-weight:500;
@@ -8079,6 +8097,14 @@ html.zp-app-loading .page-body > .lap-panel{display:none;}
 }
 .bantuan-row:hover{background:var(--paper);}
 .bantuan-row:active{transform:scale(0.99);}
+/* ---- Baris "Telepon Bantuan": nomornya belum tersedia, jadi
+   diburamkan & dimatikan interaksinya -- pola SAMA PERSIS dgn baris
+   "Login Biometrik" saat sensor tidak didukung (.settings-row-toggle.
+   is-unsupported), cuma di-scope ke .bantuan-row supaya style dasar
+   (hover/active) di atas tidak ikut berubah utk baris lain. ---- */
+.bantuan-row.is-disabled{
+  opacity:.5;cursor:default;pointer-events:none;
+}
 .bantuan-row-ic{
   width:40px;height:40px;flex-shrink:0;border-radius:12px;
   display:flex;align-items:center;justify-content:center;
@@ -11637,7 +11663,7 @@ body.is-scrolling *{
         <div class="bantuan-section">
           <span class="settings-section-label">Kontak Kami</span>
           <div class="bantuan-list">
-            <a class="bantuan-row" href="https://wa.me/6280000000000" target="_blank" rel="noopener">
+            <a class="bantuan-row" href="https://wa.me/6281366331996" target="_blank" rel="noopener">
               <span class="bantuan-row-ic">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20.5 5.3 16A8.4 8.4 0 1 1 8.6 19.2Z"/><path d="M8.7 8.6c.2-.5.4-.5.7-.5h.5c.2 0 .4 0 .6.4.2.5.7 1.6.7 1.8.1.2.1.3 0 .5-.1.2-.2.3-.4.5-.2.2-.3.3-.1.6.2.4.9 1.4 1.9 2.2 1.3 1 2.3 1.3 2.6 1.5.3.1.5.1.7-.1.2-.2.7-.8.9-1.1.2-.3.4-.2.6-.1.2.1 1.5.7 1.8.8.3.1.5.2.5.4 0 .2 0 1-.4 1.5-.4.6-1.5 1.1-2.1 1.1-.6 0-1.6-.2-3.5-1.2-2.4-1.3-4-3.8-4.1-4Z" fill="currentColor" stroke="none"/></svg>
               </span>
@@ -11648,16 +11674,16 @@ body.is-scrolling *{
               <svg class="bantuan-row-chevron" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"/></svg>
             </a>
 
-            <a class="bantuan-row" href="tel:1500017">
+            <div class="bantuan-row is-disabled" aria-disabled="true">
               <span class="bantuan-row-ic">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4.5h3.2l1.3 4-2 1.5a11.5 11.5 0 0 0 5.5 5.5l1.5-2 4 1.3V18a1.5 1.5 0 0 1-1.6 1.5C10.9 19 4.5 12.6 3.5 5.9A1.5 1.5 0 0 1 5 4.5Z"/></svg>
               </span>
               <span class="bantuan-row-text">
                 <strong>Telepon Bantuan</strong>
-                <span>Layanan dikenakan tarif pulsa normal</span>
+                <span>Belum tersedia</span>
               </span>
               <svg class="bantuan-row-chevron" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"/></svg>
-            </a>
+            </div>
 
             <a class="bantuan-row" href="mailto:cs@zayain.app?subject=Pengaduan%20-%20ZAYAin">
               <span class="bantuan-row-ic">
