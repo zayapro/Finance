@@ -4902,11 +4902,40 @@ body.density-compact .income-cards-group{gap:10px;}
   transform:translateZ(0);-webkit-transform:translateZ(0);
   backface-visibility:hidden;-webkit-backface-visibility:hidden;
   isolation:isolate;
+  /* ---- FIX LANJUTAN "banner masih sempat bocor saat discroll" --
+     DISAMAKAN dgn .saya-sticky-top (halaman Pengaturan, lihat catatan
+     lengkap di sana): will-change:transform ditambahkan supaya browser
+     mempromosikan wrapper sticky Laporan ini ke compositor layer-nya
+     SEDARI AWAL (sebelum scroll dimulai), bukan baru "on-the-fly" pas
+     sticky-nya aktif -- jeda promosi layer itulah celah tempat sudut
+     lengkung oren->putih sempat salah gambar 1 frame. AMAN dipakai di
+     sini krn isi wrapper ini (judul "Laporan" + tab + header "Semua
+     Transaksi") tidak berubah bentuk/ukuran tiap saat, sama seperti
+     alasan yang sama di .saya-sticky-top. ---- */
+  will-change:transform;
 }
+/* ---- FIX LANJUTAN "banner bocor saat discroll" (DISAMAKAN dgn
+   .saya-sticky-top .page-banner, lihat catatan lengkap 3-angka di
+   sana): perbesar kanvas oren di BELAKANG kartu radius putih sbg
+   buffer ekstra thd sliver/seam rendering WebKit di sudut lengkung.
+   INI ADA 3 ANGKA YANG WAJIB SELALU DIUBAH BARENG-BARENG (sama
+   persis aturan di .saya-sticky-top .page-banner):
+     1) padding-bottom EKSTRA di sini (+8px)
+     2) margin-top .lap-page-body-top (di bawah) -- jadi -32px
+     3) padding-top .lap-page-body-top (di bawah) -- jadi 32px
+   Konsekuensi sampingan yg disengaja: jarak antara judul "Laporan"
+   dgn baris tab di bawahnya jadi ~8px sedikit lebih tinggi drpd
+   sebelumnya -- "harga" fisik dari oren ekstra yg sekarang tertanam
+   di baliknya, sama persis seperti di halaman Pengaturan. ---- */
+.lap-sticky-top .page-banner{padding-bottom:calc(clamp(44px,9vw,68px) + 8px);}
 /* Bagian atas (banner+tab+header) TIDAK butuh padding-bottom lagi di
    ujung bawahnya -- .lap-aktifitas-head di dalamnya sudah punya
-   padding-bottom sendiri (lihat aturannya di bawah). */
-.page-body.lap-page-body-top{padding-bottom:0;}
+   padding-bottom sendiri (lihat aturannya di bawah).
+   margin-top & padding-top DIUBAH BARENG dari basis -24px/24px jadi
+   -32px/32px -- PASANGAN WAJIB dari +8px padding-bawah ekstra di
+   ".lap-sticky-top .page-banner" tepat di atas (lihat catatan
+   lengkap & PERINGATAN 3-angka di sana kalau mau ubah salah satu). */
+.page-body.lap-page-body-top{margin-top:-32px;padding-top:32px;padding-bottom:0;}
 /* Blok bawah (3 panel, scroll normal): margin-atas negatif/radius/
    shadow "kartu menumpang di atas banner" dinolkan di sini krn sudah
    "dipakai" oleh .lap-page-body-top di atasnya -- kalau tidak,
@@ -7029,7 +7058,28 @@ tbody tr:last-child td{border-bottom:none;}
      jadi dihapus di sini supaya transisinya menyatu mulus lagi
      (background di head & di daftar bawahnya sama-sama var(--card-fade-bg),
      jadi tanpa shadow pun sambungannya sudah rata tanpa "patah"). */
+  /* ---- FIX LANJUTAN "banner masih sempat bocor saat discroll" --
+     DISAMAKAN dgn .saya-sticky-top/.lap-sticky-top/.dompet-sticky-top
+     (lihat catatan lengkap di sana): will-change:transform ditambahkan
+     supaya browser mempromosikan wrapper sticky Tagihan & Hutang ini
+     ke compositor layer-nya SEDARI AWAL, bukan baru "on-the-fly" pas
+     sticky-nya aktif. AMAN dipakai di sini krn isi wrapper ini (judul
+     "Tagihan & Hutang" + ringkasan + tab) tidak berubah bentuk/ukuran
+     tiap saat, sama seperti alasan yg sama di halaman lain. ---- */
+  will-change:transform;
 }
+/* ---- FIX LANJUTAN "banner bocor saat discroll" (DISAMAKAN PERSIS dgn
+   .lap-sticky-top .page-banner / .saya-sticky-top .page-banner, lihat
+   catatan lengkap 3-angka di sana). Selector 2 class (.bd-sticky-head
+   .bd-page-banner-simple) sengaja dipakai supaya spesifisitasnya lebih
+   tinggi drpd ".bd-page-banner-simple" biasa (dasar, 1 class) & pasti
+   menang tanpa perlu urutan source tertentu. INI ADA 3 ANGKA YANG
+   WAJIB SELALU DIUBAH BARENG-BARENG:
+     1) padding-bottom EKSTRA di sini (+8px)
+     2) margin-top #bdAllOverlay .bd-page-body-head (di bawah) -- -32px
+     3) padding-top #bdAllOverlay .bd-page-body-head (di bawah) -- 32px
+   ---- */
+.bd-sticky-head .bd-page-banner-simple{padding-bottom:calc(clamp(44px,9vw,68px) + 8px);}
 .bd-page-body.bd-page-body-rest{margin-top:0;border-radius:0;box-shadow:none;padding-top:14px;}
 @media (max-width:640px){
   .bd-page-body.bd-page-body-rest{margin-top:0;border-radius:0;box-shadow:none;}
@@ -7399,7 +7449,11 @@ tbody tr:last-child td{border-bottom:none;}
    tombol ikon Tanggal/Cari/Unduh yang mengisi ruang itu; sekarang
    tombolnya sudah dihapus jadi jaraknya disatukan ke satu nilai kecil
    & konsisten di semua ukuran layar. ---- */
-#bdAllOverlay .bd-page-body-head{padding-bottom:0;}
+/* margin-top & padding-top DIUBAH BARENG dari basis -24px/24px jadi
+   -32px/32px -- PASANGAN WAJIB dari +8px padding-bawah ekstra di
+   ".bd-sticky-head .bd-page-banner-simple" (lihat catatan lengkap &
+   PERINGATAN 3-angka di sana kalau mau ubah salah satu). */
+#bdAllOverlay .bd-page-body-head{padding-bottom:0;margin-top:-32px;padding-top:32px;}
 #bdAllOverlay .bd-page-body-rest{padding-top:16px;}
 .bd-list{display:grid;grid-template-columns:repeat(2,1fr);gap:11px;}
 @media (max-width:760px){.bd-list{grid-template-columns:1fr;}}
@@ -7481,6 +7535,18 @@ tbody tr:last-child td{border-bottom:none;}
 .bd-item-actions .edit-btn:hover{color:var(--forest-glow);border-color:rgba(37,99,235,0.3);background:rgba(37,99,235,0.08);}
 .bd-item-actions .del-btn:hover{color:var(--wine);border-color:rgba(225,29,72,0.3);background:rgba(225,29,72,0.08);}
 .bd-empty{grid-column:1/-1;text-align:center;padding:48px 16px;color:var(--ink-faint);}
+/* ---- SEMENTARA/OPSIONAL, khusus halaman Dompet (belum ada konten
+   asli, masih placeholder "Belum ada data"): tinggi minimum ditambah
+   supaya halaman ini cukup panjang buat discroll & bisa dites langsung
+   sekarang bahwa banner "Dompet" sudah menempel (sticky) sama persis
+   seperti halaman Pengaturan -- tanpa ini, state kosongnya terlalu
+   pendek utk memicu scroll sama sekali. AMAN & GAMPANG DIHAPUS: begitu
+   konten asli Dompet ditambahkan nanti (kartu perangkat/akun dkk),
+   baris CSS scoped ini boleh dihapus kapan saja tanpa mempengaruhi
+   halaman lain -- perilaku sticky-nya sendiri TIDAK bergantung pada
+   baris ini (sudah ditentukan oleh .dompet-sticky-top, lihat di atas),
+   ini cuma alat bantu supaya efeknya kelihatan sekarang. ---- */
+#page-dompet .bd-empty{min-height:70vh;}
 .bd-empty .bd-empty-ic{
   width:56px;height:56px;border-radius:18px;background:var(--paper);display:flex;align-items:center;justify-content:center;
   margin:0 auto 14px;color:var(--ink-faint);
@@ -7605,8 +7671,27 @@ html.zp-app-loading .page-body > .settings-list{display:none;}
   transform:translateZ(0);-webkit-transform:translateZ(0);
   backface-visibility:hidden;-webkit-backface-visibility:hidden;
   isolation:isolate;
+  /* ---- FIX LANJUTAN "banner masih sempat bocor saat discroll" --
+     DISAMAKAN dgn .saya-sticky-top (halaman Pengaturan, lihat catatan
+     lengkap di sana): will-change:transform ditambahkan supaya browser
+     mempromosikan wrapper sticky Dompet ini ke compositor layer-nya
+     SEDARI AWAL, bukan baru "on-the-fly" pas sticky-nya aktif. AMAN
+     dipakai di sini krn isi wrapper ini (judul "Dompet" + cap kosong)
+     statis, sama persis alasan yg sama di .saya-sticky-top. ---- */
+  will-change:transform;
 }
-.page-body.dompet-page-body-cap{padding-bottom:0;}
+/* ---- FIX LANJUTAN "banner bocor saat discroll" (DISAMAKAN PERSIS dgn
+   .saya-sticky-top .page-banner & .saya-page-body-cap, lihat catatan
+   lengkap 3-angka di sana). INI ADA 3 ANGKA YANG WAJIB SELALU DIUBAH
+   BARENG-BARENG:
+     1) padding-bottom EKSTRA di .page-banner Dompet (+8px)
+     2) margin-top .dompet-page-body-cap (di bawah) -- jadi -32px
+     3) padding-top .dompet-page-body-cap (di bawah) -- jadi 32px
+   overflow:hidden ditambah juga di cap (sama seperti .saya-page-body-cap)
+   supaya sudut lengkungnya benar2 di-hard-clip -- aman krn cap ini
+   kosong (aria-hidden, tanpa konten sama sekali). ---- */
+.dompet-sticky-top .page-banner{padding-bottom:calc(clamp(44px,9vw,68px) + 8px);}
+.page-body.dompet-page-body-cap{margin-top:-32px;padding-top:32px;padding-bottom:0;overflow:hidden;}
 .page-body.dompet-page-body-rest{margin-top:0;border-radius:0;box-shadow:none;padding-top:14px;}
 .page-body.dompet-page-body-rest::before{display:none;}
 /* Blok daftar menu (.settings-list) jadi .page-body TERPISAH DI LUAR
