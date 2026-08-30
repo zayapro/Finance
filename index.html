@@ -8049,6 +8049,20 @@ html.zp-app-loading .page-body > .lap-panel{display:none;}
    krn di sini dialah yg bertugas bikin lengkungnya sendiri (beda dgn
    #dataDiriOverlay/#temaOverlay yg lengkungnya sudah dipakai duluan
    oleh .tema-preview-wrap). */
+/* Cap kosong: reuse lengkungan .lap-filter-card (margin -24px + radius
+   28px atas) & padding ATAS bawaannya (22px, supaya lengkungnya penuh
+   kelihatan) -- cuma padding-bottom & shadow yg dinolkan, krn tidak
+   ada konten apa pun di dalamnya (kalau padding-bottom tetap ada, akan
+   ada celah putih kosong tambahan di antara cap ini dgn kartu asli
+   (.bantuan-card) di bawahnya). */
+.lap-filter-card.bantuan-card-cap{padding-bottom:0;box-shadow:none;}
+/* Kartu asli (.bantuan-card, DI LUAR wrapper sticky): lengkungannya
+   sudah "dipakai" oleh cap di atas, jadi diratakan total lewat
+   .lap-filter-card--rest (margin-top:0;border-radius:0;padding-top:0).
+   padding-top DIBERI SEDIKIT JARAK PENGGANTI di sini (selector 2-class
+   spy menang lawan .lap-filter-card--rest yg juga 2-class) -- SAMA
+   PERSIS pola .saya-page-body-rest thd .saya-page-body-cap. */
+.bantuan-card.lap-filter-card--rest{padding-top:14px;}
 .bantuan-card{gap:20px;}
 .bantuan-section{display:flex;flex-direction:column;gap:10px;}
 .bantuan-list{display:flex;flex-direction:column;gap:10px;}
@@ -11533,9 +11547,18 @@ body.is-scrolling *{
             <input type="search" id="bantuanSearchInput" placeholder="Cari pertanyaan atau bantuan...">
           </div>
         </div>
+        <!-- ---- Cap kosong (lihat pola .saya-page-body-cap di CSS/HTML
+             #page-saya): ikut jadi ANAK .bantuan-sticky-top supaya satu
+             stacking context dgn header, jadi lengkungan atas kartu
+             putih TIDAK ketutup balik oleh z-index tinggi milik wrapper
+             sticky. Tidak ada konten apa pun, cuma menampilkan
+             lengkungannya saja -- kartu asli (.bantuan-card di bawah,
+             DI LUAR wrapper sticky) diratakan total lewat modifier
+             .lap-filter-card--rest supaya tidak dobel lengkungan. ---- -->
+        <div class="lap-filter-card bantuan-card-cap" aria-hidden="true"></div>
       </div>
 
-      <div class="lap-filter-card bantuan-card">
+      <div class="lap-filter-card lap-filter-card--rest bantuan-card">
 
         <div class="bantuan-section" id="bantuanUmumSection">
           <span class="settings-section-label">Pengaduan &amp; Pertanyaan Umum</span>
