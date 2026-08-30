@@ -8003,6 +8003,24 @@ html.zp-app-loading .page-body > .lap-panel{display:none;}
    otomatis ikut berubah kalau warna tema aplikasi diganti lewat
    halaman Tema) supaya kelihatan menyatu jadi SATU banner, bukan dua
    blok warna terpisah. ---- */
+/* ---- Header + kolom pencarian dibuat MENEMPEL (sticky) di puncak
+   layar saat daftar di bawahnya discroll -- persis pola yang sudah
+   dipakai di halaman Tema/Data Diri (.tema-sticky-head) & Saya
+   (.saya-sticky-top): dibungkus wrapper sticky TERSENDIRI supaya
+   posisinya tetap terjaga & selalu berhenti di atas, TIDAK ikut
+   hilang ke atas layar saat discroll -- sama seperti gambar
+   referensi (header + kolom pencarian BRImo tetap terlihat walau
+   daftar menu di bawahnya sudah discroll jauh). translateZ+backface-
+   visibility+isolation di sini adalah fix supaya sudut lengkung kartu
+   putih .bantuan-card di bawahnya tidak "bocor" pas discroll di
+   Safari/WebKit mobile (bug rendering yg sama spt di semua wrapper
+   sticky lain di app ini). ---- */
+.bantuan-sticky-top{
+  position:sticky;top:0;z-index:6;
+  transform:translateZ(0);-webkit-transform:translateZ(0);
+  backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  isolation:isolate;
+}
 .bantuan-head{padding-bottom:14px;}
 .bantuan-hero{
   position:relative;z-index:1;
@@ -11499,19 +11517,21 @@ body.is-scrolling *{
        cuma tampilan kosong, lihat initBantuanPage() di script.js. -->
   <div class="detail-page-overlay lap-filter-overlay" id="bantuanOverlay">
     <div class="lap-filter-page">
-      <div class="lap-filter-head bantuan-head">
-        <button class="lap-filter-back-btn" id="bantuanBackBtn" type="button" aria-label="Tutup Pusat Bantuan">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
-        </button>
-        <h2>Pusat Bantuan</h2>
-        <span class="lap-filter-back-btn" style="visibility:hidden" aria-hidden="true"></span>
-      </div>
+      <div class="bantuan-sticky-top" id="bantuanStickyTop">
+        <div class="lap-filter-head bantuan-head">
+          <button class="lap-filter-back-btn" id="bantuanBackBtn" type="button" aria-label="Tutup Pusat Bantuan">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <h2>Pusat Bantuan</h2>
+          <span class="lap-filter-back-btn" style="visibility:hidden" aria-hidden="true"></span>
+        </div>
 
-      <div class="bantuan-hero">
-        <p class="bantuan-hero-title">Ada yang bisa kami bantu?</p>
-        <div class="bantuan-search">
-          <span class="search-ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span>
-          <input type="search" id="bantuanSearchInput" placeholder="Cari pertanyaan atau bantuan...">
+        <div class="bantuan-hero">
+          <p class="bantuan-hero-title">Ada yang bisa kami bantu?</p>
+          <div class="bantuan-search">
+            <span class="search-ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span>
+            <input type="search" id="bantuanSearchInput" placeholder="Cari pertanyaan atau bantuan...">
+          </div>
         </div>
       </div>
 
