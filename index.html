@@ -1213,6 +1213,10 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
    supaya keduanya menempel bareng di atas layar saat discroll. ---- */
 .notif-sticky-head{
   position:sticky;top:0;z-index:6;
+  /* FIX "garis sambungan banner-kartu sempat hilang/rata pas discroll":
+     mask kosong -webkit-mask-image (lihat catatan lengkap di
+     .page-body) turut dipasang di sini juga. */
+  -webkit-mask-image:-webkit-radial-gradient(white, white);
   transform:translateZ(0);-webkit-transform:translateZ(0);
   backface-visibility:hidden;-webkit-backface-visibility:hidden;
   isolation:isolate;
@@ -1229,6 +1233,10 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
   background:var(--card);
   margin:-24px 0 0;height:24px;
   border-radius:28px 28px 0 0;
+  /* FIX "garis sambungan banner-kartu sempat hilang/rata pas discroll":
+     mask kosong -webkit-mask-image (lihat catatan lengkap di
+     .page-body) turut dipasang di sini juga. */
+  -webkit-mask-image:-webkit-radial-gradient(white, white);
   transform:translateZ(0);-webkit-transform:translateZ(0);
   backface-visibility:hidden;-webkit-backface-visibility:hidden;
   isolation:isolate;
@@ -4898,7 +4906,13 @@ body.density-compact .income-cards-group{gap:10px;}
      layer LENGKAP sama seperti .page-body -- sebelumnya cuma
      translateZ+backface-visibility, tanpa isolation, jadi masih ada
      celah kondisi yang bikin sudut lengkung oren-nya sesekali salah
-     gambar ulang. ---- */
+     gambar ulang.
+     FIX TAMBAHAN "garis sambungan banner-kartu sempat hilang/rata
+     pas discroll" -- mask kosong yang sama dipasang di .page-body/
+     .page-banner (lihat catatan lengkap di sana ttg -webkit-mask-image)
+     juga dipasang di sini krn wrapper inilah yg PALING sering dipaksa
+     re-composite tiap frame scroll. ---- */
+  -webkit-mask-image:-webkit-radial-gradient(white, white);
   transform:translateZ(0);-webkit-transform:translateZ(0);
   backface-visibility:hidden;-webkit-backface-visibility:hidden;
   isolation:isolate;
@@ -6936,7 +6950,11 @@ tbody tr:last-child td{border-bottom:none;}
      lewat margin negatif, dibungkus wrapper sticky .bd-sticky-head) --
      jadi paling rawan kena bug WebKit/Safari yg sama (tonjolan/kedipan
      oren "bocor" di sudut lengkung pas discroll). Disamakan PERSIS dgn
-     ketiga fix di .page-banner (lihat catatan lengkap di sana). ---- */
+     ketiga fix di .page-banner (lihat catatan lengkap di sana).
+     FIX TAMBAHAN "garis sambungan banner-kartu sempat hilang/rata pas
+     discroll": mask kosong -webkit-mask-image (lihat catatan lengkap
+     di .page-body) turut dipasang di sini juga. ---- */
+  -webkit-mask-image:-webkit-radial-gradient(white, white);
   transform:translateZ(0);-webkit-transform:translateZ(0);
   backface-visibility:hidden;-webkit-backface-visibility:hidden;
   isolation:isolate;
@@ -6984,7 +7002,11 @@ tbody tr:last-child td{border-bottom:none;}
      di atas, kartu putih radius ini SEBELUMNYA juga belum dikasih fix
      compositor-layer sama sekali -- padahal inilah elemen yang paling
      menentukan (sudut lengkungnya sendiri yang "bocor"), pasangan
-     PERSIS dari fix di .page-body (Laporan/Dompet/Pengaturan). ---- */
+     PERSIS dari fix di .page-body (Laporan/Dompet/Pengaturan).
+     FIX TAMBAHAN "garis sambungan banner-kartu sempat hilang/rata pas
+     discroll": mask kosong -webkit-mask-image (lihat catatan lengkap
+     di .page-body) turut dipasang di sini juga. ---- */
+  -webkit-mask-image:-webkit-radial-gradient(white, white);
   transform:translateZ(0);-webkit-transform:translateZ(0);
   backface-visibility:hidden;-webkit-backface-visibility:hidden;
   isolation:isolate;
@@ -7016,7 +7038,11 @@ tbody tr:last-child td{border-bottom:none;}
      ditambahkan (sebelumnya cuma translateZ+backface-visibility di
      sini, TANPA isolation) supaya wrapper sticky ini dapat compositor
      layer LENGKAP sama seperti .lap-sticky-top/.saya-sticky-top,
-     bukan cuma sebagian. ---- */
+     bukan cuma sebagian.
+     FIX TAMBAHAN "garis sambungan banner-kartu sempat hilang/rata pas
+     discroll": mask kosong -webkit-mask-image (lihat catatan lengkap
+     di .page-body) turut dipasang di sini juga. ---- */
+  -webkit-mask-image:-webkit-radial-gradient(white, white);
   transform:translateZ(0);-webkit-transform:translateZ(0);
   backface-visibility:hidden;-webkit-backface-visibility:hidden;
   isolation:isolate;
@@ -7562,6 +7588,10 @@ html.zp-app-loading .page-body > .settings-list{display:none;}
 .dompet-sticky-top{
   position:sticky;top:0;
   z-index:calc(var(--z-mini-topbar) - 1);
+  /* FIX "garis sambungan banner-kartu sempat hilang/rata pas discroll":
+     mask kosong -webkit-mask-image (lihat catatan lengkap di
+     .page-body) turut dipasang di sini juga. */
+  -webkit-mask-image:-webkit-radial-gradient(white, white);
   transform:translateZ(0);-webkit-transform:translateZ(0);
   backface-visibility:hidden;-webkit-backface-visibility:hidden;
   isolation:isolate;
@@ -7919,7 +7949,13 @@ html.zp-app-loading .page-body > .lap-panel{display:none;}
      lengkungnya digambar sekali di layer stabil, tidak digambar ulang
      tiap frame scroll. Sebelumnya belum dipasang di sini padahal
      .lap-filter-card dipakai persis dgn pola menumpang yg sama
-     (kartu putih Tema/Filter/Data Diri semuanya numpang class ini). */
+     (kartu putih Tema/Filter/Data Diri semuanya numpang class ini).
+     FIX TAMBAHAN "garis sambungan banner-kartu sempat hilang/rata pas
+     discroll": mask kosong -webkit-mask-image (lihat catatan lengkap
+     di .page-body) turut dipasang di sini juga -- otomatis berlaku
+     utk semua halaman yg reuse class ini (Tema, Data Diri, Bantuan,
+     Manajemen Device, Kebijakan Privasi, Syarat & Ketentuan). */
+  -webkit-mask-image:-webkit-radial-gradient(white, white);
   transform:translateZ(0);-webkit-transform:translateZ(0);
   backface-visibility:hidden;-webkit-backface-visibility:hidden;
   isolation:isolate;
@@ -7947,7 +7983,12 @@ html.zp-app-loading .page-body > .lap-panel{display:none;}
   /* ---- FIX "banner bocor saat discroll": isolation:isolate ditambahkan
      (sebelumnya cuma translateZ+backface-visibility di sini, TANPA
      isolation) supaya wrapper sticky ini dapat compositor layer LENGKAP
-     sama seperti .lap-sticky-top/.saya-sticky-top/.bd-sticky-head. ---- */
+     sama seperti .lap-sticky-top/.saya-sticky-top/.bd-sticky-head.
+     FIX TAMBAHAN "garis sambungan banner-kartu sempat hilang/rata pas
+     discroll": mask kosong -webkit-mask-image (lihat catatan lengkap
+     di .page-body) turut dipasang di sini juga -- otomatis berlaku
+     utk Tema, Data Diri, & Manajemen Device yg reuse class ini. ---- */
+  -webkit-mask-image:-webkit-radial-gradient(white, white);
   transform:translateZ(0);-webkit-transform:translateZ(0);
   backface-visibility:hidden;-webkit-backface-visibility:hidden;
   isolation:isolate;
@@ -7976,7 +8017,11 @@ html.zp-app-loading .page-body > .lap-panel{display:none;}
   /* ---- FIX "banner bocor saat discroll": isolation:isolate ditambahkan
      di sini juga (elemen inilah sudut lengkungnya sendiri yg "bocor",
      sebelumnya cuma translateZ+backface-visibility) -- pasangan PERSIS
-     dari fix di .page-body/.bd-page-body/.lap-filter-card. ---- */
+     dari fix di .page-body/.bd-page-body/.lap-filter-card.
+     FIX TAMBAHAN "garis sambungan banner-kartu sempat hilang/rata pas
+     discroll": mask kosong -webkit-mask-image (lihat catatan lengkap
+     di .page-body) turut dipasang di sini juga. ---- */
+  -webkit-mask-image:-webkit-radial-gradient(white, white);
   transform:translateZ(0);-webkit-transform:translateZ(0);
   backface-visibility:hidden;-webkit-backface-visibility:hidden;
   isolation:isolate;
@@ -8042,12 +8087,17 @@ html.zp-app-loading .page-body > .lap-panel{display:none;}
    sticky lain di app ini). ---- */
 .bantuan-sticky-top{
   position:sticky;top:0;z-index:6;
+  /* FIX "garis sambungan banner-kartu sempat hilang/rata pas discroll":
+     mask kosong -webkit-mask-image (lihat catatan lengkap di
+     .page-body) turut dipasang di sini juga. */
+  -webkit-mask-image:-webkit-radial-gradient(white, white);
   transform:translateZ(0);-webkit-transform:translateZ(0);
   backface-visibility:hidden;-webkit-backface-visibility:hidden;
   isolation:isolate;
 }
 .bantuan-head{
   padding-bottom:14px;
+  -webkit-mask-image:-webkit-radial-gradient(white, white);
   transform:translateZ(0);-webkit-transform:translateZ(0);
   backface-visibility:hidden;-webkit-backface-visibility:hidden;
   isolation:isolate;
@@ -8065,7 +8115,11 @@ html.zp-app-loading .page-body > .lap-panel{display:none;}
      sisi satunya tidak) yang bikin WebKit/Safari salah gambar ulang
      batas oren->putih pas discroll, sekelebat oren "bocor" nongol di
      lengkungan. SAMA PERSIS pasangan fix .page-banner vs .page-body
-     (lihat catatan lengkap di sana) -- disamakan di sini juga. ---- */
+     (lihat catatan lengkap di sana) -- disamakan di sini juga.
+     FIX TAMBAHAN "garis sambungan banner-kartu sempat hilang/rata pas
+     discroll": mask kosong -webkit-mask-image (lihat catatan lengkap
+     di .page-body) turut dipasang di sini juga. ---- */
+  -webkit-mask-image:-webkit-radial-gradient(white, white);
   transform:translateZ(0);-webkit-transform:translateZ(0);
   backface-visibility:hidden;-webkit-backface-visibility:hidden;
   isolation:isolate;
@@ -8202,6 +8256,11 @@ html.zp-app-loading .page-body > .lap-panel{display:none;}
    yg sama spt semua wrapper sticky lain di app ini). */
 .tentang-doc-sticky-head{
   position:sticky;top:0;z-index:6;
+  /* FIX "garis sambungan banner-kartu sempat hilang/rata pas discroll":
+     mask kosong -webkit-mask-image (lihat catatan lengkap di
+     .page-body) turut dipasang di sini juga -- berlaku utk Kebijakan
+     Privasi & Syarat & Ketentuan yg reuse class ini. */
+  -webkit-mask-image:-webkit-radial-gradient(white, white);
   transform:translateZ(0);-webkit-transform:translateZ(0);
   backface-visibility:hidden;-webkit-backface-visibility:hidden;
   isolation:isolate;
