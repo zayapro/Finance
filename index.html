@@ -6546,6 +6546,55 @@ tbody tr:last-child td{border-bottom:none;}
   .bill-modal .bill-kind-switch{margin:-22px 18px 18px;}
   .bill-amount-hero #billAmount{font-size:27px;}
 }
+/* ---- Pengaman ekstra khusus HP paling sempit (mis. iPhone SE
+   gen-1, lebar layar 320px, sama spt breakpoint 380px yg sudah
+   dipakai konsisten di elemen lain pada file ini) -- di lebar
+   sesempit ini, ukuran versi ">600px" di atas masih terasa longgar
+   (padding kartu nominal & saklar jenis kepotong mepet, teks chip
+   & baris "Ulangi otomatis" beresiko turun baris jelek). Diperkecil
+   lagi sedikit di sini SUPAYA seluruh isi popup tetap muat rapi
+   dalam satu kolom tanpa ada teks yg terpotong/tumpang tindih. ---- */
+@media (max-width:380px){
+  .bill-modal-banner{padding:16px 16px 32px;}
+  .bill-modal-banner::before{width:96px;height:96px;top:-42px;right:-26px;}
+  .bill-modal-banner::after{width:54px;height:54px;bottom:-22px;left:14px;}
+  .bill-modal-banner .modal-head-icon{width:40px;height:40px;margin-bottom:10px;}
+  .bill-modal-banner .modal-head-icon svg{width:18px;height:18px;}
+  .bill-modal-banner-titles h3{font-size:17px;}
+  .bill-modal .bill-kind-switch{margin:-20px 16px 16px;}
+  .bill-modal .bill-kind-switch button{padding:9px 4px;font-size:12.5px;gap:5px;}
+  .bill-modal .bill-kind-switch button svg{width:12px;height:12px;}
+  .bill-amount-hero{padding:14px 12px 16px;margin-bottom:14px;}
+  .bill-amount-hero-label{font-size:10.5px;margin-bottom:6px;}
+  .bill-amount-hero .amount-prefix{font-size:16px;}
+  .bill-amount-hero #billAmount{font-size:24px;max-width:165px;}
+  .bill-due-chips{gap:5px;}
+  .bill-due-chip{padding:5px 10px;font-size:11px;}
+  .bill-recurring-row{padding:11px 12px;gap:10px;margin-bottom:14px;}
+  .bill-recurring-row-icon{width:30px;height:30px;border-radius:9px;}
+  .bill-recurring-row-icon svg{width:14px;height:14px;}
+  .bill-recurring-row-text{font-size:12.5px;}
+  .bill-recurring-row-sub{font-size:10.5px;}
+  .bill-recurring-toggle-track{width:36px;height:21px;}
+  .bill-recurring-toggle-thumb{width:16px;height:16px;}
+  .bill-recurring-row input:checked ~ .bill-recurring-toggle-track .bill-recurring-toggle-thumb{transform:translateX(15px);}
+}
+/* ---- Layar PENDEK (mis. HP dalam mode landscape, atau HP kecil
+   dgn tinggi <680px) -- popup ini isinya cukup panjang (banner +
+   saklar + nominal + nama + tanggal + chip + catatan + toggle +
+   tombol), jadi di layar pendek ia lebih sering mentok ke
+   max-height:86vh milik .modal & butuh discroll. Jarak vertikal
+   dipadatkan di sini (margin-bottom tiap blok & padding banner)
+   supaya scroll yg dibutuhkan lebih pendek & lebih banyak konten
+   langsung kelihatan tanpa discroll dulu -- TANPA memotong ukuran
+   lebar/horizontal apa pun (murni penghematan tinggi). ---- */
+@media (max-height:680px){
+  .bill-modal-banner{padding-top:14px;padding-bottom:28px;}
+  .bill-modal .bill-kind-switch{margin-top:-18px;margin-bottom:14px;}
+  .bill-amount-hero{padding-top:12px;padding-bottom:14px;margin-bottom:12px;}
+  .bill-modal .form-row{margin-bottom:10px;}
+  .bill-recurring-row{padding-top:9px;padding-bottom:9px;margin-bottom:12px;}
+}
 
 .wallet-preview-card{transition:box-shadow .25s ease;}
 .wallet-modal .wallet-category-toggle button{transition:all .2s cubic-bezier(.22,.9,.3,1);}
