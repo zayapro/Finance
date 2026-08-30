@@ -10046,11 +10046,14 @@ body.is-scrolling *{
    total 4 baris melebihi tinggi layar, itulah salah satu penyebab
    utama popup ini butuh discroll). Sekarang keypad dibatasi lebar
    maksimum & dirata-tengah, jadi ukurannya masuk akal & KONSISTEN di
-   HP kecil maupun tablet/desktop lebar. ---- */
+   HP kecil maupun tablet/desktop lebar. Max-width DIPERKECIL lagi
+   (288->258px) krn keypad SEKARANG 5 baris (nambah baris "Batal" di
+   bawah 9), supaya total tinggi keypad tetap dlm anggaran yg sama &
+   TIDAK memicu lagi kebutuhan discroll di layar pendek. ---- */
 .pin-keypad{
-  display:grid; grid-template-columns:repeat(3,1fr); gap:clamp(8px,2.4vw,14px);
-  margin:0 auto clamp(10px,2.2dvh,18px);
-  width:100%; max-width:288px;
+  display:grid; grid-template-columns:repeat(3,1fr); gap:clamp(6px,2vw,10px);
+  margin:0 auto clamp(10px,2.2dvh,16px);
+  width:100%; max-width:258px;
 }
 .pin-key{
   aspect-ratio:1/1; border-radius:50%; border:1px solid var(--line,#E4E8EF);
@@ -10075,6 +10078,19 @@ body.is-scrolling *{
   border-color:color-mix(in srgb, var(--primary) 25%, transparent);
 }
 .pin-key-bio:active{ background:color-mix(in srgb, var(--primary) 20%, var(--paper,#F4F6F9)); }
+/* ---- Tombol "Batal" -- DIPINDAH dari pojok kanan-atas (ikon × kecil,
+   di luar keypad) ke DALAM keypad, di baris baru PERSIS di bawah
+   kolom angka "9" (grid-column:3 -- tanpa perlu sel kosong tambahan
+   di DOM). Bentuknya disamakan bulat spt tombol angka lain (bukan
+   lagi kotak/ikon × polos), teksnya diperkecil supaya muat pas dalam
+   lingkaran. Perilakunya SAMA seperti sebelumnya: cuma tampil kalau
+   Login Biometrik aktif (balik ke tampilan Login), lihat JS. ---- */
+.pin-key-cancel{
+  grid-column:3;
+  font-size:12.5px; font-weight:700; letter-spacing:.1px;
+  color:var(--ink-soft,#5B6472);
+}
+.pin-key-cancel:active{ color:var(--ink,#131A2A); }
 
 /* ---- Tampilan utama "Login Biometrik" di layar kunci awal (dot
    PIN & keypad digeser jadi tampilan cadangan, lihat .pin-lock-pin-view
@@ -10147,20 +10163,10 @@ body.is-scrolling *{
   padding:8px 4px;
 }
 .pin-lock-use-pin-link:active{ opacity:.7; }
-/* ---- Tombol tutup (×) di tampilan keypad PIN -- dipakai utk KEMBALI
-   ke tombol "Login" sidik jari/Face ID, cuma tampil kalau Login
-   Biometrik memang aktif di perangkat ini (kalau tidak, PIN adalah
-   satu-satunya cara masuk, jadi tombol ini disembunyikan lewat JS). ---- */
-.pin-lock-pinview-head{
-  display:flex; justify-content:flex-end; margin:-6px -4px 2px 0;
-}
-.pin-lock-close-pin-btn{
-  width:32px; height:32px; border-radius:50%; border:none; cursor:pointer;
-  display:none; align-items:center; justify-content:center;
-  background:var(--paper,#F4F6F9); color:var(--ink-soft,#5B6472);
-  transition:background .15s, transform .12s;
-}
-.pin-lock-close-pin-btn:active{ transform:scale(.9); }
+/* ---- Tombol "Batal" (dulunya tombol × terpisah di pojok kanan-atas)
+   SUDAH DIPINDAH & digabung jadi bagian dari keypad -- lihat
+   .pin-key-cancel di dekat .pin-key-bio. Style header terpisah di
+   bawah ini sudah tidak dipakai lagi. ---- */
 /* ---- Preview menu utama ZAYAin di bawah tombol Login -- murni
    DEKORATIF (pointer-events:none), cuma supaya layar kunci terasa
    "mengintip" ke menu asli app spt di referensi (Transfer/E-Wallet/
@@ -10192,19 +10198,22 @@ body.is-scrolling *{
    tanpa perlu discroll. ---- */
 @media (max-height:680px){
   .pin-lock-menu-preview{ display:none; }
+  .pin-keypad{ max-width:232px; }
 }
 @media (max-height:560px){
   .pin-lock-hero-greetcard{ padding:10px 16px 12px; }
   .pin-lock-hero-tagline{ font-size:15px; }
   .pin-lock-bio-hint{ display:none; }
-  .pin-keypad{ max-width:250px; }
+  .pin-keypad{ max-width:206px; gap:6px; }
+  .pin-dots{ margin:2px 0 10px; }
 }
 @media (max-height:460px){
   .pin-lock-hero{ padding-top:10px; padding-bottom:12px; }
   .pin-lock-hero-hi{ display:none; }
-  .pin-keypad{ max-width:216px; gap:6px; }
+  .pin-keypad{ max-width:176px; gap:4px; }
   .pin-dots{ margin:2px 0 8px; gap:10px; }
   .pin-dot{ width:11px; height:11px; }
+  .pin-key-cancel{ font-size:10.5px; }
 }
 
 /* ---- Tombol "Coba Sidik Jari / Face ID Lagi" terpisah SUDAH
@@ -13772,11 +13781,6 @@ body.is-scrolling *{
              "Gunakan PIN" / sidik jari gagal berkali-kali dari tampilan
              di atas. ---- -->
         <div id="pinLockPinView" class="pin-lock-pin-view">
-          <div class="pin-lock-pinview-head">
-            <button type="button" class="pin-lock-close-pin-btn" id="pinLockClosePinBtn" aria-label="Tutup, kembali ke Login sidik jari" style="display:none;">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-            </button>
-          </div>
           <div class="pin-dots" id="pinLockDots">
             <span class="pin-dot"></span><span class="pin-dot"></span><span class="pin-dot"></span>
             <span class="pin-dot"></span><span class="pin-dot"></span><span class="pin-dot"></span>
@@ -13799,6 +13803,7 @@ body.is-scrolling *{
             <button type="button" class="pin-key pin-key-back" id="pinLockBackspace" aria-label="Hapus angka">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2Z"/><path d="M18 9l-6 6M12 9l6 6"/></svg>
             </button>
+            <button type="button" class="pin-key pin-key-cancel" id="pinLockClosePinBtn" aria-label="Batal, kembali ke Login sidik jari" style="display:none;">Batal</button>
           </div>
           <div class="cloud-auth-switch">
             <a id="pinLockForgotLink">Lupa PIN? Keluar &amp; masuk ulang</a>
