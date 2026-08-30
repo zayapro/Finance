@@ -6330,7 +6330,13 @@ function openEditModal(id) {
   document.getElementById('modalTitle').textContent = 'Edit Transaksi';
   document.getElementById('btnSubmitTx').textContent = 'Simpan Perubahan';
   document.getElementById('txId').value = t.id;
-  document.getElementById('txAmount').value = t.amount;
+  // ---- #txAmount sekarang kartu "slip sobekan" (.tx-amount-hero,
+  // MENYESUAIKAN dgn #billAmount di popup Tagihan & Hutang) & sudah
+  // diberi titik pemisah ribuan otomatis saat diketik (lihat
+  // initTxAmountFormat() di bawah), jadi nilai yg ditampilkan saat
+  // edit pun perlu diformat sama -- pola PERSIS sama dgn
+  // openEditBillModal() yg mengisi #billAmount pakai toLocaleString.
+  document.getElementById('txAmount').value = Number(t.amount).toLocaleString('id-ID');
   document.getElementById('txDate').value = t.date;
   document.getElementById('txDesc').value = t.desc || '';
   setSelectedType(t.type);
@@ -6386,7 +6392,11 @@ function closeModal(overlay) {
 
 document.getElementById('txForm').addEventListener('submit', (e) => {
   e.preventDefault();
-  const amount = parseFloat(document.getElementById('txAmount').value);
+  // ---- #txAmount sekarang bisa mengandung titik pemisah ribuan (lihat
+  // initTxAmountFormat() & komentar di index.html), jadi titiknya
+  // dibuang dulu sebelum di-parse -- pola PERSIS sama dgn submit
+  // handler #billForm yg membaca #billAmount. ----
+  const amount = parseFloat(document.getElementById('txAmount').value.replace(/\./g, ''));
   const date = document.getElementById('txDate').value;
   const category = document.getElementById('txCategory').value;
   const desc = document.getElementById('txDesc').value.trim();
@@ -7384,6 +7394,28 @@ billModal.addEventListener('click', (e) => { if (e.target === billModal) closeMo
    submit handler #billForm & openEditBillModal di atas). ---- */
 (function initBillAmountFormat() {
   const input = document.getElementById('billAmount');
+  if (!input) return;
+  input.addEventListener('input', () => {
+    const caretFromEnd = input.value.length - input.selectionStart;
+    const digitsOnly = input.value.replace(/\D/g, '');
+    const formatted = digitsOnly ? Number(digitsOnly).toLocaleString('id-ID') : '';
+    input.value = formatted;
+    const newPos = Math.max(0, formatted.length - caretFromEnd);
+    input.setSelectionRange(newPos, newPos);
+  });
+})();
+
+/* ---- Format titik pemisah ribuan OTOMATIS pada input nominal
+   (#txAmount) di popup "Tambah Transaksi" -- MENYESUAIKAN popup ini
+   dgn #billAmount di popup Tagihan & Hutang (lihat initBillAmountFormat()
+   tepat di atas), pola & logic-nya PERSIS sama persis: nilai yg
+   ditampilkan diberi titik ribuan (mis. "150.000"), posisi kursor
+   dijaga relatif thd digit yg sudah diketik, sedangkan nilai murni
+   (tanpa titik) yg dikirim ke parseFloat() saat submit/ditampilkan
+   ulang saat edit (lihat submit handler #txForm & openEditModal() di
+   atas). ---- */
+(function initTxAmountFormat() {
+  const input = document.getElementById('txAmount');
   if (!input) return;
   input.addEventListener('input', () => {
     const caretFromEnd = input.value.length - input.selectionStart;
@@ -9913,6 +9945,56 @@ function closeSettingsLeaderboardOverlay() {
 }
 document.getElementById('settingsLeaderboardOpenBtn')?.addEventListener('click', openSettingsLeaderboardOverlay);
 document.getElementById('settingsLeaderboardBackBtn')?.addEventListener('click', closeSettingsLeaderboardOverlay);
+
+/* ==========================================================
+   PENGATURAN > PENGATURAN — "Fast Menu" (#fastMenuOverlay). Pola
+   buka/tutup SAMA PERSIS dgn openWidgetOverlay/closeWidgetOverlay di
+   atas -- halaman ini SENGAJA masih kosong (placeholder "empty-state"),
+   tinggal diisi kontennya nanti. ---- */
+function openFastMenuOverlay() {
+  document.getElementById('fastMenuOverlay')?.classList.add('open');
+  lockBodyScroll();
+}
+function closeFastMenuOverlay() {
+  document.getElementById('fastMenuOverlay')?.classList.remove('open');
+  unlockBodyScroll();
+}
+document.getElementById('fastMenuOpenBtn')?.addEventListener('click', openFastMenuOverlay);
+document.getElementById('fastMenuBackBtn')?.addEventListener('click', closeFastMenuOverlay);
+
+/* ==========================================================
+   PENGATURAN > PENGATURAN — "Sumber Dana Utama"
+   (#sumberDanaUtamaOverlay). Pola buka/tutup SAMA PERSIS dgn
+   openFastMenuOverlay/closeFastMenuOverlay di atas -- halaman ini
+   SENGAJA masih kosong (placeholder "empty-state"), tinggal diisi
+   kontennya nanti. ---- */
+function openSumberDanaUtamaOverlay() {
+  document.getElementById('sumberDanaUtamaOverlay')?.classList.add('open');
+  lockBodyScroll();
+}
+function closeSumberDanaUtamaOverlay() {
+  document.getElementById('sumberDanaUtamaOverlay')?.classList.remove('open');
+  unlockBodyScroll();
+}
+document.getElementById('sumberDanaUtamaOpenBtn')?.addEventListener('click', openSumberDanaUtamaOverlay);
+document.getElementById('sumberDanaUtamaBackBtn')?.addEventListener('click', closeSumberDanaUtamaOverlay);
+
+/* ==========================================================
+   PENGATURAN > NOTIFIKASI — "Pemberitahuan Promosi"
+   (#pemberitahuanPromosiOverlay). Pola buka/tutup SAMA PERSIS dgn
+   openSumberDanaUtamaOverlay/closeSumberDanaUtamaOverlay di atas --
+   halaman ini SENGAJA masih kosong (placeholder "empty-state"),
+   tinggal diisi kontennya nanti. ---- */
+function openPemberitahuanPromosiOverlay() {
+  document.getElementById('pemberitahuanPromosiOverlay')?.classList.add('open');
+  lockBodyScroll();
+}
+function closePemberitahuanPromosiOverlay() {
+  document.getElementById('pemberitahuanPromosiOverlay')?.classList.remove('open');
+  unlockBodyScroll();
+}
+document.getElementById('pemberitahuanPromosiOpenBtn')?.addEventListener('click', openPemberitahuanPromosiOverlay);
+document.getElementById('pemberitahuanPromosiBackBtn')?.addEventListener('click', closePemberitahuanPromosiOverlay);
 
 /* ==========================================================
    PENGATURAN > KONTAK — Pusat Bantuan (#bantuanOverlay).

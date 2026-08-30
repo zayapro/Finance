@@ -6320,23 +6320,12 @@ tbody tr:last-child td{border-bottom:none;}
 .tx-modal .type-toggle button:not(.active):hover,
 .bill-modal .type-toggle button:not(.active):hover{color:var(--ink);}
 
-/* ---- Input Jumlah -- kotak bersih dgn prefix "Rp", tanpa gradient
-   latar/glow lebar spt sebelumnya. ---- */
-.tx-modal .amount-row label{font-size:12.5px;font-weight:600;color:var(--ink-soft);}
-.tx-modal .amount-input-wrap{
-  display:flex;align-items:baseline;gap:8px;
-  background:var(--paper);border:1.5px solid var(--line);border-radius:14px;padding:13px 16px;
-  transition:border-color .16s ease, box-shadow .16s ease, background .16s ease;
-}
-.tx-modal .amount-input-wrap:focus-within{
-  border-color:var(--ink);background:#fff;box-shadow:0 0 0 4px rgba(19,26,42,0.06);
-}
+/* ---- Input Jumlah -- SEKARANG kartu "slip sobekan" (ticket stub),
+   PERSIS pola .bill-amount-hero milik popup Tagihan & Hutang (lihat
+   blok .tx-amount-hero di bawah, disatukan dgn REDESIGN v2 "SLIP
+   TAGIHAN" biar tidak dobel definisi) -- warna kartu ikut jenis aktif
+   (hijau=Uang Masuk/default, merah=Uang Keluar via .type-out). ---- */
 .tx-modal .amount-prefix{font-family:'Poppins',sans-serif;font-weight:700;font-size:17px;color:var(--ink-faint);}
-.tx-modal #txAmount{
-  border:none;background:transparent;padding:0;font-family:'Poppins',sans-serif;
-  font-size:24px;font-weight:700;color:var(--ink);width:100%;
-}
-.tx-modal #txAmount:focus{box-shadow:none;background:transparent;}
 
 .tx-modal .form-grid-2,
 .bill-modal .form-grid-2{gap:12px;position:relative;z-index:1;}
@@ -6358,18 +6347,36 @@ tbody tr:last-child td{border-bottom:none;}
 .bill-modal .form-row textarea:focus{
   background:#fff;border-color:var(--ink);box-shadow:0 0 0 4px rgba(19,26,42,0.06);
 }
+/* ---- MENYESUAIKAN dgn .bill-modal: field biasa (tanggal/kategori/
+   keterangan) di popup Transaksi ikut ganti warna fokus sesuai jenis
+   aktif juga (hijau=Masuk, merah=Keluar), bukan cuma fokus abu-abu/ink
+   polos spt sebelumnya -- pola PERSIS sama dgn override
+   .bill-modal .form-row input:focus / .kind-hutang di bawahnya, cuma
+   dipasang belakangan supaya menang atas aturan ink polos di atas
+   (urutan CSS, bukan !important). ---- */
+.tx-modal .form-row input:focus,
+.tx-modal .form-row select:focus,
+.tx-modal .form-row textarea:focus{border-color:#047857;box-shadow:0 0 0 4px rgba(4,120,87,0.1);}
+.tx-modal.type-out .form-row input:focus,
+.tx-modal.type-out .form-row select:focus,
+.tx-modal.type-out .form-row textarea:focus{border-color:var(--wine);box-shadow:0 0 0 4px rgba(225,29,72,0.1);}
 
-/* ---- Tombol aksi -- flat, tanpa efek kilau/sweep. Warna primer
-   tetap ikut identitas app (--primary), cukup dgn hover halus. ---- */
+/* ---- Tombol aksi -- flat, tanpa efek kilau/sweep. ---- */
 .tx-modal .modal-actions,
 .bill-modal .modal-actions{position:relative;z-index:1;margin-top:14px;}
 .tx-modal .modal-actions .btn,
 .bill-modal .modal-actions .btn{padding:13px;border-radius:13px;font-size:14.5px;font-weight:600;}
+/* ---- MENYESUAIKAN dgn .bill-modal: tombol "Simpan" SEKARANG ikut
+   warna jenis aktif juga (hijau=Masuk, merah=Keluar) -- pola PERSIS
+   sama dgn .bill-modal .modal-actions .btn-primary / .kind-hutang,
+   bukan lagi warna oranye brand (--primary) yg netral thd jenisnya. ---- */
 .tx-modal .modal-actions .btn-primary{
-  background:var(--primary);box-shadow:0 8px 18px -8px color-mix(in srgb, var(--primary-deep) 50%, transparent);
+  background:#047857;box-shadow:0 8px 18px -8px rgba(4,120,87,0.5);
   transition:background .16s ease, box-shadow .16s ease;
 }
-.tx-modal .modal-actions .btn-primary:hover{background:var(--primary-deep);}
+.tx-modal .modal-actions .btn-primary:hover{background:#036049;}
+.tx-modal.type-out .modal-actions .btn-primary{background:var(--wine);box-shadow:0 8px 18px -8px rgba(225,29,72,0.45);}
+.tx-modal.type-out .modal-actions .btn-primary:hover{background:#BE123C;}
 .tx-modal .modal-actions .btn-ghost,
 .bill-modal .modal-actions .btn-ghost{transition:background .16s ease, border-color .16s ease;}
 .tx-modal .modal-actions .btn-ghost:hover,
@@ -6486,6 +6493,92 @@ tbody tr:last-child td{border-bottom:none;}
 .bill-amount-hero::before{left:-8px;}
 .bill-amount-hero::after{right:-8px;}
 
+/* ============================================================
+   POPUP "TAMBAH TRANSAKSI" (.tx-modal) — kartu nominal "SLIP SOBEKAN"
+   (.tx-amount-hero), MENYESUAIKAN popup ini dgn REDESIGN v2 "SLIP
+   TAGIHAN" milik .bill-amount-hero di atas: bentuk, lubang gigitan,
+   garis putus², & catatan format ribuan PERSIS sama -- bedanya cuma
+   warna aksen yg ikut jenis transaksi aktif (bukan Tagihan/Hutang):
+   hijau (#047857, senada .type-toggle .sel-in.active & .receipt-
+   amount.in) utk "Uang Masuk" (default), merah var(--wine) (senada
+   .sel-out.active & .receipt-amount.out) utk "Uang Keluar" -- ditoggle
+   lewat class .type-out yg sudah ada di .tx-modal (lihat
+   setSelectedType() di script.js), TIDAK ada nilai warna baru di luar
+   2 kondisi ini. ============================================== */
+.tx-amount-hero{
+  position:relative;text-align:center;margin:0 0 16px;padding:14px 16px 14px;
+  border-radius:16px;overflow:visible;
+  background:linear-gradient(180deg, color-mix(in srgb, #047857 7%, #fff) 0%, color-mix(in srgb, #047857 3%, var(--paper)) 100%);
+  border:1.5px solid color-mix(in srgb, #047857 20%, var(--line));
+  transition:border-color .16s ease, box-shadow .16s ease, background .2s ease;
+}
+.tx-modal.type-out .tx-amount-hero{
+  background:linear-gradient(180deg, color-mix(in srgb, var(--wine) 7%, #fff) 0%, color-mix(in srgb, var(--wine) 3%, var(--paper)) 100%);
+  border-color:color-mix(in srgb, var(--wine) 20%, var(--line));
+}
+.tx-amount-hero:focus-within{border-color:#047857;background:#fff;box-shadow:0 0 0 4px rgba(4,120,87,0.1);}
+.tx-modal.type-out .tx-amount-hero:focus-within{border-color:var(--wine);box-shadow:0 0 0 4px rgba(225,29,72,0.1);}
+.tx-amount-hero-label{
+  display:inline-flex;align-items:center;justify-content:center;gap:5px;
+  font-size:10.5px;font-weight:700;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;
+}
+.tx-amount-hero-label svg{width:11px;height:11px;flex-shrink:0;opacity:.8;color:#047857;}
+.tx-modal.type-out .tx-amount-hero-label svg{color:var(--wine);}
+.tx-amount-hero .tx-amount-wrap{
+  display:flex;align-items:baseline;justify-content:center;gap:6px;
+  background:transparent;border:none;padding:0;width:100%;
+}
+.tx-amount-hero .tx-amount-wrap:focus-within{border:none;background:transparent;box-shadow:none;}
+.tx-amount-hero .amount-prefix{font-family:'Poppins',sans-serif;font-weight:700;font-size:16px;color:var(--ink-faint);}
+.tx-amount-hero #txAmount{
+  border:none;background:transparent;padding:0;font-family:'Poppins',sans-serif;
+  font-size:27px;font-weight:700;color:var(--ink);letter-spacing:-0.01em;
+  width:auto;max-width:180px;min-width:38px;text-align:center;
+  caret-color:#047857;
+}
+.tx-modal.type-out #txAmount{caret-color:var(--wine);}
+.tx-amount-hero #txAmount:focus{box-shadow:none;background:transparent;}
+.tx-amount-hero #txAmount::placeholder{color:var(--ink-faint);opacity:.5;font-weight:600;}
+
+/* ---- Garis putus² "sobekan" + catatan format ribuan di bawahnya ---- */
+.tx-amount-perf{
+  display:block;margin:12px auto 8px;width:calc(100% - 4px);
+  border-top:1.5px dashed color-mix(in srgb, #047857 35%, var(--line));
+}
+.tx-modal.type-out .tx-amount-perf{border-top-color:color-mix(in srgb, var(--wine) 35%, var(--line));}
+.tx-amount-hint{
+  display:block;font-family:var(--font-body);font-size:10px;font-weight:600;color:var(--ink-faint);
+}
+
+/* ---- Dua lubang "gigitan" bulat di tepi kiri-kanan kartu, sejajar
+   dgn garis putus² -- diwarnai SAMA PERSIS dgn latar popup (#fff)
+   supaya kelihatan spt benar² "dilubangi", pola sama dgn
+   .bill-amount-hero::before/::after. ---- */
+.tx-amount-hero::before,
+.tx-amount-hero::after{
+  content:'';position:absolute;top:calc(100% - 40px);width:15px;height:15px;border-radius:50%;
+  background:#fff;
+  border:1.5px solid color-mix(in srgb, #047857 20%, var(--line));
+  z-index:1;
+}
+.tx-modal.type-out .tx-amount-hero::before,
+.tx-modal.type-out .tx-amount-hero::after{border-color:color-mix(in srgb, var(--wine) 20%, var(--line));}
+.tx-amount-hero::before{left:-8px;}
+.tx-amount-hero::after{right:-8px;}
+
+@media (max-width:600px){
+  .tx-amount-hero::before,.tx-amount-hero::after{width:13px;height:13px;top:calc(100% - 34px);}
+}
+@media (max-width:380px){
+  .tx-amount-hero{padding:11px 12px 12px;margin-bottom:10px;}
+  .tx-amount-hero-label{font-size:10px;margin-bottom:5px;}
+  .tx-amount-hero .amount-prefix{font-size:14px;}
+  .tx-amount-hero #txAmount{font-size:20px;max-width:145px;}
+  .tx-amount-perf{margin:9px auto 6px;}
+  .tx-amount-hint{font-size:9.5px;}
+  .tx-amount-hero::before,.tx-amount-hero::after{width:13px;height:13px;top:calc(100% - 34px);}
+}
+
 /* ---- Fokus field biasa (nama/tanggal/catatan) tetap ikut warna jenis aktif ---- */
 .bill-modal .form-row input:focus,
 .bill-modal .form-row textarea:focus{border-color:#D97706;box-shadow:0 0 0 4px rgba(217,119,6,0.1);}
@@ -6586,54 +6679,87 @@ tbody tr:last-child td{border-bottom:none;}
   .bill-recurring-row input:checked ~ .bill-recurring-toggle-track .bill-recurring-toggle-thumb{transform:translateX(13px);}
   .bill-modal .modal-actions .btn{padding:10px;font-size:13px;}
 }
-/* ---- Layar PENDEK (HP landscape / HP kecil <680px tinggi) --
-   dipadatkan spy scroll internal lebih pendek, tanpa memotong lebar. ---- */
-@media (max-height:680px){
-  .bill-modal .bill-kind-switch{margin-bottom:12px;}
-  .bill-amount-hero{padding-top:11px;padding-bottom:11px;margin-bottom:11px;}
-  .bill-amount-perf{margin:9px auto 6px;}
-  .bill-modal .form-row{margin-bottom:7px;}
-  .bill-recurring-row{padding-top:7px;padding-bottom:7px;margin-bottom:9px;}
-}
 
-/* ---- Posisi popup di HP (bottom-sheet, nempel di atas nav) DAN
-   pemadatan ukuran isinya -- diletakkan PALING TERAKHIR supaya selalu
-   menang di cascade drpd blok 380px/tinggi-pendek di atas (spesifisitas
-   sama, jadi urutan file yg menentukan pemenang). ---- */
+/* ============================================================
+   ANTI-SCROLL: popup ini SEKARANG dipadatkan sekuat mungkin di HP
+   (<=640px lebar, breakpoint sama dgn munculnya .bottom-nav) supaya
+   SELURUH isi (kepala + saklar + nominal + nama + jatuh tempo + chip
+   + catatan + ulangi otomatis + tombol aksi) muat dalam satu layar
+   TANPA perlu discroll -- bukan cuma dikecilkan dikit spt sebelumnya.
+   overflow-y:auto pada .modal (bawaan, lihat aturan umum ".modal")
+   TETAP dibiarkan menyala sbg jaring pengaman utk kasus ekstrem
+   (HP sangat kecil + browser bar tebal), tapi target utamanya nilai²
+   di bawah ini dihitung supaya scroll itu TIDAK PERNAH kepakai di
+   HP wajar. Elemen dekoratif murni (catatan kecil format ribuan)
+   ikut disembunyikan di layar pendek krn bukan info penting -- lebih
+   baik hilang drpd memaksa scroll cuma demi 1 baris teks kecil. ---- */
 @media (max-width:640px){
   #billModalOverlay{
     align-items:flex-end;
-    padding:calc(10px + env(safe-area-inset-top,0px)) 10px calc(72px + 14px + env(safe-area-inset-bottom,0px));
+    padding:calc(8px + env(safe-area-inset-top,0px)) 10px calc(72px + 10px + env(safe-area-inset-bottom,0px));
   }
   #billModalOverlay .bill-modal{
     width:100%;
-    max-height:calc(100vh - 72px - 14px - env(safe-area-inset-bottom,0px) - 10px - env(safe-area-inset-top,0px));
-    max-height:calc(100dvh - 72px - 14px - env(safe-area-inset-bottom,0px) - 10px - env(safe-area-inset-top,0px));
+    max-height:calc(100vh - 72px - 10px - env(safe-area-inset-bottom,0px) - 8px - env(safe-area-inset-top,0px));
+    max-height:calc(100dvh - 72px - 10px - env(safe-area-inset-bottom,0px) - 8px - env(safe-area-inset-top,0px));
+    /* Konten diatur jadi kolom flex supaya form bisa menyusut (min-height:0)
+       persis tinggi wadahnya kalau perlu, bukan cuma mengandalkan margin
+       kecil satu-satu -- lihat #billForm di bawah. */
+    display:flex;flex-direction:column;
   }
-  .bill-modal .bill-kind-switch{margin-bottom:12px;}
-  .bill-amount-hero{padding:10px 12px 11px;margin-bottom:10px;}
-  .bill-amount-hero-label{font-size:9.5px;margin-bottom:5px;}
-  .bill-amount-hero .amount-prefix{font-size:13px;}
-  .bill-amount-hero #billAmount{font-size:21px;max-width:150px;}
-  .bill-amount-perf{margin:9px auto 6px;}
-  .bill-amount-hint{font-size:9.5px;}
-  .bill-amount-hero::before,.bill-amount-hero::after{width:13px;height:13px;top:calc(100% - 32px);}
-  .bill-modal .form-row{margin-bottom:8px;}
-  .bill-modal .form-row label{margin-bottom:4px;}
+  .bill-modal{padding:10px 12px 10px;border-radius:16px;}
+  .bill-modal #billForm{display:flex;flex-direction:column;min-height:0;}
+  .bill-modal .modal-head{margin-bottom:8px;}
+  .bill-modal .modal-head-icon{width:30px;height:30px;border-radius:9px;}
+  .bill-modal .modal-head-icon svg{width:15px;height:15px;}
+  .bill-modal .modal-head-titles h3{font-size:14.5px;}
+  .bill-modal .modal-head-sub{font-size:9.5px;}
+  .bill-modal .modal-close{width:26px;height:26px;}
+  .bill-modal .bill-kind-switch{margin-bottom:6px;padding:3px;}
+  .bill-modal .bill-kind-switch button{padding:5px 4px;font-size:11px;gap:4px;}
+  .bill-modal .bill-kind-switch button svg{width:11px;height:11px;}
+  .bill-amount-hero{padding:6px 10px 6px;margin-bottom:6px;border-radius:12px;}
+  .bill-amount-hero-label{font-size:8.5px;margin-bottom:2px;gap:3px;}
+  .bill-amount-hero-label svg{width:9px;height:9px;}
+  .bill-amount-hero .amount-prefix{font-size:12px;}
+  .bill-amount-hero #billAmount{font-size:18px;max-width:140px;}
+  .bill-amount-perf{margin:5px auto 3px;}
+  /* Catatan "otomatis dipisah titik ribuan" -- murni dekoratif, tanpa
+     memengaruhi fungsi input, jadi aman disembunyikan demi hemat tinggi. */
+  .bill-amount-hint{display:none;}
+  .bill-amount-hero::before,.bill-amount-hero::after{width:11px;height:11px;top:calc(100% - 17px);}
+  .bill-modal .form-row{margin-bottom:6px;}
+  .bill-modal .form-row label{margin-bottom:3px;font-size:11.5px;}
   .bill-modal .form-row input,
-  .bill-modal .form-row textarea{padding:8px 11px;}
-  .bill-due-chips{margin-top:5px;gap:4px;}
-  .bill-due-chip{padding:4px 9px;font-size:10.5px;}
-  .bill-recurring-row{padding:8px 10px;gap:9px;margin-bottom:9px;}
-  .bill-recurring-row-icon{width:25px;height:25px;border-radius:8px;}
-  .bill-recurring-row-icon svg{width:12px;height:12px;}
-  .bill-recurring-row-text{font-size:11.5px;}
-  .bill-recurring-row-sub{font-size:9.5px;margin-top:1px;}
-  .bill-recurring-toggle-track{width:32px;height:18px;}
-  .bill-recurring-toggle-thumb{width:13px;height:13px;}
-  .bill-recurring-row input:checked ~ .bill-recurring-toggle-track .bill-recurring-toggle-thumb{transform:translateX(14px);}
-  .bill-modal .modal-actions{margin-top:8px;}
-  .bill-modal .modal-actions .btn{padding:9px;font-size:13px;}
+  .bill-modal .form-row textarea{padding:6px 10px;font-size:12.5px;}
+  /* Catatan (opsional) -- kotak teks dipendekkan jadi 1 baris (rows="2"
+     di HTML tetap dibiarkan apa adanya, cukup ditimpa lewat min-height/
+     height CSS) krn field ini paling boleh mengalah tingginya drpd
+     field wajib lain. */
+  .bill-modal #billNote{min-height:30px;height:30px;resize:none;}
+  .bill-due-chips{margin-top:4px;gap:4px;}
+  .bill-due-chip{padding:3px 8px;font-size:10px;}
+  .bill-due-chip-check{width:0;}
+  .bill-due-chip.active .bill-due-chip-check{width:8px;}
+  .bill-recurring-row{padding:6px 9px;gap:8px;margin-bottom:6px;border-radius:10px;}
+  .bill-recurring-row-icon{width:21px;height:21px;border-radius:7px;}
+  .bill-recurring-row-icon svg{width:10px;height:10px;}
+  .bill-recurring-row-text{font-size:10.5px;line-height:1.2;}
+  .bill-recurring-row-sub{font-size:8.5px;margin-top:0;}
+  .bill-recurring-toggle-track{width:29px;height:16px;padding:2px;}
+  .bill-recurring-toggle-thumb{width:12px;height:12px;}
+  .bill-recurring-row input:checked ~ .bill-recurring-toggle-track .bill-recurring-toggle-thumb{transform:translateX(13px);}
+  .bill-modal .modal-actions{margin-top:6px;flex-shrink:0;}
+  .bill-modal .modal-actions .btn{padding:8px;font-size:12.5px;}
+}
+/* ---- Layar SANGAT pendek (mis. HP landscape) -- kalau setelah semua
+   pemadatan di atas masih berpotensi mepet, baris "Ulangi otomatis"
+   (fitur tambahan, bukan field wajib) ikut disusutkan lagi drpd
+   dikorbankan discroll. ---- */
+@media (max-width:640px) and (max-height:620px){
+  .bill-recurring-row{padding:5px 8px;margin-bottom:5px;}
+  .bill-recurring-row-sub{display:none;}
+  .bill-amount-hero{padding:5px 10px 5px;}
 }
 
 .wallet-preview-card{transition:box-shadow .25s ease;}
@@ -7350,6 +7476,17 @@ tbody tr:last-child td{border-bottom:none;}
    berstatus "open". Tombol ini adalah SAUDARA (sibling) tepat setelah
    #bdAllOverlay di HTML, bukan anak di dalamnya -- lihat catatan di HTML. */
 #bdAllOverlay.open + .bd-fab-add{display:flex;}
+/* ---- Tombol "+" ini HARUS ikut sembunyi begitu popup Tambah/Edit
+   Tagihan & Hutang (#billModalOverlay) lagi terbuka DI ATASNYA --
+   sebelumnya cuma bergantung pada status #bdAllOverlay.open, jadi
+   waktu popup tambah/edit dibuka dari sini, tombol "+" ini tetap
+   kelihatan menumpuk di belakang popup (mengganggu/redundan). Kedua
+   elemen ini SAMA-SAMA anak langsung <body> & #billModalOverlay
+   duluan urutannya di markup drpd .bd-fab-add, jadi combinator "~"
+   (general sibling) valid dipakai di sini. Diletakkan SETELAH aturan
+   display:flex di atas (spesifisitas sama-sama 1 id + 2 class) supaya
+   menang di cascade saat KEDUA overlay kebetulan sama-sama terbuka. ---- */
+#billModalOverlay.open ~ .bd-fab-add{display:none!important;}
 .bd-fab-add:hover{transform:translateY(-2px) scale(1.05);box-shadow:0 16px 32px -8px rgba(250,139,30,0.6);}
 .bd-fab-add:active{transform:scale(0.92);}
 @media (max-width:640px){
@@ -12320,6 +12457,97 @@ body.is-scrolling *{
   </div>
   <!-- ===== /HALAMAN "LEADERBOARD" KHUSUS PENGATURAN ===== -->
 
+  <!-- ===== HALAMAN "FAST MENU" (#fastMenuOverlay) =====
+       Halaman baru di Pengaturan > Pengaturan, dibuka dari baris
+       "Fast Menu" (#fastMenuOpenBtn) tepat di atas baris "Tema".
+       Struktur & pola SAMA PERSIS dgn #widgetOverlay/#userAccountOverlay
+       di atas (.detail-page-overlay.lap-filter-overlay > .lap-filter-page
+       > .lap-filter-head + .lap-filter-card + .empty-state).
+
+       SENGAJA DIKOSONGKAN dulu sesuai permintaan, sama seperti halaman
+       kosong lain -- tinggal diisi nanti (mis. susun ulang pintasan
+       menu cepat di Beranda) tanpa perlu ubah kerangka halaman ini. ---- -->
+  <div class="detail-page-overlay lap-filter-overlay" id="fastMenuOverlay">
+    <div class="lap-filter-page">
+      <div class="lap-filter-head">
+        <button class="lap-filter-back-btn" id="fastMenuBackBtn" type="button" aria-label="Tutup Fast Menu">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <h2>Fast Menu</h2>
+        <span class="lap-filter-back-btn" style="visibility:hidden" aria-hidden="true"></span>
+      </div>
+
+      <div class="lap-filter-card">
+        <div class="empty-state" style="padding:30px 16px;">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3.5" y="3.5" width="7" height="7" rx="1.4"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.4"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.4"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.4"/></svg>
+          <p>Halaman Fast Menu belum diisi. Konten akan segera hadir di sini.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- ===== /HALAMAN "FAST MENU" ===== -->
+
+  <!-- ===== HALAMAN "SUMBER DANA UTAMA" (#sumberDanaUtamaOverlay) =====
+       Halaman baru di Pengaturan > Pengaturan, dibuka dari baris
+       "Sumber Dana Utama" (#sumberDanaUtamaOpenBtn) tepat di bawah
+       baris "Tema". Struktur & pola SAMA PERSIS dgn #fastMenuOverlay
+       di atas (.detail-page-overlay.lap-filter-overlay > .lap-filter-page
+       > .lap-filter-head + .lap-filter-card + .empty-state).
+
+       SENGAJA DIKOSONGKAN dulu sesuai permintaan, sama seperti halaman
+       kosong lain -- tinggal diisi nanti (mis. pilih dompet/rekening
+       default utk transaksi baru) tanpa perlu ubah kerangka halaman
+       ini. ---- -->
+  <div class="detail-page-overlay lap-filter-overlay" id="sumberDanaUtamaOverlay">
+    <div class="lap-filter-page">
+      <div class="lap-filter-head">
+        <button class="lap-filter-back-btn" id="sumberDanaUtamaBackBtn" type="button" aria-label="Tutup Sumber Dana Utama">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <h2>Sumber Dana Utama</h2>
+        <span class="lap-filter-back-btn" style="visibility:hidden" aria-hidden="true"></span>
+      </div>
+
+      <div class="lap-filter-card">
+        <div class="empty-state" style="padding:30px 16px;">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2.5" y="6" width="19" height="13" rx="2.2"/><path d="M2.5 10.5h19"/><circle cx="17.3" cy="14.6" r="1.15" fill="currentColor" stroke="none"/></svg>
+          <p>Halaman Sumber Dana Utama belum diisi. Konten akan segera hadir di sini.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- ===== /HALAMAN "SUMBER DANA UTAMA" ===== -->
+
+  <!-- ===== HALAMAN "PEMBERITAHUAN PROMOSI" (#pemberitahuanPromosiOverlay) =====
+       Halaman baru di Pengaturan > Notifikasi, dibuka dari baris
+       "Pemberitahuan Promosi" (#pemberitahuanPromosiOpenBtn). Struktur
+       & pola SAMA PERSIS dgn #sumberDanaUtamaOverlay/#fastMenuOverlay
+       di atas (.detail-page-overlay.lap-filter-overlay > .lap-filter-page
+       > .lap-filter-head + .lap-filter-card + .empty-state).
+
+       SENGAJA DIKOSONGKAN dulu sesuai permintaan, sama seperti halaman
+       kosong lain -- tinggal diisi nanti (mis. saklar jenis promo yg
+       ingin diterima) tanpa perlu ubah kerangka halaman ini. ---- -->
+  <div class="detail-page-overlay lap-filter-overlay" id="pemberitahuanPromosiOverlay">
+    <div class="lap-filter-page">
+      <div class="lap-filter-head">
+        <button class="lap-filter-back-btn" id="pemberitahuanPromosiBackBtn" type="button" aria-label="Tutup Pemberitahuan Promosi">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <h2>Pemberitahuan Promosi</h2>
+        <span class="lap-filter-back-btn" style="visibility:hidden" aria-hidden="true"></span>
+      </div>
+
+      <div class="lap-filter-card">
+        <div class="empty-state" style="padding:30px 16px;">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M10.5 3.5 4 10v4.5L13.5 24l7-7L11 8V3.5Z" transform="translate(0 -1) scale(.92)"/><circle cx="8.3" cy="8.3" r="1.15" fill="currentColor" stroke="none"/></svg>
+          <p>Halaman Pemberitahuan Promosi belum diisi. Konten akan segera hadir di sini.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- ===== /HALAMAN "PEMBERITAHUAN PROMOSI" ===== -->
+
   <!-- ===== HALAMAN "PUSAT BANTUAN" (#bantuanOverlay) =====
        Struktur & pola animasi (slide dari kanan, header warna tema +
        kartu putih melengkung menumpang di bawahnya) SAMA PERSIS dgn
@@ -13199,7 +13427,7 @@ body.is-scrolling *{
         <div class="settings-section">
           <span class="settings-section-label">Pengaturan</span>
           <div class="settings-group">
-            <button type="button" class="settings-row" disabled>
+            <button type="button" class="settings-row" id="fastMenuOpenBtn">
               <span class="settings-row-icon">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7" height="7" rx="1.4"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.4"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.4"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.4"/></svg>
               </span>
@@ -13213,7 +13441,7 @@ body.is-scrolling *{
               <span class="settings-row-title">Tema</span>
               <svg class="settings-row-chevron" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"/></svg>
             </button>
-            <button type="button" class="settings-row" disabled>
+            <button type="button" class="settings-row" id="sumberDanaUtamaOpenBtn">
               <span class="settings-row-icon">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="13" rx="2.2"/><path d="M2.5 10.5h19"/><circle cx="17.3" cy="14.6" r="1.15" fill="currentColor" stroke="none"/></svg>
               </span>
@@ -13363,7 +13591,7 @@ body.is-scrolling *{
               <span class="settings-row-title">Update Version</span>
               <svg class="settings-row-chevron" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"/></svg>
             </button>
-            <button type="button" class="settings-row" disabled>
+            <button type="button" class="settings-row" id="pemberitahuanPromosiOpenBtn">
               <span class="settings-row-icon">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.5 3.5 4 10v4.5L13.5 24l7-7L11 8V3.5Z" transform="translate(0 -1) scale(.92)"/><circle cx="8.3" cy="8.3" r="1.15" fill="currentColor" stroke="none"/></svg>
               </span>
@@ -13484,12 +13712,33 @@ body.is-scrolling *{
         </button>
       </div>
 
-      <div class="form-row amount-row">
-        <label for="txAmount">Jumlah</label>
-        <div class="amount-input-wrap">
+      <!-- ---- Nominal SEKARANG memakai kartu "SLIP SOBEKAN" (ticket
+           stub) yang sama persis dengan popup Tagihan & Hutang
+           (.bill-amount-hero) -- dua lubang "gigitan" bulat di kiri-
+           kanan tepi bawah + garis putus² memisahkan angka dari
+           catatan format ribuan kecil di bawahnya, supaya kedua popup
+           (Transaksi & Tagihan/Hutang) benar² satu keluarga visual,
+           bukan cuma kepala popup & togglenya saja yang senada. Warna
+           kartu ikut jenis aktif (hijau=Uang Masuk, merah=Uang Keluar)
+           via class .type-out yang sudah ditoggle setSelectedType() di
+           script.js -- TIDAK ada logic baru, cuma CSS tambahan (lihat
+           .tx-amount-hero). Input diubah type="text" + inputmode=
+           "numeric" (dari type="number") supaya bisa diberi titik
+           pemisah ribuan otomatis saat diketik lewat JS
+           (initTxAmountFormat() di script.js), pola yang sama persis
+           dengan #billAmount -- nilai murni (tanpa titik) yang tetap
+           disimpan, TIDAK ada yang berubah dari sisi logic. ---- -->
+      <div class="tx-amount-hero">
+        <span class="tx-amount-hero-label">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.5c0-1.1 1.1-2 2.5-2s2.5.8 2.5 1.8-1 1.5-2.5 1.9-2.5.9-2.5 1.9S10.6 15 12 15s2.5-.6 2.5-1.7"/></svg>
+          Jumlah
+        </span>
+        <div class="amount-input-wrap tx-amount-wrap">
           <span class="amount-prefix">Rp</span>
-          <input type="number" id="txAmount" min="0" step="1" placeholder="0" required>
+          <input type="text" inputmode="numeric" autocomplete="off" id="txAmount" placeholder="0" required>
         </div>
+        <span class="tx-amount-perf" aria-hidden="true"></span>
+        <span class="tx-amount-hint">Otomatis dipisah titik ribuan saat diketik</span>
       </div>
 
       <div class="form-grid-2">
