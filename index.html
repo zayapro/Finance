@@ -6404,8 +6404,8 @@ tbody tr:last-child td{border-bottom:none;}
 /* ---- 1) Banner gradasi ---- */
 .bill-modal-banner{
   position:relative;overflow:hidden;
-  margin:-22px -22px 0;padding:20px 22px 40px;
-  border-radius:22px 22px 0 0;
+  margin:-16px -16px 0;padding:14px 16px 28px;
+  border-radius:18px 18px 0 0;
   background:linear-gradient(135deg,var(--banner-orange),var(--banner-orange-deep));
   transition:background .3s ease;
 }
@@ -6422,8 +6422,8 @@ tbody tr:last-child td{border-bottom:none;}
 .bill-modal-banner::before{width:130px;height:130px;top:-58px;right:-36px;}
 .bill-modal-banner::after{width:74px;height:74px;bottom:-32px;left:18px;background:rgba(255,255,255,0.1);}
 .bill-modal-banner .modal-close{
-  position:absolute;top:16px;right:16px;z-index:2;
-  width:29px;height:29px;border-radius:50%;
+  position:absolute;top:13px;right:13px;z-index:2;
+  width:26px;height:26px;border-radius:50%;
   background:rgba(255,255,255,0.22);color:#fff;
   display:flex;align-items:center;justify-content:center;
   transition:background .16s ease;
@@ -6431,28 +6431,29 @@ tbody tr:last-child td{border-bottom:none;}
 .bill-modal-banner .modal-close:hover{background:rgba(255,255,255,0.36);}
 .bill-modal-banner .modal-head-icon{
   position:relative;z-index:2;
-  width:44px;height:44px;border-radius:14px;margin-bottom:12px;
+  width:37px;height:37px;border-radius:12px;margin-bottom:9px;
   background:rgba(255,255,255,0.22);
   display:flex;align-items:center;justify-content:center;color:#fff;
 }
-.bill-modal-banner .modal-head-icon svg{width:21px;height:21px;}
+.bill-modal-banner .modal-head-icon svg{width:18px;height:18px;}
 .bill-modal-banner-titles{position:relative;z-index:2;}
 .bill-modal-banner-titles h3{
-  font-family:'Poppins',sans-serif;font-weight:600;font-size:18.5px;
+  font-family:'Poppins',sans-serif;font-weight:600;font-size:16.5px;
   letter-spacing:-0.005em;line-height:1.25;color:#fff;margin:0 0 2px;
 }
 .bill-modal-banner-titles .modal-head-sub{
-  font-family:var(--font-body);font-size:12px;font-weight:500;color:rgba(255,255,255,0.85);
+  font-family:var(--font-body);font-size:11px;font-weight:500;color:rgba(255,255,255,0.85);
 }
 
 /* ---- 2) Saklar jenis melayang, sliding thumb ---- */
 .bill-modal .bill-kind-switch{
   position:relative;z-index:3;gap:0;
-  margin:-24px 22px 20px;padding:4px;
-  background:#fff;border-radius:14px;
+  margin:-18px 16px 14px;padding:3px;
+  background:#fff;border-radius:12px;
   display:grid;grid-template-columns:1fr 1fr;
   box-shadow:0 14px 28px -14px rgba(15,23,42,0.38), 0 2px 8px rgba(15,23,42,0.06);
 }
+.bill-modal .bill-kind-switch button{padding:8px 6px;font-size:12.5px;}
 .bill-kind-switch-thumb{
   position:absolute;top:4px;left:4px;z-index:0;
   width:calc(50% - 4px);height:calc(100% - 8px);border-radius:10px;
@@ -6468,19 +6469,19 @@ tbody tr:last-child td{border-bottom:none;}
 
 /* ---- 3) Kartu hero nominal ---- */
 .bill-amount-hero{
-  text-align:center;margin-bottom:16px;padding:16px 16px 18px;
-  border-radius:16px;background:var(--paper);border:1.5px solid var(--line);
+  text-align:center;margin-bottom:12px;padding:12px 14px 14px;
+  border-radius:14px;background:var(--paper);border:1.5px solid var(--line);
   transition:border-color .16s ease, box-shadow .16s ease, background .16s ease;
 }
 .bill-amount-hero:focus-within{border-color:#D97706;background:#fff;box-shadow:0 0 0 4px rgba(217,119,6,0.1);}
 .bill-modal.kind-hutang .bill-amount-hero:focus-within{border-color:#7C3AED;box-shadow:0 0 0 4px rgba(124,58,237,0.1);}
-.bill-amount-hero-label{display:block;font-size:11px;font-weight:700;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;}
+.bill-amount-hero-label{display:block;font-size:10.5px;font-weight:700;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;}
 .bill-amount-hero .bill-amount-wrap{background:transparent;border:none;padding:0;justify-content:center;}
 .bill-amount-hero .bill-amount-wrap:focus-within{border:none;background:transparent;box-shadow:none;}
-.bill-amount-hero .amount-prefix{font-family:'Poppins',sans-serif;font-weight:700;font-size:19px;color:var(--ink-faint);}
+.bill-amount-hero .amount-prefix{font-family:'Poppins',sans-serif;font-weight:700;font-size:16px;color:var(--ink-faint);}
 .bill-amount-hero #billAmount{
   border:none;background:transparent;padding:0;font-family:'Poppins',sans-serif;
-  font-size:32px;font-weight:700;color:var(--ink);width:auto;max-width:210px;text-align:center;
+  font-size:25px;font-weight:700;color:var(--ink);width:auto;max-width:180px;text-align:center;
 }
 .bill-amount-hero #billAmount:focus{box-shadow:none;background:transparent;}
 
@@ -6491,10 +6492,10 @@ tbody tr:last-child td{border-bottom:none;}
 .bill-modal.kind-hutang .form-row textarea:focus{border-color:#7C3AED;box-shadow:0 0 0 4px rgba(124,58,237,0.1);}
 
 /* ---- 4) Chip preset Jatuh Tempo ---- */
-.bill-due-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px;}
+.bill-due-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px;}
 .bill-due-chip{
-  padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:#fff;
-  font-family:var(--font-body);font-size:11.5px;font-weight:600;color:var(--ink-soft);
+  padding:5px 10px;border-radius:999px;border:1px solid var(--line);background:#fff;
+  font-family:var(--font-body);font-size:11px;font-weight:600;color:var(--ink-soft);
   transition:all .15s ease;
 }
 .bill-due-chip:hover{border-color:#D97706;color:#B45309;background:rgba(217,119,6,0.06);}
@@ -6504,8 +6505,8 @@ tbody tr:last-child td{border-bottom:none;}
 
 /* ---- 5) Baris "Ulangi otomatis" -- kartu + toggle switch ---- */
 .bill-recurring-row{
-  display:flex;align-items:center;gap:12px;cursor:pointer;
-  padding:12px 14px;margin-bottom:16px;border-radius:14px;
+  display:flex;align-items:center;gap:10px;cursor:pointer;
+  padding:10px 12px;margin-bottom:12px;border-radius:12px;
   background:var(--paper);border:1.5px solid var(--line);
   transition:border-color .15s ease, background .15s ease;
 }
@@ -6513,27 +6514,27 @@ tbody tr:last-child td{border-bottom:none;}
 .bill-recurring-row:has(input:checked){border-color:#D97706;background:rgba(217,119,6,0.06);}
 .bill-modal.kind-hutang .bill-recurring-row:has(input:checked){border-color:#7C3AED;background:rgba(124,58,237,0.06);}
 .bill-recurring-row-icon{
-  width:34px;height:34px;flex-shrink:0;border-radius:10px;background:#fff;
+  width:29px;height:29px;flex-shrink:0;border-radius:9px;background:#fff;
   display:flex;align-items:center;justify-content:center;color:#B45309;
   box-shadow:0 1px 3px rgba(15,23,42,0.08);
 }
 .bill-modal.kind-hutang .bill-recurring-row-icon{color:#7C3AED;}
 .bill-recurring-row-text{
-  flex:1;min-width:0;font-family:var(--font-body);font-size:13.5px;font-weight:600;color:var(--ink);line-height:1.3;
+  flex:1;min-width:0;font-family:var(--font-body);font-size:12.5px;font-weight:600;color:var(--ink);line-height:1.3;
 }
-.bill-recurring-row-sub{display:block;font-size:11.5px;font-weight:400;color:var(--ink-faint);margin-top:2px;}
+.bill-recurring-row-sub{display:block;font-size:11px;font-weight:400;color:var(--ink-faint);margin-top:2px;}
 .bill-recurring-toggle-track{
-  flex-shrink:0;width:40px;height:23px;border-radius:999px;background:var(--line);
+  flex-shrink:0;width:36px;height:21px;border-radius:999px;background:var(--line);
   display:inline-flex;align-items:center;padding:2.5px;box-sizing:border-box;
   transition:background .2s ease;
 }
 .bill-recurring-toggle-thumb{
-  width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(15,23,42,0.25);
+  width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(15,23,42,0.25);
   transition:transform .2s cubic-bezier(.22,1,.36,1);
 }
 .bill-recurring-row input:checked ~ .bill-recurring-toggle-track{background:#D97706;}
 .bill-modal.kind-hutang .bill-recurring-row input:checked ~ .bill-recurring-toggle-track{background:#7C3AED;}
-.bill-recurring-row input:checked ~ .bill-recurring-toggle-track .bill-recurring-toggle-thumb{transform:translateX(17px);}
+.bill-recurring-row input:checked ~ .bill-recurring-toggle-track .bill-recurring-toggle-thumb{transform:translateX(15px);}
 
 /* ---- Tombol aksi -- warna primer ikut jenis aktif ---- */
 .bill-modal .modal-actions .btn-primary{background:#D97706;box-shadow:0 8px 18px -8px rgba(180,83,9,0.5);transition:background .16s ease;}
@@ -6541,10 +6542,22 @@ tbody tr:last-child td{border-bottom:none;}
 .bill-modal.kind-hutang .modal-actions .btn-primary{background:#7C3AED;box-shadow:0 8px 18px -8px rgba(109,40,217,0.45);}
 .bill-modal.kind-hutang .modal-actions .btn-primary:hover{background:#6D28D9;}
 
+/* ---- REVISI UKURAN: dibuat lebih ringkas/padat (khusus popup ini
+   saja, class "bill-modal" -- TIDAK menyentuh ".tx-modal" popup
+   "Tambah Transaksi" yg berbagi beberapa selector dgn popup ini).
+   Padding badan popup, jarak antar-baris form, & tombol aksi
+   dikecilkan supaya popup terasa lebih pendek/tidak makan banyak
+   ruang, tanpa membuang elemen apa pun. ---- */
+.bill-modal{padding:16px 16px 16px;border-radius:18px;}
+.bill-modal .form-row{margin-bottom:10px;}
+.bill-modal .modal-actions{margin-top:10px;}
+.bill-modal .modal-actions .btn{padding:11px;font-size:14px;}
+
 @media (max-width:600px){
-  .bill-modal-banner{margin:-18px -18px 0;padding:18px 18px 36px;border-radius:20px 20px 0 0;}
-  .bill-modal .bill-kind-switch{margin:-22px 18px 18px;}
-  .bill-amount-hero #billAmount{font-size:27px;}
+  .bill-modal{padding:14px 14px 14px;border-radius:16px;}
+  .bill-modal-banner{margin:-14px -14px 0;padding:12px 14px 24px;border-radius:16px 16px 0 0;}
+  .bill-modal .bill-kind-switch{margin:-16px 14px 12px;}
+  .bill-amount-hero #billAmount{font-size:22px;}
 }
 /* ---- Pengaman ekstra khusus HP paling sempit (mis. iPhone SE
    gen-1, lebar layar 320px, sama spt breakpoint 380px yg sudah
@@ -6555,29 +6568,32 @@ tbody tr:last-child td{border-bottom:none;}
    lagi sedikit di sini SUPAYA seluruh isi popup tetap muat rapi
    dalam satu kolom tanpa ada teks yg terpotong/tumpang tindih. ---- */
 @media (max-width:380px){
-  .bill-modal-banner{padding:16px 16px 32px;}
-  .bill-modal-banner::before{width:96px;height:96px;top:-42px;right:-26px;}
-  .bill-modal-banner::after{width:54px;height:54px;bottom:-22px;left:14px;}
-  .bill-modal-banner .modal-head-icon{width:40px;height:40px;margin-bottom:10px;}
-  .bill-modal-banner .modal-head-icon svg{width:18px;height:18px;}
-  .bill-modal-banner-titles h3{font-size:17px;}
-  .bill-modal .bill-kind-switch{margin:-20px 16px 16px;}
-  .bill-modal .bill-kind-switch button{padding:9px 4px;font-size:12.5px;gap:5px;}
-  .bill-modal .bill-kind-switch button svg{width:12px;height:12px;}
-  .bill-amount-hero{padding:14px 12px 16px;margin-bottom:14px;}
-  .bill-amount-hero-label{font-size:10.5px;margin-bottom:6px;}
-  .bill-amount-hero .amount-prefix{font-size:16px;}
-  .bill-amount-hero #billAmount{font-size:24px;max-width:165px;}
-  .bill-due-chips{gap:5px;}
-  .bill-due-chip{padding:5px 10px;font-size:11px;}
-  .bill-recurring-row{padding:11px 12px;gap:10px;margin-bottom:14px;}
-  .bill-recurring-row-icon{width:30px;height:30px;border-radius:9px;}
-  .bill-recurring-row-icon svg{width:14px;height:14px;}
-  .bill-recurring-row-text{font-size:12.5px;}
-  .bill-recurring-row-sub{font-size:10.5px;}
-  .bill-recurring-toggle-track{width:36px;height:21px;}
-  .bill-recurring-toggle-thumb{width:16px;height:16px;}
-  .bill-recurring-row input:checked ~ .bill-recurring-toggle-track .bill-recurring-toggle-thumb{transform:translateX(15px);}
+  .bill-modal{padding:12px 12px 12px;}
+  .bill-modal-banner{margin:-12px -12px 0;padding:11px 12px 22px;}
+  .bill-modal-banner::before{width:88px;height:88px;top:-38px;right:-24px;}
+  .bill-modal-banner::after{width:50px;height:50px;bottom:-20px;left:12px;}
+  .bill-modal-banner .modal-head-icon{width:34px;height:34px;margin-bottom:7px;}
+  .bill-modal-banner .modal-head-icon svg{width:16px;height:16px;}
+  .bill-modal-banner-titles h3{font-size:15.5px;}
+  .bill-modal .bill-kind-switch{margin:-14px 12px 11px;}
+  .bill-modal .bill-kind-switch button{padding:7px 4px;font-size:12px;gap:4px;}
+  .bill-modal .bill-kind-switch button svg{width:11px;height:11px;}
+  .bill-amount-hero{padding:10px 10px 12px;margin-bottom:10px;}
+  .bill-amount-hero-label{font-size:10px;margin-bottom:4px;}
+  .bill-amount-hero .amount-prefix{font-size:14px;}
+  .bill-amount-hero #billAmount{font-size:20px;max-width:145px;}
+  .bill-modal .form-row{margin-bottom:8px;}
+  .bill-due-chips{gap:4px;}
+  .bill-due-chip{padding:4px 9px;font-size:10.5px;}
+  .bill-recurring-row{padding:9px 10px;gap:8px;margin-bottom:10px;}
+  .bill-recurring-row-icon{width:26px;height:26px;border-radius:8px;}
+  .bill-recurring-row-icon svg{width:13px;height:13px;}
+  .bill-recurring-row-text{font-size:12px;}
+  .bill-recurring-row-sub{font-size:10px;}
+  .bill-recurring-toggle-track{width:33px;height:19px;}
+  .bill-recurring-toggle-thumb{width:14px;height:14px;}
+  .bill-recurring-row input:checked ~ .bill-recurring-toggle-track .bill-recurring-toggle-thumb{transform:translateX(13px);}
+  .bill-modal .modal-actions .btn{padding:10px;font-size:13px;}
 }
 /* ---- Layar PENDEK (mis. HP dalam mode landscape, atau HP kecil
    dgn tinggi <680px) -- popup ini isinya cukup panjang (banner +
@@ -6589,11 +6605,11 @@ tbody tr:last-child td{border-bottom:none;}
    langsung kelihatan tanpa discroll dulu -- TANPA memotong ukuran
    lebar/horizontal apa pun (murni penghematan tinggi). ---- */
 @media (max-height:680px){
-  .bill-modal-banner{padding-top:14px;padding-bottom:28px;}
-  .bill-modal .bill-kind-switch{margin-top:-18px;margin-bottom:14px;}
-  .bill-amount-hero{padding-top:12px;padding-bottom:14px;margin-bottom:12px;}
-  .bill-modal .form-row{margin-bottom:10px;}
-  .bill-recurring-row{padding-top:9px;padding-bottom:9px;margin-bottom:12px;}
+  .bill-modal-banner{padding-top:10px;padding-bottom:20px;}
+  .bill-modal .bill-kind-switch{margin-top:-13px;margin-bottom:10px;}
+  .bill-amount-hero{padding-top:9px;padding-bottom:10px;margin-bottom:9px;}
+  .bill-modal .form-row{margin-bottom:7px;}
+  .bill-recurring-row{padding-top:7px;padding-bottom:7px;margin-bottom:9px;}
 }
 
 .wallet-preview-card{transition:box-shadow .25s ease;}
