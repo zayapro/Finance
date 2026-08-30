@@ -9976,7 +9976,7 @@ function deviceMgmtGuessAndroidBrand(ua) {
   // rule.brand di pemanggilnya, hasilnya dobel ("Redmi Redmi Note 11").
   // Guard ini mengecek apakah rawModel SUDAH diawali nama merek; kalau
   // sudah, "brand" dikosongkan supaya pemanggil cukup pakai rawModel
-  // apa adanya (lihat deviceMgmtDetectLabel()).
+  // apa adanya (lihat deviceMgmtDetectDetails()).
   const alreadyHasBrand = new RegExp('^' + rule.brand, 'i').test(rawModel);
   return { model: rawModel, brand: alreadyHasBrand ? null : rule.brand };
 }
@@ -9989,31 +9989,123 @@ function deviceMgmtGuessAndroidBrand(ua) {
 // & desktop SENGAJA tetap generik (browser+OS saja), krn Apple tidak
 // menyertakan model di UA sama sekali (dibatasi demi privasi, bukan
 // keterbatasan parser ini) & "merek" tidak relevan utk desktop.
-function deviceMgmtDetectLabel() {
+// Ganti nama dari deviceMgmtDetectLabel() -> deviceMgmtDetectDetails():
+// SEKARANG mengembalikan rincian browser+versi & OS+versi+model
+// terpisah (bukan cuma satu string "Browser on OS" polos), supaya
+// popup detail perangkat (lihat openDeviceDetailSheet()) bisa
+// menampilkan baris "Browser" & "Sistem" masing2 dgn versi yg jelas,
+// bukan cuma gabungan singkat. `label` ringkas ("Browser on OS") tetap
+// disertakan krn masih dipakai sbg judul baris di daftar perangkat.
+function deviceMgmtDetectDetails() {
   const ua = navigator.userAgent || '';
-  let browser = 'Browser';
-  if (/Edg\//.test(ua)) browser = 'Edge';
-  else if (/OPR\//.test(ua) || /Opera/.test(ua)) browser = 'Opera';
-  else if (/Chrome\//.test(ua) && !/Edg\//.test(ua)) browser = 'Chrome';
-  else if (/CriOS\//.test(ua)) browser = 'Chrome';
-  else if (/FxiOS\//.test(ua) || /Firefox\//.test(ua)) browser = 'Firefox';
-  else if (/Safari\//.test(ua) && /Version\//.test(ua)) browser = 'Safari';
+  let m;
 
-  let os = 'Perangkat';
+  // ---- Browser + nomor versi ----
+  let browser = 'Browser', browserVersion = '';
+  if ((m = ua.match(/Edg\/([\d.]+)/))) { browser = 'Edge'; browserVersion = m[1]; }
+  else if ((m = ua.match(/OPR\/([\d.]+)/))) { browser = 'Opera'; browserVersion = m[1]; }
+  else if ((m = ua.match(/FxiOS\/([\d.]+)/))) { browser = 'Firefox'; browserVersion = m[1]; }
+  else if ((m = ua.match(/Firefox\/([\d.]+)/))) { browser = 'Firefox'; browserVersion = m[1]; }
+  else if ((m = ua.match(/CriOS\/([\d.]+)/))) { browser = 'Chrome'; browserVersion = m[1]; }
+  else if (!/Edg\//.test(ua) && (m = ua.match(/Chrome\/([\d.]+)/))) { browser = 'Chrome'; browserVersion = m[1]; }
+  else if (/Safari\//.test(ua) && (m = ua.match(/Version\/([\d.]+)/))) { browser = 'Safari'; browserVersion = m[1]; }
+
+  // ---- OS + nomor versi + model perangkat (kalau ada) ----
+  let os = 'Perangkat', osVersion = '', deviceModel = '';
   let isMobile = /Mobi|Android|iPhone|iPad|iPod/.test(ua);
-  if (/Windows NT 10/.test(ua)) os = 'Windows 10/11';
-  else if (/Windows NT/.test(ua)) os = 'Windows';
-  else if (/Mac OS X/.test(ua) && !/iPhone|iPad|iPod/.test(ua)) os = 'macOS';
-  else if (/Android/.test(ua)) {
+  if ((m = ua.match(/Windows NT ([\d.]+)/))) {
+    osVersion = m[1];
+    // Windows 11 SENGAJA masih melapor "NT 10.0" di User-Agent (Microsoft
+    // tidak menaikkan angka NT-nya) -- browser TIDAK menyediakan cara
+    // pasti membedakan 10 vs 11 murni dari UA, jadi label ini SENGAJA
+    // ditulis "10/11" apa adanya drpd menebak salah satu.
+    os = (m[1] === '10.0') ? 'Windows 10/11' : 'Windows';
+  } else if (/Mac OS X/.test(ua) && !/iPhone|iPad|iPod/.test(ua)) {
+    os = 'macOS';
+    if ((m = ua.match(/Mac OS X ([\d_]+)/))) osVersion = m[1].replace(/_/g, '.');
+  } else if (/Android/.test(ua)) {
     os = 'Android';
+    if ((m = ua.match(/Android\s+([\d.]+)/))) osVersion = m[1];
     const guess = deviceMgmtGuessAndroidBrand(ua);
-    if (guess) os = guess.brand ? `${guess.brand} ${guess.model}` : guess.model;
+    if (guess) deviceModel = guess.brand ? `${guess.brand} ${guess.model}` : guess.model;
+  } else if (/iPhone/.test(ua)) {
+    os = 'iOS';
+    if ((m = ua.match(/OS ([\d_]+) like Mac OS X/))) osVersion = m[1].replace(/_/g, '.');
+    deviceModel = 'iPhone';
+  } else if (/iPad/.test(ua)) {
+    os = 'iPadOS';
+    if ((m = ua.match(/OS ([\d_]+) like Mac OS X/))) osVersion = m[1].replace(/_/g, '.');
+    deviceModel = 'iPad';
+  } else if (/Linux/.test(ua)) {
+    os = 'Linux';
   }
-  else if (/iPhone/.test(ua)) os = 'iOS';
-  else if (/iPad/.test(ua)) os = 'iPadOS';
-  else if (/Linux/.test(ua)) os = 'Linux';
 
-  return { label: `${browser} on ${os}`, isMobile };
+  const browserLabel = browserVersion ? `${browser} ${browserVersion}` : browser;
+  const osLabel = osVersion ? `${os} ${osVersion}` : os;
+
+  return {
+    label: `${browser} on ${os}`, // label ringkas, tetap dipakai di baris daftar
+    isMobile, browser, browserVersion, browserLabel, os, osVersion, osLabel, deviceModel,
+  };
+}
+
+// ---- Lookup IP publik + perkiraan lokasi (kota/wilayah/negara) ----
+// SENGAJA pakai lookup berbasis-IP (bukan navigator.geolocation/GPS):
+// (1) tidak perlu izin lokasi yang mengganggu cuma utk melihat daftar
+// perangkat sendiri, (2) tetap bisa dipakai utk device desktop yang
+// biasanya tidak punya GPS sama sekali. KONSEKUENSINYA: hasil ini
+// PERKIRAAN, bukan titik GPS presisi -- bisa meleset (kadang sampai
+// beda kota) terutama di jaringan seluler/VPN/proxy krn ISP sering
+// me-routing IP publik lewat gateway yg jauh dari lokasi fisik asli.
+// Ini SENGAJA dijelaskan apa adanya ke user lewat catatan di popup
+// detail perangkat (lihat #deviceDetailNote di index.html), bukan
+// diklaim "akurat" begitu saja.
+// Cache jadi 1x per pemuatan halaman (bukan tiap heartbeat 60 detik)
+// supaya tidak membombardir API pihak ketiga gratis yang dipakai &
+// berisiko kena rate-limit.
+let deviceMgmtIpInfoPromise = null;
+function deviceMgmtFetchIpInfo() {
+  if (deviceMgmtIpInfoPromise) return deviceMgmtIpInfoPromise;
+  deviceMgmtIpInfoPromise = fetch('https://ipapi.co/json/')
+    .then((r) => (r.ok ? r.json() : Promise.reject(new Error('Lookup IP gagal: HTTP ' + r.status))))
+    .then((data) => {
+      if (data && data.error) throw new Error(data.reason || 'Lookup IP menolak permintaan');
+      return {
+        ip: data.ip || null,
+        city: data.city || null,
+        region: data.region || null,
+        country: data.country_name || null,
+      };
+    })
+    .catch((e) => {
+      console.error('Gagal mengambil alamat IP/lokasi:', e);
+      return null; // gagal -> field ip/lokasi TETAP kosong, jangan diisi tebakan
+    });
+  return deviceMgmtIpInfoPromise;
+}
+
+// Perbarui entri perangkat INI di daftar dgn hasil lookup IP/lokasi
+// di atas. Dijalankan cuma SEKALI per pemuatan halaman (lihat
+// deviceMgmtStartHeartbeat()), terpisah dari heartbeat "lastActive"
+// yg jalan tiap menit, supaya tidak spam request ke API lookup.
+let deviceMgmtIpEnrichStarted = false;
+async function deviceMgmtEnrichThisDeviceIpLocation() {
+  if (deviceMgmtIpEnrichStarted) return;
+  deviceMgmtIpEnrichStarted = true;
+  const info = await deviceMgmtFetchIpInfo();
+  if (!info) return;
+  const id = deviceMgmtGetLocalId();
+  const list = deviceMgmtLoadSessions();
+  const entry = list.find((d) => d.id === id);
+  if (!entry) return; // belum pernah "touch" sekalipun -- lewati, biar heartbeat berikutnya yg bikin entrinya dulu
+  entry.ip = info.ip;
+  entry.city = info.city;
+  entry.region = info.region;
+  entry.country = info.country;
+  deviceMgmtPersistSessions(list);
+  if (document.getElementById('manajemenDeviceOverlay')?.classList.contains('open')) {
+    renderDeviceMgmtPage();
+  }
 }
 
 function deviceMgmtLoadSessions() {
@@ -10034,16 +10126,21 @@ function deviceMgmtPersistSessions(list) {
 // duluan) supaya daftar tidak membengkak tanpa batas.
 function deviceMgmtTouchThisDevice() {
   const id = deviceMgmtGetLocalId();
-  const { label, isMobile } = deviceMgmtDetectLabel();
+  // `details` sengaja TIDAK menyertakan ip/city/region/country --
+  // field itu murni tanggung jawab deviceMgmtEnrichThisDeviceIpLocation()
+  // (lookup terpisah, async, 1x per pemuatan halaman), supaya
+  // Object.assign di bawah tidak menimpa/menghapus nilai ip/lokasi yg
+  // sudah berhasil didapat sebelumnya tiap kali heartbeat "lastActive"
+  // biasa (tiap menit) jalan.
+  const details = deviceMgmtDetectDetails();
   const now = new Date().toISOString();
   let list = deviceMgmtLoadSessions();
   const existing = list.find((d) => d.id === id);
   if (existing) {
-    existing.label = label;
-    existing.isMobile = isMobile;
+    Object.assign(existing, details);
     existing.lastActive = now;
   } else {
-    list.push({ id, label, isMobile, firstSeen: now, lastActive: now });
+    list.push(Object.assign({ id, firstSeen: now, lastActive: now }, details));
   }
   // Urutkan terbaru aktif dulu, lalu potong sesuai batas slot --
   // perangkat INI selalu dipertahankan walau daftar penuh.
@@ -10131,6 +10228,119 @@ async function renderDeviceMgmtPage() {
   }).join('');
 }
 
+/* ==========================================================
+   POPUP "DETAIL PERANGKAT" (#deviceDetailSheetOverlay) -- dibuka
+   dgn KLIK salah satu baris di daftar Manajemen Device (bukan tombol
+   "Hapus"-nya, lihat listener #deviceMgmtList di atas). Menampilkan
+   rincian LENGKAP perangkat yg diklik: browser+versi, sistem+versi,
+   model perangkat, status online/offline, waktu aktif (relatif +
+   tanggal-jam persis), pertama terdaftar, alamat IP & perkiraan
+   lokasi. Field IP/lokasi SENGAJA ditampilkan "Tidak tersedia" apa
+   adanya kalau memang belum/tidak berhasil didapat (lihat
+   deviceMgmtEnrichThisDeviceIpLocation() di atas) -- TIDAK PERNAH
+   diisi tebakan supaya datanya selalu jujur & akurat drpd terlihat
+   lengkap tapi palsu.
+========================================================== */
+function deviceMgmtBuildDetailRows(d, isThis) {
+  const online = isThis || (Date.now() - new Date(d.lastActive).getTime()) < DEVICE_MGMT_ONLINE_WINDOW_MS;
+  const fmtExact = (iso) => {
+    try { return new Date(iso).toLocaleString('id-ID', { dateStyle: 'long', timeStyle: 'short' }); }
+    catch (e) { return '-'; }
+  };
+  const locationText = (d.city || d.region || d.country)
+    ? [d.city, d.region, d.country].filter(Boolean).join(', ')
+    : 'Tidak tersedia';
+  return [
+    ['Status', online ? 'Online' : 'Offline'],
+    ['Terakhir aktif', online ? 'Sekarang' : `${timeAgoId(d.lastActive)} (${fmtExact(d.lastActive)})`],
+    ['Pertama terdaftar', d.firstSeen ? fmtExact(d.firstSeen) : 'Tidak diketahui'],
+    ['Browser', d.browserLabel || d.browser || 'Tidak diketahui'],
+    ['Sistem', d.osLabel || d.os || 'Tidak diketahui'],
+    ['Model perangkat', d.deviceModel || (d.isMobile ? 'Tidak diketahui' : 'Komputer/Laptop')],
+    ['Alamat IP', d.ip || 'Tidak tersedia'],
+    ['Perkiraan lokasi', locationText],
+  ];
+}
+
+function openDeviceDetailSheet(id) {
+  const list = deviceMgmtLoadSessions();
+  const d = list.find((x) => x.id === id);
+  if (!d) return;
+  const isThis = id === deviceMgmtGetLocalId();
+
+  document.getElementById('deviceDetailTitle').textContent = d.label || `${d.browser || ''} ${d.os || ''}`.trim() || 'Perangkat';
+  document.getElementById('deviceDetailIcon').innerHTML = deviceMgmtIconSvg(d.isMobile);
+  document.getElementById('deviceDetailBadge').style.display = isThis ? '' : 'none';
+
+  document.getElementById('deviceDetailRows').innerHTML = deviceMgmtBuildDetailRows(d, isThis)
+    .map(([k, v]) => `<div class="receipt-expand-row"><span>${escapeHtml(k)}</span><span>${escapeHtml(String(v))}</span></div>`)
+    .join('');
+
+  const forgetBtn = document.getElementById('deviceDetailForgetBtn');
+  if (isThis) {
+    forgetBtn.style.display = 'none';
+  } else {
+    forgetBtn.style.display = '';
+    forgetBtn.onclick = () => deviceMgmtForgetDevice(d.id, d.label || 'perangkat ini', null);
+  }
+
+  document.getElementById('deviceDetailSheetOverlay')?.classList.add('open');
+}
+function closeDeviceDetailSheet() {
+  document.getElementById('deviceDetailSheetOverlay')?.classList.remove('open');
+}
+document.getElementById('deviceDetailCloseBtn')?.addEventListener('click', closeDeviceDetailSheet);
+document.getElementById('deviceDetailCloseBtn2')?.addEventListener('click', closeDeviceDetailSheet);
+document.getElementById('deviceDetailSheetOverlay')?.addEventListener('click', function (e) {
+  if (e.target === this) closeDeviceDetailSheet(); // klik area gelap di luar sheet -> tutup
+});
+
+// ---- Heartbeat "online" perangkat ini (Bug fix akurasi) ----
+// SEBELUM ini, deviceMgmtTouchThisDevice() CUMA terpanggil saat
+// halaman Manajemen Device dibuka / tombol refresh ditekan -- artinya
+// status "Online" & "Terakhir aktif" HANYA benar kalau user memang
+// sedang melihat halaman itu. Begitu user pindah ke tab/menu lain di
+// app ini (tetap aktif memakai ZAYAin), timestamp lastActive berhenti
+// diperbarui -- lewat DEVICE_MGMT_ONLINE_WINDOW_MS (5 menit) tanpa
+// membuka halaman itu lagi, perangkat yg SEBENARNYA sedang aktif akan
+// keliru ditampilkan "Offline" (di perangkat lain yg melihat daftar
+// ini), begitu juga hitungan "Aktif Hari Ini" jadi tidak akurat.
+// Heartbeat di bawah ini menjaga entri perangkat ini tetap
+// "ter-touch" secara berkala SELAMA app dibuka/terlihat -- tidak
+// bergantung sama sekali pada overlay Manajemen Device sedang dibuka
+// atau tidak -- supaya status online/waktu aktif merefleksikan
+// pemakaian app yang sesungguhnya.
+let deviceMgmtHeartbeatTimer = null;
+function deviceMgmtHeartbeat() {
+  // Sengaja tanpa sentuh DOM sama sekali (beda dari renderDeviceMgmtPage())
+  // -- heartbeat ini harus ringan & aman dipanggil kapan saja, termasuk
+  // saat overlay Manajemen Device sendiri sedang tertutup.
+  try { deviceMgmtTouchThisDevice(); } catch (e) { console.error('Heartbeat perangkat gagal', e); }
+  // Kalau overlay-nya KEBETULAN sedang terbuka saat heartbeat ini
+  // jalan, gambar ulang juga supaya angka/daftar yg terlihat user
+  // ikut ter-update live, bukan cuma tersimpan diam2 di storage.
+  if (document.getElementById('manajemenDeviceOverlay')?.classList.contains('open')) {
+    renderDeviceMgmtPage();
+  }
+}
+function deviceMgmtStartHeartbeat() {
+  deviceMgmtHeartbeat(); // touch pertama begitu app dibuka
+  deviceMgmtEnrichThisDeviceIpLocation(); // lookup IP/lokasi, 1x per pemuatan halaman
+  if (deviceMgmtHeartbeatTimer) clearInterval(deviceMgmtHeartbeatTimer);
+  // Interval jauh lebih pendek drpd DEVICE_MGMT_ONLINE_WINDOW_MS (5
+  // menit) supaya status "Online" tidak sempat kedaluwarsa selama tab
+  // ini masih aktif dipakai.
+  deviceMgmtHeartbeatTimer = setInterval(function () {
+    if (document.visibilityState === 'visible') deviceMgmtHeartbeat();
+  }, 60 * 1000);
+}
+// Begitu tab disembunyikan lalu dibuka lagi (mis. user balik dari app
+// lain / kunci layar), langsung touch ulang -- jangan tunggu interval
+// 60 detik berikutnya supaya status online terasa instan saat kembali.
+document.addEventListener('visibilitychange', function () {
+  if (document.visibilityState === 'visible') deviceMgmtHeartbeat();
+});
+
 function openManajemenDeviceOverlay() {
   document.getElementById('manajemenDeviceOverlay')?.classList.add('open');
   lockBodyScroll();
@@ -10163,16 +10373,17 @@ document.getElementById('deviceMgmtRefreshBtn')?.addEventListener('click', funct
 // class "is-removing" dulu supaya CSS transition (lihat .device-mgmt-
 // row.is-removing di index.html) mainkan animasi fade+collapse
 // singkat -- baris tidak lagi "meloncat hilang" begitu saja.
-document.getElementById('deviceMgmtList')?.addEventListener('click', function (e) {
-  const btn = e.target.closest('[data-forgetdevice]');
-  if (!btn) return;
-  const id = btn.dataset.forgetdevice;
-  const row = btn.closest('.device-mgmt-row');
-  const label = row?.querySelector('.device-mgmt-row-title strong')?.textContent || 'perangkat ini';
+// Dipisah jadi fungsi sendiri (SEBELUMNYA inline di dalam listener
+// klik daftar) supaya bisa dipanggil dari DUA tempat: tombol "Hapus"
+// inline di tiap baris daftar, MAUPUN tombol "Hapus Perangkat" di
+// popup detail perangkat (#deviceDetailSheetOverlay) -- lihat
+// openDeviceDetailSheet() di bawah. `row` boleh null (dipanggil dari
+// popup, bukan dari baris daftar itu sendiri) -- kalau null, animasi
+// fade+collapse dilewati & penghapusan terjadi langsung.
+function deviceMgmtForgetDevice(id, label, row) {
   const ok = confirm(`Hapus "${label}" dari daftar perangkat?\n\nPerangkat ini tidak akan "dipaksa keluar" -- kalau masih dipakai, ia akan otomatis terdaftar ulang begitu ZAYAin dibuka lagi di sana.`);
   if (!ok) return;
 
-  btn.disabled = true;
   let done = false;
   const finishRemoval = () => {
     if (done) return; // jaring pengaman: transitionend & setTimeout bisa
@@ -10180,6 +10391,7 @@ document.getElementById('deviceMgmtList')?.addEventListener('click', function (e
     const list = deviceMgmtLoadSessions().filter((d) => d.id !== id);
     deviceMgmtPersistSessions(list);
     showToast('Perangkat dihapus dari daftar.');
+    closeDeviceDetailSheet();
     renderDeviceMgmtPage();
   };
   if (row) {
@@ -10191,6 +10403,24 @@ document.getElementById('deviceMgmtList')?.addEventListener('click', function (e
   } else {
     finishRemoval();
   }
+}
+
+// Klik baris daftar perangkat: tombol "Hapus" inline tetap menghapus
+// LANGSUNG dari daftar (perilaku lama dipertahankan supaya tidak perlu
+// buka popup dulu cuma utk hapus cepat); klik di bagian LAIN baris
+// (nama/ikon/status) membuka popup detail lengkap perangkat itu.
+document.getElementById('deviceMgmtList')?.addEventListener('click', function (e) {
+  const forgetBtn = e.target.closest('[data-forgetdevice]');
+  if (forgetBtn) {
+    const id = forgetBtn.dataset.forgetdevice;
+    const row = forgetBtn.closest('.device-mgmt-row');
+    const label = row?.querySelector('.device-mgmt-row-title strong')?.textContent || 'perangkat ini';
+    forgetBtn.disabled = true;
+    deviceMgmtForgetDevice(id, label, row);
+    return;
+  }
+  const row = e.target.closest('.device-mgmt-row');
+  if (row && row.dataset.deviceid) openDeviceDetailSheet(row.dataset.deviceid);
 });
 
 // Accordion FAQ (pola SAMA PERSIS dgn initBantuanPage() di atas).
@@ -12810,6 +13040,7 @@ function init() {
   renderDevices();
   renderSocial();
   maybeShowDueReminder();
+  deviceMgmtStartHeartbeat();
   initFooter();
   initAiChat();
   initBannerScrollFreeze();

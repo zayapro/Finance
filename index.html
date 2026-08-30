@@ -8300,7 +8300,7 @@ html.zp-app-loading .page-body > .lap-panel{display:none;}
   transition:background .15s ease,border-color .15s ease,opacity .22s ease,transform .22s ease,margin .22s ease,padding .22s ease,max-height .22s ease;
   max-height:120px;overflow:hidden;
 }
-.device-mgmt-row:hover{background:var(--card);border-color:var(--line);}
+.device-mgmt-row:hover{background:var(--card);border-color:var(--line);cursor:pointer;}
 /* ---- Animasi hapus perangkat: dipasang sesaat sebelum baris dibuang
    dari DOM (lihat listener "deviceMgmtList" click di script.js) supaya
    baris memudar+menciut halus, bukan langsung meloncat hilang begitu
@@ -12208,6 +12208,42 @@ body.is-scrolling *{
     </div>
   </div>
   <!-- ===== /HALAMAN "MANAJEMEN DEVICE" ===== -->
+
+  <!-- ===== BOTTOM SHEET: DETAIL PERANGKAT =====
+       Dipicu klik salah satu baris di daftar perangkat halaman
+       "Manajemen Device" (lihat openDeviceDetailSheet() di script.js,
+       dipanggil dari listener klik #deviceMgmtList). Seluruh isinya
+       DINAMIS, diisi ulang tiap dibuka berdasar data perangkat yg
+       diklik -- markup di bawah cuma kerangka kosong. Baris
+       "Alamat IP"/"Perkiraan Lokasi" datang dari lookup IP publik
+       (deviceMgmtFetchIpInfo() di script.js) yang dilakukan perangkat
+       ybs sendiri -- kalau lookup itu gagal/belum sempat jalan,
+       field itu SENGAJA tampil "Tidak tersedia" apa adanya, BUKAN
+       diisi tebakan, supaya datanya selalu jujur. ---- -->
+  <div class="lap-sheet-overlay" id="deviceDetailSheetOverlay">
+    <div class="lap-sheet" id="deviceDetailSheet">
+      <div class="lap-sheet-handle"></div>
+      <div style="padding:6px 4px 2px;position:relative;">
+        <button type="button" class="lap-sheet-close-btn" id="deviceDetailCloseBtn" aria-label="Tutup" style="position:absolute;right:0;top:0;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+        <div style="display:flex;align-items:center;gap:11px;margin:2px 30px 6px 0;">
+          <span id="deviceDetailIcon" style="width:38px;height:38px;border-radius:11px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--card);color:var(--ink-soft);"></span>
+          <div style="min-width:0;text-align:left;">
+            <strong id="deviceDetailTitle" style="display:block;font-family:'Poppins',sans-serif;font-size:14.5px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">-</strong>
+            <span class="device-mgmt-badge" id="deviceDetailBadge" style="display:none;">Device ini</span>
+          </div>
+        </div>
+        <div id="deviceDetailRows" style="text-align:left;"></div>
+        <p id="deviceDetailNote" style="margin:12px 0 0;font-size:11.5px;line-height:1.6;color:var(--ink-faint);text-align:left;">Alamat IP &amp; lokasi bersifat perkiraan (dihitung dari alamat IP), bukan GPS presisi -- bisa meleset terutama di jaringan seluler, VPN, atau proxy.</p>
+        <div class="sec-sheet-actions sec-sheet-actions--split" style="margin-top:16px;">
+          <button type="button" class="btn btn-ghost lap-filter-cancel-btn" id="deviceDetailCloseBtn2">Tutup</button>
+          <button type="button" class="btn" style="border:1px solid var(--wine);color:var(--wine);background:rgba(225,29,72,0.06);" id="deviceDetailForgetBtn">Hapus Perangkat</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- ===== /BOTTOM SHEET: DETAIL PERANGKAT ===== -->
 
 
   <!-- ===== BOTTOM SHEET: KONFIRMASI UBAH PIN =====
