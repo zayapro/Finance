@@ -7521,6 +7521,19 @@ html.zp-app-loading .page-body > .settings-list{display:none;}
   transform:translateZ(0);-webkit-transform:translateZ(0);
   backface-visibility:hidden;-webkit-backface-visibility:hidden;
   isolation:isolate;
+  /* ---- FIX LANJUTAN #2 "banner masih sempat bocor saat discroll":
+     will-change:transform ditambahkan supaya browser mempromosikan
+     wrapper ini ke compositor layer-nya SEDARI AWAL (sebelum scroll
+     dimulai), bukan baru dipromosikan "on-the-fly" tepat saat sticky-
+     nya aktif -- jeda promosi layer itulah yang sering jadi celah
+     tempat sudut lengkung oren->putih sempat salah gambar 1 frame.
+     AMAN dipakai di sini (beda dgn will-change yang PERNAH dicoba lalu
+     dilepas lagi di .banner Beranda, lihat catatan di sana) karena isi
+     wrapper ini STATIS -- cuma judul "Pengaturan", tidak pernah
+     di-update ulang oleh JS setelah render pertama -- jadi tidak ada
+     risiko "raster ulang layer besar tiap kali teks berubah" yang jadi
+     alasan will-change dilepas di banner Beranda. ---- */
+  will-change:transform;
 }
 /* ---- Cap kosong (lihat catatan panjang di HTML #page-saya) -- anak
    .saya-sticky-top, satu stacking context dgn banner, jadi sudut
@@ -7531,8 +7544,17 @@ html.zp-app-loading .page-body > .settings-list{display:none;}
    Laporan/Dompet. padding-bottom dinolkan krn cap ini tidak punya
    konten apa pun -- kalau tidak, akan ada celah putih kosong tambahan
    di antara cap ini dgn daftar menu asli (.saya-page-body-rest) di
-   bawahnya. ---- */
-.page-body.saya-page-body-cap{padding-bottom:0;}
+   bawahnya.
+   FIX LANJUTAN "banner bocor saat discroll": overflow:hidden ditambah
+   supaya sudut lengkung cap ini benar-benar DIPOTONG KERAS (hard clip)
+   oleh browser, bukan cuma mengandalkan border-radius sbg "background-
+   clip" semata -- kombinasi border-radius+transform tanpa overflow:
+   hidden itulah yang paling rawan kena bug rasterisasi WebKit (sudut
+   lengkung sempat "salah potong" & nyisain sliver oren di baliknya
+   pas layer di-repaint tiap frame scroll). Aman ditambah di sini krn
+   cap ini kosong (aria-hidden, tanpa konten sama sekali) -- tidak ada
+   isi apa pun yang berisiko ikut kepotong tak sengaja. ---- */
+.page-body.saya-page-body-cap{padding-bottom:0;overflow:hidden;}
 /* ---- Potongan KEDUA (.saya-page-body-rest, daftar menu asli) HARUS
    diratakan -- sebelumnya tidak ada override sama sekali di sini
    sehingga masih ikut style dasar .page-body (margin-top:-24px +
