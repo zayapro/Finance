@@ -6467,23 +6467,58 @@ tbody tr:last-child td{border-bottom:none;}
   background:transparent;border-color:transparent;box-shadow:none;color:#fff;
 }
 
-/* ---- 3) Kartu hero nominal ---- */
+/* ---- 3) Kartu hero nominal — REDESIGN lanjutan ----
+   Sebelumnya latarnya abu polos (var(--paper)) sama utk kedua jenis,
+   & tata letak "Rp" + angka mengandalkan text-align:center pasif
+   (bill-amount-wrap BUKAN flex, cuma numpang rata-tengah dari induk)
+   -- jarak antara prefix & angka jadi tidak konsisten/agak "nempel".
+   Sekarang:
+   1) Latar dikasih gradasi TIPIS senada warna jenis aktif (oranye
+      tipis utk Tagihan / ungu tipis utk Hutang, via color-mix supaya
+      otomatis konsisten dgn --banner-orange-deep/--violet tanpa nilai
+      baru), jadi kartu ini kerasa "hero" & langsung ketauan jenisnya
+      sekilas, bukan cuma kotak abu netral.
+   2) Label "Jumlah" diberi ikon koin kecil di sampingnya (svg inline
+      di HTML) & dibuat flex row rapi, bukan cuma teks polos.
+   3) "Rp" & angka sekarang betul2 flex+baseline dgn gap tetap 6px
+      supaya jaraknya presisi & konsisten di semua ukuran layar,
+      bukan lagi mengandalkan spasi kosong antar tag di HTML.
+   4) Warna kursor ketik (caret) ikut warna jenis aktif, detail kecil
+      yg bikin terasa lebih "disengaja"/dipoles. ---- */
 .bill-amount-hero{
   text-align:center;margin-bottom:12px;padding:12px 14px 14px;
-  border-radius:14px;background:var(--paper);border:1.5px solid var(--line);
-  transition:border-color .16s ease, box-shadow .16s ease, background .16s ease;
+  border-radius:14px;
+  background:linear-gradient(180deg, color-mix(in srgb, var(--banner-orange-deep) 7%, #fff) 0%, color-mix(in srgb, var(--banner-orange-deep) 3%, var(--paper)) 100%);
+  border:1.5px solid color-mix(in srgb, var(--banner-orange-deep) 20%, var(--line));
+  transition:border-color .16s ease, box-shadow .16s ease, background .2s ease;
+}
+.bill-modal.kind-hutang .bill-amount-hero{
+  background:linear-gradient(180deg, color-mix(in srgb, #7C3AED 7%, #fff) 0%, color-mix(in srgb, #7C3AED 3%, var(--paper)) 100%);
+  border-color:color-mix(in srgb, #7C3AED 20%, var(--line));
 }
 .bill-amount-hero:focus-within{border-color:#D97706;background:#fff;box-shadow:0 0 0 4px rgba(217,119,6,0.1);}
 .bill-modal.kind-hutang .bill-amount-hero:focus-within{border-color:#7C3AED;box-shadow:0 0 0 4px rgba(124,58,237,0.1);}
-.bill-amount-hero-label{display:block;font-size:10.5px;font-weight:700;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;}
-.bill-amount-hero .bill-amount-wrap{background:transparent;border:none;padding:0;justify-content:center;}
+.bill-amount-hero-label{
+  display:inline-flex;align-items:center;justify-content:center;gap:5px;
+  font-size:10.5px;font-weight:700;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;
+}
+.bill-amount-hero-label svg{width:11px;height:11px;flex-shrink:0;opacity:.8;color:var(--banner-orange-deep);}
+.bill-modal.kind-hutang .bill-amount-hero-label svg{color:#7C3AED;}
+.bill-amount-hero .bill-amount-wrap{
+  display:flex;align-items:baseline;justify-content:center;gap:6px;
+  background:transparent;border:none;padding:0;width:100%;
+}
 .bill-amount-hero .bill-amount-wrap:focus-within{border:none;background:transparent;box-shadow:none;}
 .bill-amount-hero .amount-prefix{font-family:'Poppins',sans-serif;font-weight:700;font-size:16px;color:var(--ink-faint);}
 .bill-amount-hero #billAmount{
   border:none;background:transparent;padding:0;font-family:'Poppins',sans-serif;
-  font-size:25px;font-weight:700;color:var(--ink);width:auto;max-width:180px;text-align:center;
+  font-size:25px;font-weight:700;color:var(--ink);letter-spacing:-0.01em;
+  width:auto;max-width:180px;min-width:38px;text-align:center;
+  caret-color:#D97706;
 }
+.bill-modal.kind-hutang #billAmount{caret-color:#7C3AED;}
 .bill-amount-hero #billAmount:focus{box-shadow:none;background:transparent;}
+.bill-amount-hero #billAmount::placeholder{color:var(--ink-faint);opacity:.5;font-weight:600;}
 
 /* ---- Fokus field biasa (nama/tanggal/catatan) tetap ikut warna jenis aktif ---- */
 .bill-modal .form-row input:focus,
@@ -13709,12 +13744,25 @@ body.is-scrolling *{
       <!-- ---- Nominal sekarang jadi "kartu hero" tersendiri di paling
            atas form (angka besar di tengah), bukan lagi salah satu sel
            dlm grid 2 kolom bersama Jatuh Tempo -- ditonjolkan krn ini
-           info terpenting dari sebuah tagihan/hutang. ---- -->
+           info terpenting dari sebuah tagihan/hutang. REDESIGN lanjutan:
+           input diberi titik pemisah ribuan OTOMATIS saat mengetik
+           (mis. "150.000" bukan angka polos "150000") lewat JS
+           (initBillAmountFormat() di script.js) supaya nominal besar
+           tetap gampang dibaca sekilas -- persis kebiasaan input
+           nominal di aplikasi finansial pada umumnya. Krn butuh
+           menyisipkan titik saat mengetik, type diubah dari "number"
+           ke "text" + inputmode="numeric" (tetap memunculkan keypad
+           angka di HP), NILAI ASLI (tanpa titik) tetap disimpan &
+           dibaca sbg angka biasa oleh submit handler (lihat comment
+           di script.js). ---- -->
       <div class="bill-amount-hero">
-        <span class="bill-amount-hero-label">Jumlah</span>
+        <span class="bill-amount-hero-label">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.5c0-1.1 1.1-2 2.5-2s2.5.8 2.5 1.8-1 1.5-2.5 1.9-2.5.9-2.5 1.9S10.6 15 12 15s2.5-.6 2.5-1.7"/></svg>
+          Jumlah
+        </span>
         <div class="amount-input-wrap bill-amount-wrap">
           <span class="amount-prefix">Rp</span>
-          <input type="number" id="billAmount" min="0" step="1" placeholder="0" required>
+          <input type="text" inputmode="numeric" autocomplete="off" id="billAmount" placeholder="0" required>
         </div>
       </div>
 

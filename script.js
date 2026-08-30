@@ -7283,7 +7283,7 @@ function openEditBillModal(kind, id) {
   editingBillId = id;
   document.getElementById('billId').value = item.id;
   document.getElementById('billName').value = item.name;
-  document.getElementById('billAmount').value = item.amount;
+  document.getElementById('billAmount').value = Number(item.amount).toLocaleString('id-ID');
   document.getElementById('billDueDate').value = item.dueDate;
   document.getElementById('billNote').value = item.note || '';
   document.getElementById('billRecurring').checked = !!item.recurring;
@@ -7295,7 +7295,11 @@ function openEditBillModal(kind, id) {
 document.getElementById('billForm').addEventListener('submit', (e) => {
   e.preventDefault();
   const name = document.getElementById('billName').value.trim();
-  const amount = parseFloat(document.getElementById('billAmount').value);
+  // ---- Nilai #billAmount sekarang bisa mengandung titik pemisah ribuan
+  // (lihat initBillAmountFormat() & komentar di index.html), jadi titiknya
+  // dibuang dulu sebelum di-parse jadi angka -- kalau langsung parseFloat
+  // nilai spt "150.000" bakal salah kebaca jadi 150 (titik dikira desimal).
+  const amount = parseFloat(document.getElementById('billAmount').value.replace(/\./g, ''));
   const dueDate = document.getElementById('billDueDate').value;
   const note = document.getElementById('billNote').value.trim();
   const recurring = document.getElementById('billRecurring').checked;
@@ -7364,6 +7368,31 @@ billModal.addEventListener('click', (e) => { if (e.target === billModal) closeMo
   });
   dateInput.addEventListener('input', syncActiveChip);
   window.zayaSyncBillDueChips = syncActiveChip;
+})();
+
+/* ---- Format titik pemisah ribuan OTOMATIS pada input nominal
+   (#billAmount) saat user mengetik -- mis. ketik "150000" langsung
+   tampil "150.000" di layar, supaya nominal besar tetap gampang
+   dibaca sekilas di kartu hero-nya (lihat komentar di index.html
+   utk alasan input diubah dari type="number" ke type="text").
+   Posisi kursor DIJAGA relatif thd digit yg sudah diketik (bukan
+   selalu lompat ke ujung kanan) dgn menghitung ulang berdasarkan
+   SELISIH jumlah titik sebelum & sesudah diformat -- supaya user
+   yang mengedit angka di tengah (bukan cuma menambah di akhir)
+   tidak merasa kursornya "meloncat" aneh. Nilai yg dikirim ke
+   server/disimpan TETAP angka murni (titiknya dibuang dulu, lihat
+   submit handler #billForm & openEditBillModal di atas). ---- */
+(function initBillAmountFormat() {
+  const input = document.getElementById('billAmount');
+  if (!input) return;
+  input.addEventListener('input', () => {
+    const caretFromEnd = input.value.length - input.selectionStart;
+    const digitsOnly = input.value.replace(/\D/g, '');
+    const formatted = digitsOnly ? Number(digitsOnly).toLocaleString('id-ID') : '';
+    input.value = formatted;
+    const newPos = Math.max(0, formatted.length - caretFromEnd);
+    input.setSelectionRange(newPos, newPos);
+  });
 })();
 
 /* ==========================================================
