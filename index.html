@@ -9025,6 +9025,22 @@ select#categoryFilter[hidden]{display:none;}
    tebal/berat dibanding modal hapus transaksi biasa. */
 .device-forget-confirm-modal h3{font-weight:500;}
 .device-forget-confirm-modal #btnConfirmDeviceForget{font-weight:600;}
+/* FIX "popup konfirmasi nongol telat di halaman Pengaturan": overlay ini
+   SEBELUMNYA cuma pakai class generik .modal-overlay -> z-index:var(--z-modal)
+   (200). Padahal ia dibuka SAAT halaman "Manajemen Device" (#manajemenDeviceOverlay,
+   class .lap-filter-overlay) masih terbuka, dan overlay itu z-index-nya 700
+   (sengaja dinaikkan melebihi .bottom-nav -- lihat catatan .lap-filter-overlay
+   di atas). Krn 200 < 700, popup konfirmasi ini SEBENARNYA sudah kebuka
+   (class "open" sudah ke-add) tapi ketutup total di BELAKANG halaman
+   Manajemen Device yg backgroundnya solid -- makanya kelihatan spt tombol
+   "Hapus" tidak merespons. Begitu user mundur/menutup halaman Manajemen
+   Device (z-index 700 hilang), popup yg dari tadi sudah kebuka itu baru
+   kelihatan, menimpa halaman APAPUN yg ada di baliknya saat itu (mis.
+   halaman Pengaturan utama) -- kesannya jadi "muncul di tempat yg salah".
+   Pola fix-nya SAMA PERSIS spt #txReceiptOverlay (lihat catatannya di CSS
+   popup Bukti Transaksi): dikasih angka z-index sendiri, lebih tinggi dari
+   .lap-filter-overlay (700), bukan ikut var(--z-modal) generik lagi. */
+#deviceForgetConfirmOverlay{z-index:750;}
 
 /* ============ TOAST ============
    REDESIGN: sebelumnya kartu solid gelap (--forest-deep/--wine) dengan
