@@ -236,7 +236,7 @@ html.zp-page-restore-saya #bottomNav .bn-item[data-page="saya"] .bn-ic-wrap{
   background:color-mix(in srgb, var(--nav-orange) 15%, transparent) !important;
   color:var(--nav-orange) !important;
 }
-/* FIX "bayangan footer" (footer gelap ZAYAin ikut nyembul sekilas
+/* FIX "bayangan footer" (footer gelap ZAYAIN ikut nyembul sekilas
    di bawah) yang muncul PERSIS saat refresh di tab Laporan/Dompet/
    Pengaturan di HP, lalu hilang lagi -- akar masalahnya beda dari
    fix zp-page-restore-* di atas (yang hanya urus konten halaman &
@@ -322,8 +322,8 @@ try {
 
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>ZAYAin — Kelola Uang Masuk &amp; Keluar</title>
-<meta name="description" id="appMetaDescription" content="Kelola uang masuk dan keluar, catat transaksi, tagihan, dan hutang dengan mudah bersama ZAYAin.">
+<title>ZAYAIN — Kelola Uang Masuk &amp; Keluar</title>
+<meta name="description" id="appMetaDescription" content="Kelola uang masuk dan keluar, catat transaksi, tagihan, dan hutang dengan mudah bersama ZAYAIN.">
 <meta name="keywords" id="appMetaKeywords" content="">
 <meta name="robots" content="index, follow">
 <!-- Warna default sengaja disamakan dgn --banner-orange default (lihat
@@ -372,12 +372,12 @@ try {
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="canonical" id="appCanonicalLink" href="">
 <meta property="og:type" content="website">
-<meta property="og:title" id="appOgTitle" content="ZAYAin — Kelola Uang Masuk &amp; Keluar">
-<meta property="og:description" id="appOgDescription" content="Kelola uang masuk dan keluar, catat transaksi, tagihan, dan hutang dengan mudah bersama ZAYAin.">
+<meta property="og:title" id="appOgTitle" content="ZAYAIN — Kelola Uang Masuk &amp; Keluar">
+<meta property="og:description" id="appOgDescription" content="Kelola uang masuk dan keluar, catat transaksi, tagihan, dan hutang dengan mudah bersama ZAYAIN.">
 <meta property="og:image" id="appOgImage" content="">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" id="appTwitterTitle" content="ZAYAin — Kelola Uang Masuk &amp; Keluar">
-<meta name="twitter:description" id="appTwitterDescription" content="Kelola uang masuk dan keluar, catat transaksi, tagihan, dan hutang dengan mudah bersama ZAYAin.">
+<meta name="twitter:title" id="appTwitterTitle" content="ZAYAIN — Kelola Uang Masuk &amp; Keluar">
+<meta name="twitter:description" id="appTwitterDescription" content="Kelola uang masuk dan keluar, catat transaksi, tagihan, dan hutang dengan mudah bersama ZAYAIN.">
 <link rel="icon" id="appFaviconLink" href="">
 <link rel="apple-touch-icon" id="appTouchIconLink" href="">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -465,7 +465,7 @@ try {
      pakai font lain, supaya benar-benar seragam dgn font judul halaman
      -- bukan cuma judul & label saja). Semua font-family lain yang
      sebelumnya literal 'IBM Plex Mono' (angka/nominal), 'Plus Jakarta
-     Sans' (teks body & nama brand ZAYAin), 'Fraunces' (highlight
+     Sans' (teks body & nama brand ZAYAIN), 'Fraunces' (highlight
      kartu pertumbuhan tabungan), dan tumpukan -apple-system (satu
      komponen notifikasi) SUDAH ikut diganti ke 'Poppins' juga di
      seluruh file ini -- tidak ada lagi font kedua/ketiga yg tersisa. */
@@ -7774,6 +7774,14 @@ html.zp-app-loading .page-body > .settings-list{display:none;}
 .settings-toggle input:checked + .settings-toggle-track{background:var(--brass);}
 .settings-toggle input:checked + .settings-toggle-track .settings-toggle-thumb{transform:translateX(17px);}
 
+/* ---- Sub-label kecil di bawah judul baris toggle (mis. "Minta PIN
+   setiap kali app dibuka" di baris "Kunci PIN") -- dipakai SELALU
+   tampil (beda dgn .is-unsupported .settings-row-title-sub di bawah
+   yg cuma tampil kondisional utk baris "Login Biometrik"). ---- */
+.settings-row-title-sub{
+  display:block;font-size:11.5px;color:var(--ink-faint);margin-top:2px;font-weight:400;
+}
+
 /* ---- Baris "Login Biometrik" saat HP/browser TIDAK punya sensor
    sidik jari/Face ID (atau diakses lewat HTTP, bukan HTTPS) -- lihat
    initBiometricToggle() di script.js. Barisnya TETAP ditampilkan
@@ -7784,9 +7792,6 @@ html.zp-app-loading .page-body > .settings-list{display:none;}
   filter:grayscale(1) blur(0.5px);
   opacity:.45;
   cursor:not-allowed;
-}
-.settings-row-toggle.is-unsupported .settings-row-title-sub{
-  display:block;font-size:11.5px;color:var(--ink-faint);margin-top:2px;font-weight:400;
 }
 
 .settings-version{
@@ -8308,7 +8313,7 @@ html.zp-app-loading .page-body > .lap-panel{display:none;}
    dokumen legal di gambar referensi. Warnanya DISESUAIKAN memakai
    var(--nav-orange) (ikut tema app, sama seperti #bantuanOverlay/
    .lap-filter-head lain), bukan biru seperti gambar aslinya, dan isi
-   tulisannya ditulis ulang khusus utk ZAYAin (bukan menyalin teks
+   tulisannya ditulis ulang khusus utk ZAYAIN (bukan menyalin teks
    bank di gambar). Struktur markup memakai class .detail-page-overlay
    .lap-filter-overlay yang sama dgn #bantuanOverlay/#dataDiriOverlay
    supaya animasi meluncur dari kanan & lengkungan kartu putihnya
@@ -8385,9 +8390,9 @@ html.zp-app-loading .page-body > .lap-panel{display:none;}
    konten mengikuti referensi gambar yang diberikan (kartu profil +
    kartu "Device Aktif" berisi 2 kotak ringkasan & daftar perangkat +
    kartu FAQ & Ketentuan berbentuk accordion), TAPI di-reskin total
-   ke bahasa visual ZAYAin (kartu putih beradius var(--radius) di
+   ke bahasa visual ZAYAIN (kartu putih beradius var(--radius) di
    atas var(--paper), BUKAN kartu gelap seperti referensi) supaya
-   konsisten dgn seluruh halaman lain di app ini. Karena ZAYAin
+   konsisten dgn seluruh halaman lain di app ini. Karena ZAYAIN
    bukan app streaming/VIP, istilah "Streaming" & "Ketentuan Layanan
    VIP" di referensi ikut disesuaikan jadi konsep yg relevan (jumlah
    perangkat yg tersimpan di akun cloud + ketentuan keamanan
@@ -9195,7 +9200,7 @@ select#categoryFilter[hidden]{display:none;}
 /* ============ TOAST ============
    REDESIGN: sebelumnya kartu solid gelap (--forest-deep/--wine) dengan
    ikon polos & animasi slide-fade standar -- terasa generik, tidak
-   senada dengan bahasa visual ZAYAin di tempat lain (kartu PUTIH +
+   senada dengan bahasa visual ZAYAIN di tempat lain (kartu PUTIH +
    ikon bulat bertinta warna, lihat .settings-row-icon/.bd-item-ic).
    Sekarang toast dibuat kartu putih senada, dengan:
    - Ikon dibungkus chip bulat bertinta (hijau/--brass utk sukses,
@@ -9274,7 +9279,7 @@ select#categoryFilter[hidden]{display:none;}
      (kiri-atas) SEBELUMNYA biru statis (rgba(37,99,235,...), tidak
      terkait tema sama sekali) -- diganti var(--primary) supaya
      berubah ikut tema aktif. Titik kedua (kanan-bawah) dibiarkan
-     var(--brass) (hijau "pertumbuhan" khas ZAYAin utk elemen
+     var(--brass) (hijau "pertumbuhan" khas ZAYAIN utk elemen
      keuangan) TAPI ditulis lewat variabel (bukan lagi angka
      rgb(5,150,105) yang di-hardcode persis sama) supaya tetap ikut
      kalau --brass suatu saat diubah juga. */
@@ -10350,7 +10355,7 @@ body.is-scrolling *{
 /* ============ CLOUD SYNC — LOGIN/AUTH OVERLAY ============ */
 #cloudAuthOverlay{
   position:fixed; inset:0; z-index:99999;
-  /* Diselaraskan dengan tema hangat oranye khas ZAYAin (sama seperti
+  /* Diselaraskan dengan tema hangat oranye khas ZAYAIN (sama seperti
      gradasi banner/body di halaman utama), bukan lagi biru-hijau gelap
      yang terasa seperti aplikasi lain. */
   background:
@@ -10366,7 +10371,7 @@ body.is-scrolling *{
   /* Kartu login sekarang pakai permukaan putih bersih senada kartu
      "Saldo Total" & kartu lain di seluruh app (var(--card)), bukan
      kartu gelap -- supaya begitu overlay ini terbuka, kesan pertamanya
-     langsung terasa sebagai bagian dari ZAYAin yang sama, bukan
+     langsung terasa sebagai bagian dari ZAYAIN yang sama, bukan
      layar login generik. */
   background:var(--card, #FFFFFF);
   border:1px solid var(--line, #E4E8EF);
@@ -10484,7 +10489,7 @@ body.is-scrolling *{
    nama app + kartu sapaan, lalu di bawahnya "lembar" putih membulat
    berisi tombol pil "Login" (sidik jari) dan preview menu utama
    app (dекoratif, bukan interaktif) supaya user langsung merasa
-   ini gerbang menuju ZAYAin miliknya sendiri, bukan popup generik. ---- */
+   ini gerbang menuju ZAYAIN miliknya sendiri, bukan popup generik. ---- */
 #pinLockOverlay{
   position:fixed; inset:0; z-index:99999;
   background:var(--paper,#F4F6F9);
@@ -10554,7 +10559,12 @@ body.is-scrolling *{
   width:34px; height:34px; border-radius:50%; flex-shrink:0;
   display:flex; align-items:center; justify-content:center;
   background:rgba(255,255,255,.16); color:#fff;
+  /* ---- Sekarang tombol sungguhan (dulu <span> dekoratif) -- reset
+     gaya bawaan <button> supaya tampilannya tetap identik. ---- */
+  border:none; padding:0; cursor:pointer; -webkit-tap-highlight-color:transparent;
+  transition:background .15s ease, transform .1s ease;
 }
+.pin-lock-hero-help:active{ background:rgba(255,255,255,.28); transform:scale(0.94); }
 .pin-lock-hero-greetcard{
   background:rgba(255,255,255,.16);
   border:1px solid rgba(255,255,255,.22);
@@ -10564,7 +10574,7 @@ body.is-scrolling *{
   margin:0 0 clamp(4px,1dvh,7px); font-size:clamp(12.5px,3.2vw,14px); font-weight:600; opacity:.9; letter-spacing:.1px;
 }
 .pin-lock-hero-tagline{
-  margin:0; font-size:clamp(15px,3.6vw,18px); font-weight:600; line-height:1.32;
+  margin:0; font-size:clamp(15px,3.6vw,18px); font-weight:700; line-height:1.32;
   font-family:var(--font-display,'Poppins',sans-serif);
 }
 /* ---- Lembar putih membulat yg "menimpa" ujung bawah header,
@@ -10746,7 +10756,7 @@ body.is-scrolling *{
 #pinLockBioMsg.cloud-auth-msg.show{ margin-bottom:10px; }
 .pin-lock-use-pin-link{
   margin-top:14px; background:transparent; border:none; cursor:pointer;
-  font-size:12.5px; font-weight:700; color:var(--primary,#F2672B);
+  font-size:12.5px; font-weight:600; color:var(--primary,#F2672B);
   padding:8px 4px;
 }
 .pin-lock-use-pin-link:active{ opacity:.7; }
@@ -10754,7 +10764,7 @@ body.is-scrolling *{
    SUDAH DIPINDAH & digabung jadi bagian dari keypad -- lihat
    .pin-key-cancel di dekat .pin-key-bio. Style header terpisah di
    bawah ini sudah tidak dipakai lagi. ---- */
-/* ---- Preview menu utama ZAYAin di bawah tombol Login -- murni
+/* ---- Preview menu utama ZAYAIN di bawah tombol Login -- murni
    DEKORATIF (pointer-events:none), cuma supaya layar kunci terasa
    "mengintip" ke menu asli app spt di referensi (Transfer/E-Wallet/
    dst), memakai ikon & warna yg sama dgn nav bawah + FAB tambah
@@ -11078,7 +11088,7 @@ body.is-scrolling *{
       <span class="brand-mark" id="miniBrandMarkIcon">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>
       </span>
-      <span class="brand-name" id="miniBrandNameText">ZAYAin</span>
+      <span class="brand-name" id="miniBrandNameText">ZAYAIN</span>
     </div>
     <div class="mtb-actions">
       <button class="notif-btn" id="miniHistoryBtn" type="button" title="Riwayat Transaksi" aria-label="Lompat ke riwayat transaksi">
@@ -11179,7 +11189,7 @@ body.is-scrolling *{
           </span>
           <span class="brand-text-col">
             <span class="brand-greeting" id="brandGreetingText">Selamat pagi 👋</span>
-            <span class="brand-name" id="brandNameText">ZAYAin</span>
+            <span class="brand-name" id="brandNameText">ZAYAIN</span>
           </span>
         </div>
       </div>
@@ -11765,7 +11775,7 @@ body.is-scrolling *{
                 <span class="brand-mark-badge" aria-hidden="true">PREMIUM</span>
               </span>
               <span class="tema-preview-titles">
-                <strong id="temaPreviewName">ZAYAin</strong>
+                <strong id="temaPreviewName">ZAYAIN</strong>
                 <span class="tema-preview-sub">Warna, font &amp; gaya banner Anda</span>
               </span>
             </div>
@@ -11949,6 +11959,141 @@ body.is-scrolling *{
   </div>
   <!-- ===== /HALAMAN "DATA DIRI" ===== -->
 
+  <!-- ===== HALAMAN "USER ACCOUNT" (#userAccountOverlay) =====
+       Halaman baru di Pengaturan > Informasi Pribadi, dibuka dari
+       baris "User Account" (#userAccountOpenBtn) tepat di bawah baris
+       "Data Diri & Pekerjaan". Struktur & pola animasi (slide dari
+       kanan, header oranye + kartu putih melengkung menumpang di
+       bawahnya) SAMA PERSIS dgn #tentangOverlay/#dataDiriOverlay di
+       atas (.detail-page-overlay.lap-filter-overlay > .lap-filter-page
+       > .lap-filter-head + .lap-filter-card), supaya konsisten dgn
+       halaman penuh lain di app ini.
+
+       SENGAJA DIKOSONGKAN dulu sesuai permintaan -- isinya baru
+       placeholder "empty-state" (pola PERSIS #detailPageEmpty/
+       #incListEmpty), belum ada konten/fungsi akun sungguhan di
+       dalamnya. Tinggal diisi nanti (mis. detail profil akun cloud,
+       status langganan, dsb) tanpa perlu ubah kerangka halaman ini. ---- -->
+  <div class="detail-page-overlay lap-filter-overlay" id="userAccountOverlay">
+    <div class="lap-filter-page">
+      <div class="lap-filter-head">
+        <button class="lap-filter-back-btn" id="userAccountBackBtn" type="button" aria-label="Tutup User Account">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <h2>User Account</h2>
+        <span class="lap-filter-back-btn" style="visibility:hidden" aria-hidden="true"></span>
+      </div>
+
+      <div class="lap-filter-card">
+        <div class="empty-state" style="padding:30px 16px;">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>
+          <p>Halaman User Account belum diisi. Konten akan segera hadir di sini.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- ===== /HALAMAN "USER ACCOUNT" ===== -->
+
+  <!-- ===== HALAMAN "WIDGET" (#widgetOverlay) =====
+       Halaman baru di Pengaturan > Pengaturan, dibuka dari baris
+       "Widget" (#widgetOpenBtn) tepat di bawah baris "Manajemen
+       Device". Struktur & pola SAMA PERSIS dgn #userAccountOverlay di
+       atas (.detail-page-overlay.lap-filter-overlay > .lap-filter-page
+       > .lap-filter-head + .lap-filter-card + .empty-state).
+
+       SENGAJA DIKOSONGKAN dulu sesuai permintaan, sama seperti
+       #userAccountOverlay -- tinggal diisi nanti (mis. pengaturan
+       widget saldo/ringkasan di homescreen HP) tanpa perlu ubah
+       kerangka halaman ini. ---- -->
+  <div class="detail-page-overlay lap-filter-overlay" id="widgetOverlay">
+    <div class="lap-filter-page">
+      <div class="lap-filter-head">
+        <button class="lap-filter-back-btn" id="widgetBackBtn" type="button" aria-label="Tutup Widget">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <h2>Widget</h2>
+        <span class="lap-filter-back-btn" style="visibility:hidden" aria-hidden="true"></span>
+      </div>
+
+      <div class="lap-filter-card">
+        <div class="empty-state" style="padding:30px 16px;">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3.5" y="3.5" width="8" height="8" rx="1.6"/><rect x="13.5" y="3.5" width="7" height="5.5" rx="1.6"/><rect x="13.5" y="11.5" width="7" height="9" rx="1.6"/><rect x="3.5" y="13.5" width="8" height="7" rx="1.6"/></svg>
+          <p>Halaman Widget belum diisi. Konten akan segera hadir di sini.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- ===== /HALAMAN "WIDGET" ===== -->
+
+  <!-- ===== HALAMAN "UPDATE VERSION" (#updateVersionOverlay) =====
+       Halaman baru di Pengaturan > Informasi, dibuka dari baris
+       "Update Version" (#updateVersionOpenBtn) tepat di bawah baris
+       "Tentang". Struktur & pola SAMA PERSIS dgn #widgetOverlay/
+       #userAccountOverlay di atas (.detail-page-overlay.lap-filter-
+       overlay > .lap-filter-page > .lap-filter-head + .lap-filter-card
+       + .empty-state).
+
+       SENGAJA DIKOSONGKAN dulu sesuai permintaan, sama seperti halaman
+       kosong lain -- tinggal diisi nanti (mis. info versi terbaru/
+       changelog/tombol cek update) tanpa perlu ubah kerangka halaman
+       ini. ---- -->
+  <div class="detail-page-overlay lap-filter-overlay" id="updateVersionOverlay">
+    <div class="lap-filter-page">
+      <div class="lap-filter-head">
+        <button class="lap-filter-back-btn" id="updateVersionBackBtn" type="button" aria-label="Tutup Update Version">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <h2>Update Version</h2>
+        <span class="lap-filter-back-btn" style="visibility:hidden" aria-hidden="true"></span>
+      </div>
+
+      <div class="lap-filter-card">
+        <div class="empty-state" style="padding:30px 16px;">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3v10.5M12 13.5 8.5 10M12 13.5 15.5 10"/><path d="M4.5 15.5v2.8a1.7 1.7 0 0 0 1.7 1.7h11.6a1.7 1.7 0 0 0 1.7-1.7v-2.8"/></svg>
+          <p>Halaman Update Version belum diisi. Konten akan segera hadir di sini.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- ===== /HALAMAN "UPDATE VERSION" ===== -->
+
+  <!-- ===== HALAMAN "LEADERBOARD" KHUSUS PENGATURAN (#settingsLeaderboardOverlay) =====
+       Halaman baru di Pengaturan > Pengaturan, dibuka dari baris
+       "Leaderboard" (#settingsLeaderboardOpenBtn) tepat di bawah baris
+       "Widget". Struktur & pola SAMA PERSIS dgn #widgetOverlay/
+       #updateVersionOverlay di atas (.detail-page-overlay.lap-filter-
+       overlay > .lap-filter-page > .lap-filter-head + .lap-filter-card
+       + .empty-state).
+
+       PENTING: ini BUKAN halaman Leaderboard yg sudah ada & berfungsi
+       penuh di app ini (#leaderboardOverlay, dibuka dari footer) --
+       app sudah punya itu duluan (peringkat pemasukan/pengeluaran
+       harian & bulanan). Ini halaman TERPISAH khusus menu Pengaturan,
+       id-nya sengaja diberi prefix "settingsLeaderboard..." supaya
+       tidak bentrok, sesuai konfirmasi pengguna.
+
+       SENGAJA DIKOSONGKAN dulu, sama seperti halaman kosong lain --
+       tinggal diisi nanti tanpa perlu ubah kerangka halaman ini. ---- -->
+  <div class="detail-page-overlay lap-filter-overlay" id="settingsLeaderboardOverlay">
+    <div class="lap-filter-page">
+      <div class="lap-filter-head">
+        <button class="lap-filter-back-btn" id="settingsLeaderboardBackBtn" type="button" aria-label="Tutup Leaderboard">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <h2>Leaderboard</h2>
+        <span class="lap-filter-back-btn" style="visibility:hidden" aria-hidden="true"></span>
+      </div>
+
+      <div class="lap-filter-card">
+        <div class="empty-state" style="padding:30px 16px;">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4Z"/><path d="M7 5H4a1 1 0 0 0-1 1v1a4 4 0 0 0 4 4M17 5h3a1 1 0 0 1 1 1v1a4 4 0 0 1-4 4"/></svg>
+          <p>Halaman Leaderboard belum diisi. Konten akan segera hadir di sini.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- ===== /HALAMAN "LEADERBOARD" KHUSUS PENGATURAN ===== -->
+
   <!-- ===== HALAMAN "PUSAT BANTUAN" (#bantuanOverlay) =====
        Struktur & pola animasi (slide dari kanan, header warna tema +
        kartu putih melengkung menumpang di bawahnya) SAMA PERSIS dgn
@@ -12100,7 +12245,7 @@ body.is-scrolling *{
               <svg class="bantuan-row-chevron" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"/></svg>
             </div>
 
-            <a class="bantuan-row" href="mailto:cs@zayain.app?subject=Pengaduan%20-%20ZAYAin">
+            <a class="bantuan-row" href="mailto:cs@zayain.app?subject=Pengaduan%20-%20ZAYAIN">
               <span class="bantuan-row-ic">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5.5" width="18" height="13" rx="2"/><path d="m4 7 8 6 8-6"/></svg>
               </span>
@@ -12144,7 +12289,7 @@ body.is-scrolling *{
             <svg class="bantuan-row-chevron" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"/></svg>
           </button>
           <button type="button" class="bantuan-row tentang-row" id="tentangSyaratOpenBtn">
-            <span class="bantuan-row-text"><strong>Syarat dan Ketentuan ZAYAin</strong></span>
+            <span class="bantuan-row-text"><strong>Syarat dan Ketentuan ZAYAIN</strong></span>
             <svg class="bantuan-row-chevron" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"/></svg>
           </button>
         </div>
@@ -12161,7 +12306,7 @@ body.is-scrolling *{
        efektif di bawahnya, LALU satu daftar bernomor yang MENGALIR
        terus (tanpa sub-judul tebal terpisah tiap topik seperti versi
        sebelumnya) -- persis nuansa dokumen legal aslinya, cuma
-       ISINYA ditulis ulang khusus utk ZAYAin (bukan salinan teks BRI). -->
+       ISINYA ditulis ulang khusus utk ZAYAIN (bukan salinan teks BRI). -->
   <div class="detail-page-overlay lap-filter-overlay" id="tentangPrivasiOverlay">
     <div class="lap-filter-page">
       <!-- ---- Header oranye dibuat MENEMPEL (sticky) di puncak layar
@@ -12186,10 +12331,10 @@ body.is-scrolling *{
       <div class="lap-filter-card lap-filter-card--rest tentang-page-card">
         <div class="tentang-doc-card">
         <div class="tentang-doc">
-          <p class="tentang-doc-title">PEMBERITAHUAN PRIVASI<br>ZAYAin</p>
+          <p class="tentang-doc-title">PEMBERITAHUAN PRIVASI<br>ZAYAIN</p>
           <p class="tentang-doc-updated">Tanggal Efektif Berlaku: 30 Agustus 2026</p>
 
-          <p>ZAYAin ("Kami") sepenuhnya menyadari bahwa data pribadi merupakan hal penting. Kami berkomitmen menjaga kerahasiaan &amp; keamanan data pribadi serta hak privasi Anda ("Pengguna") selama menggunakan aplikasi ZAYAin. Dengan menggunakan aplikasi ini, Anda menyatakan telah membaca &amp; memahami Pemberitahuan Privasi berikut:</p>
+          <p>ZAYAIN ("Kami") sepenuhnya menyadari bahwa data pribadi merupakan hal penting. Kami berkomitmen menjaga kerahasiaan &amp; keamanan data pribadi serta hak privasi Anda ("Pengguna") selama menggunakan aplikasi ZAYAIN. Dengan menggunakan aplikasi ini, Anda menyatakan telah membaca &amp; memahami Pemberitahuan Privasi berikut:</p>
 
           <ol>
             <li>Data yang Anda masukkan ke aplikasi meliputi catatan uang masuk &amp; keluar, kategori, nominal, keterangan, foto struk/bukti, serta data profil dasar seperti nama, alamat email, dan foto/logo yang Anda isikan sendiri di menu Data Diri atau saat mendaftar akun.</li>
@@ -12214,7 +12359,7 @@ body.is-scrolling *{
        Pola teks disamakan PERSIS gambar referensi (Syarat & Ketentuan
        Qita): diawali kalimat "Dengan ini saya menyatakan:" lalu daftar
        bernomor yang mengalir terus tanpa sub-judul, isinya ditulis
-       ulang khusus utk ZAYAin (aplikasi pencatat keuangan pribadi,
+       ulang khusus utk ZAYAIN (aplikasi pencatat keuangan pribadi,
        bukan produk perbankan). -->
   <div class="detail-page-overlay lap-filter-overlay" id="tentangSyaratOverlay">
     <div class="lap-filter-page">
@@ -12234,21 +12379,21 @@ body.is-scrolling *{
       <div class="lap-filter-card lap-filter-card--rest tentang-page-card">
         <div class="tentang-doc-card">
         <div class="tentang-doc">
-          <p class="tentang-doc-title">SYARAT DAN KETENTUAN<br>ZAYAin</p>
+          <p class="tentang-doc-title">SYARAT DAN KETENTUAN<br>ZAYAIN</p>
           <p class="tentang-doc-updated">Tanggal Efektif Berlaku: 30 Agustus 2026</p>
 
           <p>Dengan ini saya menyatakan:</p>
 
           <ol>
-            <li>ZAYAin adalah aplikasi pencatat &amp; pengelola uang masuk-keluar pribadi, bukan produk perbankan, dan tidak menyimpan atau memindahkan dana sungguhan -- aplikasi ini hanya berfungsi sebagai alat bantu pencatatan keuangan saya sendiri.</li>
+            <li>ZAYAIN adalah aplikasi pencatat &amp; pengelola uang masuk-keluar pribadi, bukan produk perbankan, dan tidak menyimpan atau memindahkan dana sungguhan -- aplikasi ini hanya berfungsi sebagai alat bantu pencatatan keuangan saya sendiri.</li>
             <li>Aplikasi ini dapat saya gunakan sepenuhnya tanpa akun (data tersimpan lokal di perangkat), atau dengan membuat akun untuk mengaktifkan sinkronisasi data &amp; fitur tambahan.</li>
             <li>Saya bertanggung jawab menjaga kerahasiaan PIN, kata sandi, dan perangkat yang saya gunakan untuk mengakses akun saya.</li>
-            <li>ZAYAin berhak menolak atau menutup akses akun yang terindikasi disalahgunakan untuk merugikan pengguna lain atau mengganggu jalannya layanan.</li>
+            <li>ZAYAIN berhak menolak atau menutup akses akun yang terindikasi disalahgunakan untuk merugikan pengguna lain atau mengganggu jalannya layanan.</li>
             <li>Keakuratan data transaksi, kategori, dan nominal yang saya catat sepenuhnya menjadi tanggung jawab saya sendiri sebagai pengguna.</li>
-            <li>ZAYAin tidak bertanggung jawab atas keputusan keuangan yang saya ambil berdasarkan catatan atau laporan di dalam aplikasi.</li>
+            <li>ZAYAIN tidak bertanggung jawab atas keputusan keuangan yang saya ambil berdasarkan catatan atau laporan di dalam aplikasi.</li>
             <li>Jawaban dari fitur Tanya AI bersifat bantuan otomatis &amp; dapat saja keliru, bukan pengganti nasihat keuangan profesional, dan keputusan akhir tetap ada di tangan saya.</li>
-            <li>ZAYAin dapat menambah, mengubah, atau menghentikan sebagian fitur aplikasi dari waktu ke waktu untuk peningkatan layanan, dengan pemberitahuan di dalam aplikasi bila perubahan tersebut bersifat signifikan.</li>
-            <li>Aplikasi disediakan "sebagaimana adanya" -- ZAYAin berupaya menjaga layanan tetap berjalan normal &amp; data tetap aman, namun tidak menjamin aplikasi akan selalu bebas dari gangguan teknis sepenuhnya.</li>
+            <li>ZAYAIN dapat menambah, mengubah, atau menghentikan sebagian fitur aplikasi dari waktu ke waktu untuk peningkatan layanan, dengan pemberitahuan di dalam aplikasi bila perubahan tersebut bersifat signifikan.</li>
+            <li>Aplikasi disediakan "sebagaimana adanya" -- ZAYAIN berupaya menjaga layanan tetap berjalan normal &amp; data tetap aman, namun tidak menjamin aplikasi akan selalu bebas dari gangguan teknis sepenuhnya.</li>
             <li>Syarat &amp; Ketentuan ini dapat diperbarui sewaktu-waktu, &amp; penggunaan aplikasi setelah pembaruan dianggap sebagai persetujuan saya atas ketentuan yang baru. Pertanyaan dapat disampaikan lewat <a href="mailto:cs@zayain.app">cs@zayain.app</a> atau menu Pusat Bantuan.</li>
           </ol>
         </div>
@@ -12271,7 +12416,7 @@ body.is-scrolling *{
        ISI halaman ini mengikuti STRUKTUR referensi gambar yang diminta
        (kartu profil akun, kartu "Device Aktif" dgn 2 kotak ringkasan +
        daftar perangkat, kartu FAQ, kartu Ketentuan) TAPI kontennya
-       disesuaikan ke konteks ZAYAin (app pencatat keuangan, bukan app
+       disesuaikan ke konteks ZAYAIN (app pencatat keuangan, bukan app
        VIP/streaming): "Perangkat Tersimpan" menggantikan "Login Aktif"
        & "Aktif Hari Ini" menggantikan "Streaming", "Ketentuan Layanan
        VIP" jadi "Ketentuan Keamanan Perangkat". Semua nilai (nama akun,
@@ -12374,7 +12519,7 @@ body.is-scrolling *{
               <span>Apa itu Perangkat Tersimpan?</span>
               <svg class="bantuan-faq-caret" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m6 9 6 6 6-6"/></svg>
             </button>
-            <p class="bantuan-faq-a">Daftar browser/perangkat yang pernah kamu pakai untuk membuka ZAYAin dengan akun ini. Kalau kamu belum masuk/daftar akun, daftar ini cuma menampilkan perangkat yang sedang kamu pakai sekarang.</p>
+            <p class="bantuan-faq-a">Daftar browser/perangkat yang pernah kamu pakai untuk membuka ZAYAIN dengan akun ini. Kalau kamu belum masuk/daftar akun, daftar ini cuma menampilkan perangkat yang sedang kamu pakai sekarang.</p>
           </div>
           <div class="bantuan-faq-item">
             <button type="button" class="bantuan-faq-q">
@@ -12388,14 +12533,14 @@ body.is-scrolling *{
               <span>Apa yang terjadi kalau saya hapus sebuah perangkat?</span>
               <svg class="bantuan-faq-caret" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m6 9 6 6 6-6"/></svg>
             </button>
-            <p class="bantuan-faq-a">Perangkat itu hilang dari daftar ini di semua perangkatmu. Ini bukan mematikan sesi login-nya secara paksa -- kalau perangkat itu masih ingin dipakai, cukup buka ZAYAin lagi di sana, perangkat itu akan otomatis terdaftar ulang.</p>
+            <p class="bantuan-faq-a">Perangkat itu hilang dari daftar ini di semua perangkatmu. Ini bukan mematikan sesi login-nya secara paksa -- kalau perangkat itu masih ingin dipakai, cukup buka ZAYAIN lagi di sana, perangkat itu akan otomatis terdaftar ulang.</p>
           </div>
           <div class="bantuan-faq-item">
             <button type="button" class="bantuan-faq-q">
               <span>Kenapa perangkat ini menunjukkan status "Offline"?</span>
               <svg class="bantuan-faq-caret" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m6 9 6 6 6-6"/></svg>
             </button>
-            <p class="bantuan-faq-a">Status "Online" hanya berarti perangkat itu membuka ZAYAin dalam 5 menit terakhir. Kalau sudah lebih lama dari itu (atau tidak dibuka lagi), statusnya berubah jadi "Offline" -- perangkatnya tetap tersimpan di daftar.</p>
+            <p class="bantuan-faq-a">Status "Online" hanya berarti perangkat itu membuka ZAYAIN dalam 5 menit terakhir. Kalau sudah lebih lama dari itu (atau tidak dibuka lagi), statusnya berubah jadi "Offline" -- perangkatnya tetap tersimpan di daftar.</p>
           </div>
         </div>
 
@@ -12413,7 +12558,7 @@ body.is-scrolling *{
           <svg class="bantuan-row-chevron" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"/></svg>
         </button>
         <div class="tentang-doc-card device-mgmt-terms-body" id="deviceMgmtTermsBody" hidden>
-          <p style="margin:0 0 10px;font-size:12.5px;line-height:1.65;color:var(--ink-soft);">Fitur Manajemen Device membantu kamu memantau perangkat mana saja yang mengakses akun ZAYAin kamu. Dengan menggunakan fitur ini, kamu memahami &amp; menyetujui:</p>
+          <p style="margin:0 0 10px;font-size:12.5px;line-height:1.65;color:var(--ink-soft);">Fitur Manajemen Device membantu kamu memantau perangkat mana saja yang mengakses akun ZAYAIN kamu. Dengan menggunakan fitur ini, kamu memahami &amp; menyetujui:</p>
           <ol style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:8px;">
             <li style="font-size:12.5px;line-height:1.65;color:var(--ink-soft);">Daftar perangkat hanya tersinkron ke akun cloud kamu apabila kamu sudah masuk/daftar akun -- tanpa akun, daftar ini hanya menampilkan perangkat yang sedang kamu pakai.</li>
             <li style="font-size:12.5px;line-height:1.65;color:var(--ink-soft);">Batas jumlah perangkat bersifat panduan keamanan, bukan pembatasan berbayar/VIP -- kamu bebas menghapus perangkat lama kapan saja.</li>
@@ -12479,7 +12624,7 @@ body.is-scrolling *{
           <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9c.7-1.2 2.7-1.2 3.4 0l8.2 14.2c.7 1.2-.2 2.7-1.7 2.7H3.8c-1.5 0-2.4-1.5-1.7-2.7L10.3 3.9Z"/><path d="M12 9v4.5"/><circle cx="12" cy="16.8" r="1" fill="currentColor" stroke="none"/></svg>
         </div>
         <h3 class="sec-sheet-title">Yakin kamu ingin mengubah PIN?</h3>
-        <p class="sec-sheet-desc">PIN ini dipakai sebagai kunci cepat masuk ke ZAYAin di perangkat ini, menggantikan PIN lama begitu berhasil diganti.</p>
+        <p class="sec-sheet-desc">PIN ini dipakai sebagai kunci cepat masuk ke ZAYAIN di perangkat ini, menggantikan PIN lama begitu berhasil diganti.</p>
         <div class="sec-sheet-actions sec-sheet-actions--split">
           <button type="button" class="btn btn-ghost lap-filter-cancel-btn" id="pinChangeConfirmCancelBtn">Batal</button>
           <button type="button" class="btn btn-primary lap-filter-save-btn" id="pinChangeConfirmProceedBtn">Ubah PIN</button>
@@ -12809,6 +12954,19 @@ body.is-scrolling *{
               <span class="settings-row-title">Data Diri &amp; Pekerjaan</span>
               <svg class="settings-row-chevron" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"/></svg>
             </button>
+            <!-- ---- Baris baru "User Account" -- membuka halaman penuh
+                 #userAccountOverlay, mengikuti pola PERSIS baris "Data
+                 Diri & Pekerjaan" di atas (id *OpenBtn + fungsi open/
+                 close overlay di script.js). Halaman tujuannya SENGAJA
+                 masih kosong (placeholder), lihat catatan lengkap di
+                 markup #userAccountOverlay. ---- -->
+            <button type="button" class="settings-row" id="userAccountOpenBtn">
+              <span class="settings-row-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.4"/><path d="M5.5 20c.7-3.8 3.4-6 6.5-6s5.8 2.2 6.5 6"/></svg>
+              </span>
+              <span class="settings-row-title">User Account</span>
+              <svg class="settings-row-chevron" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"/></svg>
+            </button>
           </div>
         </div>
 
@@ -12851,6 +13009,43 @@ body.is-scrolling *{
               <span class="settings-row-title">Manajemen Device</span>
               <svg class="settings-row-chevron" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"/></svg>
             </button>
+            <!-- ---- Baris baru "Widget" -- membuka halaman penuh
+                 #widgetOverlay, pola PERSIS baris "Manajemen Device" di
+                 atas (id *OpenBtn + fungsi open/close overlay di
+                 script.js). Halaman tujuannya SENGAJA masih kosong
+                 (placeholder), sama seperti #userAccountOverlay --
+                 lihat catatan lengkap di markup #widgetOverlay. ---- -->
+            <button type="button" class="settings-row" id="widgetOpenBtn">
+              <span class="settings-row-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="8" height="8" rx="1.6"/><rect x="13.5" y="3.5" width="7" height="5.5" rx="1.6"/><rect x="13.5" y="11.5" width="7" height="9" rx="1.6"/><rect x="3.5" y="13.5" width="8" height="7" rx="1.6"/></svg>
+              </span>
+              <span class="settings-row-title">Widget</span>
+              <svg class="settings-row-chevron" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"/></svg>
+            </button>
+            <!-- ---- Baris baru "Leaderboard" (KHUSUS Pengaturan) --
+                 membuka halaman penuh #settingsLeaderboardOverlay, pola
+                 PERSIS baris "Widget" di atas (id *OpenBtn + fungsi
+                 open/close overlay di script.js). Halaman tujuannya
+                 SENGAJA masih kosong (placeholder), sama seperti
+                 #widgetOverlay/#userAccountOverlay -- lihat catatan
+                 lengkap di markup #settingsLeaderboardOverlay.
+
+                 CATATAN PENTING: app ini SUDAH punya halaman
+                 "Leaderboard" lain yg berfungsi penuh (#leaderboardOverlay,
+                 dibuka dari footer/#footerNavLeaderboard, berisi
+                 peringkat pemasukan/pengeluaran harian & bulanan) --
+                 baris & overlay baru ini SENGAJA dibuat dgn id BERBEDA
+                 (prefix "settingsLeaderboard...") supaya TIDAK bentrok
+                 dgn punya footer itu; keduanya sekarang hidup
+                 berdampingan sbg 2 halaman terpisah sesuai konfirmasi
+                 pengguna. ---- -->
+            <button type="button" class="settings-row" id="settingsLeaderboardOpenBtn">
+              <span class="settings-row-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4Z"/><path d="M7 5H4a1 1 0 0 0-1 1v1a4 4 0 0 0 4 4M17 5h3a1 1 0 0 1 1 1v1a4 4 0 0 1-4 4"/></svg>
+              </span>
+              <span class="settings-row-title">Leaderboard</span>
+              <svg class="settings-row-chevron" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"/></svg>
+            </button>
           </div>
         </div>
 
@@ -12864,6 +13059,27 @@ body.is-scrolling *{
               <span class="settings-row-title">Ubah PIN</span>
               <svg class="settings-row-chevron" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"/></svg>
             </button>
+            <!-- ---- Toggle baru "Kunci PIN" -- menyalakan/mematikan
+                 layar kunci PIN yg tampil saat app dibuka (lihat
+                 requirePinUnlock di cloud-sync.js). Pola markup & gaya
+                 SAMA PERSIS dgn toggle "Login Biometrik" di bawah
+                 (.settings-row-toggle + .settings-toggle), disambungkan
+                 lewat window.zayaproAuth.isPinLockEnabled()/
+                 setPinLockEnabled() -- lihat initPinLockToggle() di
+                 script.js. Preferensi ini per-perangkat (localStorage,
+                 SAMA seperti Login Biometrik), bukan menghapus PIN
+                 akun -- PIN yg sudah diset tetap tersimpan, cuma layar
+                 kuncinya yg di-skip selama toggle ini OFF. ---- -->
+            <div class="settings-row settings-row-toggle" id="pinLockToggleRow">
+              <span class="settings-row-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15" r="1.3" fill="currentColor" stroke="none"/></svg>
+              </span>
+              <span class="settings-row-title">Kunci PIN<span class="settings-row-title-sub">Minta PIN setiap kali app dibuka</span></span>
+              <label class="settings-toggle">
+                <input type="checkbox" id="pinLockToggleInput">
+                <span class="settings-toggle-track"><span class="settings-toggle-thumb"></span></span>
+              </label>
+            </div>
             <button type="button" class="settings-row" id="btnOpenPasswordChange">
               <span class="settings-row-icon">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="10.5" width="15" height="10" rx="2"/><path d="M7.5 10.5V7a4.5 4.5 0 0 1 9 0v3.5"/></svg>
@@ -12905,6 +13121,20 @@ body.is-scrolling *{
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5" stroke-linecap="round"/><circle cx="12" cy="7.6" r="1.05" fill="currentColor" stroke="none"/></svg>
               </span>
               <span class="settings-row-title">Tentang</span>
+              <svg class="settings-row-chevron" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"/></svg>
+            </button>
+            <!-- ---- Baris baru "Update Version" -- membuka halaman
+                 penuh #updateVersionOverlay, pola PERSIS baris "Tentang"
+                 di atas (id *OpenBtn + fungsi open/close overlay di
+                 script.js). Halaman tujuannya SENGAJA masih kosong
+                 (placeholder), sama seperti #userAccountOverlay/
+                 #widgetOverlay -- lihat catatan lengkap di markup
+                 #updateVersionOverlay. ---- -->
+            <button type="button" class="settings-row" id="updateVersionOpenBtn">
+              <span class="settings-row-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v10.5M12 13.5 8.5 10M12 13.5 15.5 10"/><path d="M4.5 15.5v2.8a1.7 1.7 0 0 0 1.7 1.7h11.6a1.7 1.7 0 0 0 1.7-1.7v-2.8"/></svg>
+              </span>
+              <span class="settings-row-title">Update Version</span>
               <svg class="settings-row-chevron" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"/></svg>
             </button>
             <button type="button" class="settings-row" disabled>
@@ -12951,7 +13181,7 @@ body.is-scrolling *{
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>
         </span>
         <div>
-          <span class="footer-brand-name" id="footerBrandNameText">ZAYAin</span>
+          <span class="footer-brand-name" id="footerBrandNameText">ZAYAIN</span>
           <span class="footer-brand-tag">Pengelola Uang Masuk &amp; Keluar</span>
         </div>
       </div>
@@ -12993,7 +13223,7 @@ body.is-scrolling *{
 
     <div class="footer-bottom">
       <p class="footer-note">Data disimpan otomatis di penyimpanan lokal browser kamu (localStorage) — tidak terkirim ke server mana pun.</p>
-      <p class="footer-copy">© <span id="footerYear"></span> <span id="footerCopyName">ZAYAin</span>. Dibuat dengan <span class="footer-heart">♥</span> untuk keuanganmu.</p>
+      <p class="footer-copy">© <span id="footerYear"></span> <span id="footerCopyName">ZAYAIN</span>. Dibuat dengan <span class="footer-heart">♥</span> untuk keuanganmu.</p>
     </div>
   </footer>
 </div>
@@ -13064,7 +13294,7 @@ body.is-scrolling *{
      di tab Aktifitas -- Bagikan/Unduh/Selesai sama seperti struk pembayaran
      pada umumnya. Header gradasi oranye di atas (menggantikan biru pada
      referensi) lalu memudar ke badan kartu putih di bawahnya, senada
-     dengan warna aksen & identitas ZAYAin yang bisa diganti pengguna
+     dengan warna aksen & identitas ZAYAIN yang bisa diganti pengguna
      lewat Pengaturan Aplikasi -- lihat #receiptBrandNameText/#receiptBrandMarkIcon
      yang ikut disinkronkan oleh applyAppSettings() supaya nama & logo di
      popup ini SELALU sama dengan nama/logo aplikasi yang sedang aktif,
@@ -13086,7 +13316,7 @@ body.is-scrolling *{
           <span class="receipt-brand-mark" id="receiptBrandMarkIcon">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>
           </span>
-          <span class="receipt-brand-name" id="receiptBrandNameText">ZAYAin</span>
+          <span class="receipt-brand-name" id="receiptBrandNameText">ZAYAIN</span>
         </div>
       </div>
 
@@ -13244,7 +13474,7 @@ body.is-scrolling *{
 <!-- ===== MODAL KONFIRMASI HAPUS PERANGKAT (Manajemen Device) — REDESIGN =====
      SEBELUMNYA pakai confirm() bawaan browser (lihat catatan lama di
      deviceMgmtForgetDevice() di script.js) -- kotak abu-abu polos milik
-     OS/browser, tidak senada sama sekali dgn tampilan ZAYAin & teksnya
+     OS/browser, tidak senada sama sekali dgn tampilan ZAYAIN & teksnya
      (nama perangkat) tidak bisa diberi penekanan apa pun. Sekarang diganti
      modal custom, dibungkus jadi fungsi berbasis Promise (openDeviceForgetConfirm())
      persis pola openLogoutConfirm() di atas, supaya pemanggilnya tetap bisa
@@ -13265,7 +13495,7 @@ body.is-scrolling *{
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6h16Z"/></svg>
     </div>
     <h3 id="deviceForgetConfirmTitle" style="margin-bottom:6px;">Hapus perangkat ini?</h3>
-    <p style="color:var(--ink-soft);font-size:13.5px;margin-bottom:18px;">Perangkat ini tidak akan "dipaksa keluar" — kalau masih dipakai, ia akan otomatis terdaftar ulang begitu ZAYAin dibuka lagi di sana.</p>
+    <p style="color:var(--ink-soft);font-size:13.5px;margin-bottom:18px;">Perangkat ini tidak akan "dipaksa keluar" — kalau masih dipakai, ia akan otomatis terdaftar ulang begitu ZAYAIN dibuka lagi di sana.</p>
     <div class="modal-actions">
       <button class="btn btn-ghost" id="btnCancelDeviceForget" type="button">Batal</button>
       <button class="btn btn-danger" id="btnConfirmDeviceForget" type="button">Ya, Hapus</button>
@@ -13276,7 +13506,7 @@ body.is-scrolling *{
 <!-- ===== MODAL KONFIRMASI KELUAR AKUN (REDESIGN) =====
      SEBELUMNYA logout memakai confirm() bawaan BROWSER -- kotak abu-abu
      polos "OK/Batal" milik OS/browser sendiri, sama sekali tidak senada
-     dgn tampilan ZAYAin, tidak bisa diberi warna/ikon/animasi apa pun
+     dgn tampilan ZAYAIN, tidak bisa diberi warna/ikon/animasi apa pun
      (lihat handleAccountToggleClick() di script.js, baris
      `if (!confirm('Keluar dari akun ini?')) return;` yg sekarang
      diganti dgn openLogoutConfirm() versi custom ini). Sengaja dibuat
@@ -14527,7 +14757,7 @@ body.is-scrolling *{
       <div class="as-body">
         <div class="as-section form-row">
           <label class="as-section-label" for="asAppName">Nama Aplikasi</label>
-          <input type="text" id="asAppName" placeholder="Contoh: ZAYAin" maxlength="24" required>
+          <input type="text" id="asAppName" placeholder="Contoh: ZAYAIN" maxlength="24" required>
         </div>
 
         <div class="as-section">
@@ -14846,7 +15076,7 @@ body.is-scrolling *{
     <div class="cloud-auth-logo">
       <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>
     </div>
-    <h2 id="cloudAuthTitle">Masuk ke ZAYAin</h2>
+    <h2 id="cloudAuthTitle">Masuk ke ZAYAIN</h2>
     <p class="cloud-auth-tagline">Kelola keuanganmu, di mana saja.</p>
     <div class="cloud-auth-msg" id="cloudAuthMsg"></div>
     <form id="cloudAuthForm">
@@ -14902,16 +15132,16 @@ body.is-scrolling *{
 
     <!-- ===== HEADER: nama app + kartu sapaan (niru header biru
          "Hai, Ari / Makin Nyaman Atur Keuangan Bareng Qita" di
-         referensi, tapi pakai identitas & warna ZAYAin sendiri). ===== -->
+         referensi, tapi pakai identitas & warna ZAYAIN sendiri). ===== -->
     <div class="pin-lock-hero">
       <div class="pin-lock-hero-topbar">
         <span class="pin-lock-hero-brand">
           <span class="brand-mark" id="pinLockBrandMarkIcon"></span>
-          <span id="pinLockBrandNameText">ZAYAin</span>
+          <span id="pinLockBrandNameText">ZAYAIN</span>
         </span>
-        <span class="pin-lock-hero-help" aria-hidden="true">
+        <button type="button" class="pin-lock-hero-help" id="pinLockHelpBtn" aria-label="Buka Pusat Bantuan">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 18v-6a6 6 0 0 0-12 0v6"/><path d="M3 18a2 2 0 0 0 2 2h1v-6H4a1 1 0 0 0-1 1Z"/><path d="M21 18a2 2 0 0 1-2 2h-1v-6h2a1 1 0 0 1 1 1Z"/></svg>
-        </span>
+        </button>
       </div>
       <div class="pin-lock-hero-greetcard">
         <p class="pin-lock-hero-hi" id="pinLockGreeting">Selamat datang kembali</p>
@@ -14976,7 +15206,7 @@ body.is-scrolling *{
           </div>
         </div>
 
-        <!-- ---- Preview menu utama ZAYAin -- DEKORATIF saja (spt grid
+        <!-- ---- Preview menu utama ZAYAIN -- DEKORATIF saja (spt grid
              Transfer/E-Wallet/BRIVA/dst di referensi), memakai ikon
              yg sama dgn nav bawah (#bottomNav) + FAB tambah transaksi
              milik app ini, supaya layar kunci terasa mengintip ke

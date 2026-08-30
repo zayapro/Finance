@@ -1,5 +1,5 @@
 /* ==========================================================
-   ZAYAin — CLOUD SYNC (Supabase)
+   ZAYAIN — CLOUD SYNC (Supabase)
    Modul ini HARUS dimuat SEBELUM script.js.
    Menyediakan `window.cloudStorage`: pengganti drop-in untuk
    `localStorage` (API sama: getItem/setItem/removeItem) yang
@@ -346,12 +346,12 @@
     if (pinInput) pinInput.required = (mode === 'signup');
     if (pinConfirmInput) pinConfirmInput.required = (mode === 'signup');
     if (mode === 'signup') {
-      titleEl.textContent = 'Daftar Akun ZAYAin';
+      titleEl.textContent = 'Daftar Akun ZAYAIN';
       submitBtn.textContent = 'Daftar';
       switchText.textContent = 'Sudah punya akun?';
       switchLink.textContent = 'Masuk di sini';
     } else {
-      titleEl.textContent = 'Masuk ke ZAYAin';
+      titleEl.textContent = 'Masuk ke ZAYAIN';
       submitBtn.textContent = 'Masuk';
       switchText.textContent = 'Belum punya akun?';
       switchLink.textContent = 'Daftar di sini';
@@ -678,6 +678,9 @@
       const backspaceBtn = document.getElementById('pinLockBackspace');
       const forgotLink = document.getElementById('pinLockForgotLink');
       const keypadBioBtn = document.getElementById('pinLockKeypadBioBtn');
+      const helpBtn = document.getElementById('pinLockHelpBtn');
+      const bantuanOverlayEl = document.getElementById('bantuanOverlay');
+      const bantuanBackBtnEl = document.getElementById('bantuanBackBtn');
       const bioEnabled = window.zayaproAuth.isBiometricEnabled();
       let entered = '';
       let checking = false;
@@ -706,7 +709,7 @@
       function showBioView() {
         if (pinView) pinView.classList.remove('open');
         if (bioView) bioView.classList.add('open');
-        if (titleEl) titleEl.textContent = 'Atur Keuanganmu dengan ZAYAin Sekarang';
+        if (titleEl) titleEl.textContent = 'Atur Keuanganmu dengan ZAYAIN Sekarang';
       }
       /* ---- Tombol tutup (×) di tampilan PIN cuma masuk akal kalau
          ada tampilan Login sidik jari utk dituju balik -- makanya
@@ -768,6 +771,31 @@
       function onForgot() {
         window.cloudSignOut();
       }
+      /* ---- Ikon bantuan (?) di header layar kunci PIN/sidik jari:
+         dulu cuma <span> dekoratif, sekarang mengarah ke halaman
+         "Pusat Bantuan" (#bantuanOverlay) begitu diketuk. Overlay itu
+         markup-nya SUDAH ada statis di index.html (bukan digambar
+         oleh script.js), jadi bisa langsung dibuka dari sini -- TAPI
+         script.js (pemilik asli openBantuanOverlay/closeBantuanOverlay
+         & initBantuanPage utk accordion FAQ + pencarian) SENGAJA baru
+         dimuat SETELAH PIN berhasil (lihat startAppOnce()), jadi belum
+         ada saat layar kunci ini tampil. Makanya buka/tutupnya ditangani
+         sendiri di sini, mandiri tanpa gantung ke script.js. z-index
+         overlay bantuan (var(--z-page):120) SENGAJA dinaikkan sementara
+         di atas #pinLockOverlay (99999) HANYA selagi dibuka dari layar
+         kunci ini, supaya kelihatan menimpanya -- lalu dikembalikan
+         normal saat ditutup, supaya tidak mengacaukan urutan tumpukan
+         overlay lain stlh PIN berhasil & script.js mengambil alih. ---- */
+      function openBantuanFromPinLock() {
+        if (!bantuanOverlayEl) return;
+        bantuanOverlayEl.style.zIndex = '100000';
+        bantuanOverlayEl.classList.add('open');
+      }
+      function closeBantuanFromPinLock() {
+        if (!bantuanOverlayEl) return;
+        bantuanOverlayEl.classList.remove('open');
+        bantuanOverlayEl.style.zIndex = '';
+      }
       /* ---- Percobaan sidik jari/Face ID dari tampilan biometrik
          utama -- dipicu OTOMATIS begitu tampilan ini terbuka (lihat
          pemanggilan attemptBio() di paling bawah), & bisa diulang
@@ -811,6 +839,9 @@
         if (keypadBioBtn) keypadBioBtn.removeEventListener('click', onBioRetry);
         if (bioBtn) bioBtn.removeEventListener('click', onBioBtnClick);
         if (usePinBtn) usePinBtn.removeEventListener('click', onUsePin);
+        if (helpBtn) helpBtn.removeEventListener('click', openBantuanFromPinLock);
+        if (bantuanBackBtnEl) bantuanBackBtnEl.removeEventListener('click', closeBantuanFromPinLock);
+        closeBantuanFromPinLock();
         unlockBodyScrollForPinLock();
       }
 
@@ -820,6 +851,8 @@
       if (keypadBioBtn) keypadBioBtn.addEventListener('click', onBioRetry);
       if (bioBtn) bioBtn.addEventListener('click', onBioBtnClick);
       if (usePinBtn) usePinBtn.addEventListener('click', onUsePin);
+      if (helpBtn) helpBtn.addEventListener('click', openBantuanFromPinLock);
+      if (bantuanBackBtnEl) bantuanBackBtnEl.addEventListener('click', closeBantuanFromPinLock);
 
       entered = '';
       renderDots();
@@ -936,6 +969,30 @@
       currentUser = data.user;
       return true;
     },
+    /* ---------- Toggle "Kunci PIN" (Pengaturan > Keamanan) ----------
+       Menyalakan/mematikan layar kunci PIN yg tampil saat app dibuka
+       (lihat requirePinUnlock() & boot() di bawah) -- BUKAN menghapus
+       PIN akun itu sendiri (pin_hash tetap tersimpan di server & bisa
+       dipakai lagi kapan saja begitu toggle ini dinyalakan ulang).
+       Preferensi ini sengaja disimpan LOKAL per perangkat (localStorage,
+       key diberi akhiran id akun), pola SAMA PERSIS dgn kredensial
+       Login Biometrik di bawah -- supaya mematikan kunci PIN di HP ini
+       TIDAK ikut mematikannya di perangkat lain tempat akun yg sama
+       login. Default (key belum pernah diset) = AKTIF, supaya perilaku
+       akun lama/yg sudah ada tetap sama persis spt sebelum toggle ini
+       ditambahkan. ---------- */
+    isPinLockEnabled: function () {
+      if (!currentUser) return true;
+      return localStorage.getItem('zayapro_pin_lock_off_' + currentUser.id) !== '1';
+    },
+    setPinLockEnabled: function (enabled) {
+      if (!currentUser) return;
+      if (enabled) {
+        localStorage.removeItem('zayapro_pin_lock_off_' + currentUser.id);
+      } else {
+        localStorage.setItem('zayapro_pin_lock_off_' + currentUser.id, '1');
+      }
+    },
     verifyPassword: async function (password) {
       if (!currentUser) return false;
       const { error } = await sb.auth.signInWithPassword({ email: currentUser.email, password: password });
@@ -979,7 +1036,7 @@
       const cred = await navigator.credentials.create({
         publicKey: {
           challenge: challenge,
-          rp: { name: 'ZAYAin' },
+          rp: { name: 'ZAYAIN' },
           user: {
             id: userIdBytes,
             name: currentUser.email || 'user',
@@ -1061,10 +1118,15 @@
       // requirePinUnlock() sendiri -- lihat tampilan #pinLockBioView --
       // jadi tidak lagi dicoba dobel di sini sebelum layar kuncinya
       // ditampilkan.
+      // ---- Syarat TAMBAHAN isPinLockEnabled(): toggle "Kunci PIN" di
+      // Pengaturan > Keamanan (lihat window.zayaproAuth di atas & baris
+      // #pinLockToggleInput di script.js) -- kalau user MEMATIKANNYA di
+      // perangkat ini, layar kunci di-skip TOTAL walau pin_hash tetap
+      // ada di akun, persis spt kalau memang belum pernah set PIN.
       const pinHash = currentUser.user_metadata && currentUser.user_metadata.pin_hash;
-      if (pinHash) {
+      if (pinHash && window.zayaproAuth.isPinLockEnabled()) {
         await requirePinUnlock(currentUser, pinHash);
-      } else if (window.zayaproAuth.isBiometricEnabled()) {
+      } else if (!pinHash && window.zayaproAuth.isBiometricEnabled()) {
         // Kondisi rusak/tidak konsisten: biometrik sempat diaktifkan
         // padahal akun ini TIDAK PUNYA PIN (mis. diaktifkan sebelum
         // pengecekan hasPin() ditambahkan di initBiometricToggle,

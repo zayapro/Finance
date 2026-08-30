@@ -1,5 +1,5 @@
 /* ==========================================================
-   ZAYAin — Pengelola Uang Masuk & Keluar
+   ZAYAIN — Pengelola Uang Masuk & Keluar
    Semua panggilan localStorage di file ini sudah diganti jadi
    `cloudStorage` (lihat cloud-sync.js, dimuat sebelum file ini).
    cloudStorage.getItem/setItem/removeItem PUNYA API PERSIS SAMA
@@ -5241,7 +5241,7 @@ async function exportIncomeSourceExcel() {
 
   const total = list.reduce((s, x) => s + (Number(x.amount) || 0), 0);
   const wb = new ExcelJS.Workbook();
-  wb.creator = 'ZAYAin';
+  wb.creator = 'ZAYAIN';
   wb.created = new Date();
   const ws = wb.addWorksheet('Sumber Pendapatan', { views: [{ state: 'frozen', ySplit: 4 }] });
 
@@ -5251,7 +5251,7 @@ async function exportIncomeSourceExcel() {
 
   ws.mergeCells('A1:E1');
   const titleCell = ws.getCell('A1');
-  titleCell.value = 'ZAYAin — Sumber Pendapatan';
+  titleCell.value = 'ZAYAIN — Sumber Pendapatan';
   titleCell.font = { name: 'Calibri', size: 16, bold: true, color: { argb: 'FFFFFFFF' } };
   titleCell.alignment = { vertical: 'middle', horizontal: 'left' };
   ws.getRow(1).height = 30;
@@ -5329,7 +5329,7 @@ async function exportIncomeSourcePdf() {
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(18);
-  doc.text('ZAYAin', 40, 34);
+  doc.text('ZAYAIN', 40, 34);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(11);
   doc.text('Laporan Sumber Pendapatan', 40, 52);
@@ -5364,7 +5364,7 @@ async function exportIncomeSourcePdf() {
       doc.setFontSize(8.5);
       doc.setTextColor(138, 147, 163);
       doc.text(`Halaman ${data.pageNumber} / ${pageCount}`, pageW - 40, doc.internal.pageSize.getHeight() - 20, { align: 'right' });
-      doc.text('ZAYAin — Kelola Uang Masuk & Keluar', 40, doc.internal.pageSize.getHeight() - 20);
+      doc.text('ZAYAIN — Kelola Uang Masuk & Keluar', 40, doc.internal.pageSize.getHeight() - 20);
     }
   });
 
@@ -6423,7 +6423,7 @@ txModal.addEventListener('click', (e) => { if (e.target === txModal) closeModal(
    dibuka dgn tap kartu transaksi di tab Aktifitas (bukan tombol
    edit/hapus). Meniru pola struk pembayaran pada umumnya (lencana
    sukses, nominal besar, rincian, lalu Bagikan/Unduh/Selesai) tapi
-   warna & identitasnya memakai tema ZAYAin sendiri.
+   warna & identitasnya memakai tema ZAYAIN sendiri.
 ========================================================== */
 const txReceiptOverlay = document.getElementById('txReceiptOverlay');
 let receiptTxId = null;
@@ -6535,7 +6535,7 @@ document.getElementById('receiptExpandBody').addEventListener('transitionend', (
 });
 
 function currentAppName() {
-  return (document.getElementById('brandNameText')?.textContent || '').trim() || 'ZAYAin';
+  return (document.getElementById('brandNameText')?.textContent || '').trim() || 'ZAYAIN';
 }
 
 function receiptSummaryText(t) {
@@ -7105,7 +7105,7 @@ document.getElementById('btnAddDesktop')?.addEventListener('click', () => openAd
 // buat guest).
 // ---- Redesign popup konfirmasi keluar akun ----
 // SEBELUMNYA pakai confirm() bawaan browser (kotak abu-abu polos milik
-// OS/browser, tidak senada sama sekali dgn tampilan ZAYAin & tidak bisa
+// OS/browser, tidak senada sama sekali dgn tampilan ZAYAIN & tidak bisa
 // diberi ikon/warna/animasi apa pun). Sekarang diganti modal custom
 // (#logoutConfirmOverlay, lihat markup + catatan desainnya di index.html)
 // yg dibungkus jadi fungsi berbasis Promise di sini supaya pemanggilnya
@@ -7914,10 +7914,10 @@ const APP_META_DESC_MAXLEN = 160;
    terbaca rapi sbg nama, bukan mentah2 "budi.santoso99" -- dipakai di
    mana pun aplikasi butuh nama aplikasi tapi pengguna belum pernah
    mengganti "Nama Web" sendiri (appName kosong). APP_SETTINGS_DEFAULTS.appName
-   SENGAJA dikosongkan ('') -- bukan lagi hardcode 'ZAYAin' -- supaya
+   SENGAJA dikosongkan ('') -- bukan lagi hardcode 'ZAYAIN' -- supaya
    status "belum pernah diisi pengguna" bisa dibedakan dari "sudah
    pernah diisi", dan getDefaultAppName() di bawah inilah yg
-   menentukan tampilannya selama appName masih kosong. 'ZAYAin' cuma
+   menentukan tampilannya selama appName masih kosong. 'ZAYAIN' cuma
    dipakai sbg jaring pengaman paling akhir kalau emailnya sendiri
    entah kenapa tidak tersedia. ---- */
 function deriveAccountNameFromEmail(email) {
@@ -7939,7 +7939,7 @@ function getDefaultAppName() {
   // spt semula.
   const realName = (window.zayaproAccountName || '').trim();
   if (realName) return realName;
-  return deriveAccountNameFromEmail(window.zayaproAccountEmail) || 'ZAYAin';
+  return deriveAccountNameFromEmail(window.zayaproAccountEmail) || 'ZAYAIN';
 }
 
 /* ==========================================================
@@ -7950,7 +7950,7 @@ function getDefaultAppName() {
    --primary-soft SEKALIGUS --banner-orange/--banner-orange-deep --
    yaitu SEMUA variabel warna yang dipakai banner Beranda, tombol,
    badge, & elemen brand lain di seluruh app. 6 pilihan siap pakai,
-   dikurasi supaya senada dengan identitas ZAYAin (aksen hangat di
+   dikurasi supaya senada dengan identitas ZAYAIN (aksen hangat di
    atas latar navy gelap + kartu putih): Oren (bawaan, warna brand
    asli), Zamrud & Toska (kesan uang/pertumbuhan finansial), Safir
    (kepercayaan), Ametis (premium), Emas (kesan kekayaan/tabungan).
@@ -8473,7 +8473,7 @@ function applyAppSettings(settings) {
   const receiptNameEl = document.getElementById('receiptBrandNameText');
   if (receiptNameEl) receiptNameEl.textContent = name;
   // Header popup PIN/Login Biometrik -- nama brand ikut nama aplikasi
-  // yg sedang aktif juga (bukan lagi teks "ZAYAin" hardcode).
+  // yg sedang aktif juga (bukan lagi teks "ZAYAIN" hardcode).
   const pinLockNameEl = document.getElementById('pinLockBrandNameText');
   if (pinLockNameEl) pinLockNameEl.textContent = name;
 
@@ -9778,6 +9778,77 @@ document.getElementById('dataDiriCancelBtn')?.addEventListener('click', closeDat
 document.getElementById('dataDiriDoneBtn')?.addEventListener('click', confirmDataDiriOverlay);
 
 /* ==========================================================
+   PENGATURAN > INFORMASI PRIBADI — "User Account" (#userAccountOverlay).
+   Pola buka/tutup SAMA PERSIS dgn openTentangOverlay/closeTentangOverlay
+   di bawah (tanpa logic tambahan lain) -- halaman ini SENGAJA masih
+   kosong (placeholder "empty-state"), tinggal diisi kontennya nanti. ---- */
+function openUserAccountOverlay() {
+  document.getElementById('userAccountOverlay')?.classList.add('open');
+  lockBodyScroll();
+}
+function closeUserAccountOverlay() {
+  document.getElementById('userAccountOverlay')?.classList.remove('open');
+  unlockBodyScroll();
+}
+document.getElementById('userAccountOpenBtn')?.addEventListener('click', openUserAccountOverlay);
+document.getElementById('userAccountBackBtn')?.addEventListener('click', closeUserAccountOverlay);
+
+/* ==========================================================
+   PENGATURAN > PENGATURAN — "Widget" (#widgetOverlay). Pola buka/
+   tutup SAMA PERSIS dgn openUserAccountOverlay/closeUserAccountOverlay
+   di atas -- halaman ini SENGAJA masih kosong (placeholder
+   "empty-state"), tinggal diisi kontennya nanti. ---- */
+function openWidgetOverlay() {
+  document.getElementById('widgetOverlay')?.classList.add('open');
+  lockBodyScroll();
+}
+function closeWidgetOverlay() {
+  document.getElementById('widgetOverlay')?.classList.remove('open');
+  unlockBodyScroll();
+}
+document.getElementById('widgetOpenBtn')?.addEventListener('click', openWidgetOverlay);
+document.getElementById('widgetBackBtn')?.addEventListener('click', closeWidgetOverlay);
+
+/* ==========================================================
+   PENGATURAN > INFORMASI — "Update Version" (#updateVersionOverlay).
+   Pola buka/tutup SAMA PERSIS dgn openWidgetOverlay/closeWidgetOverlay
+   di atas -- halaman ini SENGAJA masih kosong (placeholder
+   "empty-state"), tinggal diisi kontennya nanti. ---- */
+function openUpdateVersionOverlay() {
+  document.getElementById('updateVersionOverlay')?.classList.add('open');
+  lockBodyScroll();
+}
+function closeUpdateVersionOverlay() {
+  document.getElementById('updateVersionOverlay')?.classList.remove('open');
+  unlockBodyScroll();
+}
+document.getElementById('updateVersionOpenBtn')?.addEventListener('click', openUpdateVersionOverlay);
+document.getElementById('updateVersionBackBtn')?.addEventListener('click', closeUpdateVersionOverlay);
+
+/* ==========================================================
+   PENGATURAN > PENGATURAN — "Leaderboard" khusus menu Pengaturan
+   (#settingsLeaderboardOverlay). Pola buka/tutup SAMA PERSIS dgn
+   openUpdateVersionOverlay/closeUpdateVersionOverlay di atas --
+   halaman ini SENGAJA masih kosong (placeholder "empty-state"),
+   tinggal diisi kontennya nanti.
+
+   CATATAN: sengaja diberi nama fungsi/id BERBEDA (prefix
+   "SettingsLeaderboard...") dari openLeaderboardPage/closeLeaderboardPage
+   & #leaderboardOverlay yg SUDAH ADA & berfungsi penuh (dibuka dari
+   footer) di tempat lain di file ini -- supaya kedua halaman "Leaderboard"
+   ini tetap berdiri sendiri-sendiri, tidak saling menimpa. ---- */
+function openSettingsLeaderboardOverlay() {
+  document.getElementById('settingsLeaderboardOverlay')?.classList.add('open');
+  lockBodyScroll();
+}
+function closeSettingsLeaderboardOverlay() {
+  document.getElementById('settingsLeaderboardOverlay')?.classList.remove('open');
+  unlockBodyScroll();
+}
+document.getElementById('settingsLeaderboardOpenBtn')?.addEventListener('click', openSettingsLeaderboardOverlay);
+document.getElementById('settingsLeaderboardBackBtn')?.addEventListener('click', closeSettingsLeaderboardOverlay);
+
+/* ==========================================================
    PENGATURAN > KONTAK — Pusat Bantuan (#bantuanOverlay).
    Pola buka/tutup SAMA PERSIS dgn openDataDiriOverlay/closeDataDiriOverlay
    di atas. Selain itu ada 2 fitur kecil yg beneran jalan (bukan cuma
@@ -9909,9 +9980,9 @@ document.getElementById('tentangSyaratBackBtn')?.addEventListener('click', close
 /* ==========================================================
    PENGATURAN > PENGATURAN — "Manajemen Device" (#manajemenDeviceOverlay).
    Fitur ini menampilkan daftar perangkat/browser yang pernah dipakai
-   membuka ZAYAin dgn akun yang sedang login, mengikuti struktur
+   membuka ZAYAIN dgn akun yang sedang login, mengikuti struktur
    referensi (kartu profil + kartu ringkasan & daftar perangkat + FAQ +
-   Ketentuan) yang sudah disesuaikan ke konteks ZAYAin (bukan app
+   Ketentuan) yang sudah disesuaikan ke konteks ZAYAIN (bukan app
    VIP/streaming). Alurnya:
 
    1. Tiap perangkat/browser punya ID acak sendiri yg dibuat SEKALI &
@@ -10284,8 +10355,8 @@ async function renderDeviceMgmtPage() {
     try {
       const { data } = await window._sb.auth.getSession();
       const email = data && data.session && data.session.user ? data.session.user.email : null;
-      nameEl.textContent = email || 'Akun ZAYAin';
-    } catch (e) { nameEl.textContent = 'Akun ZAYAin'; }
+      nameEl.textContent = email || 'Akun ZAYAIN';
+    } catch (e) { nameEl.textContent = 'Akun ZAYAIN'; }
     statusEl.innerHTML = '<span class="dot"></span>Tersinkron ke akun cloud';
     statusEl.classList.add('is-online');
     subtitleEl.textContent = 'Kelola perangkat yang tersinkron ke akun kamu';
@@ -10414,7 +10485,7 @@ document.getElementById('deviceDetailSheetOverlay')?.addEventListener('click', f
 // halaman Manajemen Device dibuka / tombol refresh ditekan -- artinya
 // status "Online" & "Terakhir aktif" HANYA benar kalau user memang
 // sedang melihat halaman itu. Begitu user pindah ke tab/menu lain di
-// app ini (tetap aktif memakai ZAYAin), timestamp lastActive berhenti
+// app ini (tetap aktif memakai ZAYAIN), timestamp lastActive berhenti
 // diperbarui -- lewat DEVICE_MGMT_ONLINE_WINDOW_MS (5 menit) tanpa
 // membuka halaman itu lagi, perangkat yg SEBENARNYA sedang aktif akan
 // keliru ditampilkan "Offline" (di perangkat lain yg melihat daftar
@@ -10524,7 +10595,7 @@ document.getElementById('deviceMgmtRefreshBtn')?.addEventListener('click', async
 
 // ---- Redesign popup konfirmasi HAPUS PERANGKAT (Manajemen Device) ----
 // SEBELUMNYA pakai confirm() bawaan browser -- kotak abu-abu polos milik
-// OS/browser, tidak senada sama sekali dgn tampilan ZAYAin & nama
+// OS/browser, tidak senada sama sekali dgn tampilan ZAYAIN & nama
 // perangkatnya tidak bisa ditonjolkan apa pun di dalamnya. Sekarang diganti
 // modal custom (#deviceForgetConfirmOverlay, lihat markup + catatan
 // desainnya di index.html), dibungkus jadi fungsi berbasis Promise persis
@@ -10670,8 +10741,8 @@ function updatePinChangeLabels() {
   const sheetDesc = document.querySelector('#pinChangeConfirmSheet .sec-sheet-desc');
   if (sheetDesc) {
     sheetDesc.textContent = hasExistingPin
-      ? 'PIN ini dipakai sebagai kunci cepat masuk ke ZAYAin di perangkat ini, menggantikan PIN lama begitu berhasil diganti.'
-      : 'PIN ini dipakai sebagai kunci cepat masuk ke ZAYAin di perangkat ini, & jadi syarat sebelum Login Biometrik bisa diaktifkan.';
+      ? 'PIN ini dipakai sebagai kunci cepat masuk ke ZAYAIN di perangkat ini, menggantikan PIN lama begitu berhasil diganti.'
+      : 'PIN ini dipakai sebagai kunci cepat masuk ke ZAYAIN di perangkat ini, & jadi syarat sebelum Login Biometrik bisa diaktifkan.';
   }
   const proceedBtn = document.getElementById('pinChangeConfirmProceedBtn');
   if (proceedBtn) proceedBtn.textContent = verb + ' PIN';
@@ -10991,6 +11062,51 @@ document.getElementById('pwForgotSendBtn')?.addEventListener('click', async func
   }
 });
 
+/* ---- Toggle "Kunci PIN" -- menyalakan/mematikan layar kunci PIN yg
+   tampil saat app dibuka (lihat requirePinUnlock()/boot() di
+   cloud-sync.js). Preferensi per-perangkat, disambungkan lewat
+   window.zayaproAuth.isPinLockEnabled()/setPinLockEnabled(). Kalau
+   dimatikan sementara Login Biometrik masih aktif, biometriknya ikut
+   dimatikan otomatis di sini juga -- toggle itu murni jalur MASUK ke
+   layar kunci PIN, jadi tidak ada gunanya tetap ON kalau layar
+   kuncinya sendiri sudah di-skip total. ---- */
+(function initPinLockToggle() {
+  const toggle = document.getElementById('pinLockToggleInput');
+  if (!toggle || !window.zayaproAuth) return;
+
+  toggle.checked = window.zayaproAuth.isPinLockEnabled();
+  toggle.addEventListener('change', function () {
+    if (!requireCloudLogin('Masuk untuk mengatur Kunci PIN.')) {
+      toggle.checked = window.zayaproAuth.isPinLockEnabled();
+      return;
+    }
+    if (!toggle.checked && !window.zayaproAuth.hasPin()) {
+      // Jaga-jaga: kalau suatu saat ada akun tanpa PIN sama sekali,
+      // togglenya tidak relevan utk dimatikan (memang sudah tidak
+      // pernah mengunci).
+      toggle.checked = true;
+      showToast('Belum ada PIN yang diset di akun ini.', 'err');
+      return;
+    }
+    window.zayaproAuth.setPinLockEnabled(toggle.checked);
+    if (toggle.checked) {
+      showToast('Kunci PIN diaktifkan -- PIN akan diminta setiap app dibuka.');
+    } else {
+      // Login Biometrik cuma jalan sbg jalan pintas DI DALAM layar
+      // kunci PIN -- kalau layar kuncinya di-skip, matikan juga
+      // biometriknya (& ikut update tampilan togglenya) supaya
+      // Pengaturan tidak menampilkan "Login Biometrik: ON" yg
+      // sebenarnya sudah tidak pernah kepakai.
+      if (window.zayaproAuth.isBiometricEnabled()) {
+        window.zayaproAuth.disableBiometric();
+        const bioToggle = document.getElementById('biometricToggleInput');
+        if (bioToggle) bioToggle.checked = false;
+      }
+      showToast('Kunci PIN dimatikan di perangkat ini -- app langsung terbuka tanpa diminta PIN.');
+    }
+  });
+})();
+
 /* ---- Toggle "Login Biometrik" ---- */
 (async function initBiometricToggle() {
   const toggle = document.getElementById('biometricToggleInput');
@@ -11041,6 +11157,15 @@ document.getElementById('pwForgotSendBtn')?.addEventListener('click', async func
       if (!window.zayaproAuth.hasPin()) {
         toggle.checked = false;
         showToast('Atur PIN dulu lewat menu "Buat PIN" sebelum mengaktifkan Login Biometrik.', 'err');
+        return;
+      }
+      // Biometrik cuma jalan sbg jalan pintas DI DALAM layar kunci
+      // PIN (lihat #pinLockBioView) -- percuma diaktifkan kalau
+      // toggle "Kunci PIN" di atas sedang OFF, krn layar kuncinya
+      // sendiri tidak akan pernah tampil.
+      if (!window.zayaproAuth.isPinLockEnabled()) {
+        toggle.checked = false;
+        showToast('Nyalakan dulu toggle "Kunci PIN" sebelum mengaktifkan Login Biometrik.', 'err');
         return;
       }
       try {
@@ -11187,14 +11312,14 @@ async function exportTransactionsExcel() {
   const net = masuk - keluar;
 
   const wb = new ExcelJS.Workbook();
-  wb.creator = 'ZAYAin';
+  wb.creator = 'ZAYAIN';
   wb.created = new Date();
   const ws = wb.addWorksheet('Transaksi', { views: [{ state: 'frozen', ySplit: 4 }] });
   ws.columns = [{ width: 13 }, { width: 12 }, { width: 20 }, { width: 34 }, { width: 20 }];
 
   ws.mergeCells('A1:E1');
   const titleCell = ws.getCell('A1');
-  titleCell.value = 'ZAYAin — Riwayat Transaksi';
+  titleCell.value = 'ZAYAIN — Riwayat Transaksi';
   titleCell.font = { name: 'Calibri', size: 16, bold: true, color: { argb: 'FFFFFFFF' } };
   ws.getRow(1).height = 30;
 
@@ -11274,7 +11399,7 @@ async function exportTransactionsPdf() {
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(18);
-  doc.text('ZAYAin', 40, 34);
+  doc.text('ZAYAIN', 40, 34);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(11);
   doc.text('Laporan Riwayat Transaksi', 40, 52);
@@ -11322,7 +11447,7 @@ async function exportTransactionsPdf() {
       doc.setFontSize(8.5);
       doc.setTextColor(138, 147, 163);
       doc.text(`Halaman ${data.pageNumber} / ${pageCount}`, pageW - 40, doc.internal.pageSize.getHeight() - 20, { align: 'right' });
-      doc.text('ZAYAin — Kelola Uang Masuk & Keluar', 40, doc.internal.pageSize.getHeight() - 20);
+      doc.text('ZAYAIN — Kelola Uang Masuk & Keluar', 40, doc.internal.pageSize.getHeight() - 20);
     }
   });
 
@@ -12638,7 +12763,7 @@ function renderAiMessages() {
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="6" width="12" height="12" rx="3"/><path d="M9.5 2v3M14.5 2v3M9.5 19v3M14.5 19v3M2 9.5h3M2 14.5h3M19 9.5h3M19 14.5h3"/></svg>
       </div>
       <p>${aiActiveTab === 'data'
-        ? 'Tanya apa saja soal saldo, transaksi, tagihan, atau hutangmu di ZAYAin.'
+        ? 'Tanya apa saja soal saldo, transaksi, tagihan, atau hutangmu di ZAYAIN.'
         : 'Tanya apa saja ke AI, mulai dari tips keuangan sampai hal umum lainnya.'}</p>
       <p class="ai-chat-empty-hint">${aiActiveTab === 'data' ? 'Contoh: "Berapa pengeluaran bulan ini?"' : 'Contoh: "Bagaimana cara mulai menabung?"'}</p>
     `;
@@ -12662,7 +12787,7 @@ function buildAiMsgNode(msg) {
     head.className = 'ai-msg-head';
     head.innerHTML = `
       <span class="ai-msg-ic"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="6" y="6" width="12" height="12" rx="3"/><path d="M9.5 2v3M14.5 2v3M9.5 19v3M14.5 19v3M2 9.5h3M2 14.5h3M19 9.5h3M19 14.5h3"/></svg></span>
-      <span class="ai-msg-name">ZAYAin AI</span>
+      <span class="ai-msg-name">ZAYAIN AI</span>
     `;
     const content = document.createElement('div');
     content.className = 'ai-msg-content';
@@ -12850,7 +12975,7 @@ function appendAiTypingIndicator() {
   row.innerHTML = `
     <div class="ai-msg-head">
       <span class="ai-msg-ic"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="6" y="6" width="12" height="12" rx="3"/><path d="M9.5 2v3M14.5 2v3M9.5 19v3M14.5 19v3M2 9.5h3M2 14.5h3M19 9.5h3M19 14.5h3"/></svg></span>
-      <span class="ai-msg-name">ZAYAin AI</span>
+      <span class="ai-msg-name">ZAYAIN AI</span>
     </div>
     <div class="ai-msg-content"><div class="ai-typing"><span></span><span></span><span></span></div></div>
   `;
@@ -12869,8 +12994,8 @@ async function callGeminiApi(userText, mode) {
 
   const formattingNote = ' Format jawaban dengan markdown ringan bila membantu keterbacaan: **tebal** untuk poin penting, daftar bullet "- " untuk rincian/list, dan blok kode ``` ``` khusus untuk data terstruktur (misalnya tabel angka rapi).';
   const systemInstruction = mode === 'data'
-    ? `Kamu adalah asisten keuangan pribadi di aplikasi ZAYAin. Jawab dalam Bahasa Indonesia, singkat, jelas, dan ramah.${formattingNote} Gunakan data keuangan pengguna berikut sebagai konteks untuk menjawab. Jangan mengarang angka di luar data ini, dan sebutkan jika suatu informasi tidak tersedia di data.\n\n=== DATA KEUANGAN PENGGUNA ===\n${buildFinancialContextSummary()}`
-    : `Kamu adalah asisten AI umum di aplikasi ZAYAin. Jawab dalam Bahasa Indonesia, singkat, jelas, dan ramah.${formattingNote}`;
+    ? `Kamu adalah asisten keuangan pribadi di aplikasi ZAYAIN. Jawab dalam Bahasa Indonesia, singkat, jelas, dan ramah.${formattingNote} Gunakan data keuangan pengguna berikut sebagai konteks untuk menjawab. Jangan mengarang angka di luar data ini, dan sebutkan jika suatu informasi tidak tersedia di data.\n\n=== DATA KEUANGAN PENGGUNA ===\n${buildFinancialContextSummary()}`
+    : `Kamu adalah asisten AI umum di aplikasi ZAYAIN. Jawab dalam Bahasa Indonesia, singkat, jelas, dan ramah.${formattingNote}`;
 
   // Sertakan beberapa pesan terakhir sebagai riwayat percakapan supaya
   // konteks obrolan tetap nyambung, tanpa mengirim seluruh riwayat.

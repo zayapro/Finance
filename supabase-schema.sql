@@ -1,5 +1,5 @@
 -- ==========================================================
--- ZAYAin — SCHEMA SUPABASE UNTUK SINKRONISASI OTOMATIS
+-- ZAYAIN — SCHEMA SUPABASE UNTUK SINKRONISASI OTOMATIS
 -- Jalankan file ini SEKALI di project Supabase kamu:
 -- Dashboard Supabase > SQL Editor > New query > paste semua
 -- isi file ini > Run.
