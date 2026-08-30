@@ -28,7 +28,19 @@
   // sensitif/perangkat-spesifik):
   //  - cache berita: cuma cache sementara, tidak penting disamakan
   //  - API key Gemini pribadi user & riwayat chat AI: disimpan lokal saja
-  const CLOUD_EXCLUDE_EXACT = ['zayapro_ai_settings', 'zayapro_ai_chat_history'];
+  //  - 'zayapro_this_device_id' = ID unik "perangkat ini" utk fitur
+  //    Manajemen Device (lihat deviceMgmtGetLocalId() di script.js).
+  //    Key ini SENGAJA ditulis LANGSUNG ke localStorage biasa (bukan
+  //    lewat cloudStorage) supaya murni per-browser & TIDAK PERNAH
+  //    di-push ke kv_store. TANPA dikecualikan di sini, key ini
+  //    dianggap pullAllFromCloud() sbg "key lokal yg sudah tidak ada
+  //    di cloud" (krn memang tidak pernah ada di cloud) lalu ikut
+  //    DIHAPUS setiap refresh/buka app dgn sesi aktif -- akibatnya
+  //    deviceMgmtGetLocalId() mengira ini "perangkat baru" tiap kali &
+  //    generate ID acak baru lagi, sehingga perangkat yg SAMA
+  //    terdaftar berulang-ulang sbg entri baru & daftar perangkat
+  //    terus bertambah tiap di-refresh. (Bug fix)
+  const CLOUD_EXCLUDE_EXACT = ['zayapro_ai_settings', 'zayapro_ai_chat_history', 'zayapro_this_device_id'];
   // 'sb-' = prefix key internal yang dipakai Supabase sendiri untuk
   // menyimpan token sesi login (mis. "sb-<ref>-auth-token") di
   // localStorage. WAJIB dikecualikan dari sinkron/pembersihan di
@@ -185,6 +197,31 @@
 
     return true;
   }
+
+  // ---- Pull SEBAGIAN (cuma key tertentu), tanpa efek samping pullAllFromCloud() ----
+  // pullAllFromCloud() di atas SENGAJA agresif (menimpa & MENGHAPUS key lokal yg
+  // sudah tidak ada di cloud) supaya cocok dipakai saat login/reload penuh -- tapi
+  // itu berisiko kalau dipanggil dari tombol kecil di tengah sesi yg sedang jalan
+  // (mis. ada data lokal-lain yg belum sempat ke-push, bisa ikut kehapus). Fungsi
+  // ini dibuat KHUSUS utk kasus spt tombol refresh Manajemen Device: cuma menarik
+  // & menimpa key yg diminta, tidak menyentuh/menghapus key lain sama sekali.
+  window.cloudPullKeys = async function (keys) {
+    if (!currentUser) return false; // mode lokal (tanpa akun) -- tidak ada apa2 di cloud utk ditarik
+    try {
+      const { data, error } = await sb.from('kv_store').select('key,value')
+        .eq('user_id', currentUser.id).in('key', keys);
+      if (error) { console.error('Gagal menarik data cloud (sebagian):', error); return false; }
+      data.forEach(function (row) {
+        const v = row.value;
+        const strVal = (typeof v === 'string') ? v : JSON.stringify(v);
+        localStorage.setItem(row.key, strVal);
+      });
+      return true;
+    } catch (e) {
+      console.error('Gagal menarik data cloud (sebagian):', e);
+      return false;
+    }
+  };
 
   /* ---------- sinyal reset live antar perangkat (Realtime Broadcast) ----------
      Broadcast TIDAK butuh publication/replikasi tabel, cukup satu topik

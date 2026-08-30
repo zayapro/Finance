@@ -9962,9 +9962,13 @@ const ANDROID_BRAND_RULES = [
 // kode model lagi -- kalau itu terjadi, fungsi ini mengembalikan null
 // & pemanggilnya otomatis jatuh balik ke label umum "Android" saja
 // (persis perilaku SEBELUM fitur ini ada, tidak ada yang rusak).
-function deviceMgmtGuessAndroidBrand(ua) {
-  const match = ua.match(/Android\s+[\d.]+\s*;\s*([^;)]+?)\s*(?:Build\/|\))/i);
-  const rawModel = match ? match[1].trim() : '';
+// Dipisah dari deviceMgmtGuessAndroidBrand() di bawah (SEBELUMNYA logic ini
+// nempel jadi satu dgn parsing regex User-Agent) supaya bisa dipakai ULANG
+// oleh deviceMgmtEnrichThisDeviceModel() (Client Hints) juga -- kode model
+// mentah bisa datang dari DUA sumber berbeda (tebakan regex UA string, atau
+// nilai "model" dari navigator.userAgentData yg lebih akurat), tapi
+// pencocokan ke ANDROID_BRAND_RULES-nya sama persis utk keduanya.
+function deviceMgmtMatchBrandRule(rawModel) {
   // Sebagian UA menaruh "wv" (WebView) atau kode bahasa (mis. "K")
   // menggantikan model kalau device policy-nya menyembunyikan model --
   // buang hasil yang jelas bukan kode model asli.
@@ -9979,6 +9983,12 @@ function deviceMgmtGuessAndroidBrand(ua) {
   // apa adanya (lihat deviceMgmtDetectDetails()).
   const alreadyHasBrand = new RegExp('^' + rule.brand, 'i').test(rawModel);
   return { model: rawModel, brand: alreadyHasBrand ? null : rule.brand };
+}
+
+function deviceMgmtGuessAndroidBrand(ua) {
+  const match = ua.match(/Android\s+[\d.]+\s*;\s*([^;)]+?)\s*(?:Build\/|\))/i);
+  const rawModel = match ? match[1].trim() : '';
+  return deviceMgmtMatchBrandRule(rawModel);
 }
 
 // Parser User-Agent SEDERHANA (cukup utk label "Browser on OS", tidak
@@ -10042,9 +10052,18 @@ function deviceMgmtDetectDetails() {
 
   const browserLabel = browserVersion ? `${browser} ${browserVersion}` : browser;
   const osLabel = osVersion ? `${os} ${osVersion}` : os;
+  // Judul baris di daftar SEKARANG pakai nama merek+model perangkat (mis.
+  // "Samsung SM-A536E") kalau berhasil terbaca -- jauh lebih gampang
+  // dikenali user drpd cuma "Chrome on Android" generik. Info browser tetap
+  // ditampilkan, cuma dipindah jadi info sekunder di baris meta (lihat
+  // renderDeviceMgmtPage()) & baris "Browser" tersendiri di popup detail.
+  // Kalau model tidak berhasil terbaca sama sekali (mis. iOS/desktop, atau
+  // Android yg UA-nya sudah "dibekukan" & Client Hints juga tidak tersedia),
+  // fallback ke label lama apa adanya.
+  const label = deviceModel || `${browser} on ${os}`;
 
   return {
-    label: `${browser} on ${os}`, // label ringkas, tetap dipakai di baris daftar
+    label,
     isMobile, browser, browserVersion, browserLabel, os, osVersion, osLabel, deviceModel,
   };
 }
@@ -10102,6 +10121,67 @@ async function deviceMgmtEnrichThisDeviceIpLocation() {
   entry.city = info.city;
   entry.region = info.region;
   entry.country = info.country;
+  deviceMgmtPersistSessions(list);
+  if (document.getElementById('manajemenDeviceOverlay')?.classList.contains('open')) {
+    renderDeviceMgmtPage();
+  }
+}
+
+// ---- Client Hints (navigator.userAgentData) utk model perangkat Android
+// yg LEBIH AKURAT drpd cuma tebak dari string User-Agent ----
+// Chrome versi baru menerapkan "User-Agent Reduction": string UA biasa (yg
+// dipakai deviceMgmtGuessAndroidBrand() di atas) di BANYAK perangkat SUDAH
+// TIDAK menyertakan kode model asli lagi (cuma "Android 10; K" generik),
+// sehingga kolom "Model perangkat"/judul kartu sering muncul kosong/generik
+// padahal browsernya sendiri (Chrome/Edge/Opera & browser berbasis Chromium
+// lain) SEBENARNYA masih tahu model aslinya lewat API terpisah ini -- API
+// Client Hints SENGAJA tidak ikut "dibekukan" seperti UA string biasa,
+// justru dibuat khusus utk kasus spt ini. Safari & Firefox TIDAK mendukung
+// API ini sama sekali -- di situ fallback ke tebakan dari UA string
+// (deviceMgmtGuessAndroidBrand, sudah ada sebelumnya) TETAP jadi satu2nya
+// cara, jadi ini murni "peningkatan kalau tersedia", bukan pengganti total.
+// Dicache 1x per pemuatan halaman, sama spt lookup IP di atas -- nilainya
+// tidak berubah selama sesi ini jadi tidak perlu dipanggil berulang.
+let deviceMgmtClientHintsPromise = null;
+function deviceMgmtFetchClientHintsModel() {
+  if (deviceMgmtClientHintsPromise) return deviceMgmtClientHintsPromise;
+  if (!navigator.userAgentData || typeof navigator.userAgentData.getHighEntropyValues !== 'function') {
+    deviceMgmtClientHintsPromise = Promise.resolve(null);
+    return deviceMgmtClientHintsPromise;
+  }
+  deviceMgmtClientHintsPromise = navigator.userAgentData.getHighEntropyValues(['model'])
+    .then((ch) => (ch && ch.model) ? ch.model.trim() : null)
+    .catch((e) => {
+      // Browser menolak permintaan (jarang terjadi) -- anggap saja tidak
+      // tersedia, biarkan fallback tebakan dari UA string yg sudah ada
+      // dipakai apa adanya, jangan sampai fitur lain ikut gagal gara2 ini.
+      console.error('Gagal membaca Client Hints model perangkat:', e);
+      return null;
+    });
+  return deviceMgmtClientHintsPromise;
+}
+
+// Perbarui entri perangkat INI dgn model dari Client Hints di atas, kalau
+// tersedia -- dijalankan sekali per pemuatan halaman (dipanggil dari
+// deviceMgmtStartHeartbeat(), sama spt lookup IP), plus diulang manual tiap
+// tombol refresh ditekan (lihat listener #deviceMgmtRefreshBtn) supaya klik
+// refresh tidak sia-sia kalau lookup pertama tadi ternyata gagal/belum
+// sempat kepakai (mis. `entry` belum ada saat app baru dibuka).
+let deviceMgmtModelEnrichStarted = false;
+async function deviceMgmtEnrichThisDeviceModel() {
+  if (deviceMgmtModelEnrichStarted) return;
+  deviceMgmtModelEnrichStarted = true;
+  const rawModel = await deviceMgmtFetchClientHintsModel();
+  if (!rawModel) return; // tidak didukung/gagal -- biarkan hasil tebakan UA string yg lama apa adanya
+  const guess = deviceMgmtMatchBrandRule(rawModel);
+  if (!guess) return;
+  const betterModel = guess.brand ? `${guess.brand} ${guess.model}` : guess.model;
+  const id = deviceMgmtGetLocalId();
+  const list = deviceMgmtLoadSessions();
+  const entry = list.find((d) => d.id === id);
+  if (!entry) return; // belum pernah "touch" sekalipun -- lewati, biar heartbeat berikutnya yg bikin entrinya dulu
+  entry.deviceModel = betterModel;
+  entry.label = betterModel; // biar judul kartu di daftar ikut ter-update juga, bukan cuma field "Model perangkat" di popup detail
   deviceMgmtPersistSessions(list);
   if (document.getElementById('manajemenDeviceOverlay')?.classList.contains('open')) {
     renderDeviceMgmtPage();
@@ -10213,6 +10293,11 @@ async function renderDeviceMgmtPage() {
     const statusHtml = isThis
       ? '<span class="is-online">Online</span>'
       : (online ? '<span class="is-online">Online</span>' : `<span class="is-offline">Terakhir aktif ${timeAgoId(d.lastActive)}</span>`);
+    // Judul baris (d.label) sekarang bisa berisi merek+model perangkat (mis.
+    // "Samsung SM-A536E"), lihat deviceMgmtDetectDetails() -- supaya info
+    // browser yg sebelumnya ada di judul tidak hilang begitu saja, ditaruh
+    // di baris meta sbg info sekunder, disandingkan dgn status online/offline.
+    const browserMeta = d.browserLabel || d.browser || '';
     return `
       <div class="device-mgmt-row" data-deviceid="${escapeHtmlAttr(d.id)}">
         <span class="device-mgmt-row-ic">${deviceMgmtIconSvg(d.isMobile)}</span>
@@ -10221,7 +10306,7 @@ async function renderDeviceMgmtPage() {
             <strong>${escapeHtml(d.label)}</strong>
             ${isThis ? '<span class="device-mgmt-badge">Device ini</span>' : ''}
           </div>
-          <div class="device-mgmt-row-meta">${statusHtml}</div>
+          <div class="device-mgmt-row-meta">${statusHtml}${browserMeta ? `<span>· ${escapeHtml(browserMeta)}</span>` : ''}</div>
         </div>
         ${isThis ? '' : `<button type="button" class="device-mgmt-row-forget" data-forgetdevice="${escapeHtmlAttr(d.id)}">Hapus</button>`}
       </div>`;
@@ -10326,6 +10411,7 @@ function deviceMgmtHeartbeat() {
 function deviceMgmtStartHeartbeat() {
   deviceMgmtHeartbeat(); // touch pertama begitu app dibuka
   deviceMgmtEnrichThisDeviceIpLocation(); // lookup IP/lokasi, 1x per pemuatan halaman
+  deviceMgmtEnrichThisDeviceModel(); // lookup Client Hints model perangkat, 1x per pemuatan halaman
   if (deviceMgmtHeartbeatTimer) clearInterval(deviceMgmtHeartbeatTimer);
   // Interval jauh lebih pendek drpd DEVICE_MGMT_ONLINE_WINDOW_MS (5
   // menit) supaya status "Online" tidak sempat kedaluwarsa selama tab
@@ -10353,14 +10439,51 @@ function closeManajemenDeviceOverlay() {
 document.getElementById('manajemenDeviceOpenBtn')?.addEventListener('click', openManajemenDeviceOverlay);
 document.getElementById('manajemenDeviceBackBtn')?.addEventListener('click', closeManajemenDeviceOverlay);
 
-// Tombol refresh: putar ikon sebentar + gambar ulang daftar dari data
-// terbaru (berguna kalau perangkat lain baru saja login/aktif & sudah
-// tersinkron ke cloud di latar belakang).
-document.getElementById('deviceMgmtRefreshBtn')?.addEventListener('click', function () {
-  this.classList.remove('is-spinning');
-  void this.offsetWidth; // restart animasi kalau diklik berkali-kali
-  this.classList.add('is-spinning');
-  renderDeviceMgmtPage();
+// Tombol refresh -- SEBELUMNYA cuma menggambar ulang daftar dari cache
+// localStorage yg ada (klaim "berguna kalau perangkat lain baru saja
+// login/aktif" di komentar lama TIDAK benar2 terjadi, krn kv_store cuma
+// ditarik saat login/reload halaman, bukan tiap tombol ini diklik).
+// SEKARANG tombol ini benar2 menarik data terbaru sebelum menggambar ulang:
+// 1) tarik ulang daftar perangkat dari cloud (kalau login akun) supaya
+//    perangkat lain yg baru saja aktif ikut muncul tanpa perlu reload,
+// 2) ulangi lookup IP/lokasi & Client Hints model perangkat INI (keduanya
+//    SENGAJA cuma jalan sekali otomatis saat halaman pertama dibuka --
+//    reset flag-nya di sini supaya klik manual tidak sia-sia kalau lookup
+//    pertama tadi kebetulan gagal/network sempat putus).
+// Ikon berputar TERUS (bukan cuma sekali) selama proses berjalan (lihat
+// animasi "infinite" di CSS), tombol dinonaktifkan sementara utk cegah
+// klik ganda, & toast singkat menandai hasilnya -- supaya jelas kapan
+// prosesnya benar2 selesai, bukan cuma efek visual kosong.
+document.getElementById('deviceMgmtRefreshBtn')?.addEventListener('click', async function () {
+  const btn = this;
+  if (btn.disabled) return;
+  btn.disabled = true;
+  btn.setAttribute('aria-busy', 'true');
+  btn.classList.remove('is-spinning');
+  void btn.offsetWidth; // restart animasi kalau diklik berkali-kali
+  btn.classList.add('is-spinning');
+  try {
+    const loggedIn = typeof window.cloudIsLoggedIn === 'function' && window.cloudIsLoggedIn();
+    if (loggedIn && typeof window.cloudPullKeys === 'function') {
+      await window.cloudPullKeys([STORAGE_KEY_DEVICE_SESSIONS]);
+    }
+    // Paksa lookup IP & Client Hints diulang (bukan cuma pakai cache lama).
+    deviceMgmtIpEnrichStarted = false;
+    deviceMgmtIpInfoPromise = null;
+    deviceMgmtModelEnrichStarted = false;
+    deviceMgmtClientHintsPromise = null;
+    await Promise.all([deviceMgmtEnrichThisDeviceIpLocation(), deviceMgmtEnrichThisDeviceModel()]);
+    await renderDeviceMgmtPage();
+    showToast('Daftar perangkat diperbarui.');
+  } catch (e) {
+    console.error('Gagal menyegarkan daftar perangkat:', e);
+    showToast('Gagal menyegarkan daftar perangkat.', 'err');
+    renderDeviceMgmtPage(); // tetap gambar ulang dari data yg ada supaya UI tidak macet
+  } finally {
+    btn.classList.remove('is-spinning');
+    btn.removeAttribute('aria-busy');
+    btn.disabled = false;
+  }
 });
 
 // Tombol "Hapus" per baris perangkat (event delegation, krn baris

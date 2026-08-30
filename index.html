@@ -8283,7 +8283,14 @@ html.zp-app-loading .page-body > .lap-panel{display:none;}
   cursor:pointer;transition:transform .5s ease,background .15s ease;touch-action:manipulation;-webkit-tap-highlight-color:transparent;
 }
 .device-mgmt-refresh-btn:hover{background:var(--line);}
-.device-mgmt-refresh-btn.is-spinning svg{animation:deviceMgmtSpin .6s linear;}
+.device-mgmt-refresh-btn:disabled{opacity:.55;cursor:default;}
+/* Diganti dari 1x putaran (.6s linear tanpa infinite) -> berputar TERUS
+   selama tombolnya masih ber-class "is-spinning": prosesnya sekarang
+   benar2 async (tarik data cloud + lookup IP/Client Hints, lihat
+   listener #deviceMgmtRefreshBtn di script.js) yg durasinya tidak pasti,
+   jadi ikon harus tetap berputar sampai class ini dilepas manual saat
+   prosesnya benar2 selesai -- bukan berhenti sendiri di tengah proses. */
+.device-mgmt-refresh-btn.is-spinning svg{animation:deviceMgmtSpin .6s linear infinite;}
 @keyframes deviceMgmtSpin{to{transform:rotate(360deg);}}
 .device-mgmt-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;}
 .device-mgmt-stat{
