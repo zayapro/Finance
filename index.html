@@ -4387,6 +4387,19 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   background:rgba(28,28,32,0.65);backdrop-filter:blur(4px) saturate(180%);
   border:1px solid rgba(255,255,255,0.12);
 }
+/* ---- FIX: badge centang (.tfb-check) menimpa langsung bagian atas
+   kotak preview .tdmp yang berwarna oranye utk mode Default & Gelap
+   (sama persis nuansa var(--primary) yg jd warna badge-nya), bikin
+   centangnya nyaris "hilang" menyatu di 2 dari 3 kartu -- sementara di
+   kartu Glass (atasnya biru/ungu) tetap kontras jelas. Efeknya status
+   "aktif" kelihatan tidak konsisten antar kartu. FIX: tambah cincin
+   tipis warna var(--card) (bkn ubah warna badge, biar checkmark tetap
+   pakai var(--primary) spt kartu Font/Bingkai Avatar lain) di sekitar
+   badge KHUSUS di grid ini, supaya kontrasnya tetap terjaga sama kuat
+   di ketiga kartu apa pun warna preview di baliknya. ---- */
+#temaDisplayGrid .tfb-check{
+  box-shadow:0 0 0 2px var(--card), 0 1px 3px rgba(0,0,0,.22);
+}
 .tema-font-btn{
   position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
   border:1.5px solid var(--line);border-radius:14px;background:var(--paper);
@@ -11494,28 +11507,21 @@ html.dark-mode{
 }
 
 /* ============ MODE GLASS (ala "Liquid Glass" iOS) ============
-   Material kaca terang: lapisan tembus pandang + blur+saturate kuat
-   (persis parameter "vibrancy" material iOS -- warna di belakang kaca
-   ikut lebih hidup/jenuh, bukan cuma buram polos), plus GARIS TEPI
-   TIPIS dua-warna (putih terang di sisi atas, gelap samar di sisi
-   bawah lewat box-shadow inset) yang meniru refleksi cahaya di tepi
-   panel kaca asli iOS -- inilah yang bikin glass composer app KAYA
-   Kontrol iOS/Notification Center, bukan cuma "putih transparan
-   polos". Latar halaman diganti gradient mesh warna lembut (mengikuti
-   warna aksen aktif) supaya materi kacanya kelihatan jelas. ---- */
-html.glass-mode{
-  --card: rgba(255,255,255,0.5);
-  /* Versi tembus pandang dari --card-fade-bg (dipakai kartu Saldo
-     Total/Ringkasan yg sengaja tidak pakai var(--card) polos, lihat
-     definisi aslinya di :root) -- putihnya diganti rgba supaya
-     backdrop-filter di bawah (lihat .saldo-card dst) betulan kelihatan,
-     tint di ujung kanan tetap ikut var(--primary) spt versi asli. */
-  --card-fade-bg: linear-gradient(to right,
-    rgba(255,255,255,0.55) 0%,
-    rgba(255,255,255,0.55) 45%,
-    color-mix(in srgb, var(--primary) 10%, rgba(255,255,255,0.5)) 70%,
-    color-mix(in srgb, var(--primary) 22%, rgba(255,255,255,0.42)) 100%);
-}
+   UPDATE (permintaan user): dulu SELURUH badan kartu (background +
+   backdrop-filter blur) dibikin tembus pandang -- sekarang diubah jadi
+   HANYA GARIS TEPI (border) kartu yg bergaya kaca (rgba putih tipis +
+   kilau dua-warna via box-shadow inset), badan/isi kartu balik SOLID
+   spt mode Default (tetap enak dibaca, tidak transparan). Makanya
+   variabel --card & --card-fade-bg di sini SENGAJA TIDAK ditimpa lagi
+   (dulu ditimpa jadi rgba transparan supaya ratusan elemen kecil ikut
+   tembus otomatis) -- dibiarkan pakai nilai solid bawaan dari :root,
+   supaya SEMUA permukaan (bukan cuma yg dpt border khusus di bawah)
+   balik opaque. Efek kaca sungguhan (background tembus + blur) kini
+   dipindah sepenuhnya ke TOMBOL (.btn-primary/.btn-ghost) di bawah,
+   sesuai permintaan "tombol secara keseluruhan aplikasi" yg glass.
+   Latar halaman TETAP gradient mesh warna lembut spt sebelumnya supaya
+   ada kontras & nuansa "kaca" tetap kerasa lewat tepi kartu & tombol
+   yg melayang di atasnya. ---- */
 html.glass-mode body{
   background:
     radial-gradient(circle at 6% 2%, color-mix(in srgb, var(--primary-light) 60%, transparent) 0%, transparent 40%),
@@ -11570,21 +11576,19 @@ html.glass-mode .pin-lock-sheet,
 html.glass-mode .ai-chat-panel,
 html.glass-mode .export-menu,
 html.glass-mode .toast{
-  /* ---- Kaca tetap DASARNYA putih (demi kontras teks tetap aman utk
-     semua warna aksen), tapi dicampur SEDIKIT (8%) dgn warna aksen
-     aktif via color-mix() -- supaya begitu warna tema diganti di
-     halaman Tema (var(--primary) ikut berubah), rona kaca ini OTOMATIS
-     ikut sedikit condong ke warna itu (mis. agak kebiruan saat pilih
-     Safir, agak kehijauan saat pilih Zamrud), bukan putih netral yg
-     sama terus utk semua preset warna. ---- */
-  background:color-mix(in srgb, var(--primary) 8%, rgba(255,255,255,0.46)) !important;
-  backdrop-filter:var(--glass-blur);
-  -webkit-backdrop-filter:var(--glass-blur);
-  border:1px solid rgba(255,255,255,0.7);
+  /* ---- UPDATE: badan kartu balik SOLID (background var(--card) biasa,
+     backdrop-filter dicopot krn tanpa transparansi blur tidak kelihatan
+     apa2) -- yg tersisa bergaya "kaca" cuma GARIS TEPI: border rgba
+     putih tipis dicampur sedikit warna aksen (color-mix, biar ikut
+     berubah otomatis saat preset Warna Aksen diganti spt versi lama),
+     + kilau dua-warna via box-shadow inset (terang di atas, gelap
+     samar di bawah) yg meniru refleksi tepi panel kaca asli iOS. ---- */
+  background:var(--card);
+  border:1.5px solid color-mix(in srgb, var(--primary) 20%, rgba(255,255,255,0.85));
   box-shadow:
-    0 8px 32px rgba(31,38,80,0.14),
-    inset 0 1px 0 rgba(255,255,255,0.85),
-    inset 0 -1px 0 rgba(15,23,42,0.05);
+    0 8px 26px rgba(31,38,80,0.08),
+    inset 0 1px 0 rgba(255,255,255,0.9),
+    inset 0 -1px 0 rgba(15,23,42,0.04);
 }
 html.glass-mode .bottom-nav,
 /* mini-topbar (versi mobile, fixed nempel ATAS layar) numpang persis
@@ -11598,23 +11602,17 @@ html.glass-mode .mini-topbar{
   box-shadow:0 -1px 0 rgba(255,255,255,0.9) inset, 0 -8px 28px -10px rgba(31,38,80,0.16);
 }
 /* Kartu "Saldo Total" + "Ringkasan transaksi kamu" (.saldo-card/
-   .flow-deal-card/.fc-peek-handle) SENGAJA TIDAK ditimpa background-nya
-   di sini spt grup kartu di atas -- ketiganya numpang 1 variabel yg
-   sama (--card-fade-bg, ditimpa jadi versi tembus pandang tepat di
-   bawah) supaya sambungan mulus antar-ketiganya (sengaja dibuat tanpa
-   garis batas oleh desain aslinya) tetap terjaga, cuma blur+tepi kaca
-   yg ditambahkan di sini. */
-html.glass-mode .saldo-card,
-html.glass-mode .flow-deal-card,
-html.glass-mode .fc-peek-handle{
-  backdrop-filter:var(--glass-blur);
-  -webkit-backdrop-filter:var(--glass-blur);
-}
+   .flow-deal-card/.fc-peek-handle) numpang 1 variabel yg sama
+   (--card-fade-bg) yg SEKARANG solid spt mode Default (lihat catatan
+   di atas -- --card-fade-bg tidak lagi ditimpa transparan), jadi
+   backdrop-filter blur DICOPOT di sini (percuma tanpa transparansi).
+   Yg tersisa cuma garis tepi kaca (border+kilau) di .saldo-card, biar
+   sejalan dgn kartu2 lain yg juga "border-only glass". */
 html.glass-mode .saldo-card{
-  border:1px solid rgba(255,255,255,0.7);
+  border:1.5px solid color-mix(in srgb, var(--primary) 20%, rgba(255,255,255,0.85));
   box-shadow:
-    0 8px 32px rgba(31,38,80,0.14),
-    inset 0 1px 0 rgba(255,255,255,0.85);
+    0 8px 26px rgba(31,38,80,0.08),
+    inset 0 1px 0 rgba(255,255,255,0.9);
 }
 html.glass-mode .modal-overlay{
   background:rgba(20,25,55,0.28);
@@ -11624,50 +11622,83 @@ html.glass-mode .modal-overlay{
 html.glass-mode .detail-page-overlay{
   background:rgba(238,241,247,0.001); /* biarkan gradient body tembus di belakang overlay halaman penuh */
 }
-/* Badge/pill/kotak ikon kecil (numpang var(--card) yg sudah transparan
-   di atas) sengaja TIDAK dikasih backdrop-filter satu-satu (perf) --
-   transparansinya saja sudah cukup terasa "kaca" di ukuran kecil. */
+/* ---- BARU (permintaan user): efek kaca sungguhan (background tembus
+   pandang + blur+saturate) dipindah dari badan kartu (skrg cuma
+   border, lihat blok di atas) ke TOMBOL di SELURUH aplikasi -- numpang
+   2 class dasar .btn-primary/.btn-ghost yg dipakai di ~80+ tempat
+   (form, popup, footer Batal/Selesai, dst) supaya cukup 2 selector utk
+   dampak menyeluruh, konsisten dgn pola "1 class dasar = ratusan
+   tempat" yg dipakai di seluruh file ini. ---- */
+html.glass-mode .btn-primary{
+  background:color-mix(in srgb, var(--primary) 62%, rgba(255,255,255,0.3)) !important;
+  backdrop-filter:var(--glass-blur);
+  -webkit-backdrop-filter:var(--glass-blur);
+  border:1px solid rgba(255,255,255,0.55);
+  box-shadow:
+    0 6px 18px color-mix(in srgb, var(--primary-deep) 30%, transparent),
+    inset 0 1px 0 rgba(255,255,255,0.55);
+}
+html.glass-mode .btn-primary:hover{
+  background:color-mix(in srgb, var(--primary-deep) 62%, rgba(255,255,255,0.28)) !important;
+}
+html.glass-mode .btn-ghost{
+  background:color-mix(in srgb, var(--primary) 8%, rgba(255,255,255,0.42)) !important;
+  backdrop-filter:var(--glass-blur);
+  -webkit-backdrop-filter:var(--glass-blur);
+  border:1px solid rgba(255,255,255,0.65);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.75);
+  color:var(--ink);
+}
+html.glass-mode .btn-ghost:hover{
+  background:color-mix(in srgb, var(--primary) 15%, rgba(255,255,255,0.5)) !important;
+  border-color:rgba(255,255,255,0.8);
+}
+/* Badge/pill/kotak ikon kecil numpang var(--card) yg SEKARANG solid
+   (lihat catatan di atas), jadi otomatis balik opaque juga -- sesuai
+   permintaan "cuma border kartu & tombol" yg glass, bukan elemen lain. */
 
-/* ============ MODE GELAP (ala "Liquid Glass" iOS -- Dark) ============
-   BUKAN dark mode flat/solid biasa -- permukaan utamanya TETAP material
-   kaca tembus pandang (persis mode Glass di atas), cuma tintnya gelap
-   & latarnya near-black (#000000, gaya OLED true-black iOS) alih-alih
-   putih. Garis tepi tipisnya dibalik: highlight putih SAMAR (bukan
-   terang penuh spt mode Glass terang) di tepi atas supaya tetap
-   kelihatan "kaca", bukan sekadar kotak gelap. Warna aksen (banner,
-   tombol, grafik) SENGAJA TIDAK ikut digelapkan -- tetap secerah
-   preset Warna Aksen yg dipilih di atas, supaya jadi titik terang yg
-   kontras & "mengambang" di atas material kaca gelap, persis nuansa
-   Kontrol/Widget iOS dark mode. ---- */
+/* ============ MODE DARK (dulu "Liquid Glass" gelap) ============
+   UPDATE (permintaan user): SEMUA efek kaca/blur (backdrop-filter)
+   DIHAPUS di mode ini -- kini dark mode SOLID biasa (flat), bukan
+   material tembus pandang lagi (beda dgn mode Glass terang yg masih
+   pakai kaca di tombol). Warna dasarnya JUGA tidak lagi hitam OLED
+   murni (#000) rata di semua preset Warna Aksen -- --paper/--card/
+   --card-fade-bg/latar body semua dicampur (color-mix) dgn var(--primary)
+   yg sedang aktif, jadi begitu user ganti preset Warna Aksen di halaman
+   Tema (mis. dari Oranye ke Safir/Zamrud), nuansa gelapnya IKUT
+   berubah otomatis condong ke warna itu (dark navy utk Safir, dark
+   forest utk Zamrud, dst) -- bukan abu-gelap netral yg sama terus utk
+   semua warna. ---- */
 html.dark-mode{
-  --paper:#000000;
-  --card: rgba(28,28,32,0.6);
+  --paper: color-mix(in srgb, var(--primary) 8%, #050506);
+  --card: color-mix(in srgb, var(--primary) 9%, #1B1B20);
   --ink:#F5F6FA;
   --ink-soft:#B4B9C6;
   --ink-faint:#8A8F9E;
   --line: rgba(255,255,255,0.09);
   --shadow-sm: 0 2px 10px rgba(0,0,0,0.35);
   --shadow-md: 0 14px 36px rgba(0,0,0,0.55);
-  /* Versi gelap dari --card-fade-bg, sama alasannya spt di mode Glass
-     terang -- dasarnya dari --card gelap (bukan putih) supaya kartu
-     Saldo Total/Ringkasan tetap senada dgn kartu lain di dark mode. */
+  /* Versi gelap dari --card-fade-bg -- SEKARANG solid/opaque (bukan
+     rgba transparan lagi) numpang pola yg sama spt versi default di
+     :root (baris ~475: putih polos -> makin condong ke warna aksen di
+     ujung kanan), cuma basisnya warna gelap tintnya var(--primary). */
   --card-fade-bg: linear-gradient(to right,
-    rgba(28,28,32,0.62) 0%,
-    rgba(28,28,32,0.62) 45%,
-    color-mix(in srgb, var(--primary) 16%, rgba(28,28,32,0.6)) 70%,
-    color-mix(in srgb, var(--primary) 30%, rgba(28,28,32,0.55)) 100%);
+    var(--card) 0%,
+    var(--card) 45%,
+    color-mix(in srgb, var(--primary) 22%, var(--card)) 70%,
+    color-mix(in srgb, var(--primary) 38%, var(--card)) 100%);
 }
 html.dark-mode body{
   background:
-    radial-gradient(circle at 10% 0%, color-mix(in srgb, var(--primary) 22%, transparent) 0%, transparent 38%),
-    radial-gradient(circle at 100% 20%, color-mix(in srgb, var(--primary-deep) 26%, transparent) 0%, transparent 42%),
+    radial-gradient(circle at 10% 0%, color-mix(in srgb, var(--primary) 16%, transparent) 0%, transparent 38%),
+    radial-gradient(circle at 100% 20%, color-mix(in srgb, var(--primary-deep) 18%, transparent) 0%, transparent 42%),
     linear-gradient(180deg,
       var(--banner-orange) 0px,
       var(--banner-orange) 155px,
-      color-mix(in srgb, var(--banner-orange) 45%, #000) 195px,
-      color-mix(in srgb, var(--banner-orange) 15%, #000) 225px,
-      #000000 254px,
-      #000000 100%);
+      color-mix(in srgb, var(--banner-orange) 45%, var(--paper)) 195px,
+      color-mix(in srgb, var(--banner-orange) 15%, var(--paper)) 225px,
+      var(--paper) 254px,
+      var(--paper) 100%);
   background-attachment:fixed;
 }
 html.dark-mode .page-body,
@@ -11710,49 +11741,35 @@ html.dark-mode .pin-lock-sheet,
 html.dark-mode .ai-chat-panel,
 html.dark-mode .export-menu,
 html.dark-mode .toast{
-  /* Sama seperti mode Glass -- kaca gelap dicampur sedikit (14%, lebih
-     kental drpd Glass krn di atas latar gelap warnanya kurang terasa
-     kalau terlalu tipis) dgn warna aksen aktif, ikut berubah otomatis
-     tiap ganti preset warna di halaman Tema. */
-  background:color-mix(in srgb, var(--primary) 14%, rgba(28,28,32,0.62)) !important;
-  backdrop-filter:var(--glass-blur);
-  -webkit-backdrop-filter:var(--glass-blur);
+  /* SOLID -- backdrop-filter blur DICOPOT, background numpang var(--card)
+     yg sudah tercampur warna aksen (lihat definisi di :root html.dark-mode
+     di atas), jadi otomatis ikut berubah tiap ganti preset Warna Aksen
+     tanpa perlu color-mix lagi di sini. */
+  background:var(--card) !important;
   border:1px solid rgba(255,255,255,0.09);
   box-shadow:
-    0 8px 32px rgba(0,0,0,0.5),
-    inset 0 1px 0 rgba(255,255,255,0.07),
-    inset 0 -1px 0 rgba(0,0,0,0.3);
+    0 8px 24px rgba(0,0,0,0.45),
+    inset 0 1px 0 rgba(255,255,255,0.05);
 }
 html.dark-mode .bottom-nav,
 html.dark-mode .mini-topbar{
-  background:color-mix(in srgb, var(--primary) 12%, rgba(18,18,20,0.66)) !important;
-  backdrop-filter:var(--glass-blur);
-  -webkit-backdrop-filter:var(--glass-blur);
+  background:color-mix(in srgb, var(--primary) 10%, #101013) !important;
   border-top:1px solid rgba(255,255,255,0.09);
-  box-shadow:0 -8px 28px -10px rgba(0,0,0,0.55);
+  box-shadow:0 -8px 24px -10px rgba(0,0,0,0.5);
 }
-/* Kartu Saldo Total + Ringkasan -- lihat catatan padanan di mode Glass
-   di atas: sengaja tidak ditimpa background di sini, numpang
-   --card-fade-bg gelap yg sudah ditimpa di :root html.dark-mode. */
-html.dark-mode .saldo-card,
-html.dark-mode .flow-deal-card,
-html.dark-mode .fc-peek-handle{
-  backdrop-filter:var(--glass-blur);
-  -webkit-backdrop-filter:var(--glass-blur);
-}
+/* Kartu Saldo Total + Ringkasan -- numpang --card-fade-bg gelap yg
+   sudah solid & bertint aksen (lihat :root html.dark-mode di atas). */
 html.dark-mode .saldo-card{
   border:1px solid rgba(255,255,255,0.09);
   box-shadow:
-    0 8px 32px rgba(0,0,0,0.5),
-    inset 0 1px 0 rgba(255,255,255,0.07);
+    0 8px 24px rgba(0,0,0,0.45),
+    inset 0 1px 0 rgba(255,255,255,0.05);
 }
 html.dark-mode .modal-overlay{
   background:rgba(0,0,0,0.65);
-  backdrop-filter:blur(6px) saturate(140%);
-  -webkit-backdrop-filter:blur(6px) saturate(140%);
 }
 html.dark-mode .detail-page-overlay{
-  background:rgba(0,0,0,0.001); /* biarkan gradient body (near-black) tembus di belakang overlay halaman penuh */
+  background:var(--paper); /* solid, tidak transparan lagi -- tanpa blur, gradient body tak perlu tembus di baliknya */
 }
 html.dark-mode input,
 html.dark-mode select,
@@ -12574,7 +12591,7 @@ html.dark-mode ::placeholder{
              tersimpan permanen kalau tombol "Selesai" ditekan. ---- -->
         <div class="tema-section">
           <h3>Tampilan Aplikasi</h3>
-          <p>Pilih gaya tampilan: bawaan, kaca tembus pandang (glass), atau gelap.</p>
+          <p>Pilih gaya tampilan: bawaan, kaca tembus pandang (glass), atau dark.</p>
           <div class="tema-font-grid" id="temaDisplayGrid"></div>
         </div>
         <!-- ---- Fitur BARU: "Bingkai Avatar" -- pilih gaya cincin/bingkai

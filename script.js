@@ -8313,7 +8313,7 @@ const DISPLAY_MODE_KEY = 'alirin_display_mode_v1';
 const DISPLAY_MODE_PRESETS = [
   { key: 'default', label: 'Default' },
   { key: 'glass', label: 'Glass' },
-  { key: 'dark', label: 'Gelap' },
+  { key: 'dark', label: 'Dark' },
 ];
 const DISPLAY_MODE_DEFAULTS = { mode: 'default' };
 function loadDisplayMode() {
