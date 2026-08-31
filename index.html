@@ -5882,7 +5882,17 @@ tbody tr:last-child td{border-bottom:none;}
   display:flex;align-items:center;justify-content:center;
   background:color-mix(in srgb, var(--primary) 16%, var(--card));
   color:var(--primary-deep);font-size:13.5px;font-weight:800;
+  overflow:hidden;
 }
+/* ---- Foto profil di kartu User Account: dipakai kalau ada Logo yang
+   sudah diisi di halaman "Data Diri" (settings.logo, disimpan lewat
+   cloudStorage -- sama utk seluruh workspace, admin maupun user
+   tambahan), menggantikan lencana inisial huruf. Karena logo ini
+   tersimpan di cloud (bukan lokal per perangkat), begitu siapa pun yang
+   berhak (lihat dataDiriOpenBtn) menggantinya dari perangkat lain,
+   kartu di halaman ini ikut menampilkan foto terbaru saat dibuka lagi
+   -- lihat userAccountAvatarHtml() di script.js. ---- */
+.ua-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
 .ua-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;}
 .ua-top-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
 .ua-name{font-size:13.5px;font-weight:700;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;}

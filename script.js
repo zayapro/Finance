@@ -10090,10 +10090,24 @@ function userAccountRoleLabel(role) {
 // polos utk User biasa.
 const UA_ICON_CROWN = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 19h18v2H3v-2Zm.4-3L2 8l5 3 5-6 5 6 5-3-1.4 8H3.4Z"/></svg>';
 const UA_ICON_USER = '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>';
+// Isi lencana avatar: pakai foto Logo dari halaman "Data Diri"
+// (settings.logo) kalau sudah diisi -- logo itu tersimpan di
+// cloudStorage (sinkron ke Supabase per workspace), jadi otomatis
+// sama utk kartu pemilik akun MAUPUN kartu tiap user tambahan di
+// halaman ini, dan ikut ter-update kalau ada yang menggantinya dari
+// perangkat lain. Kalau belum ada logo yang diisi, tetap fallback ke
+// lencana inisial huruf seperti semula.
+function userAccountAvatarInnerHtml(name) {
+  const settings = loadAppSettings();
+  if (settings.logo) {
+    return `<img src="${settings.logo}" alt="Foto profil ${escapeAttr(name)}">`;
+  }
+  return escapeHtml(userAccountInitials(name));
+}
 function userAccountAvatarHtml(name, isAdmin, orderNum) {
   return `
     <span class="ua-avatar-wrap${isAdmin ? ' is-admin-ring' : ''}">
-      <span class="ua-avatar${isAdmin ? ' ua-avatar-owner' : ''}">${escapeHtml(userAccountInitials(name))}</span>
+      <span class="ua-avatar${isAdmin ? ' ua-avatar-owner' : ''}">${userAccountAvatarInnerHtml(name)}</span>
       ${orderNum ? `<span class="ua-order-badge">${orderNum}</span>` : ''}
       <span class="ua-role-icon ${isAdmin ? 'is-admin' : 'is-user'}">${isAdmin ? UA_ICON_CROWN : UA_ICON_USER}</span>
     </span>`;
