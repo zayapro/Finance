@@ -6040,8 +6040,21 @@ tbody tr:last-child td{border-bottom:none;}
    BOBOT & GAYA hurufnya kini identik, supaya terasa satu keluarga
    tipografi di seluruh aplikasi -- bukan sekedar sama-sama Poppins
    tapi beda bobot/tracking spt sebelumnya. ---- */
-.tx-modal,
-.bill-modal{
+/* ---- FIX "ukuran popup tidak rapi di semua versi perangkat": selector
+   di sini & di seluruh blok .tx-modal/.bill-modal SEKARANG dinaikkan
+   spesifisitasnya jadi ".modal.tx-modal"/".modal.bill-modal" (2 class,
+   bukan 1) -- SEBELUMNYA cuma ".tx-modal"/".bill-modal" (1 class) yg
+   spesifisitasnya PERSIS SAMA dgn aturan ".modal{...}" generik polos
+   di media query lain (mis. @media 600px & 400px, jauh di bawah file
+   ini). Karena bobotnya sama, urutan-di-filelah yg menentukan siapa
+   menang -- akibatnya padding/radius popup ini SERING KETIMPA balik
+   jadi nilai generik yg tidak dirancang khusus utk popup ini, beda²
+   di tiap ukuran layar & tidak sinkron dgn popup satunya (persis
+   keluhan bug). Dgn 2-class selector di sini, aturan popup INI SELALU
+   menang lawan ".modal{...}" polos, di ukuran layar manapun & TIDAK
+   tergantung urutan file lagi. ---- */
+.modal.tx-modal,
+.modal.bill-modal{
   position:relative;border-radius:22px;
   max-width:440px;padding:22px 22px 22px;
   box-shadow:0 24px 56px -16px rgba(15,23,42,0.28), 0 4px 14px rgba(15,23,42,0.08);
@@ -6489,7 +6502,7 @@ tbody tr:last-child td{border-bottom:none;}
 .tx-modal .modal-actions .btn-ghost:hover,
 .bill-modal .modal-actions .btn-ghost:hover{background:var(--paper);border-color:var(--ink-faint);}
 @media (max-width:600px){
-  .tx-modal,.bill-modal{padding:18px 18px 18px;border-radius:20px;}
+  .modal.tx-modal,.modal.bill-modal{padding:18px 18px 18px;border-radius:20px;}
   .tx-modal #txAmount{font-size:21px;}
 }
 
@@ -6753,18 +6766,27 @@ tbody tr:last-child td{border-bottom:none;}
 .bill-modal.kind-hutang .modal-actions .btn-primary{background:#7C3AED;box-shadow:0 8px 18px -8px rgba(109,40,217,0.45);}
 .bill-modal.kind-hutang .modal-actions .btn-primary:hover{background:#6D28D9;}
 
-/* ---- Ukuran ringkas (khusus popup ini saja) ---- */
-.bill-modal{padding:16px 16px 16px;border-radius:18px;}
+/* ---- Ukuran ringkas -- SEKARANG diterapkan ke .tx-modal JUGA (dulu
+   cuma .bill-modal), supaya ukuran popup "Tambah Transaksi" &
+   "Tambah Tagihan" konsisten sama persis di layar desktop/tablet,
+   bukan lagi beda padding (22px vs 16px) cuma krn beda popup. ---- */
+.modal.tx-modal,
+.modal.bill-modal{padding:16px 16px 16px;border-radius:18px;}
+.tx-modal .form-row,
 .bill-modal .form-row{margin-bottom:10px;}
+.tx-modal .modal-actions,
 .bill-modal .modal-actions{margin-top:10px;}
+.tx-modal .modal-actions .btn,
 .bill-modal .modal-actions .btn{padding:11px;font-size:14px;}
 
 @media (max-width:600px){
-  .bill-modal{padding:18px 18px 18px;border-radius:20px;}
+  .modal.tx-modal,
+  .modal.bill-modal{padding:18px 18px 18px;border-radius:20px;}
   .bill-amount-hero #billAmount{font-size:22px;}
 }
 @media (max-width:380px){
-  .bill-modal{padding:12px 12px 12px;}
+  .modal.tx-modal,
+  .modal.bill-modal{padding:12px 12px 12px;}
   .bill-modal .modal-head-icon{width:36px;height:36px;}
   .bill-amount-hero{padding:11px 12px 12px;margin-bottom:10px;}
   .bill-amount-hero-label{font-size:10px;margin-bottom:5px;}
@@ -6814,7 +6836,7 @@ tbody tr:last-child td{border-bottom:none;}
        kecil satu-satu -- lihat #billForm di bawah. */
     display:flex;flex-direction:column;
   }
-  .bill-modal{padding:10px 12px 10px;border-radius:16px;}
+  .modal.bill-modal{padding:10px 12px 10px;border-radius:16px;}
   .bill-modal #billForm{display:flex;flex-direction:column;min-height:0;}
   .bill-modal .modal-head{margin-bottom:8px;}
   .bill-modal .modal-head-icon{width:30px;height:30px;border-radius:9px;}
@@ -6867,6 +6889,68 @@ tbody tr:last-child td{border-bottom:none;}
   .bill-recurring-row{padding:5px 8px;margin-bottom:5px;}
   .bill-recurring-row-sub{display:none;}
   .bill-amount-hero{padding:5px 10px 5px;}
+}
+
+/* ============================================================
+   ANTI-SCROLL utk popup "TAMBAH TRANSAKSI" (.tx-modal) -- PERSIS pola
+   & nilai yg sama dgn blok ANTI-SCROLL .bill-modal di atas (popup ini
+   dulu TIDAK PUNYA penyesuaian setara sama sekali, cuma ikut aturan
+   ".modal" generik biasa -- itu penyebab ukurannya kelihatan beda &
+   kurang padat/rapi dibanding popup "Tambah Tagihan" di HP, sesuai
+   laporan bug). Isinya lebih ringkas dari .bill-modal (tanpa chip
+   jatuh tempo & baris "ulangi otomatis", krn field itu memang tidak
+   ada di form transaksi), tapi filosofinya identik: jadi bottom-sheet
+   penuh lebar di HP + dipadatkan sekuat mungkin supaya SELURUH isi
+   (kepala + saklar + nominal + tanggal/kategori + keterangan + tombol
+   aksi) muat 1 layar TANPA perlu discroll. ---- */
+@media (max-width:640px){
+  #txModalOverlay{
+    align-items:flex-end;
+    padding:calc(8px + env(safe-area-inset-top,0px)) 10px calc(72px + 10px + env(safe-area-inset-bottom,0px));
+  }
+  #txModalOverlay .tx-modal{
+    width:100%;
+    max-height:calc(100vh - 72px - 10px - env(safe-area-inset-bottom,0px) - 8px - env(safe-area-inset-top,0px));
+    max-height:calc(100dvh - 72px - 10px - env(safe-area-inset-bottom,0px) - 8px - env(safe-area-inset-top,0px));
+    display:flex;flex-direction:column;
+  }
+  .modal.tx-modal{padding:10px 12px 10px;border-radius:16px;}
+  .tx-modal #txForm{display:flex;flex-direction:column;min-height:0;}
+  .tx-modal .modal-head{margin-bottom:8px;}
+  .tx-modal .modal-head-icon{width:30px;height:30px;border-radius:9px;}
+  .tx-modal .modal-head-icon svg{width:15px;height:15px;}
+  .tx-modal .modal-head-titles h3{font-size:14.5px;}
+  .tx-modal .modal-head-sub{font-size:9.5px;}
+  .tx-modal .modal-close{width:26px;height:26px;}
+  .tx-modal .type-toggle{margin-bottom:6px;}
+  .tx-modal .type-toggle button{padding:5px 4px;font-size:11px;gap:4px;}
+  .tx-modal .type-toggle button svg{width:11px;height:11px;}
+  .tx-amount-hero{padding:6px 10px 6px;margin-bottom:6px;border-radius:12px;}
+  .tx-amount-hero-label{font-size:8.5px;margin-bottom:2px;gap:3px;}
+  .tx-amount-hero-label svg{width:9px;height:9px;}
+  .tx-amount-hero .amount-prefix{font-size:12px;}
+  .tx-amount-hero #txAmount{font-size:18px;max-width:140px;}
+  .tx-amount-perf{margin:5px auto 3px;}
+  /* Catatan "otomatis dipisah titik ribuan" -- sama spt di .bill-modal,
+     murni dekoratif jadi aman disembunyikan demi hemat tinggi. */
+  .tx-amount-hint{display:none;}
+  .tx-amount-hero::before,.tx-amount-hero::after{width:11px;height:11px;top:calc(100% - 17px);}
+  .tx-modal .form-row{margin-bottom:6px;}
+  .tx-modal .form-row label{margin-bottom:3px;font-size:11.5px;}
+  .tx-modal .form-row input,
+  .tx-modal .form-row select,
+  .tx-modal .form-row textarea{padding:6px 10px;font-size:12.5px;}
+  /* Keterangan (opsional) -- kotak teks dipendekkan jadi 1 baris, pola
+     sama dgn #billNote di .bill-modal. */
+  .tx-modal #txDesc{min-height:30px;height:30px;resize:none;}
+  .tx-modal .modal-actions{margin-top:6px;flex-shrink:0;}
+  .tx-modal .modal-actions .btn{padding:8px;font-size:12.5px;}
+}
+/* ---- Layar SANGAT pendek (mis. HP landscape) -- pola sama dgn
+   .bill-modal di atas: kartu nominal ikut disusutkan lagi drpd
+   dikorbankan discroll. ---- */
+@media (max-width:640px) and (max-height:620px){
+  .tx-amount-hero{padding:5px 10px 5px;}
 }
 
 .wallet-preview-card{transition:box-shadow .25s ease;}
@@ -7673,6 +7757,13 @@ tbody tr:last-child td{border-bottom:none;}
   background:linear-gradient(180deg, rgba(217,119,6,0.08), rgba(217,119,6,0.015));
   border:1px solid rgba(217,119,6,0.20);border-radius:16px;
   padding:9px 16px;position:relative;overflow:hidden;
+  /* container-type:inline-size -- bikin .k/.v/.sub di bawah bisa baca LEBAR
+     KARTU ITU SENDIRI lewat unit cqw, bukan lebar layar (vw). Ini kuncinya:
+     lebar kartu sebenarnya dipengaruhi banyak faktor (grid 5 kolom vs flex
+     mobile, .app max-width:1180px, --app-x padding, gap) yang tidak linear
+     terhadap lebar layar -- jadi patokan yang benar-benar akurat ya lebar
+     kartu itu sendiri, bukan lebar viewport. */
+  container-type:inline-size;
 }
 @media (max-width:760px){
   .bd-summary-row{
@@ -7686,9 +7777,6 @@ tbody tr:last-child td{border-bottom:none;}
     flex:0 0 auto;width:132px;scroll-snap-align:start;
     padding:7px 13px;border-radius:14px;
   }
-  .bd-summary-card .k{font-size:10px;}
-  .bd-summary-card .v{font-size:16px;}
-  .bd-summary-card .sub{font-size:10px;}
 }
 .bd-summary-card::after{
   content:"";position:absolute;right:-10px;bottom:-14px;width:60px;height:60px;border-radius:50%;
@@ -7702,10 +7790,19 @@ tbody tr:last-child td{border-bottom:none;}
 .bd-summary-card.paid::after{background:rgba(5,150,105,0.10);}
 .bd-summary-card.notes{background:linear-gradient(180deg, rgba(37,99,235,0.08), rgba(37,99,235,0.015));border-color:rgba(37,99,235,0.20);}
 .bd-summary-card.notes::after{background:rgba(37,99,235,0.10);}
-.bd-summary-card .k{position:relative;z-index:1;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.bd-summary-card .v{position:relative;z-index:1;font-family:'Poppins',sans-serif;font-size:17.5px;font-weight:800;margin-top:3px;letter-spacing:-0.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink);}
+/* Ukuran font 3 baris teks kartu (label/angka/sub) dibuat FLUID mengikuti
+   lebar kartu (cqw, lihat container-type di .bd-summary-card), bukan angka
+   tetap -- supaya di kartu sempit (HP, atau grid desktop yg baru lewat
+   breakpoint 760px & belum lebar) teksnya otomatis mengecil duluan sebelum
+   sempat kepotong "...", dan di kartu lapang (desktop lebar) otomatis
+   membesar sampai batas atas biar tidak terlihat kekecilan/tenggelam.
+   Baris font-size PERTAMA (angka polos, non-cqw) sengaja dibiarkan sbg
+   fallback -- kalau browser tidak kenal unit cqw, baris clamp() di
+   bawahnya otomatis dianggap tidak valid & fallback ini yang dipakai. */
+.bd-summary-card .k{position:relative;z-index:1;font-size:10px;font-size:clamp(10px, 8.45px + 1.18cqw, 11px);font-weight:650;text-transform:uppercase;letter-spacing:0.03em;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.bd-summary-card .v{position:relative;z-index:1;font-family:'Poppins',sans-serif;font-size:16px;font-size:clamp(16px, 13.67px + 1.77cqw, 17.5px);font-weight:800;margin-top:3px;letter-spacing:-0.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink);}
 .bd-summary-card.overdue .v{color:var(--wine);}
-.bd-summary-card .sub{position:relative;z-index:1;font-size:11px;color:var(--ink-faint);font-weight:600;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.bd-summary-card .sub{position:relative;z-index:1;font-size:10px;font-size:clamp(10px, 8.45px + 1.18cqw, 11px);color:var(--ink-faint);font-weight:600;margin-top:2px;line-height:1.25;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
 
 /* ================================================================
    CATATAN (tagihan/hutang yang punya isian "Catatan") -- baris kartu
@@ -7936,10 +8033,12 @@ tbody tr:last-child td{border-bottom:none;}
 @media (max-width:640px){.bd-item{padding:11px 12px;border-radius:14px;gap:10px;}}
 /* Badge "Jatuh tempo ..." di kartu tagihan/hutang: di HP font & padding
    pil dikecilkan secukupnya, dan titik penanda bulatnya (::before) ikut
-   dikecilkan supaya proporsional. Pil ini SUDAH BOLEH membungkus jadi
-   2 baris kalau teksnya kepanjangan untuk layar sempit (lihat aturan
-   .bd-item-body .due.due-pill/.due-soon di atas) -- ini disengaja,
-   supaya pil tidak pernah mendorong lebar kartu/halaman melebihi layar
+   dikecilkan supaya proporsional. Pil ini SELALU 1 baris di semua ukuran
+   layar (lihat aturan .bd-item-body .due.due-pill/.due-soon & .due-text
+   di atas) -- teksnya dibatasi lebar kartu + dipotong "..." kalau
+   sungguh-sungguh tidak muat, BUKAN dilipat jadi 2 baris (dulu boleh
+   melipat, tapi hasilnya terlihat tidak rapi -- lihat laporan bug),
+   dan tidak akan pernah mendorong lebar kartu/halaman melebihi layar
    (yang sebelumnya bikin halaman "tidak responsive" di HP). */
 @media (max-width:640px){
   .bd-item-body .due{font-size:9.5px;gap:3px;}
@@ -7981,14 +8080,23 @@ tbody tr:last-child td{border-bottom:none;}
    Sekarang .meta jadi kolom (Rp di atas, pil di bawahnya) supaya:
    1) pil "X hari lagi" posisinya selalu SAMA seperti pil
       "Jatuh tempo hari ini" (di baris baru, di bawah nominal Rp).
-   2) pil dibatasi max-width:100% & boleh membungkus antar-baris
-      (bukan lagi dipaksa satu baris tanpa batas), jadi tidak akan
-      pernah mendorong lebar kartu/halaman di layar sempit lagi. ---- */
+   2) pil dibatasi max-width:100% & tetap 1 baris (teks dipotong "..."
+      kalau perlu, lihat .due-pill/.due-text di bawah), jadi tidak
+      akan pernah mendorong lebar kartu/halaman di layar sempit. ---- */
 .bd-item-body .meta{display:flex;flex-direction:column;align-items:flex-start;gap:4px;margin-top:4px;min-width:0;}
 .bd-item-body .amt{font-family:'Poppins',sans-serif;font-size:12.5px;font-weight:700;color:var(--ink-soft);}
-.bd-item-body .due{font-size:10.5px;color:var(--ink-faint);font-weight:700;display:inline-flex;align-items:center;gap:4px;white-space:nowrap;max-width:100%;box-sizing:border-box;}
+.bd-item-body .due{font-size:10.5px;color:var(--ink-faint);font-weight:700;display:inline-flex;align-items:center;gap:4px;white-space:nowrap;max-width:100%;min-width:0;box-sizing:border-box;}
 .bd-item-body .due::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--ink-faint);flex-shrink:0;}
-.bd-item-body .due.due-pill,.bd-item-body .due.due-soon{max-width:100%;box-sizing:border-box;white-space:normal;word-break:break-word;padding:2.5px 8px 2.5px 6px;border-radius:999px;line-height:1.35;}
+/* FIX "pil melipat 2 baris di HP": sebelumnya white-space:normal +
+   word-break:break-word dipakai supaya pil boleh membungkus 2 baris
+   kalau teksnya kepanjangan -- hasilnya malah kelihatan berantakan
+   (lihat laporan bug, screenshot pil "Terlambat 2 hari · 29 Agu 2026"
+   patah ke bawah). Sekarang pil DIPAKSA tetap 1 baris di semua ukuran
+   perangkat (white-space:nowrap) -- teks yang tidak muat dipotong rapi
+   pakai "..." (overflow:hidden + text-overflow:ellipsis di
+   .due-text) alih-alih melipat ke baris ke-2. */
+.bd-item-body .due.due-pill,.bd-item-body .due.due-soon{max-width:100%;min-width:0;box-sizing:border-box;white-space:nowrap;overflow:hidden;padding:2.5px 8px 2.5px 6px;border-radius:999px;line-height:1.35;}
+.bd-item-body .due .due-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
 .bd-item-body .due.due-pill{color:#fff;background:var(--wine);}
 .bd-item-body .due.due-pill::before{background:#fff;flex-shrink:0;}
 .bd-item-body .due.due-soon{background:rgba(217,119,6,0.16);color:#B45309;}
@@ -11780,12 +11888,25 @@ html.dark-mode .bn-item.active{
   color:var(--ink) !important;
 }
 /* Kartu Saldo Total + Ringkasan -- numpang --card-fade-bg gelap yg
-   sudah solid & bertint aksen (lihat :root html.dark-mode di atas). */
+   sudah solid & bertint aksen (lihat :root html.dark-mode di atas).
+   FIX (audit lanjutan): sebelumnya border DIKASIH KE 4 SISI + box-
+   shadow gelap DIARAHKAN KE BAWAH -- persis "shadow gelap di bawah
+   kartu" yang di CSS ASLI (.saldo-card, versi Default/terang) SUDAH
+   SENGAJA DIHAPUS (lihat komentar panjang di sana), karena kartu ini
+   & "Ringkasan transaksi kamu" (.fc-peek-handle/.flow-deal-card) di
+   bawahnya memang dirancang menyatu jadi SATU kartu panjang tanpa
+   sambungan. Border+shadow versi Dark yang lama menimbulkan balik
+   garis/bayangan palsu tepat di sambungannya (paling kelihatan pas
+   tab "Ringkasan transaksi" diciutkan) -- padahal mode Glass sudah
+   benar krn border glass-nya dipasang ke .saldo-card DAN .flow-deal-
+   card/.fc-peek-handle sekaligus (menyatu). Ditimpa balik supaya
+   Dark ikut pola yang sama seperti Default & Glass: border HANYA di
+   atas & samping (bukan bawah), shadow HANYA highlight tipis di
+   dalam (inset), tanpa shadow gelap yang mengarah ke bawah. */
 html.dark-mode .saldo-card{
   border:1px solid rgba(255,255,255,0.09);
-  box-shadow:
-    0 8px 24px rgba(0,0,0,0.45),
-    inset 0 1px 0 rgba(255,255,255,0.05);
+  border-bottom:none;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
 }
 html.dark-mode .modal-overlay{
   background:rgba(0,0,0,0.65);
@@ -11851,6 +11972,22 @@ html.dark-mode .bill-modal .form-row input:focus,
 html.dark-mode .bill-modal .form-row textarea:focus{
   background:var(--paper) !important;
 }
+/* ---- Saklar IDR/USD (.currency-toggle) di kartu Saldo Total --
+   track-nya masih hardcode var(--primary-soft) (krem terang #FFF1E7,
+   dipakai sama di semua mode krn variabelnya cuma didefinisikan sekali
+   di :root, tidak per-mode) -- belum ikut gelap di mode Dark, jadi
+   masih nongol sbg bulatan krem terang mencolok di atas kartu yg
+   sudah gelap. Knob berwarna (var(--primary-light)->var(--primary))
+   & teks aktifnya (var(--forest-deep), nyaris hitam) TIDAK disentuh
+   krn keduanya duduk di ATAS knob warna aksen yg sama terang di semua
+   mode (bukan langsung di atas latar gelap), jadi kontrasnya tetap
+   aman tanpa perlu ditimpa. Mode Glass TIDAK perlu ditimpa krn kartu
+   di mode itu tetap terang spt Default (lihat catatan di :root
+   html.glass-mode), jadi track krem ini masih menyatu wajar di sana. */
+html.dark-mode .currency-toggle{
+  background:color-mix(in srgb, var(--primary) 16%, var(--paper));
+  border-color:rgba(255,255,255,0.12);
+}
 html.dark-mode input,
 html.dark-mode select,
 html.dark-mode textarea{
@@ -11858,6 +11995,73 @@ html.dark-mode textarea{
 }
 html.dark-mode ::placeholder{
   color:var(--ink-faint);
+}
+
+/* ============ TAMBAHAN FIX MODE DARK (audit lanjutan) ============
+   Beberapa elemen berikut ternyata masih hardcode warna terang &
+   belum kebagian override di atas -- ditambal di sini satu-satu. */
+
+/* ---- Menu bawah (.bn-item) -- SEBELUMNYA cuma label tab yg SEDANG
+   AKTIF yg ditimpa (.bn-item.active{color:var(--ink)}), sedangkan
+   label & ikon tab TIDAK aktif (mayoritas tab, warna asli #374151 &
+   #4B5563) tidak ikut berubah -- jadi teks/ikon abu-gelap nyaris
+   tak kelihatan di atas nav yg sudah gelap. Ditimpa ke warna terang
+   yg lebih redup drpd tab aktif (var(--ink-soft)/var(--ink-faint))
+   biar tetap kebaca tapi kontrasnya tetap kalah dari tab aktif. */
+html.dark-mode .bn-item{
+  color:var(--ink-soft) !important;
+}
+html.dark-mode .bn-item .bn-ic-wrap{
+  color:var(--ink-faint) !important;
+}
+
+/* ---- Saklar jenis Tagihan/Hutang di popup .bill-modal -- pola
+   PERSIS sama dgn saklar Uang Masuk/Keluar di .tx-modal (yg sudah
+   ditimpa di atas), tapi versi .bill-modal-nya kelewat & masih
+   background:#fff solid saat aktif. */
+html.dark-mode .bill-modal .type-toggle button.sel-bill.active,
+html.dark-mode .bill-modal .type-toggle button.sel-debt.active{
+  background:var(--paper) !important;
+}
+
+/* ---- Lubang "gigitan" bulat di kartu slip nominal (.bill-amount-hero
+   & .tx-amount-hero) -- sengaja dibuat #fff SAMA PERSIS dgn latar
+   popup (lihat komentar aslinya) supaya kelihatan spt lubang tembus.
+   Krn latar popup (.modal/.bill-modal/.tx-modal) sudah ditimpa jadi
+   var(--card) di mode Dark, lubangnya perlu ikut ditimpa jadi
+   var(--card) juga -- kalau tidak, lubangnya malah jadi bercak putih
+   yg mencolok, bukan menyatu lagi. */
+html.dark-mode .bill-amount-hero::before,
+html.dark-mode .bill-amount-hero::after,
+html.dark-mode .tx-amount-hero::before,
+html.dark-mode .tx-amount-hero::after{
+  background:var(--card) !important;
+}
+
+/* ---- Strip header popup Pengaturan (.as-modal .modal-head) --
+   masih pakai gradient putih (#fff -> #FAFBFD) polos, tidak ikut
+   gelap walau badan popup di bawahnya (.as-body, sudah masuk grup
+   flat di atas) sudah gelap -- akibatnya kepala popup kelihatan
+   belah dua (strip atas terang, badan bawah gelap). */
+html.dark-mode .as-modal .modal-head{
+  background:linear-gradient(180deg, var(--card), color-mix(in srgb, var(--primary) 6%, var(--card))) !important;
+}
+
+/* ---- Pil kategori & tombol ikon aksi (edit/hapus) di tabel riwayat
+   transaksi (.cat-pill, .icon-btn) -- masih background:#fff solid,
+   muncul sbg kotak/pil putih mencolok di atas baris tabel yg latarnya
+   sudah gelap. */
+html.dark-mode .cat-pill,
+html.dark-mode .icon-btn{
+  background:var(--paper) !important;
+  border-color:rgba(255,255,255,0.09) !important;
+}
+
+/* ---- Tombol tutup (X) per baris di halaman Tagihan & Hutang
+   (.bd-row-close) -- sama, background putih solid, belum ikut gelap. */
+html.dark-mode .bd-row-close{
+  background:var(--paper) !important;
+  border-color:rgba(255,255,255,0.09) !important;
 }
 </style>
 </head>
@@ -14757,7 +14961,7 @@ html.dark-mode ::placeholder{
           <button class="tab-btn active" data-bdtab="semua">Semua</button>
           <button class="tab-btn" data-bdtab="tagihan">Tagihan</button>
           <button class="tab-btn" data-bdtab="hutang">Hutang</button>
-          <button class="tab-btn" data-bdtab="catatan">Catatan</button>
+          <button class="tab-btn" data-bdtab="lunas">Lunas</button>
         </div>
         <!-- ---- Tombol aksi (Cari / Cek data pertanggal / Download) --
              ditaruh sebagai grup terpisah di kanan pil tab. Di layar

@@ -11718,14 +11718,14 @@ function daysUntil(dateStr) {
 
 function dueLabel(dateStr) {
   const diff = daysUntil(dateStr);
-  // FIX "pil rapi": tanggal & frasa hari sengaja disambung pakai spasi
-  // non-breaking (\u00A0) supaya "24 Agu 2026" atau "1 hari" tidak pernah
-  // patah/wrap di tengah jadi kata yang menggantung sendirian di baris
-  // ke-2 (mis. cuma "2026" doang, lihat foto laporan bug). Spasi biasa
-  // cuma disisakan di sekitar "·" (satu-satunya titik jeda yang wajar),
-  // jadi kalau pil ini terpaksa membungkus 2 baris di layar sempit,
-  // hasilnya tetap rapi: baris 1 "Terlambat 1 hari ·", baris 2
-  // "24 Agu 2026" -- bukan patah asal di sembarang kata.
+  // Tanggal & frasa hari sengaja disambung pakai spasi non-breaking
+  // (\u00A0) -- mis. "2\u00A0hari" & "29\u00A0Agu\u00A02026" -- supaya "2 hari" atau
+  // "29 Agu 2026" tidak pernah kepisah jadi dua baris kalau suatu saat
+  // pil ini dipakai di tempat lain yang masih boleh membungkus baris.
+  // Pil "Jatuh tempo ..." sendiri di kartu Tagihan/Hutang SELALU 1
+  // baris di semua ukuran perangkat (lihat CSS .due-pill/.due-text) --
+  // kalau teksnya sungguh tidak muat di layar sangat sempit, dipotong
+  // rapi pakai "..." (ellipsis), bukan dilipat ke baris ke-2.
   const formatted = new Date(dateStr + 'T00:00:00').toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '\u00A0');
   if (diff < 0) return { text: `Terlambat\u00A0${Math.abs(diff)}\u00A0hari · ${formatted}`, overdue: true, soon: false };
   if (diff === 0) return { text: `Hari\u00A0ini · ${formatted}`, overdue: true, soon: false };
@@ -12253,7 +12253,7 @@ document.addEventListener('click', (e) => {
    pencarian, filter jenis & status — dipisah dari popup
    notifikasi supaya popup tetap ringkas.
 ========================================================== */
-let bdAllTab = 'semua';     // 'semua' | 'tagihan' | 'hutang' | 'catatan'
+let bdAllTab = 'semua';     // 'semua' | 'tagihan' | 'hutang' | 'lunas'
 let bdAllStatus = 'semua';  // 'semua' | 'belum' | 'lunas'
 // Tab (.app-page) yang aktif SEBELUM overlay "Semua Tagihan & Hutang"
 // dibuka -- direkam di openBdAllPage(), lalu dipakai closeBdAllPage()
@@ -12362,10 +12362,10 @@ function renderBdAllPage() {
   document.querySelectorAll('#bdAllTabs .tab-btn').forEach(b => b.classList.toggle('active', b.dataset.bdtab === bdAllTab));
 
   let filtered = all;
-  // Pil "Catatan" bukan jenis item (kind-nya tetap tagihan/hutang seperti
-  // biasa) -- pil ini cuma nyaring item yang kolom "Catatan"-nya diisi,
+  // Pil "Lunas" bukan jenis item (kind-nya tetap tagihan/hutang seperti
+  // biasa) -- pil ini cuma nyaring item yang status-nya sudah lunas,
   // beda logikanya dari pil "Tagihan"/"Hutang" yang nyaring lewat kind.
-  if (bdAllTab === 'catatan') filtered = filtered.filter(x => (x.note || '').trim());
+  if (bdAllTab === 'lunas') filtered = filtered.filter(x => x.status === 'lunas');
   else if (bdAllTab !== 'semua') filtered = filtered.filter(x => x.kind === bdAllTab);
   if (bdAllStatus !== 'semua') filtered = filtered.filter(x => x.status === bdAllStatus);
   const q = bdAllSearch.trim().toLowerCase();
@@ -12414,7 +12414,7 @@ function renderBdAllPage() {
           </div>
           <div class="meta">
             <span class="amt">${fmtRupiah(item.amount)}</span>
-            ${isPaid ? `<span class="status-pill">Lunas</span>` : `<span class="due${dueClass}">${due.text}</span>`}
+            ${isPaid ? `<span class="status-pill">Lunas</span>` : `<span class="due${dueClass}"><span class="due-text">${due.text}</span></span>`}
           </div>
         </div>
         <div class="bd-item-actions">
