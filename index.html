@@ -675,6 +675,55 @@ a{color:inherit;}
 .banner::before{
   content:none;
 }
+.banner::after{
+  /* FIX "gradasi banner putus/ada garis batas di belakang kartu Saldo":
+     .banner-deco (lingkaran/titik/gelombang/blob dekoratif putih tipis,
+     lihat blok di bawah) dipotong TEGAS oleh overflow:hidden milik
+     .banner tepat di tepi bawahnya. Karena hiasan itu paling padat
+     & paling terang justru di area bawah (sengaja dikumpulkan di
+     "separuh bawah" biar tidak menumpuk ke logo/tombol atas -- lihat
+     catatan di .banner-deco), warna banner PERSIS di tepi bawah jadi
+     sedikit lebih terang/pudar (oranye + putih tipis) dibanding warna
+     flat var(--banner-orange) murni yang dipakai gradasi body di
+     bawahnya (lihat body{background:linear-gradient(...)} yang mulai
+     dari var(--banner-orange) solid). Begitu tepi bawah itu terlewati,
+     warnanya "melompat" balik ke oranye murni tanpa tint putih -- selisih
+     kecil ini yang kelihatan sebagai garis/batas tegas ("gradasi
+     putus") tepat di belakang kartu Saldo, alih-alih menyatu mulus.
+     Solusi: lapisan "matting" tipis di sini -- transparan di bagian atas
+     lalu memudar ke var(--banner-orange) MURNI tepat di tepi bawah --
+     dipasang DI ATAS .banner-deco (z-index 2, antara .banner-deco z:1 &
+     .banner-top z:3) supaya tint putih dari hiasan apa pun (lingkaran/
+     titik/gelombang/blob, warna apapun tema aktif via var(--banner-orange)
+     yang otomatis ikut berubah) sudah balik jadi oranye polos SEBELUM
+     kena potong overflow:hidden. Hasilnya: warna PERSIS di tepi bawah
+     banner selalu = var(--banner-orange) murni, identik dgn awal
+     gradasi body{} di bawahnya, jadi sambungannya menyatu mulus tanpa
+     garis batas -- berlaku otomatis di SEMUA varian tema (Default/
+     Gelap/Kaca & semua preset warna aksen) krn cuma numpang variabel
+     var(--banner-orange) yang sudah dipakai bersama, tidak ada nilai
+     warna baru yang di-hardcode di sini. Sengaja dipasang di ::after
+     (BUKAN ::before) karena ::before sudah dipakai selector animasi
+     lama (data-banner-anim="lines"/"shimmer" & @media 640px di bawah)
+     yang menimpa opacity/animation-nya -- kalau matting ini numpang
+     ::before, opacity-nya bisa ikut diredupkan oleh aturan itu &
+     jahitannya kelihatan lagi di mode animasi tertentu. ::after netral,
+     tidak disentuh selector manapun, jadi efeknya konsisten di semua
+     mode animasi banner. Tinggi 30% (bukan px tetap) mengikuti pola
+     "semua ukuran dekorasi banner pakai %, bukan px" yang sudah dipakai
+     .banner-deco di bawah, supaya proporsinya tetap pas di banner
+     pendek (HP) maupun lebar (desktop). */
+  content:"";
+  position:absolute;
+  left:0;right:0;bottom:0;
+  height:30%;
+  background:linear-gradient(to bottom,
+    transparent 0%,
+    color-mix(in srgb, var(--banner-orange) 55%, transparent) 55%,
+    var(--banner-orange) 100%);
+  pointer-events:none;
+  z-index:2;
+}
 /* ---- Elemen dekoratif banner (lihat markup #bannerDeco di atas &
    #temaPreviewDeco di kartu Pratinjau halaman Tema) ----
    Kontainer full-cover di lapisan paling bawah banner (z-index rendah,
