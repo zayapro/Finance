@@ -11564,6 +11564,10 @@ html.glass-mode .ai-chat-panel,
 html.glass-mode .export-menu,
 html.glass-mode .saldo-card,
 html.glass-mode .flow-deal-card,
+html.glass-mode .bd-summary-card,
+html.glass-mode .device-card,
+html.glass-mode .wallet-deal-card,
+html.glass-mode .wallet-preview-card,
 html.glass-mode .fc-peek-handle,
 html.glass-mode .toast{
   /* UPDATE (permintaan user): background transparan + blur DIHAPUS --
@@ -11691,6 +11695,7 @@ html.dark-mode .cloud-auth-card,
 html.dark-mode .pin-lock-sheet,
 html.dark-mode .ai-chat-panel,
 html.dark-mode .export-menu,
+html.dark-mode .device-card,
 html.dark-mode .toast{
   /* SOLID -- backdrop-filter blur DICOPOT, background numpang var(--card)
      yg sudah tercampur warna aksen (lihat definisi di :root html.dark-mode
@@ -11721,6 +11726,52 @@ html.dark-mode .modal-overlay{
 }
 html.dark-mode .detail-page-overlay{
   background:var(--paper); /* solid, tidak transparan lagi -- tanpa blur, gradient body tak perlu tembus di baliknya */
+}
+/* Kartu ringkasan Tagihan & Hutang -- BUKAN dimasukkan ke grup flat
+   di atas krn tiap varian (.debt/.overdue/.paid/.notes) punya tint
+   gradasi warna sendiri-sendiri yg harus tetap kelihatan beda; kalau
+   dipaksa background:var(--card) semua varian jadi rata sama. Cukup
+   digelapkan garis tepinya saja, tint warnanya biarkan numpang warna
+   asli (sudah transparan & otomatis kelihatan di atas latar gelap). */
+html.dark-mode .bd-summary-card{
+  border-color:rgba(255,255,255,0.09);
+}
+/* Kartu pratinjau saldo dompet -- gradasinya SUDAH numpang var(--card)
+   (otomatis gelap), jadi cukup digelapkan garis tepinya saja spy
+   tidak polos putih transparan, tint warna dompetnya tetap dipakai. */
+html.dark-mode .wallet-preview-card{
+  border-color:color-mix(in srgb, var(--w-color, var(--forest-glow)) 40%, transparent);
+}
+/* ---- Panel/permukaan lain yg SEBELUMNYA hardcode putih (#fff) &
+   TIDAK ikut berubah otomatis lewat timpaan var(--paper)/var(--card)
+   di :root -- perlu ditimpa manual satu-satu supaya benar2 gelap di
+   SEMUA halaman, bukan cuma kartu-kartu besar yg sudah ada di grup
+   flat di atas. ---- */
+html.dark-mode .receipt-body,
+html.dark-mode .receipt-actions{
+  background:var(--card) !important;
+}
+html.dark-mode .receipt-detail-list{
+  background:color-mix(in srgb, var(--primary) 10%, var(--paper)) !important;
+}
+html.dark-mode .receipt-detail-ic{
+  background:var(--paper) !important;
+}
+html.dark-mode .wallet-deal-card,
+html.dark-mode .wallet-deal-add:hover{
+  background:var(--card) !important;
+  border-color:rgba(255,255,255,0.09) !important;
+}
+html.dark-mode .tx-modal .type-toggle button.sel-in.active,
+html.dark-mode .tx-modal .type-toggle button.sel-out.active{
+  background:var(--paper) !important;
+}
+html.dark-mode .tx-modal .form-row input:focus,
+html.dark-mode .tx-modal .form-row select:focus,
+html.dark-mode .tx-modal .form-row textarea:focus,
+html.dark-mode .bill-modal .form-row input:focus,
+html.dark-mode .bill-modal .form-row textarea:focus{
+  background:var(--paper) !important;
 }
 html.dark-mode input,
 html.dark-mode select,
