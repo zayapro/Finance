@@ -1853,7 +1853,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   position:relative;
   margin:0 -22px -20px;padding:22px 28px 22px 28px;
   border-radius:0 0 30px 30px;
-  background:var(--card-fade-bg);
+  background:transparent;
   border-top:1px solid transparent;
   color:var(--ink-soft);font-size:12px;font-weight:600;
   cursor:pointer;
@@ -3573,27 +3573,29 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 .isc-empty-actions{display:flex;gap:8px;margin-top:2px;flex-wrap:wrap;justify-content:center;}
 
 .isc-card-actions{
-  display:flex;align-items:center;gap:8px;margin-top:10px;
+  display:flex;align-items:stretch;gap:8px;margin-top:10px;
 }
 .isc-view-all-btn{
   display:flex;align-items:center;justify-content:center;gap:4px;
-  flex:1;
+  flex:1 1 0;min-width:0;
   padding:9px 14px;border-radius:999px;
   border:1.5px solid var(--primary);
   background:var(--card);
   color:var(--primary);font-size:12px;font-weight:700;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   transition:background .15s ease, border-color .15s ease, transform .15s ease, color .15s ease;
 }
 .isc-view-all-btn:hover{background:color-mix(in srgb, var(--primary) 10%, var(--card));border-color:var(--primary-deep);color:var(--primary-deep);transform:translateY(-1px);}
 .isc-view-all-btn:active{transform:scale(.97);}
 .isc-add-source-btn{
   display:flex;align-items:center;justify-content:center;gap:6px;
+  flex:1 1 0;min-width:0;
   padding:9px 14px;border-radius:999px;
   border:1.5px solid var(--primary);
   background:var(--card);
   color:var(--primary);font-size:12px;font-weight:700;
   transition:background .15s ease, border-color .15s ease, transform .15s ease;
-  white-space:nowrap;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
 .isc-add-source-btn:hover{background:color-mix(in srgb, var(--primary) 10%, var(--card));border-color:var(--primary-deep);color:var(--primary-deep);transform:translateY(-1px);}
 .isc-add-source-btn:active{transform:scale(.97);}
@@ -4461,6 +4463,17 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   position:absolute;top:6px;right:6px;width:16px;height:16px;border-radius:50%;
   background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;
   opacity:0;transform:scale(0.6);transition:opacity .15s ease, transform .15s ease;
+  /* ---- FIX: badge ini letaknya menumpuk area kanan-atas pratinjau
+     mini di dalam kartu yg sama (.tdmp kotak warna di grid "Tampilan
+     Aplikasi", .tfb-avatar-mini di grid "Bingkai Avatar") -- keduanya
+     SAMA-SAMA elemen ber-position (relative/absolute) TANPA z-index,
+     jadi urutan gambarnya cuma ikut urutan DOM. Karena preview mini
+     itu ditulis SETELAH badge ini di HTML, browser menggambarnya
+     BELAKANGAN -> menimpa/menutupi separuh badge (persis gejala
+     "tombol centang tertutup" yg dilaporkan). z-index eksplisit di
+     sini memaksa badge SELALU di lapisan paling atas kartu, apa pun
+     urutan elemen lain di dalamnya. ---- */
+  z-index:2;
 }
 .tema-font-btn.active .tfb-check{opacity:1;transform:scale(1);}
 .tema-font-btn .tfb-preview{font-size:18px;font-weight:600;color:var(--ink);line-height:1.15;}
@@ -4642,8 +4655,8 @@ body.density-compact .income-cards-group{gap:10px;}
 }
 @media (max-width:380px){
   .income-cards-group{gap:12px;}
-  .isc-card-actions{flex-wrap:wrap;}
-  .isc-view-all-btn, .isc-add-source-btn{flex:1 1 100%;}
+  .isc-card-actions{gap:6px;}
+  .isc-view-all-btn, .isc-add-source-btn{padding:8px 8px;font-size:11px;gap:4px;}
   .wallet-deal-card, .wallet-deal-add{width:122px;padding:10px 10px 9px;}
   .wdc-name{font-size:12px;}
   .wdc-balance{font-size:12.5px;}
@@ -6823,14 +6836,21 @@ tbody tr:last-child td{border-bottom:none;}
    ikut disembunyikan di layar pendek krn bukan info penting -- lebih
    baik hilang drpd memaksa scroll cuma demi 1 baris teks kecil. ---- */
 @media (max-width:640px){
+  /* ---- BATAS ATAS ikut banner: --modal-safe-top di-set lewat JS
+     (lihat applyModalSafeTop() di script.js) ke posisi tepi BAWAH
+     banner oren halaman yang sedang aktif saat popup dibuka, jadi
+     sheet ini TIDAK PERNAH naik sampai menutupi/menembus banner --
+     apa pun halamannya (Laporan/Dompet/Tagihan&Hutang/dll) & posisi
+     scroll-nya. Fallback lama (8px + safe-area) dipakai kalau utk
+     alasan apa pun JS gagal menghitung/tidak ada banner yg terlihat. */
   #billModalOverlay{
     align-items:flex-end;
-    padding:calc(8px + env(safe-area-inset-top,0px)) 10px calc(72px + 10px + env(safe-area-inset-bottom,0px));
+    padding:var(--modal-safe-top, calc(8px + env(safe-area-inset-top,0px))) 10px calc(72px + 10px + env(safe-area-inset-bottom,0px));
   }
   #billModalOverlay .bill-modal{
     width:100%;
-    max-height:calc(100vh - 72px - 10px - env(safe-area-inset-bottom,0px) - 8px - env(safe-area-inset-top,0px));
-    max-height:calc(100dvh - 72px - 10px - env(safe-area-inset-bottom,0px) - 8px - env(safe-area-inset-top,0px));
+    max-height:calc(100vh - 72px - 10px - env(safe-area-inset-bottom,0px) - var(--modal-safe-top, calc(8px + env(safe-area-inset-top,0px))));
+    max-height:calc(100dvh - 72px - 10px - env(safe-area-inset-bottom,0px) - var(--modal-safe-top, calc(8px + env(safe-area-inset-top,0px))));
     /* Konten diatur jadi kolom flex supaya form bisa menyusut (min-height:0)
        persis tinggi wadahnya kalau perlu, bukan cuma mengandalkan margin
        kecil satu-satu -- lihat #billForm di bawah. */
@@ -6904,14 +6924,17 @@ tbody tr:last-child td{border-bottom:none;}
    (kepala + saklar + nominal + tanggal/kategori + keterangan + tombol
    aksi) muat 1 layar TANPA perlu discroll. ---- */
 @media (max-width:640px){
+  /* ---- BATAS ATAS ikut banner, pola PERSIS sama dgn #billModalOverlay
+     di atas -- lihat catatan lengkap di sana & applyModalSafeTop() di
+     script.js. ---- */
   #txModalOverlay{
     align-items:flex-end;
-    padding:calc(8px + env(safe-area-inset-top,0px)) 10px calc(72px + 10px + env(safe-area-inset-bottom,0px));
+    padding:var(--modal-safe-top, calc(8px + env(safe-area-inset-top,0px))) 10px calc(72px + 10px + env(safe-area-inset-bottom,0px));
   }
   #txModalOverlay .tx-modal{
     width:100%;
-    max-height:calc(100vh - 72px - 10px - env(safe-area-inset-bottom,0px) - 8px - env(safe-area-inset-top,0px));
-    max-height:calc(100dvh - 72px - 10px - env(safe-area-inset-bottom,0px) - 8px - env(safe-area-inset-top,0px));
+    max-height:calc(100vh - 72px - 10px - env(safe-area-inset-bottom,0px) - var(--modal-safe-top, calc(8px + env(safe-area-inset-top,0px))));
+    max-height:calc(100dvh - 72px - 10px - env(safe-area-inset-bottom,0px) - var(--modal-safe-top, calc(8px + env(safe-area-inset-top,0px))));
     display:flex;flex-direction:column;
   }
   .modal.tx-modal{padding:10px 12px 10px;border-radius:16px;}
@@ -11747,12 +11770,10 @@ html.glass-mode .pin-lock-sheet,
 html.glass-mode .ai-chat-panel,
 html.glass-mode .export-menu,
 html.glass-mode .saldo-card,
-html.glass-mode .flow-deal-card,
 html.glass-mode .bd-summary-card,
 html.glass-mode .device-card,
 html.glass-mode .wallet-deal-card,
 html.glass-mode .wallet-preview-card,
-html.glass-mode .fc-peek-handle,
 html.glass-mode .toast{
   /* UPDATE (permintaan user): background transparan + blur DIHAPUS --
      kartu/panel kembali pakai tampilan Default apa adanya (warna,
@@ -11766,6 +11787,34 @@ html.glass-mode .toast{
     inset 0 1px 0 rgba(255,255,255,0.85),
     inset 0 -1px 0 rgba(15,23,42,0.05);
 }
+/* FIX (sama seperti audit Dark): .saldo-card + "Ringkasan transaksi"
+   (.flow-deal-card/.fc-peek-handle) di bawahnya dirancang MENYATU jadi
+   satu kartu panjang tanpa sambungan (lihat catatan panjang di
+   .saldo-card versi Default). Border kaca generik sebelumnya dipasang
+   ke KETIGANYA sekaligus (grup di atas) -- itu bikin 2 masalah:
+   1) .saldo-card dapat border-bottom PENUH & .flow-deal-card dapat
+      border-top PENUH, jadi ada GARIS DOBEL persis di sambungan
+      keduanya alih-alih satu garis menyatu.
+   2) .fc-peek-handle (tab "Ringkasan transaksi" saat diciutkan) punya
+      margin negatif kiri-kanan (-22px) yg bikin kotaknya LEBIH LEBAR
+      dari area yg benar-benar terlihat (dipotong overflow:hidden
+      induknya, .banner-flow-wrap) -- border kiri-kanannya jatuh di
+      LUAR area terlihat & ikut terpotong, kelihatan berantakan/putus.
+   Sekarang border-bottom .saldo-card dihapus (menyambung ke bawah
+   tanpa garis dobel), dan border "Ringkasan transaksi" dipindah ke
+   .banner-flow-wrap (elemen overflow:hidden yg lebarnya PAS sama
+   dgn .saldo-card, bukan ke flow-deal-card/fc-peek-handle langsung)
+   supaya garis tepinya utuh & benar-benar menyambung, baik saat kartu
+   masih tab diciutkan maupun sudah dibuka penuh. */
+html.glass-mode .saldo-card{
+  border-bottom:none;
+}
+/* PERMINTAAN: warna tetap senada baik saat kartu masih DICIUTKAN
+   maupun sudah DIBUKA PENUH -- border pada .banner-flow-wrap DIHAPUS
+   SEPENUHNYA (tidak ada border kaca di kedua kondisi), persis tema
+   Default yg memang tidak pernah punya border di sini. Latarnya
+   sendiri sudah otomatis senada (lihat fix gradasi .fc-peek-handle
+   transparent di CSS dasar) tanpa perlu bantuan garis tepi apa pun. */
 /* ---- Tombol PIL saja yg diberi kaca (.lap-filter-save-btn/
    .lap-filter-cancel-btn, dipakai bareng .btn-primary/.btn-ghost di
    markup -- lihat footer Batal/Selesai halaman Tema/Filter/Data Diri
@@ -11932,23 +11981,14 @@ html.dark-mode .saldo-card{
   border-bottom:none;
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
 }
-/* FIX: kartu "Uang Masuk & Keluar" (.flow-deal-card saat dibuka penuh /
-   .fc-peek-handle saat masih tab diciutkan) sebelumnya TIDAK ikut
-   dimasukkan ke override border Dark di atas -- keduanya masih mewarisi
-   border:none dari CSS default (lihat .banner-flow-wrap .flow-deal-card
-   & .fc-peek-handle di atas), jadi border cuma nongol di sekeliling
-   .saldo-card lalu "putus" begitu masuk ke kartu ini, kelihatan seperti
-   sambungan/warna tidak konsisten. Disamakan polanya dengan Glass (yang
-   sudah benar memasukkan ketiganya sekaligus dalam satu grup border):
-   border sisi kiri-kanan-bawah saja (TANPA atas, supaya tidak dobel garis
-   di sambungan dengan .saldo-card) sehingga garis tepi terasa MENYATU
-   membungkus satu kartu panjang, persis seperti perilaku tema Default. */
-html.dark-mode .banner-flow-wrap .flow-deal-card,
-html.dark-mode .fc-peek-handle{
-  border:1px solid rgba(255,255,255,0.09) !important;
-  border-top:none !important;
-  box-shadow: inset 0 -1px 0 rgba(255,255,255,0.05) !important;
-}
+/* PERMINTAAN TERBARU: warna tetap senada baik saat kartu masih
+   DICIUTKAN maupun sudah DIBUKA PENUH -- border pada .banner-flow-wrap
+   DIHAPUS SEPENUHNYA (tidak ada border di kedua kondisi), persis tema
+   Default. Percobaan sebelumnya (border kiri-kanan-bawah, lalu
+   di-scope hanya ke .fc-settled) sudah dilepas -- .fc-peek-handle
+   sekarang transparan (lihat fix di CSS dasar) sehingga gradasi
+   .flow-deal-card yg lebarnya SUDAH PAS dgn .saldo-card otomatis
+   tembus & senada tanpa bantuan garis tepi apa pun. */
 html.dark-mode .modal-overlay{
   background:rgba(0,0,0,0.65);
 }

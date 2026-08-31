@@ -6381,7 +6381,49 @@ function unlockBodyScroll() {
     window.scrollTo(0, scrollLockY);
   }
 }
+/* ---- BATAS ATAS popup "Tambah Transaksi" (.tx-modal) & "Tambah
+   Tagihan/Hutang" (.bill-modal) di HP: dihitung dari tepi BAWAH
+   banner oren halaman yang SEDANG TERLIHAT di layar saat popup
+   dibuka -- apa pun halamannya (Laporan/Dompet/Tagihan & Hutang/dll)
+   & apa pun posisi scroll-nya (banner2 ini position:sticky, jadi
+   getBoundingClientRect() di bawah selalu mengembalikan posisi
+   TERKINI di layar, bukan posisi statis) -- lalu dituliskan sebagai
+   CSS var --modal-safe-top di overlay-nya sendiri. Var ini yang
+   dipakai #billModalOverlay/#txModalOverlay (lihat CSS terkait,
+   dicari via komentar "BATAS ATAS ikut banner") utk padding-top &
+   max-height, jadi sheet-nya TIDAK PERNAH naik sampai menutupi/
+   menembus banner. Kalau tidak ada banner yg sedang terlihat (mis.
+   dibuka dari halaman tanpa banner), var ini dilepas lagi supaya CSS
+   otomatis balik ke nilai fallback lama (8px + safe-area-top). ---- */
+function applyModalSafeTop(overlay) {
+  if (!overlay) return;
+  if (window.innerWidth > 640) { overlay.style.removeProperty('--modal-safe-top'); return; }
+  var banners = document.querySelectorAll('.page-banner, .bd-page-banner');
+  var safeTop = 0;
+  banners.forEach(function (el) {
+    if (!el || el.offsetParent === null) return;
+    var cs = window.getComputedStyle(el);
+    if (cs.visibility === 'hidden' || parseFloat(cs.opacity) === 0) return;
+    var rect = el.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) return;
+    if (rect.bottom <= 0 || rect.top >= window.innerHeight) return;
+    if (rect.bottom > safeTop) safeTop = rect.bottom;
+  });
+  // Jaring pengaman: batas atas jangan sampai "memakan" lebih dari
+  // separuh tinggi layar (mis. layar landscape sangat pendek) --
+  // popup tetap harus kebagian ruang yang wajar utk isinya.
+  var maxAllowed = window.innerHeight * 0.5;
+  if (safeTop > maxAllowed) safeTop = maxAllowed;
+  if (safeTop > 0) {
+    overlay.style.setProperty('--modal-safe-top', Math.round(safeTop) + 'px');
+  } else {
+    overlay.style.removeProperty('--modal-safe-top');
+  }
+}
 function openModal(overlay) {
+  if (overlay.id === 'txModalOverlay' || overlay.id === 'billModalOverlay') {
+    applyModalSafeTop(overlay);
+  }
   overlay.classList.add('open');
   lockBodyScroll();
 }
@@ -6389,6 +6431,16 @@ function closeModal(overlay) {
   overlay.classList.remove('open');
   unlockBodyScroll();
 }
+/* Layar bisa berputar (landscape/portrait) atau browser bar HP
+   memendek/memanjang saat popup ini masih terbuka -- tinggi banner
+   ikut berubah krn pakai satuan vw/vh (clamp), jadi --modal-safe-top
+   perlu dihitung ulang supaya batas atasnya tetap akurat. */
+window.addEventListener('resize', function () {
+  var tx = document.getElementById('txModalOverlay');
+  var bill = document.getElementById('billModalOverlay');
+  if (tx && tx.classList.contains('open')) applyModalSafeTop(tx);
+  if (bill && bill.classList.contains('open')) applyModalSafeTop(bill);
+});
 
 document.getElementById('txForm').addEventListener('submit', (e) => {
   e.preventDefault();
