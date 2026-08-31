@@ -7888,7 +7888,16 @@ tbody tr:last-child td{border-bottom:none;}
 }
 .bd-icon-btn{
   width:32px;height:32px;border-radius:50%;flex-shrink:0;
-  border:1px solid var(--line);background:#fff;color:var(--ink-soft);
+  border:1px solid var(--line);
+  /* FIX "belum disesuaikan versi Dark": sebelumnya latar tombol ini
+     di-hardcode putih polos (#fff) alih-alih memakai var(--card) --
+     border & warna ikonnya sudah otomatis ikut tema (var(--line)/
+     var(--ink-soft)), tapi latarnya sendiri TIDAK PERNAH ikut gelap,
+     jadi di mode Dark tombolnya tetap kotak putih terang yang bentrok
+     dengan sekitarnya. var(--card) nilainya persis #FFFFFF di tema
+     Default (tidak ada perubahan visual di sana), tapi ikut berubah
+     ke warna kartu gelap begitu html.dark-mode aktif. */
+  background:var(--card);color:var(--ink-soft);
   display:flex;align-items:center;justify-content:center;
   transition:all .15s ease;cursor:pointer;
   touch-action:manipulation;-webkit-tap-highlight-color:transparent;
@@ -7972,7 +7981,10 @@ tbody tr:last-child td{border-bottom:none;}
 .bd-date-field input[type="date"]:focus{outline:none;}
 .bd-row-close{
   width:28px;height:28px;border-radius:50%;flex-shrink:0;border:1px solid var(--line);
-  background:#fff;color:var(--ink-faint);display:flex;align-items:center;justify-content:center;
+  /* Sama seperti fix .bd-icon-btn di atas -- #fff hardcode diganti
+     var(--card) supaya ikut gelap di mode Dark (satu area yg sama dgn
+     tombol Cari/Kalender/Download, jadi bug & fix-nya identik). */
+  background:var(--card);color:var(--ink-faint);display:flex;align-items:center;justify-content:center;
   transition:all .15s ease;cursor:pointer;
   touch-action:manipulation;-webkit-tap-highlight-color:transparent;
 }
@@ -8029,6 +8041,18 @@ tbody tr:last-child td{border-bottom:none;}
   display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);
   border-radius:16px;padding:13px 14px;box-shadow:var(--shadow-sm);
   transition:border-color .15s ease, transform .15s ease, box-shadow .15s ease, background .15s ease;
+  /* FIX "halaman melebar ke samping" (grid blowout): kartu ini adalah
+     ITEM GRID langsung dari .bd-list (display:grid), dan grid item
+     tanpa min-width eksplisit tetap dihitung selebar konten min-content
+     ASLINYA (termasuk teks pil "Terlambat X hari · tanggal" SEBELUM
+     dipotong ellipsis) saat menentukan lebar kolom grid -- walaupun
+     semua elemen DI DALAM kartu (.bd-item-body/.meta/.due/.due-text)
+     sudah diberi min-width:0 + overflow:hidden + text-overflow:ellipsis
+     sendiri-sendiri. min-width:0 di level kartu ini WAJIB supaya grid
+     menghormati lebar kolom (1fr) yg sudah ditentukan, alih-alih ikut
+     melebar mengikuti konten terpanjang di dalamnya -- baru setelah itu
+     mekanisme ellipsis di elemen anak benar-benar berlaku secara visual. */
+  min-width:0;
 }
 @media (max-width:640px){.bd-item{padding:11px 12px;border-radius:14px;gap:10px;}}
 /* Badge "Jatuh tempo ..." di kartu tagihan/hutang: di HP font & padding
@@ -11907,6 +11931,23 @@ html.dark-mode .saldo-card{
   border:1px solid rgba(255,255,255,0.09);
   border-bottom:none;
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+}
+/* FIX: kartu "Uang Masuk & Keluar" (.flow-deal-card saat dibuka penuh /
+   .fc-peek-handle saat masih tab diciutkan) sebelumnya TIDAK ikut
+   dimasukkan ke override border Dark di atas -- keduanya masih mewarisi
+   border:none dari CSS default (lihat .banner-flow-wrap .flow-deal-card
+   & .fc-peek-handle di atas), jadi border cuma nongol di sekeliling
+   .saldo-card lalu "putus" begitu masuk ke kartu ini, kelihatan seperti
+   sambungan/warna tidak konsisten. Disamakan polanya dengan Glass (yang
+   sudah benar memasukkan ketiganya sekaligus dalam satu grup border):
+   border sisi kiri-kanan-bawah saja (TANPA atas, supaya tidak dobel garis
+   di sambungan dengan .saldo-card) sehingga garis tepi terasa MENYATU
+   membungkus satu kartu panjang, persis seperti perilaku tema Default. */
+html.dark-mode .banner-flow-wrap .flow-deal-card,
+html.dark-mode .fc-peek-handle{
+  border:1px solid rgba(255,255,255,0.09) !important;
+  border-top:none !important;
+  box-shadow: inset 0 -1px 0 rgba(255,255,255,0.05) !important;
 }
 html.dark-mode .modal-overlay{
   background:rgba(0,0,0,0.65);
