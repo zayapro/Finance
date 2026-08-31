@@ -11507,30 +11507,16 @@ html.dark-mode{
 }
 
 /* ============ MODE GLASS (ala "Liquid Glass" iOS) ============
-   UPDATE (permintaan user): dulu SELURUH badan kartu (background +
-   backdrop-filter blur) dibikin tembus pandang -- sekarang diubah jadi
-   HANYA GARIS TEPI (border) kartu yg bergaya kaca (rgba putih tipis +
-   kilau dua-warna via box-shadow inset), badan/isi kartu balik SOLID
-   spt mode Default (tetap enak dibaca, tidak transparan). Makanya
-   variabel --card & --card-fade-bg di sini SENGAJA TIDAK ditimpa lagi
-   (dulu ditimpa jadi rgba transparan supaya ratusan elemen kecil ikut
-   tembus otomatis) -- dibiarkan pakai nilai solid bawaan dari :root,
-   supaya SEMUA permukaan (bukan cuma yg dpt border khusus di bawah)
-   balik opaque. Efek kaca sungguhan (background tembus + blur) kini
-   dipindah sepenuhnya ke TOMBOL (.btn-primary/.btn-ghost) di bawah,
-   sesuai permintaan "tombol secara keseluruhan aplikasi" yg glass.
-   Latar halaman TETAP gradient mesh warna lembut spt sebelumnya supaya
-   ada kontras & nuansa "kaca" tetap kerasa lewat tepi kartu & tombol
-   yg melayang di atasnya. ---- */
-html.glass-mode body{
-  background:
-    radial-gradient(circle at 6% 2%, color-mix(in srgb, var(--primary-light) 60%, transparent) 0%, transparent 40%),
-    radial-gradient(circle at 96% 14%, color-mix(in srgb, var(--primary) 40%, transparent) 0%, transparent 44%),
-    radial-gradient(circle at 15% 88%, color-mix(in srgb, var(--primary-soft) 85%, transparent) 0%, transparent 48%),
-    radial-gradient(circle at 85% 96%, color-mix(in srgb, var(--primary-light) 45%, transparent) 0%, transparent 42%),
-    linear-gradient(165deg, #EEF1F8 0%, #E5EAF6 50%, #EEF0F8 100%);
-  background-attachment:fixed;
-}
+   UPDATE (permintaan user): disederhanakan supaya SEBAGIAN BESAR
+   tampilan SAMA PERSIS spt mode Default (latar halaman polos, nav
+   bawah, overlay popup, dst -- semua TIDAK disentuh lagi di sini,
+   otomatis balik ke gaya Default krn tidak ada override). Yang
+   BENERAN dikasih efek kaca cuma 2 hal sesuai permintaan: (1) KARTU
+   (badan kartu sungguhan tembus pandang + blur, bukan cuma border lg
+   spt versi sblmnya), dan (2) TOMBOL PIL -- khusus tombol berbentuk
+   pil bulat penuh (.lap-filter-save-btn/.lap-filter-cancel-btn,
+   border-radius:999px, dipakai di footer Batal/Selesai banyak popup),
+   BUKAN semua tombol .btn-primary/.btn-ghost spt versi sebelumnya. ---- */
 html.glass-mode .page-body,
 html.glass-mode .lap-filter-page .lap-filter-card,
 html.glass-mode .tema-preview-card,
@@ -11575,61 +11561,33 @@ html.glass-mode .cloud-auth-card,
 html.glass-mode .pin-lock-sheet,
 html.glass-mode .ai-chat-panel,
 html.glass-mode .export-menu,
+html.glass-mode .saldo-card,
+html.glass-mode .flow-deal-card,
+html.glass-mode .fc-peek-handle,
 html.glass-mode .toast{
-  /* ---- UPDATE: badan kartu balik SOLID (background var(--card) biasa,
-     backdrop-filter dicopot krn tanpa transparansi blur tidak kelihatan
-     apa2) -- yg tersisa bergaya "kaca" cuma GARIS TEPI: border rgba
-     putih tipis dicampur sedikit warna aksen (color-mix, biar ikut
-     berubah otomatis saat preset Warna Aksen diganti spt versi lama),
-     + kilau dua-warna via box-shadow inset (terang di atas, gelap
-     samar di bawah) yg meniru refleksi tepi panel kaca asli iOS. ---- */
-  background:var(--card);
-  border:1.5px solid color-mix(in srgb, var(--primary) 20%, rgba(255,255,255,0.85));
-  box-shadow:
-    0 8px 26px rgba(31,38,80,0.08),
-    inset 0 1px 0 rgba(255,255,255,0.9),
-    inset 0 -1px 0 rgba(15,23,42,0.04);
-}
-html.glass-mode .bottom-nav,
-/* mini-topbar (versi mobile, fixed nempel ATAS layar) numpang persis
-   treatment .bottom-nav krn perannya sama -- bar chrome fixed di tepi
-   layar, BUKAN kartu konten biasa. */
-html.glass-mode .mini-topbar{
-  background:color-mix(in srgb, var(--primary) 6%, rgba(255,255,255,0.55)) !important;
+  /* Kaca tetap DASARNYA putih (demi kontras teks tetap aman utk semua
+     warna aksen), tapi dicampur SEDIKIT (8%) dgn warna aksen aktif via
+     color-mix() -- supaya begitu warna tema diganti di halaman Tema,
+     rona kaca ini OTOMATIS ikut sedikit condong ke warna itu, bukan
+     putih netral yg sama terus utk semua preset warna. Plus GARIS TEPI
+     TIPIS dua-warna (putih terang di atas, gelap samar di bawah lewat
+     box-shadow inset) yg meniru refleksi cahaya di tepi panel kaca. */
+  background:color-mix(in srgb, var(--primary) 8%, rgba(255,255,255,0.46)) !important;
   backdrop-filter:var(--glass-blur);
   -webkit-backdrop-filter:var(--glass-blur);
-  border-top:1px solid rgba(255,255,255,0.75);
-  box-shadow:0 -1px 0 rgba(255,255,255,0.9) inset, 0 -8px 28px -10px rgba(31,38,80,0.16);
-}
-/* Kartu "Saldo Total" + "Ringkasan transaksi kamu" (.saldo-card/
-   .flow-deal-card/.fc-peek-handle) numpang 1 variabel yg sama
-   (--card-fade-bg) yg SEKARANG solid spt mode Default (lihat catatan
-   di atas -- --card-fade-bg tidak lagi ditimpa transparan), jadi
-   backdrop-filter blur DICOPOT di sini (percuma tanpa transparansi).
-   Yg tersisa cuma garis tepi kaca (border+kilau) di .saldo-card, biar
-   sejalan dgn kartu2 lain yg juga "border-only glass". */
-html.glass-mode .saldo-card{
-  border:1.5px solid color-mix(in srgb, var(--primary) 20%, rgba(255,255,255,0.85));
+  border:1px solid rgba(255,255,255,0.7);
   box-shadow:
-    0 8px 26px rgba(31,38,80,0.08),
-    inset 0 1px 0 rgba(255,255,255,0.9);
+    0 8px 32px rgba(31,38,80,0.14),
+    inset 0 1px 0 rgba(255,255,255,0.85),
+    inset 0 -1px 0 rgba(15,23,42,0.05);
 }
-html.glass-mode .modal-overlay{
-  background:rgba(20,25,55,0.28);
-  backdrop-filter:blur(6px) saturate(140%);
-  -webkit-backdrop-filter:blur(6px) saturate(140%);
-}
-html.glass-mode .detail-page-overlay{
-  background:rgba(238,241,247,0.001); /* biarkan gradient body tembus di belakang overlay halaman penuh */
-}
-/* ---- BARU (permintaan user): efek kaca sungguhan (background tembus
-   pandang + blur+saturate) dipindah dari badan kartu (skrg cuma
-   border, lihat blok di atas) ke TOMBOL di SELURUH aplikasi -- numpang
-   2 class dasar .btn-primary/.btn-ghost yg dipakai di ~80+ tempat
-   (form, popup, footer Batal/Selesai, dst) supaya cukup 2 selector utk
-   dampak menyeluruh, konsisten dgn pola "1 class dasar = ratusan
-   tempat" yg dipakai di seluruh file ini. ---- */
-html.glass-mode .btn-primary{
+/* ---- Tombol PIL saja yg diberi kaca (.lap-filter-save-btn/
+   .lap-filter-cancel-btn, dipakai bareng .btn-primary/.btn-ghost di
+   markup -- lihat footer Batal/Selesai halaman Tema/Filter/Data Diri
+   dst), BUKAN seluruh tombol .btn-primary/.btn-ghost umum (yg banyak
+   dipakai di form/aksi kecil lain & sengaja dibiarkan polos spt
+   Default). ---- */
+html.glass-mode .btn.lap-filter-save-btn{
   background:color-mix(in srgb, var(--primary) 62%, rgba(255,255,255,0.3)) !important;
   backdrop-filter:var(--glass-blur);
   -webkit-backdrop-filter:var(--glass-blur);
@@ -11638,24 +11596,20 @@ html.glass-mode .btn-primary{
     0 6px 18px color-mix(in srgb, var(--primary-deep) 30%, transparent),
     inset 0 1px 0 rgba(255,255,255,0.55);
 }
-html.glass-mode .btn-primary:hover{
+html.glass-mode .btn.lap-filter-save-btn:hover{
   background:color-mix(in srgb, var(--primary-deep) 62%, rgba(255,255,255,0.28)) !important;
 }
-html.glass-mode .btn-ghost{
+html.glass-mode .btn.lap-filter-cancel-btn{
   background:color-mix(in srgb, var(--primary) 8%, rgba(255,255,255,0.42)) !important;
   backdrop-filter:var(--glass-blur);
   -webkit-backdrop-filter:var(--glass-blur);
   border:1px solid rgba(255,255,255,0.65);
   box-shadow:inset 0 1px 0 rgba(255,255,255,0.75);
-  color:var(--ink);
 }
-html.glass-mode .btn-ghost:hover{
+html.glass-mode .btn.lap-filter-cancel-btn:hover{
   background:color-mix(in srgb, var(--primary) 15%, rgba(255,255,255,0.5)) !important;
   border-color:rgba(255,255,255,0.8);
 }
-/* Badge/pill/kotak ikon kecil numpang var(--card) yg SEKARANG solid
-   (lihat catatan di atas), jadi otomatis balik opaque juga -- sesuai
-   permintaan "cuma border kartu & tombol" yg glass, bukan elemen lain. */
 
 /* ============ MODE DARK (dulu "Liquid Glass" gelap) ============
    UPDATE (permintaan user): SEMUA efek kaca/blur (backdrop-filter)
