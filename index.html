@@ -132,6 +132,27 @@ if ('scrollRestoration' in history) {
 })();
 </script>
 
+<!-- FIX SERUPA utk mode Tampilan (Default/Glass/Gelap): baca localStorage
+     (key SENGAJA sama persis dgn DISPLAY_MODE_KEY di script.js)
+     SEPALING AWAL mungkin, lalu tempel class "glass-mode"/"dark-mode"
+     langsung ke <html> sesuai mode tersimpan -- supaya refresh halaman
+     TIDAK sempat menampilkan mode Default dulu sekilas sebelum berubah
+     lagi ke Glass/Gelap (akar masalah & pola fix-nya sama persis dgn
+     fix warna tema di atas). -->
+<script>
+(function () {
+  try {
+    var raw = localStorage.getItem('alirin_display_mode_v1');
+    if (raw) {
+      var state = JSON.parse(raw);
+      var mode = state && state.mode;
+      if (mode === 'glass') document.documentElement.classList.add('glass-mode');
+      else if (mode === 'dark') document.documentElement.classList.add('dark-mode');
+    }
+  } catch (e) { /* abaikan */ }
+})();
+</script>
+
 <!-- FIX "refresh di halaman Tagihan & Hutang masih kelihatan
      lompat/kedip ke Beranda sekilas": script + style di bawah ini
      SENGAJA dipasang PALING ATAS <head>, sebelum elemen/CSS/gambar
@@ -4342,6 +4363,24 @@ tr.fade-up{animation:fadeRow .35s ease both;}
    Gaya Font & Elemen Dekoratif Banner yg TIDAK diberi id ini tetap
    pakai 4 kolom bawaan seperti semula. ---- */
 #temaFrameGrid{grid-template-columns:repeat(3,1fr);}
+/* ---- Grid pemilih "Tampilan Aplikasi" (Default/Glass/Gelap) -- numpang
+   .tema-font-btn PERSIS spt #temaFrameGrid di atas (3 kolom), cuma
+   pratinjaunya kotak warna mini (.tdmp) mewakili tampilan tiap mode,
+   bukan huruf "Aa" atau lingkaran avatar. ---- */
+#temaDisplayGrid{grid-template-columns:repeat(3,1fr);}
+.tdmp{
+  width:100%;height:36px;border-radius:9px;margin-bottom:2px;
+  border:1px solid rgba(15,23,42,0.1);
+  position:relative;overflow:hidden;
+}
+.tdmp-default{background:linear-gradient(180deg,#FA8B1E 0%,#FA8B1E 32%,#F5F7FE 68%,#F5F7FE 100%);}
+.tdmp-glass{background:linear-gradient(135deg,#C9D6F5 0%,#F2E9FB 100%);}
+.tdmp-glass::after{
+  content:'';position:absolute;inset:6px;border-radius:6px;
+  background:rgba(255,255,255,0.4);backdrop-filter:blur(3px);
+  border:1px solid rgba(255,255,255,0.6);
+}
+.tdmp-dark{background:linear-gradient(180deg,#FA8B1E 0%,#FA8B1E 32%,#151B2C 68%,#151B2C 100%);}
 .tema-font-btn{
   position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
   border:1.5px solid var(--line);border-radius:14px;background:var(--paper);
@@ -11399,6 +11438,137 @@ body.is-scrolling *{
   width:100%;height:100%;object-fit:cover;border-radius:inherit;
   display:block;
 }
+
+/* ==========================================================
+   FITUR BARU: "Tampilan Aplikasi" -- 3 mode: Default (bawaan, tidak
+   perlu CSS tambahan), Glass (glassmorphism), Gelap (dark mode).
+   Disimpan di DISPLAY_MODE_KEY (lihat script.js), cuma SATU mode yang
+   aktif dalam satu waktu -- applyDisplayMode() menempel PALING BANYAK
+   1 class ('glass-mode' ATAU 'dark-mode') ke <html>, keduanya SALING
+   LEPAS satu sama lain (bukan bisa nyala bareng). Pola on/off & live
+   preview di halaman Tema (pilih dulu = pratinjau, "Selesai" baru
+   menyimpan) numpang persis pola section lain di halaman yang sama.
+
+   ---- MODE GLASS ----
+   1) --card ditimpa jadi putih SEMI-TRANSPARAN (bukan solid) --
+      karena --card dipakai sbg background di ~150 elemen (kartu,
+      badge, pill, kotak ikon, dst di seluruh file), cukup timpa 1
+      variabel ini maka SEMUA elemen itu otomatis ikut tembus
+      pandang, tanpa perlu ubah satu-satu.
+   2) backdrop-filter (blur kaca) baru ditambahkan MANUAL cuma di
+      permukaan-permukaan besar yg memang "terasa seperti kartu"
+      (bukan diarahkan ke SEMUA elemen via selector universal *,
+      supaya tidak bikin lag di HP low-end krn tiap backdrop-filter
+      bikin layer compositor baru).
+   3) Background halaman diganti gradient warna lembut yg diturunkan
+      dari warna aksen aktif (var(--primary)/--primary-light/
+      --primary-soft yg SUDAH otomatis ikut berubah tiap ganti preset
+      warna di halaman Tema) -- supaya efek transparan/bluenya justru
+      KELIHATAN (di atas putih polos, kaca tidak akan terlihat beda).
+
+   ---- MODE GELAP ----
+   Sama seperti Glass, strateginya TIMPA VARIABEL GLOBAL (--paper,
+   --card, --ink, --ink-soft, --ink-faint, --line, --shadow-sm/-md)
+   di :root lewat class .dark-mode -- var(--paper) & var(--card)
+   masing2 SUDAH dipakai di 117 & ~150 tempat di file ini utk latar
+   halaman/kartu/badge, & var(--ink)/--ink-soft/--ink-faint/--line
+   dipakai luas juga utk teks/border -- jadi menimpa variabel2 ini
+   SEKALIGUS mengubah HAMPIR SEMUA permukaan & teks aplikasi ke gelap
+   tanpa perlu menyentuh ratusan selector satu-satu. Sisanya (elemen yg
+   SENGAJA hardcode #fff, bukan var(--card)) ditimpa manual: .modal
+   (basis SEMUA popup: transaksi/struk/tagihan/logout/dst — cukup 1
+   selector krn semuanya numpang class .modal yg sama), .bottom-nav.
+   Warna aksen (--primary/--banner-orange/dst, ikon, banner atas)
+   SENGAJA TIDAK disentuh sama sekali -- tetap warna cerah sesuai
+   preset Warna Aksen yg dipilih, supaya banner/tombol/grafik tetap
+   jadi titik terang yg kontras & enak dilihat di atas latar gelap. ---- */
+html.glass-mode{
+  --card: rgba(255,255,255,0.58);
+}
+html.glass-mode body{
+  background:
+    radial-gradient(circle at 8% 4%, color-mix(in srgb, var(--primary-light) 55%, transparent) 0%, transparent 42%),
+    radial-gradient(circle at 92% 18%, color-mix(in srgb, var(--primary) 35%, transparent) 0%, transparent 46%),
+    radial-gradient(circle at 20% 92%, color-mix(in srgb, var(--primary-soft) 80%, transparent) 0%, transparent 50%),
+    linear-gradient(160deg, #EEF1F7 0%, #E7ECF5 55%, #EDEFF6 100%);
+  background-attachment:fixed;
+}
+/* Permukaan utama yg dijadikan "kaca": panel body halaman (di bawah
+   banner), kartu popup Filter/Tema/halaman penuh, kartu Pratinjau
+   Tema, baris Tagihan & Hutang, modal struk, dan nav bar bawah. */
+html.glass-mode .page-body,
+html.glass-mode .lap-filter-page .lap-filter-card,
+html.glass-mode .tema-preview-card,
+html.glass-mode .bd-item,
+html.glass-mode .receipt-modal,
+html.glass-mode .notif-page-body,
+html.glass-mode .as-body{
+  background:rgba(255,255,255,0.42) !important;
+  backdrop-filter:blur(18px) saturate(1.5);
+  -webkit-backdrop-filter:blur(18px) saturate(1.5);
+  border:1px solid rgba(255,255,255,0.55);
+  box-shadow:0 8px 32px rgba(31,38,80,0.12);
+}
+html.glass-mode .bottom-nav{
+  background:rgba(255,255,255,0.55) !important;
+  backdrop-filter:blur(20px) saturate(1.6);
+  -webkit-backdrop-filter:blur(20px) saturate(1.6);
+  border-top:1px solid rgba(255,255,255,0.5);
+}
+html.glass-mode .modal-overlay{
+  background:rgba(31,38,80,0.22);
+  backdrop-filter:blur(3px);
+  -webkit-backdrop-filter:blur(3px);
+}
+html.glass-mode .detail-page-overlay{
+  background:rgba(238,241,247,0.001); /* biarkan gradient body tembus di belakang overlay halaman penuh */
+}
+
+html.dark-mode{
+  --paper:#0F1420;
+  --card:#1A2236;
+  --ink:#F1F4FA;
+  --ink-soft:#A8B0C4;
+  --ink-faint:#8891A6;
+  --line:#2A3348;
+  --shadow-sm: 0 2px 10px rgba(0,0,0,0.28);
+  --shadow-md: 0 14px 36px rgba(0,0,0,0.4);
+}
+/* Gradient body dari oranye/warna-aksen banner turun ke latar gelap
+   (nilai gelapnya SAMA dgn --paper di atas), gantikan gradient asli
+   yg turun ke putih (#f5f7fe) -- supaya transisi banner->body tetap
+   mulus, cuma warna akhirnya gelap, bukan putih. */
+html.dark-mode body{
+  background:linear-gradient(180deg,
+    var(--banner-orange) 0px,
+    var(--banner-orange) 155px,
+    color-mix(in srgb, var(--banner-orange) 55%, #0F1420) 190px,
+    color-mix(in srgb, var(--banner-orange) 22%, #0F1420) 220px,
+    #0F1420 252px,
+    #0F1420 100%);
+}
+html.dark-mode .modal,
+html.dark-mode .bottom-nav{
+  background:var(--card);
+}
+html.dark-mode .bottom-nav{
+  border-top:1px solid var(--line);
+  box-shadow:0 -6px 18px -8px rgba(0,0,0,0.4);
+}
+html.dark-mode .modal-overlay{
+  background:rgba(0,0,0,0.55);
+}
+/* Placeholder input & elemen abu-abu muda (border halus, dst) yg
+   sebelumnya hardcode ke warna terang -- disamakan ke --line/--ink-faint
+   supaya tetap kebaca di atas latar gelap. */
+html.dark-mode input,
+html.dark-mode select,
+html.dark-mode textarea{
+  color:var(--ink);
+}
+html.dark-mode ::placeholder{
+  color:var(--ink-faint);
+}
 </style>
 </head>
 
@@ -12198,6 +12368,21 @@ body.is-scrolling *{
             <button type="button" class="ws-switch active" id="temaDecoSwitch" role="switch" aria-checked="true" aria-label="Aktifkan/nonaktifkan elemen dekoratif banner"><span class="ws-switch-knob"></span></button>
           </div>
           <div class="tema-font-grid tema-deco-grid" id="temaDecoGrid"></div>
+        </div>
+        <!-- ---- Fitur BARU: "Tampilan Aplikasi" -- pilih salah satu dari
+             3 mode (Default/Glass/Gelap), niru PERSIS struktur grid
+             #temaFrameGrid (Bingkai Avatar) di bawah -- kartu 3 kolom,
+             tiap kartu ada pratinjau mini kotak warna + label, status
+             terpilih lewat class .active (bukan switch on/off spt
+             Elemen Dekoratif krn ini pilihan 1-dari-3, bukan nyala/mati).
+             Sama seperti section lain di halaman Tema ini, di sini juga
+             cuma PRATINJAU live selama popup terbuka (langsung kelihatan
+             di kartu Pratinjau & seluruh halaman di baliknya), baru
+             tersimpan permanen kalau tombol "Selesai" ditekan. ---- -->
+        <div class="tema-section">
+          <h3>Tampilan Aplikasi</h3>
+          <p>Pilih gaya tampilan: bawaan, kaca tembus pandang (glass), atau gelap.</p>
+          <div class="tema-font-grid" id="temaDisplayGrid"></div>
         </div>
         <!-- ---- Fitur BARU: "Bingkai Avatar" -- pilih gaya cincin/bingkai
              utk lingkaran avatar/logo premium di banner beranda (elemen

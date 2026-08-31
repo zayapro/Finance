@@ -8296,6 +8296,67 @@ function renderTemaDecoGrid(state) {
   }
 }
 /* ==========================================================
+   FITUR BARU: "Tampilan Aplikasi" di halaman Tema -- pilih 1 dari 3
+   mode (Default/Glass/Gelap), pola storage & render-nya numpang mirip
+   GLOBAL_THEME_PRESETS/BANNER_DECO_SHAPES di atas (array preset +
+   key tersimpan), TAPI cuma boleh 1 mode aktif dalam satu waktu
+   (bukan on/off per-fitur spt BANNER_DECO). Disimpan di key sendiri
+   (bukan bagian GLOBAL_THEME_KEY warna atau APP_SETTINGS_KEY font)
+   krn ini murni preferensi gaya visual terpisah. Efek visual Glass &
+   Gelap SEPENUHNYA diatur lewat CSS class .glass-mode/.dark-mode di
+   <html> (lihat :root & aturan html.glass-mode.../html.dark-mode...
+   di <style> index.html) -- applyDisplayMode() di sini cuma toggle
+   class itu (SALING LEPAS, cuma 1 yg aktif), tidak menyentuh variabel
+   CSS secara langsung dari JS supaya 1 sumber kebenaran tetap di
+   CSS. ---- */
+const DISPLAY_MODE_KEY = 'alirin_display_mode_v1';
+const DISPLAY_MODE_PRESETS = [
+  { key: 'default', label: 'Default' },
+  { key: 'glass', label: 'Glass' },
+  { key: 'dark', label: 'Gelap' },
+];
+const DISPLAY_MODE_DEFAULTS = { mode: 'default' };
+function loadDisplayMode() {
+  try {
+    const raw = cloudStorage.getItem(DISPLAY_MODE_KEY);
+    return raw ? { ...DISPLAY_MODE_DEFAULTS, ...JSON.parse(raw) } : { ...DISPLAY_MODE_DEFAULTS };
+  } catch (e) { return { ...DISPLAY_MODE_DEFAULTS }; }
+}
+function saveDisplayMode(state) {
+  try { cloudStorage.setItem(DISPLAY_MODE_KEY, JSON.stringify(state)); }
+  catch (e) { showToast('Gagal menyimpan Tampilan Aplikasi.', 'err'); }
+}
+function applyDisplayMode(state) {
+  const mode = (state && state.mode) || 'default';
+  const root = document.documentElement.classList;
+  root.toggle('glass-mode', mode === 'glass');
+  root.toggle('dark-mode', mode === 'dark');
+}
+function renderTemaDisplayGrid(state) {
+  const grid = document.getElementById('temaDisplayGrid');
+  if (!grid) return;
+  const checkSvg = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
+  grid.innerHTML = DISPLAY_MODE_PRESETS.map(d => `
+    <button type="button" class="tema-font-btn${state.mode === d.key ? ' active' : ''}" data-displaymode="${d.key}" aria-label="Tampilan ${d.label}">
+      <span class="tfb-check">${checkSvg}</span>
+      <span class="tdmp tdmp-${d.key}" aria-hidden="true"></span>
+      <span class="tfb-label">${d.label}</span>
+    </button>
+  `).join('');
+}
+let temaDisplayOriginalState = null;
+let temaDisplayPendingState = null;
+document.getElementById('temaDisplayGrid')?.addEventListener('click', (e) => {
+  const btn = e.target.closest('.tema-font-btn');
+  if (!btn) return;
+  const mode = btn.dataset.displaymode;
+  if (!mode || mode === temaDisplayPendingState?.mode) return;
+  const state = { mode };
+  temaDisplayPendingState = state;
+  applyDisplayMode(state);
+  renderTemaDisplayGrid(state);
+});
+/* ==========================================================
    "Bingkai Avatar" di halaman Tema -- 6 pilihan gaya cincin/bingkai
    utk lingkaran avatar/logo premium di banner (elemen .brand-mark-wrap
    .brand-mark, lihat markup #brandMarkWrap & sistem CSS lengkap
@@ -8387,6 +8448,10 @@ function refreshTemaPage() {
   temaFramePendingState = frameState;
   renderTemaFrameGrid(frameState);
   applyAvatarFrame(frameState);
+  const displayState = loadDisplayMode();
+  temaDisplayOriginalState = displayState;
+  temaDisplayPendingState = displayState;
+  renderTemaDisplayGrid(displayState);
   const nameEl = document.getElementById('temaPreviewName');
   if (nameEl) {
     nameEl.textContent = (settings.appName || '').trim() || getDefaultAppName();
@@ -8534,6 +8599,7 @@ document.getElementById('temaCustomColorInput')?.addEventListener('input', (e) =
 // sejak render pertama (senada dgn applyAppSettings(loadAppSettings())
 // di bawah nanti).
 applyGlobalTheme(loadGlobalTheme());
+applyDisplayMode(loadDisplayMode());
 // Sama halnya utk elemen dekoratif banner (on/off + bentuk) -- diterapkan
 // sesegera mungkin juga supaya banner tidak sempat "berkedip" tampil lalu
 // hilang/berubah bentuk sesaat setelah halaman dimuat.
@@ -9715,6 +9781,7 @@ function closeTemaOverlay() {
   if (temaFontOriginalKey) applyFontPreview(temaFontOriginalKey);
   if (temaDecoOriginalState) applyBannerDeco(temaDecoOriginalState);
   if (temaFrameOriginalState) applyAvatarFrame(temaFrameOriginalState);
+  if (temaDisplayOriginalState) applyDisplayMode(temaDisplayOriginalState);
   document.getElementById('temaOverlay').classList.remove('open');
   unlockBodyScroll();
 }
@@ -9749,6 +9816,12 @@ function confirmTemaOverlay() {
     saveAvatarFrame(temaFramePendingState);
     applyAvatarFrame(temaFramePendingState);
     temaFrameOriginalState = temaFramePendingState;
+    changed = true;
+  }
+  if (temaDisplayPendingState && JSON.stringify(temaDisplayPendingState) !== JSON.stringify(temaDisplayOriginalState)) {
+    saveDisplayMode(temaDisplayPendingState);
+    applyDisplayMode(temaDisplayPendingState);
+    temaDisplayOriginalState = temaDisplayPendingState;
     changed = true;
   }
   if (changed) showToast('Tema disimpan.');
