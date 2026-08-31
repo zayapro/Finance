@@ -11507,16 +11507,17 @@ html.dark-mode{
 }
 
 /* ============ MODE GLASS (ala "Liquid Glass" iOS) ============
-   UPDATE (permintaan user): disederhanakan supaya SEBAGIAN BESAR
-   tampilan SAMA PERSIS spt mode Default (latar halaman polos, nav
-   bawah, overlay popup, dst -- semua TIDAK disentuh lagi di sini,
-   otomatis balik ke gaya Default krn tidak ada override). Yang
-   BENERAN dikasih efek kaca cuma 2 hal sesuai permintaan: (1) KARTU
-   (badan kartu sungguhan tembus pandang + blur, bukan cuma border lg
-   spt versi sblmnya), dan (2) TOMBOL PIL -- khusus tombol berbentuk
-   pil bulat penuh (.lap-filter-save-btn/.lap-filter-cancel-btn,
-   border-radius:999px, dipakai di footer Batal/Selesai banyak popup),
-   BUKAN semua tombol .btn-primary/.btn-ghost spt versi sebelumnya. ---- */
+   UPDATE (permintaan user): disederhanakan LAGI supaya HAMPIR SELURUH
+   tampilan SAMA PERSIS spt mode Default (background kartu, shadow,
+   warna, latar halaman, nav bawah, overlay popup, dst -- semua TIDAK
+   disentuh lagi di sini, otomatis balik ke gaya Default krn tidak ada
+   override). Yang BENERAN dikasih efek kaca cuma 2 hal sesuai
+   permintaan: (1) BORDER kartu/panel (garis tepi tipis kaca saja,
+   TANPA background transparan & TANPA backdrop-filter blur lagi), dan
+   (2) TOMBOL PIL -- khusus tombol berbentuk pil bulat penuh
+   (.lap-filter-save-btn/.lap-filter-cancel-btn, border-radius:999px,
+   dipakai di footer Batal/Selesai banyak popup), BUKAN semua tombol
+   .btn-primary/.btn-ghost. ---- */
 html.glass-mode .page-body,
 html.glass-mode .lap-filter-page .lap-filter-card,
 html.glass-mode .tema-preview-card,
@@ -11565,19 +11566,15 @@ html.glass-mode .saldo-card,
 html.glass-mode .flow-deal-card,
 html.glass-mode .fc-peek-handle,
 html.glass-mode .toast{
-  /* Kaca tetap DASARNYA putih (demi kontras teks tetap aman utk semua
-     warna aksen), tapi dicampur SEDIKIT (8%) dgn warna aksen aktif via
-     color-mix() -- supaya begitu warna tema diganti di halaman Tema,
-     rona kaca ini OTOMATIS ikut sedikit condong ke warna itu, bukan
-     putih netral yg sama terus utk semua preset warna. Plus GARIS TEPI
-     TIPIS dua-warna (putih terang di atas, gelap samar di bawah lewat
-     box-shadow inset) yg meniru refleksi cahaya di tepi panel kaca. */
-  background:color-mix(in srgb, var(--primary) 8%, rgba(255,255,255,0.46)) !important;
-  backdrop-filter:var(--glass-blur);
-  -webkit-backdrop-filter:var(--glass-blur);
+  /* UPDATE (permintaan user): background transparan + blur DIHAPUS --
+     kartu/panel kembali pakai tampilan Default apa adanya (warna,
+     shadow, dst tidak disentuh sama sekali di sini). Yang TERSISA
+     cuma GARIS TEPI (border) kaca dua-warna (putih terang di atas,
+     gelap samar di bawah lewat box-shadow inset) sbg satu-satunya
+     penanda visual "kaca" di kartu -- sesuai permintaan: hanya
+     border & tombol yg kelihatan glass, sisanya balik ke Default. */
   border:1px solid rgba(255,255,255,0.7);
   box-shadow:
-    0 8px 32px rgba(31,38,80,0.14),
     inset 0 1px 0 rgba(255,255,255,0.85),
     inset 0 -1px 0 rgba(15,23,42,0.05);
 }
