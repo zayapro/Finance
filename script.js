@@ -10085,6 +10085,36 @@ function userAccountRoleLabel(role) {
   return role === 'admin' ? 'Admin' : 'User';
 }
 
+// Ikon kecil sesuai jabatan, ditempel di sudut avatar -- mahkota utk
+// Admin (pemilik maupun user tambahan berrole admin), figur orang
+// polos utk User biasa.
+const UA_ICON_CROWN = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 19h18v2H3v-2Zm.4-3L2 8l5 3 5-6 5 6 5-3-1.4 8H3.4Z"/></svg>';
+const UA_ICON_USER = '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>';
+function userAccountAvatarHtml(name, isAdmin, orderNum) {
+  return `
+    <span class="ua-avatar-wrap${isAdmin ? ' is-admin-ring' : ''}">
+      <span class="ua-avatar${isAdmin ? ' ua-avatar-owner' : ''}">${escapeHtml(userAccountInitials(name))}</span>
+      ${orderNum ? `<span class="ua-order-badge">${orderNum}</span>` : ''}
+      <span class="ua-role-icon ${isAdmin ? 'is-admin' : 'is-user'}">${isAdmin ? UA_ICON_CROWN : UA_ICON_USER}</span>
+    </span>`;
+}
+
+function userAccountOwnerCardHtml() {
+  const name = window.zayaproAccountName || 'Pemilik Akun';
+  const email = window.zayaproAccountEmail || '';
+  return `
+    <div class="ua-card ua-card-owner" style="animation-delay:.02s;">
+      ${userAccountAvatarHtml(name, true)}
+      <span class="ua-body">
+        <span class="ua-top-row">
+          <span class="ua-name">${escapeHtml(name)}</span>
+          <span class="ua-role-badge ua-role-badge-owner">Admin (Pemilik)</span>
+        </span>
+        ${email ? `<span class="ua-email">${escapeHtml(email)}</span>` : ''}
+      </span>
+    </div>`;
+}
+
 async function renderUserAccountList() {
   const wrap = document.getElementById('userAccountList');
   if (!wrap) return;
@@ -10094,17 +10124,18 @@ async function renderUserAccountList() {
     return;
   }
   manualLoginUsers = await window.cloudListMembers();
+  const ownerCardHtml = userAccountOwnerCardHtml();
   if (!manualLoginUsers.length) {
-    wrap.innerHTML = `
+    wrap.innerHTML = ownerCardHtml + `
       <div class="ua-empty">
         <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>
         <p>Belum ada user login yang ditambahkan. Ketuk "Tambah User" untuk mulai.</p>
       </div>`;
     return;
   }
-  wrap.innerHTML = manualLoginUsers.map(u => `
-    <div class="ua-card">
-      <span class="ua-avatar">${escapeHtml(userAccountInitials(u.name))}</span>
+  wrap.innerHTML = ownerCardHtml + manualLoginUsers.map((u, i) => `
+    <div class="ua-card" style="animation-delay:${(0.06 + i * 0.05).toFixed(2)}s;">
+      ${userAccountAvatarHtml(u.name, u.role === 'admin', i + 1)}
       <span class="ua-body">
         <span class="ua-top-row">
           <span class="ua-name">${escapeHtml(u.name)}</span>
@@ -10112,6 +10143,9 @@ async function renderUserAccountList() {
         </span>
       </span>
       <span class="ua-actions">
+        <button type="button" class="icon-btn notify" data-uanotify="${escapeAttr(u.member_id)}" data-uanotifyname="${escapeAttr(u.name)}" title="Kirim pesan ke ${escapeAttr(u.name)}" aria-label="Kirim pesan ke ${escapeAttr(u.name)}">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        </button>
         <button type="button" class="icon-btn edit" data-uaedit="${escapeAttr(u.member_id)}" title="Edit user" aria-label="Edit ${escapeAttr(u.name)}">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
         </button>
@@ -10121,6 +10155,9 @@ async function renderUserAccountList() {
       </span>
     </div>
   `).join('');
+  wrap.querySelectorAll('[data-uanotify]').forEach(btn => {
+    btn.addEventListener('click', () => openUserNotifyModal(btn.dataset.uanotify, btn.dataset.uanotifyname));
+  });
   wrap.querySelectorAll('[data-uaedit]').forEach(btn => {
     btn.addEventListener('click', () => openUserAccountFormModal(btn.dataset.uaedit));
   });
@@ -10129,24 +10166,99 @@ async function renderUserAccountList() {
   });
 }
 
+
+
+
+
 function setUserAccountFormMode(isEdit) {
   const submitBtn = document.getElementById('uaFormSubmitBtn');
   const heading = document.getElementById('userAccountFormHeading');
   const emailInput = document.getElementById('uaEmailInput');
   const passwordInput = document.getElementById('uaPasswordInput');
   const pinInput = document.getElementById('uaPinInput');
+  const pwPinRow = document.getElementById('uaPwPinRow');
   const hint = document.getElementById('uaEditHint');
   if (submitBtn) submitBtn.textContent = isEdit ? 'Simpan Perubahan' : 'Simpan User';
   if (heading) heading.textContent = isEdit ? 'Edit User' : 'Tambah User';
-  // Email/Password/PIN cuma bisa diisi SEKALI saat user-nya dibuat --
-  // lihat catatan batasan di window.cloudAddMember (cloud-sync.js).
-  [emailInput, passwordInput, pinInput].forEach(el => {
+  // Email cuma bisa diisi SEKALI saat user-nya dibuat -- lihat catatan
+  // batasan di window.cloudAddMember (cloud-sync.js).
+  if (emailInput) { emailInput.disabled = isEdit; emailInput.required = !isEdit; }
+  // Password & PIN: khusus mode edit, field ini DISEMBUNYIKAN total
+  // (bukan cuma di-nonaktifkan) -- cuma user yang bersangkutan yang
+  // boleh menggantinya sendiri lewat menu Ubah Password/PIN setelah
+  // login, jadi pemilik akun tidak perlu (& tidak bisa) mengaturnya
+  // dari sini lagi saat edit.
+  [passwordInput, pinInput].forEach(el => {
     if (!el) return;
     el.disabled = isEdit;
     el.required = !isEdit;
   });
+  if (pwPinRow) pwPinRow.style.display = isEdit ? 'none' : '';
   if (hint) hint.style.display = isEdit ? '' : 'none';
 }
+
+// Nilai default fitur yang bisa dicentang saat menambah user baru --
+// semua nyala kecuali Reset Database (sesuai batasan role 'user'
+// bawaan sebelumnya di applyRolePermissionsUI()).
+const UA_PERM_DEFAULT = { transaksi: true, tagihan: true, sumber_dana: true, tanya_ai: true, reset_db: false };
+const UA_PERM_FIELDS = [
+  ['transaksi', 'uaPermTransaksi'],
+  ['tagihan', 'uaPermTagihan'],
+  ['sumber_dana', 'uaPermSumberDana'],
+  ['tanya_ai', 'uaPermTanyaAi'],
+  ['reset_db', 'uaPermResetDb']
+];
+function setUserAccountPermChecks(perms) {
+  const p = Object.assign({}, UA_PERM_DEFAULT, perms || {});
+  UA_PERM_FIELDS.forEach(([key, id]) => {
+    const el = document.getElementById(id);
+    if (el) el.checked = !!p[key];
+  });
+}
+function readUserAccountPermChecks() {
+  const p = {};
+  UA_PERM_FIELDS.forEach(([key, id]) => {
+    const el = document.getElementById(id);
+    p[key] = el ? el.checked : false;
+  });
+  return p;
+}
+
+// ---- Popup "Kirim Pesan" (#userNotifyModalOverlay) -- admin/pemilik
+// mengirim notifikasi bertarget ke SATU user tambahan tertentu dari
+// kartunya di halaman User Account. Beda dari notifikasi biasa (yang
+// tampil ke semua yang berbagi data yang sama), notifikasi ini cuma
+// muncul di panel Notifikasi milik user yang dituju -- lihat field
+// `target` pada pushCustomNotification()/renderNotifPanel() di bawah. ----
+const userNotifyModal = document.getElementById('userNotifyModalOverlay');
+let userNotifyTargetId = null;
+function openUserNotifyModal(memberId, name) {
+  userNotifyTargetId = memberId;
+  document.getElementById('userNotifyTargetName').textContent = name || 'user ini';
+  document.getElementById('userNotifyForm').reset();
+  openModal(userNotifyModal);
+}
+function closeUserNotifyModal() {
+  closeModal(userNotifyModal);
+  userNotifyTargetId = null;
+}
+document.getElementById('userNotifyCloseBtn')?.addEventListener('click', closeUserNotifyModal);
+document.getElementById('btnUaNotifyCancel')?.addEventListener('click', closeUserNotifyModal);
+userNotifyModal?.addEventListener('click', (e) => { if (e.target === userNotifyModal) closeUserNotifyModal(); });
+document.getElementById('userNotifyForm')?.addEventListener('submit', (e) => {
+  e.preventDefault();
+  if (!userNotifyTargetId) return;
+  const title = document.getElementById('uaNotifyTitleInput').value.trim();
+  const body = document.getElementById('uaNotifyBodyInput').value.trim();
+  if (!title) { showToast('Judul pesan wajib diisi.', 'err'); return; }
+  pushCustomNotification({
+    source: (window.zayaproAccountName ? window.zayaproAccountName : 'Admin'),
+    title, body,
+    target: userNotifyTargetId
+  });
+  showToast('Pesan berhasil dikirim.');
+  closeUserNotifyModal();
+});
 
 function openUserAccountFormModal(editId) {
   const form = document.getElementById('userAccountForm');
@@ -10156,15 +10268,17 @@ function openUserAccountFormModal(editId) {
     if (u) {
       editingUserAccountId = u.member_id;
       document.getElementById('uaNameInput').value = u.name;
-      document.getElementById('uaEmailInput').value = '(tidak bisa diubah)';
+      document.getElementById('uaEmailInput').value = u.email || '(tidak bisa diubah)';
       document.getElementById('uaPasswordInput').value = '';
       document.getElementById('uaPinInput').value = '';
       document.getElementById('uaRoleInput').value = u.role === 'admin' ? 'admin' : 'user';
+      setUserAccountPermChecks(u.permissions);
       setUserAccountFormMode(true);
     }
   } else {
     editingUserAccountId = null;
     document.getElementById('uaRoleInput').value = 'user';
+    setUserAccountPermChecks(UA_PERM_DEFAULT);
     setUserAccountFormMode(false);
   }
   openModal(userAccountFormModal);
@@ -10199,9 +10313,11 @@ document.getElementById('userAccountForm')?.addEventListener('submit', async (e)
   const submitBtn = document.getElementById('uaFormSubmitBtn');
   if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Menyimpan...'; }
 
+  const permissions = readUserAccountPermChecks();
+
   let result;
   if (editingUserAccountId) {
-    result = await window.cloudUpdateMember(editingUserAccountId, { name, role });
+    result = await window.cloudUpdateMember(editingUserAccountId, { name, role, permissions });
   } else {
     const email = document.getElementById('uaEmailInput').value.trim();
     const password = document.getElementById('uaPasswordInput').value;
@@ -10209,7 +10325,7 @@ document.getElementById('userAccountForm')?.addEventListener('submit', async (e)
     if (!email) { showToast('Email wajib diisi.', 'err'); resetUaSubmitBtn(); return; }
     if (password.length < 6) { showToast('Password minimal 6 karakter.', 'err'); resetUaSubmitBtn(); return; }
     if (!/^\d{6}$/.test(pin)) { showToast('PIN harus 6 digit angka.', 'err'); resetUaSubmitBtn(); return; }
-    result = await window.cloudAddMember({ name, email, password, pin, role });
+    result = await window.cloudAddMember({ name, email, password, pin, role, permissions });
   }
 
   function resetUaSubmitBtn() {
@@ -12157,13 +12273,17 @@ function saveCustomNotifs(list) {
   try { cloudStorage.setItem(NOTIF_CUSTOM_KEY, JSON.stringify(list)); }
   catch (e) { /* localStorage diblokir — abaikan, tak tersimpan */ }
 }
-function pushCustomNotification({ source, title, body = '', icon = null, image = null, sentAt = null } = {}) {
+function pushCustomNotification({ source, title, body = '', icon = null, image = null, sentAt = null, target = 'all' } = {}) {
   if (!title) return null; // judul wajib, selain itu semua opsional
   const list = getCustomNotifs();
   const entry = {
     id: 'ntf_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8),
     source: source || 'Sistem',
     title, body, icon, image,
+    // target: 'all' (tampil ke semua yg berbagi data yang sama, spt
+    // sebelumnya) ATAU member_id spesifik (cuma tampil ke user itu --
+    // lihat penyaringan di renderNotifPanel() & isNotifVisibleToMe()).
+    target: target || 'all',
     sentAt: sentAt || new Date().toISOString()
   };
   list.push(entry);
@@ -12178,6 +12298,19 @@ function deleteCustomNotification(id) {
 // Diekspos ke window supaya bisa dipanggil dari luar file ini (mis.
 // oleh fitur pengiriman notifikasi terpisah yang akan dibangun nanti).
 window.pushCustomNotification = pushCustomNotification;
+
+// ---- Cek apakah SATU notifikasi kustom boleh tampil di perangkat
+// yang sedang dipakai -- notifikasi bertarget 'all' selalu tampil ke
+// semua (spt sebelumnya). Notifikasi bertarget member_id tertentu
+// cuma tampil ke: (a) user yang dituju (window.zayaproMemberId cocok),
+// atau (b) pemilik asli akun (window.zayaproIsOwner) supaya dia bisa
+// meninjau ulang pesan yang sudah dia kirim. User tambahan LAIN yang
+// bukan tujuan & bukan pemilik TIDAK melihatnya sama sekali. ----
+function isNotifVisibleToMe(target) {
+  if (!target || target === 'all') return true;
+  if (window.zayaproIsOwner) return true;
+  return window.zayaproMemberId != null && target === window.zayaproMemberId;
+}
 
 function renderNotifPanel() {
   updateNotifBadge();
@@ -12206,12 +12339,14 @@ function renderNotifPanel() {
     dueDate: d.dueDate, image: null,
     arrivedAt: getOrSetNotifArrival('hutang', d.id)
   }));
-  const customs = getCustomNotifs().map(c => ({
-    feedKind: 'custom', id: c.id, source: c.source || 'Sistem',
-    title: c.title, body: c.body || '', recurring: false,
-    dueDate: null, image: c.image || null, customIcon: c.icon || null,
-    arrivedAt: c.sentAt
-  }));
+  const customs = getCustomNotifs()
+    .filter(c => isNotifVisibleToMe(c.target))
+    .map(c => ({
+      feedKind: 'custom', id: c.id, source: c.source || 'Sistem',
+      title: c.title, body: c.body || '', recurring: false,
+      dueDate: null, image: c.image || null, customIcon: c.icon || null,
+      arrivedAt: c.sentAt
+    }));
 
   const fullList = [...unpaidBills, ...unpaidDebts, ...customs]
     .sort((a, b) => new Date(b.arrivedAt) - new Date(a.arrivedAt));

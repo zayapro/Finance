@@ -65,14 +65,26 @@ create policy "kv_store_delete_own"
 --     di bawah -- supaya tidak perlu logic RLS berantai/rekursif utk
 --     "admin lain juga boleh kelola user".
 create table if not exists public.workspace_members (
-  owner_id   uuid not null references auth.users(id) on delete cascade,
-  member_id  uuid not null references auth.users(id) on delete cascade,
-  role       text not null default 'user' check (role in ('admin','user')),
-  name       text not null default '',
-  created_at timestamptz not null default now(),
+  owner_id    uuid not null references auth.users(id) on delete cascade,
+  member_id   uuid not null references auth.users(id) on delete cascade,
+  role        text not null default 'user' check (role in ('admin','user')),
+  name        text not null default '',
+  email       text not null default '',
+  -- Fitur mana saja yang boleh dipakai user ini (dicentang dari
+  -- halaman User Account > form Tambah/Edit User): transaksi,
+  -- tagihan, sumber_dana, tanya_ai, reset_db (boolean masing-masing).
+  -- Dibaca/ditulis via cloudAddMember/cloudUpdateMember di
+  -- cloud-sync.js, dipakai applyRolePermissionsUI() di script.js.
+  permissions jsonb not null default '{"transaksi":true,"tagihan":true,"sumber_dana":true,"tanya_ai":true,"reset_db":false}'::jsonb,
+  created_at  timestamptz not null default now(),
   primary key (owner_id, member_id)
 );
 create index if not exists workspace_members_member_id_idx on public.workspace_members (member_id);
+-- Kalau tabelnya sudah ada dari sebelumnya (versi lama tanpa kolom
+-- email/permissions), tambahkan kolomnya di sini supaya upgrade
+-- tinggal jalankan file ini lagi tanpa perlu drop table.
+alter table public.workspace_members add column if not exists email text not null default '';
+alter table public.workspace_members add column if not exists permissions jsonb not null default '{"transaksi":true,"tagihan":true,"sumber_dana":true,"tanya_ai":true,"reset_db":false}'::jsonb;
 
 alter table public.workspace_members enable row level security;
 

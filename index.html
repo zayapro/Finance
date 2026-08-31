@@ -5849,6 +5849,7 @@ tbody tr:last-child td{border-bottom:none;}
 .icon-btn:hover{background:var(--paper);transform:translateY(-1px);}
 .icon-btn.edit:hover{color:var(--forest-glow);border-color:var(--forest-glow);}
 .icon-btn.del:hover{color:var(--wine);border-color:var(--wine);}
+.icon-btn.notify:hover{color:var(--primary-deep);border-color:var(--primary);}
 
 .empty-state{text-align:center;padding:46px 20px;color:var(--ink-faint);}
 .empty-state svg{margin-bottom:10px;opacity:.6;}
@@ -5890,8 +5891,63 @@ tbody tr:last-child td{border-bottom:none;}
   background:color-mix(in srgb, var(--primary) 14%, var(--card));color:var(--primary-deep);
   white-space:nowrap;
 }
+.ua-card-owner{background:color-mix(in srgb, var(--primary) 7%, var(--card));border-color:color-mix(in srgb, var(--primary) 28%, var(--line));margin-bottom:2px;}
+.ua-avatar-owner{background:var(--primary);color:#fff;}
+.ua-role-badge-owner{background:var(--primary);color:#fff;}
+/* ---- Ikon jabatan + animasi pada avatar kartu User Account: badge
+   kecil menempel di sudut kanan-bawah avatar (mahkota utk Admin,
+   figur orang utk User biasa), plus cincin berpendar (pulse, sama
+   pola dgn .brand-mark di banner) khusus utk Admin supaya jabatan
+   tertinggi terasa lebih menonjol. Kartu juga masuk dgn animasi
+   fade+slide bertahap (stagger) tiap dirender ulang. Dinonaktifkan
+   semua kalau prefers-reduced-motion. ---- */
+.ua-avatar-wrap{position:relative;flex-shrink:0;width:40px;height:40px;}
+.ua-avatar-wrap .ua-avatar{width:100%;height:100%;}
+.ua-role-icon{
+  position:absolute;right:-3px;bottom:-3px;z-index:2;
+  width:18px;height:18px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--card);border:2px solid var(--card);
+  box-shadow:0 1px 4px -1px rgba(0,0,0,.25);
+}
+.ua-role-icon svg{width:10px;height:10px;}
+.ua-role-icon.is-admin{background:linear-gradient(135deg,#F5B84C,#E08A1E);color:#fff;}
+.ua-role-icon.is-user{background:color-mix(in srgb, var(--primary) 18%, var(--card));color:var(--primary-deep);}
+.ua-avatar-wrap.is-admin-ring{border-radius:50%;animation:uaAdminRingPulse 2.6s ease-in-out infinite;}
+@keyframes uaAdminRingPulse{
+  0%{box-shadow:0 0 0 0 color-mix(in srgb, #E08A1E 45%, transparent);}
+  70%{box-shadow:0 0 0 8px color-mix(in srgb, #E08A1E 0%, transparent);}
+  100%{box-shadow:0 0 0 0 color-mix(in srgb, #E08A1E 0%, transparent);}
+}
+.ua-card{animation:uaCardIn .32s ease both;}
+@keyframes uaCardIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+/* ---- Nomor urut kecil di kartu tiap user TAMBAHAN (bukan kartu
+   pemilik/Admin paling atas) -- pil bulat kecil menempel di sudut
+   kiri-atas avatar, urut sesuai created_at (tanggal ditambahkan),
+   angka #1 = user pertama yang ditambahkan. Warnanya ikut var(--primary)
+   spy otomatis menyesuaikan tema yang aktif, konsisten dgn pil lain
+   di app (mis. .wallet-account-pill). ---- */
+.ua-order-badge{
+  position:absolute;left:-4px;top:-4px;z-index:2;
+  min-width:16px;height:16px;padding:0 3px;border-radius:999px;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--card);border:1.5px solid var(--primary);
+  color:var(--primary-deep);font-size:8.5px;font-weight:800;line-height:1;
+  box-shadow:0 1px 3px -1px rgba(0,0,0,.2);
+}
+@media (prefers-reduced-motion:reduce){
+  .ua-avatar-wrap.is-admin-ring{animation:none;}
+  .ua-card{animation:none;}
+}
 .ua-email{font-size:11.5px;color:var(--ink-faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .ua-field-hint{font-size:11px;line-height:1.5;color:var(--ink-faint);margin:6px 0 0;}
+.ua-perm-list{display:flex;flex-direction:column;gap:7px;}
+.ua-perm-row{
+  display:flex;align-items:center;gap:9px;font-size:12.5px;font-weight:600;color:var(--ink-soft);
+  background:var(--paper);border:1px solid var(--line);border-radius:11px;padding:11px 13px;cursor:pointer;
+}
+.ua-perm-row input{width:16px;height:16px;flex-shrink:0;accent-color:var(--primary);cursor:pointer;}
+.ua-perm-row span{flex:1;min-width:0;}
 .ua-actions{display:flex;gap:6px;flex-shrink:0;}
 .ua-empty{text-align:center;padding:34px 16px;color:var(--ink-faint);}
 .ua-empty svg{margin-bottom:8px;opacity:.6;}
@@ -13170,7 +13226,7 @@ html.dark-mode .bd-row-close{
       </div>
 
       <div class="lap-filter-card">
-        <p class="ua-intro">Tambahkan user login lain di sini -- dia akan benar-benar bisa login sendiri (pakai email &amp; password yang kamu buatkan) dan melihat data yang sama denganmu, sesuai Akses (Admin/User) yang kamu pilih.</p>
+        <p class="ua-intro">Kelola pengguna dengan akses ke akun ini. Setiap pengguna mendapat kredensial masuk sendiri dan tingkat akses (Admin/User) yang dapat Anda atur.</p>
         <button type="button" class="ua-add-btn" id="userAccountAddBtn">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
           Tambah User
@@ -15890,6 +15946,14 @@ html.dark-mode .bd-row-close{
     </div>
     <form id="userAccountForm">
       <div class="form-row">
+        <label for="uaRoleInput">Akses</label>
+        <select id="uaRoleInput" required>
+          <option value="user">User (akses terbatas)</option>
+          <option value="admin">Admin (akses penuh)</option>
+        </select>
+        <p class="ua-field-hint">User: dapat mengelola transaksi &amp; data keuangan seperti pemilik akun. Admin: memiliki akses yang sama, ditambah kewenangan mereset seluruh data (Reset Database Online).</p>
+      </div>
+      <div class="form-row">
         <label for="uaNameInput">Nama Lengkap</label>
         <input type="text" id="uaNameInput" maxlength="40" placeholder="Contoh: Siti Rahma" required>
       </div>
@@ -15897,7 +15961,7 @@ html.dark-mode .bd-row-close{
         <label for="uaEmailInput">Email</label>
         <input type="email" id="uaEmailInput" maxlength="60" placeholder="nama@email.com" required>
       </div>
-      <div class="form-grid-2">
+      <div class="form-grid-2" id="uaPwPinRow">
         <div class="form-row">
           <label for="uaPasswordInput">Password</label>
           <div class="pw-field-wrap">
@@ -15917,17 +15981,54 @@ html.dark-mode .bd-row-close{
           </div>
         </div>
       </div>
+      <p class="ua-field-hint" id="uaEditHint" style="display:none;margin:-6px 0 16px;">Password &amp; PIN cuma diisi pemilik akun saat pertama kali membuat user ini -- untuk keamanan, user yang bersangkutan bisa menggantinya sendiri lewat menu Ubah Password/PIN setelah dia login.</p>
       <div class="form-row">
-        <label for="uaRoleInput">Akses</label>
-        <select id="uaRoleInput" required>
-          <option value="user">User (akses terbatas)</option>
-          <option value="admin">Admin (akses penuh)</option>
-        </select>
-        <p class="ua-field-hint" id="uaEditHint" style="display:none;">Email, Password &amp; PIN cuma bisa diisi saat pertama kali dibuat -- tidak bisa diubah dari sini setelah user-nya jadi. User yang bersangkutan bisa gantinya sendiri lewat menu Ubah Password/PIN setelah dia login.</p>
+        <label>Fitur yang Dapat Diakses</label>
+        <div class="ua-perm-list">
+          <label class="ua-perm-row"><input type="checkbox" id="uaPermTransaksi" checked><span>Transaksi</span></label>
+          <label class="ua-perm-row"><input type="checkbox" id="uaPermTagihan" checked><span>Tagihan &amp; Hutang</span></label>
+          <label class="ua-perm-row"><input type="checkbox" id="uaPermSumberDana" checked><span>Sumber Dana</span></label>
+          <label class="ua-perm-row"><input type="checkbox" id="uaPermTanyaAi" checked><span>Tanya AI</span></label>
+          <label class="ua-perm-row"><input type="checkbox" id="uaPermResetDb"><span>Reset Database</span></label>
+        </div>
       </div>
       <div class="modal-actions">
         <button type="button" class="btn btn-ghost" id="btnUaFormCancel">Batal</button>
         <button type="submit" class="btn btn-primary" id="uaFormSubmitBtn">Simpan User</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ===== POPUP "KIRIM PESAN" (#userNotifyModalOverlay) -- dibuka
+     lewat ikon lonceng di kartu user pada halaman User Account.
+     Pesan yang dikirim dari sini masuk ke panel Notifikasi (#notifPanelOverlay)
+     TAPI hanya kelihatan di perangkat user yang dituju (uaNotifyTargetId) --
+     user LAIN yang berbagi data yang sama TIDAK ikut melihatnya, beda dari
+     notifikasi biasa yang tampil ke semua. Lihat pushCustomNotification()/
+     renderNotifPanel() di script.js utk logika penyaringannya (field
+     `target` per notifikasi). ===== -->
+<div class="modal-overlay" id="userNotifyModalOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Kirim Pesan</h3>
+      <button class="modal-close" id="userNotifyCloseBtn" type="button">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <form id="userNotifyForm">
+      <p class="ua-field-hint" style="margin:0 0 14px;">Pesan ini akan muncul di panel Notifikasi khusus milik <strong id="userNotifyTargetName">user ini</strong> saja -- user lain tidak ikut melihatnya.</p>
+      <div class="form-row">
+        <label for="uaNotifyTitleInput">Judul Pesan</label>
+        <input type="text" id="uaNotifyTitleInput" maxlength="60" placeholder="Contoh: Pengingat Setor Laporan" required>
+      </div>
+      <div class="form-row">
+        <label for="uaNotifyBodyInput">Isi Pesan</label>
+        <textarea id="uaNotifyBodyInput" maxlength="240" rows="3" placeholder="Tulis pesan singkat di sini..."></textarea>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" id="btnUaNotifyCancel">Batal</button>
+        <button type="submit" class="btn btn-primary" id="uaNotifyFormSubmitBtn">Kirim</button>
       </div>
     </form>
   </div>

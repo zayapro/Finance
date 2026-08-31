@@ -530,12 +530,14 @@
   async function resolveWorkspace(user) {
     dataOwnerId = user.id; // default: dia pemilik data-nya sendiri
     currentRole = 'admin';
+    let currentPermissions = null;
     try {
       const { data, error } = await sb.from('workspace_members')
-        .select('owner_id,role').eq('member_id', user.id).maybeSingle();
+        .select('owner_id,role,permissions').eq('member_id', user.id).maybeSingle();
       if (!error && data) {
         dataOwnerId = data.owner_id;
         currentRole = data.role || 'user';
+        currentPermissions = data.permissions;
       }
     } catch (e) {
       // Best-effort: kalau gagal dicek (mis. offline), anggap dia
@@ -544,6 +546,14 @@
     }
     window.zayaproIsOwner = (dataOwnerId === user.id);
     window.zayaproRole = window.zayaproIsOwner ? 'admin' : currentRole;
+    // Pemilik asli akun selalu punya semua fitur menyala -- cuma user
+    // tambahan (bukan pemilik) yang dibatasi sesuai centang di halaman
+    // User Account. Dipakai applyRolePermissionsUI() di script.js
+    // utk sembunyikan/tampilkan menu Transaksi/Tagihan/Sumber Dana/
+    // Tanya AI/Reset Database sesuai izinnya.
+    window.zayaproPermissions = window.zayaproIsOwner
+      ? { transaksi: true, tagihan: true, sumber_dana: true, tanya_ai: true, reset_db: true }
+      : normalizeMemberPermissions(currentPermissions);
   }
 
   async function onLoggedIn(user, isNewSignup) {
@@ -561,6 +571,13 @@
     // Nama yang diisi di kolom "Nama" saat daftar (user_metadata.full_name)
     // -- dipakai script.js sbg "Nama Web" bawaan, lihat getDefaultAppName().
     window.zayaproAccountName = (user.user_metadata && user.user_metadata.full_name) || null;
+    // Id akun Supabase Auth yang SEDANG login di perangkat ini (bukan
+    // dataOwnerId) -- dipakai script.js utk menyaring notifikasi
+    // bertarget (lihat pushCustomNotification/renderNotifPanel):
+    // notifikasi yang admin kirim khusus ke satu user (member_id
+    // tertentu) cuma boleh muncul di perangkat user itu, bukan di
+    // perangkat user lain yang berbagi data yang sama.
+    window.zayaproMemberId = user.id;
     // Pakai dataOwnerId (bukan user.id) supaya semua perangkat/akun yang
     // berbagi data yang sama (pemilik + user tambahan) menerima sinyal
     // "Reset Database Online" yang sama juga -- lihat resolveWorkspace().
@@ -1260,6 +1277,7 @@
       currentRole = 'admin';
       window.zayaproIsOwner = undefined;
       window.zayaproRole = undefined;
+      window.zayaproMemberId = undefined;
       unsubscribeResetChannel();
       // FIX "logout tidak bersih": sebelumnya localStorage TIDAK
       // pernah dibersihkan saat logout, jadi data akun (transaksi,
@@ -1411,6 +1429,7 @@
     const password = String((opts && opts.password) || '');
     const pin = String((opts && opts.pin) || '').trim();
     const role = (opts && opts.role === 'admin') ? 'admin' : 'user';
+    const permissions = normalizeMemberPermissions(opts && opts.permissions);
     if (!name || !email || password.length < 6 || !/^[0-9]{6}$/.test(pin)) {
       return { ok: false, reason: 'validation' };
     }
@@ -1433,7 +1452,9 @@
       owner_id: currentUser.id,
       member_id: newUserId,
       role: role,
-      name: name
+      name: name,
+      email: email,
+      permissions: permissions
     });
     if (insErr) return { ok: false, reason: 'db', error: insErr };
     return { ok: true };
@@ -1445,22 +1466,39 @@
   window.cloudListMembers = async function () {
     if (!currentUser || !window.zayaproIsOwner) return [];
     const { data, error } = await sb.from('workspace_members')
-      .select('member_id,name,role,created_at').eq('owner_id', currentUser.id)
+      .select('member_id,name,email,role,permissions,created_at').eq('owner_id', currentUser.id)
       .order('created_at', { ascending: true });
     if (error) { console.error('Gagal memuat daftar User Account:', error); return []; }
-    return data || [];
+    return (data || []).map(m => Object.assign({}, m, { permissions: normalizeMemberPermissions(m.permissions) }));
   };
 
-  // Dipanggil dari halaman User Account (submit form mode edit). Cuma
-  // Nama & Akses (role) yang bisa diubah -- lihat catatan batasan di
-  // atas. memberId = id auth Supabase user tsb (bukan id baris).
+  // Rapikan objek permissions (fitur yang boleh dipakai user tambahan)
+  // supaya selalu punya 5 key boolean yang lengkap, apa pun isi
+  // input-nya (kosong, sebagian, atau dari baris lama sebelum kolom
+  // ini ada). Dipakai cloudAddMember/cloudUpdateMember/cloudListMembers.
+  function normalizeMemberPermissions(perms) {
+    const p = perms || {};
+    return {
+      transaksi: p.transaksi !== false,
+      tagihan: p.tagihan !== false,
+      sumber_dana: p.sumber_dana !== false,
+      tanya_ai: p.tanya_ai !== false,
+      reset_db: p.reset_db === true
+    };
+  }
+
+  // Dipanggil dari halaman User Account (submit form mode edit). Nama,
+  // Akses (role) & fitur yang boleh diakses (permissions) yang bisa
+  // diubah -- lihat catatan batasan di atas. memberId = id auth
+  // Supabase user tsb (bukan id baris).
   window.cloudUpdateMember = async function (memberId, opts) {
     if (!currentUser || !window.zayaproIsOwner) return { ok: false, reason: 'forbidden' };
     const name = String((opts && opts.name) || '').trim();
     const role = (opts && opts.role === 'admin') ? 'admin' : 'user';
+    const permissions = normalizeMemberPermissions(opts && opts.permissions);
     if (!name) return { ok: false, reason: 'validation' };
     const { error } = await sb.from('workspace_members')
-      .update({ name: name, role: role })
+      .update({ name: name, role: role, permissions: permissions })
       .eq('owner_id', currentUser.id).eq('member_id', memberId);
     if (error) return { ok: false, reason: 'db', error: error };
     return { ok: true };
