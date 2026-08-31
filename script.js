@@ -9217,7 +9217,7 @@ function openDeleteConfirm(id, kind) {
 }
 document.getElementById('btnCancelDelete').addEventListener('click', () => { deletingId = null; closeModal(confirmModal); });
 confirmModal.addEventListener('click', (e) => { if (e.target === confirmModal) closeModal(confirmModal); });
-document.getElementById('btnConfirmDelete').addEventListener('click', () => {
+document.getElementById('btnConfirmDelete').addEventListener('click', async () => {
   if (deletingId) {
     if (deletingKind === 'tagihan') {
       bills = bills.filter(b => b.id !== deletingId);
@@ -9280,11 +9280,13 @@ document.getElementById('btnConfirmDelete').addEventListener('click', () => {
       if (document.getElementById('customSourceManageList')) renderCustomSourceManageList();
       renderSummary();
     } else if (deletingKind === 'useraccount') {
-      manualLoginUsers = manualLoginUsers.filter(u => u.id !== deletingId);
-      persistManualLoginUsers();
-      showToast('User dihapus.');
+      const res = await window.cloudDeleteMember(deletingId);
+      if (res && res.ok) {
+        showToast('User dihapus. Akun login-nya sendiri tetap ada, tapi sudah tidak melihat data ini lagi.');
+      } else {
+        showToast('Gagal menghapus user.', 'err');
+      }
       renderUserAccountList();
-      refreshIncomeSourcePage();
     } else if (deletingKind === 'platform') {
       const list = getCustomPlatformsForSource(deletingPlatformSource);
       const plat = list.find(p => p.id === deletingId);
@@ -10002,6 +10004,30 @@ function updateAccountSettingsRow() {
 }
 updateAccountSettingsRow();
 document.getElementById('settingsAccountBtn')?.addEventListener('click', handleAccountToggleClick);
+
+/* ==========================================================
+   BATASI FITUR SESUAI AKSES (window.zayaproRole/zayaproIsOwner,
+   diisi oleh cloud-sync.js SEBELUM script.js ini dimuat -- lihat
+   resolveWorkspace() di sana). Dipanggil sekali di awal:
+   - Baris "User Account" (kelola user login lain) cuma boleh dibuka
+     PEMILIK ASLI akun (window.zayaproIsOwner === true).
+   - Tombol "Reset Database Online" cuma boleh dipakai pemilik asli
+     ATAU user tambahan berrole 'admin' -- role 'user' tidak boleh
+     menghapus seluruh data bersama.
+   Kalau tidak sedang login akun cloud sama sekali (guest/lokal),
+   window.zayaproIsOwner/zayaproRole belum terisi (undefined) --
+   dalam kondisi itu baris/tombol ini dibiarkan seperti semula
+   (nanti akan diminta login dulu lewat cloudRequireLogin() spt
+   fitur cloud lain). ---- */
+function applyRolePermissionsUI() {
+  if (window.zayaproIsOwner === undefined) return; // guest/belum login -- tidak relevan dulu
+  const userAccountRow = document.getElementById('userAccountOpenBtn');
+  if (userAccountRow) userAccountRow.style.display = window.zayaproIsOwner ? '' : 'none';
+  const resetBtn = document.getElementById('btnResetCloudDb');
+  const canReset = window.zayaproIsOwner || window.zayaproRole === 'admin';
+  if (resetBtn) resetBtn.style.display = canReset ? '' : 'none';
+}
+applyRolePermissionsUI();
 document.getElementById('dataDiriBackBtn')?.addEventListener('click', closeDataDiriOverlay);
 document.getElementById('dataDiriCancelBtn')?.addEventListener('click', closeDataDiriOverlay);
 document.getElementById('dataDiriDoneBtn')?.addEventListener('click', confirmDataDiriOverlay);
@@ -10012,6 +10038,13 @@ document.getElementById('dataDiriDoneBtn')?.addEventListener('click', confirmDat
    di bawah (tanpa logic tambahan lain) -- halaman ini SENGAJA masih
    kosong (placeholder "empty-state"), tinggal diisi kontennya nanti. ---- */
 function openUserAccountOverlay() {
+  if (!window.zayaproIsOwner) {
+    // Jaga-jaga (tombol pembukanya sendiri sudah disembunyikan lewat
+    // applyRolePermissionsUI() kalau bukan pemilik asli akun) --
+    // hanya pemilik asli yang boleh kelola User Account.
+    showToast('Cuma pemilik akun yang bisa mengelola User Account.', 'err');
+    return;
+  }
   renderUserAccountList();
   document.getElementById('userAccountOverlay')?.classList.add('open');
   lockBodyScroll();
@@ -10024,33 +10057,23 @@ document.getElementById('userAccountOpenBtn')?.addEventListener('click', openUse
 document.getElementById('userAccountBackBtn')?.addEventListener('click', closeUserAccountOverlay);
 
 /* ==========================================================
-   HALAMAN "USER ACCOUNT" -- DAFTAR USER LOGIN MANUAL
-   User yang sudah login (pemilik akun) bisa menambahkan user login
-   lain secara manual: Nama, Email, Password, PIN, & Jabatan. Ini
-   catatan internal yang tersimpan di cloudStorage (localStorage,
-   ikut tersinkron kalau pemilik login akun cloud) -- TERPISAH dari
-   akun cloud (Supabase) yang dipakai login ke aplikasi ini sendiri
-   (lihat cloud-sync.js), jadi menambah user di sini TIDAK membuat
-   akun tsb bisa benar-benar login sendiri ke app -- murni daftar
-   siapa saja yang ikut mengelola & jabatannya masing-masing.
-   Pola sama dengan modal "Tambah Sumber Manual" (customIncomeSources)
-   di atas: array + cloudStorage + render list + modal tambah/edit +
-   hapus lewat openDeleteConfirm(id,'useraccount'). ---- */
-const STORAGE_KEY_MANUAL_LOGIN_USERS = 'alirin_manual_login_users_v1';
-const USER_ROLE_PRESETS = ['Admin', 'Owner', 'Manajer Keuangan', 'Staf', 'Kasir', 'Akuntan'];
-function loadManualLoginUsers() {
-  try {
-    const raw = cloudStorage.getItem(STORAGE_KEY_MANUAL_LOGIN_USERS);
-    if (raw) return JSON.parse(raw);
-  } catch (e) { console.error('Gagal memuat user login manual', e); }
-  return [];
-}
-function persistManualLoginUsers() {
-  try { cloudStorage.setItem(STORAGE_KEY_MANUAL_LOGIN_USERS, JSON.stringify(manualLoginUsers)); }
-  catch (e) { showToast('Gagal menyimpan user login.', 'err'); }
-}
-let manualLoginUsers = loadManualLoginUsers();
-let editingUserAccountId = null;
+   HALAMAN "USER ACCOUNT" -- LOGIN SUNGGUHAN UNTUK USER TAMBAHAN
+   Pemilik akun (yang pertama kali daftar akun cloud) bisa menambahkan
+   user login LAIN secara manual: Nama, Email, Password, PIN, Jabatan
+   & Akses. BEDA dari versi sebelumnya -- sekarang menambah user di
+   sini BENAR-BENAR membuat akun login Supabase Auth baru (lihat
+   window.cloudAddMember di cloud-sync.js), jadi orang itu BISA login
+   sungguhan lewat popup Masuk/Daftar dengan email & password yang
+   dibuatkan di sini, dan begitu dia login, dia melihat & mengelola
+   DATA YANG SAMA dengan pemilik akun (bukan data kosong terpisah).
+   "Akses" (uaAccessInput: admin/user) menentukan fitur apa saja yang
+   boleh dia pakai -- lihat applyRolePermissionsUI() di bawah.
+   Daftar user (manualLoginUsers, dipakai cuma sbg cache tampilan)
+   selalu ditarik ULANG dari server tiap kali halaman dibuka lewat
+   window.cloudListMembers(), BUKAN disimpan lokal, supaya selalu
+   sinkron/akurat antar perangkat. ---- */
+let manualLoginUsers = []; // cache hasil cloudListMembers() terakhir, dipakai render & edit modal
+let editingUserAccountId = null; // member_id (id akun Supabase Auth-nya) saat mode edit
 
 function userAccountInitials(name) {
   const parts = (name || '').trim().split(/\s+/).filter(Boolean);
@@ -10058,16 +10081,19 @@ function userAccountInitials(name) {
   return (parts[0][0] + (parts[1] ? parts[1][0] : '')).toUpperCase();
 }
 
-function renderUserRoleDatalist() {
-  const list = document.getElementById('uaRoleList');
-  if (!list) return;
-  const names = Array.from(new Set(USER_ROLE_PRESETS.concat(manualLoginUsers.map(u => u.role))));
-  list.innerHTML = names.map(r => `<option value="${escapeAttr(r)}"></option>`).join('');
+function userAccountRoleLabel(role) {
+  return role === 'admin' ? 'Admin' : 'User';
 }
 
-function renderUserAccountList() {
+async function renderUserAccountList() {
   const wrap = document.getElementById('userAccountList');
   if (!wrap) return;
+  wrap.innerHTML = `<div class="ua-empty"><p>Memuat daftar user...</p></div>`;
+  if (typeof window.cloudListMembers !== 'function') {
+    wrap.innerHTML = `<div class="ua-empty"><p>Fitur ini butuh koneksi cloud. Masuk/Daftar dulu ya.</p></div>`;
+    return;
+  }
+  manualLoginUsers = await window.cloudListMembers();
   if (!manualLoginUsers.length) {
     wrap.innerHTML = `
       <div class="ua-empty">
@@ -10082,15 +10108,14 @@ function renderUserAccountList() {
       <span class="ua-body">
         <span class="ua-top-row">
           <span class="ua-name">${escapeHtml(u.name)}</span>
-          <span class="ua-role-badge">${escapeHtml(u.role)}</span>
+          <span class="ua-role-badge">${escapeHtml(userAccountRoleLabel(u.role))}</span>
         </span>
-        <span class="ua-email">${escapeHtml(u.email)}</span>
       </span>
       <span class="ua-actions">
-        <button type="button" class="icon-btn edit" data-uaedit="${escapeAttr(u.id)}" title="Edit user" aria-label="Edit ${escapeAttr(u.name)}">
+        <button type="button" class="icon-btn edit" data-uaedit="${escapeAttr(u.member_id)}" title="Edit user" aria-label="Edit ${escapeAttr(u.name)}">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
         </button>
-        <button type="button" class="icon-btn del" data-uadel="${escapeAttr(u.id)}" title="Hapus user" aria-label="Hapus ${escapeAttr(u.name)}">
+        <button type="button" class="icon-btn del" data-uadel="${escapeAttr(u.member_id)}" title="Hapus user" aria-label="Hapus ${escapeAttr(u.name)}">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"/></svg>
         </button>
       </span>
@@ -10107,27 +10132,39 @@ function renderUserAccountList() {
 function setUserAccountFormMode(isEdit) {
   const submitBtn = document.getElementById('uaFormSubmitBtn');
   const heading = document.getElementById('userAccountFormHeading');
+  const emailInput = document.getElementById('uaEmailInput');
+  const passwordInput = document.getElementById('uaPasswordInput');
+  const pinInput = document.getElementById('uaPinInput');
+  const hint = document.getElementById('uaEditHint');
   if (submitBtn) submitBtn.textContent = isEdit ? 'Simpan Perubahan' : 'Simpan User';
   if (heading) heading.textContent = isEdit ? 'Edit User' : 'Tambah User';
+  // Email/Password/PIN cuma bisa diisi SEKALI saat user-nya dibuat --
+  // lihat catatan batasan di window.cloudAddMember (cloud-sync.js).
+  [emailInput, passwordInput, pinInput].forEach(el => {
+    if (!el) return;
+    el.disabled = isEdit;
+    el.required = !isEdit;
+  });
+  if (hint) hint.style.display = isEdit ? '' : 'none';
 }
 
 function openUserAccountFormModal(editId) {
   const form = document.getElementById('userAccountForm');
   form.reset();
-  renderUserRoleDatalist();
   if (editId) {
-    const u = manualLoginUsers.find(x => x.id === editId);
+    const u = manualLoginUsers.find(x => x.member_id === editId);
     if (u) {
-      editingUserAccountId = u.id;
+      editingUserAccountId = u.member_id;
       document.getElementById('uaNameInput').value = u.name;
-      document.getElementById('uaEmailInput').value = u.email;
-      document.getElementById('uaPasswordInput').value = u.password;
-      document.getElementById('uaPinInput').value = u.pin;
-      document.getElementById('uaRoleInput').value = u.role;
+      document.getElementById('uaEmailInput').value = '(tidak bisa diubah)';
+      document.getElementById('uaPasswordInput').value = '';
+      document.getElementById('uaPinInput').value = '';
+      document.getElementById('uaRoleInput').value = u.role === 'admin' ? 'admin' : 'user';
       setUserAccountFormMode(true);
     }
   } else {
     editingUserAccountId = null;
+    document.getElementById('uaRoleInput').value = 'user';
     setUserAccountFormMode(false);
   }
   openModal(userAccountFormModal);
@@ -10153,31 +10190,47 @@ userAccountFormModal?.addEventListener('click', (e) => { if (e.target === userAc
   });
 });
 
-document.getElementById('userAccountForm')?.addEventListener('submit', (e) => {
+document.getElementById('userAccountForm')?.addEventListener('submit', async (e) => {
   e.preventDefault();
   const name = document.getElementById('uaNameInput').value.trim();
-  const email = document.getElementById('uaEmailInput').value.trim();
-  const password = document.getElementById('uaPasswordInput').value;
-  const pin = document.getElementById('uaPinInput').value.trim();
-  const role = document.getElementById('uaRoleInput').value.trim();
-  if (!name || !email || !role) { showToast('Nama, email, & jabatan wajib diisi.', 'err'); return; }
-  if (password.length < 6) { showToast('Password minimal 6 karakter.', 'err'); return; }
-  if (!/^\d{6}$/.test(pin)) { showToast('PIN harus 6 digit angka.', 'err'); return; }
-  const dupe = manualLoginUsers.some(u => u.email.toLowerCase() === email.toLowerCase() && u.id !== editingUserAccountId);
-  if (dupe) { showToast('Email ini sudah dipakai user lain.', 'err'); return; }
+  const role = document.getElementById('uaRoleInput').value;
+  if (!name) { showToast('Nama wajib diisi.', 'err'); return; }
 
+  const submitBtn = document.getElementById('uaFormSubmitBtn');
+  if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Menyimpan...'; }
+
+  let result;
   if (editingUserAccountId) {
-    const target = manualLoginUsers.find(u => u.id === editingUserAccountId);
-    if (target) {
-      target.name = name; target.email = email; target.password = password; target.pin = pin; target.role = role;
-    }
-    persistManualLoginUsers();
-    showToast('User berhasil diperbarui.');
+    result = await window.cloudUpdateMember(editingUserAccountId, { name, role });
   } else {
-    manualLoginUsers.push({ id: cryptoId(), name, email, password, pin, role, createdAt: Date.now() });
-    persistManualLoginUsers();
-    showToast('User baru berhasil ditambahkan.');
+    const email = document.getElementById('uaEmailInput').value.trim();
+    const password = document.getElementById('uaPasswordInput').value;
+    const pin = document.getElementById('uaPinInput').value.trim();
+    if (!email) { showToast('Email wajib diisi.', 'err'); resetUaSubmitBtn(); return; }
+    if (password.length < 6) { showToast('Password minimal 6 karakter.', 'err'); resetUaSubmitBtn(); return; }
+    if (!/^\d{6}$/.test(pin)) { showToast('PIN harus 6 digit angka.', 'err'); resetUaSubmitBtn(); return; }
+    result = await window.cloudAddMember({ name, email, password, pin, role });
   }
+
+  function resetUaSubmitBtn() {
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = editingUserAccountId ? 'Simpan Perubahan' : 'Simpan User'; }
+  }
+
+  if (!result || !result.ok) {
+    resetUaSubmitBtn();
+    const msg = editingUserAccountId ? 'Gagal memperbarui user.' : 'Gagal menambah user.';
+    if (result && result.reason === 'auth' && result.error && /already registered|already exists/i.test(result.error.message || '')) {
+      showToast('Email ini sudah terdaftar. Pakai email lain.', 'err');
+    } else if (result && result.reason === 'forbidden') {
+      showToast('Cuma pemilik akun yang bisa mengelola User Account.', 'err');
+    } else {
+      showToast(msg, 'err');
+    }
+    return;
+  }
+
+  resetUaSubmitBtn();
+  showToast(editingUserAccountId ? 'User berhasil diperbarui.' : 'User baru berhasil ditambahkan & bisa langsung login.');
   closeUserAccountFormModal();
   renderUserAccountList();
 });

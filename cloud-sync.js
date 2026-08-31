@@ -91,6 +91,25 @@
   window._sb = sb; // tersedia untuk debug di console kalau perlu
 
   let currentUser = null;
+  // ---- FITUR "User Account" (multi-login satu data) ----
+  // dataOwnerId = pemilik SEBENARNYA dari data kv_store yang dipakai
+  // (baris user_id di tabel kv_store) -- BUKAN selalu sama dengan
+  // currentUser.id. Kalau currentUser adalah user yang DITAMBAHKAN
+  // manual lewat halaman User Account (lihat window.cloudAddMember di
+  // bawah), dataOwnerId diisi id PEMILIK ASLI (owner_id di tabel
+  // workspace_members), supaya dia melihat & mengubah data yang SAMA
+  // dengan pemiliknya, bukan data kosong miliknya sendiri. Kalau
+  // currentUser adalah si pemilik asli sendiri (tidak terdaftar di
+  // workspace_members siapa pun sbg member), dataOwnerId = currentUser.id.
+  // Diisi oleh resolveWorkspace() SEBELUM pull/push data cloud apa pun
+  // dilakukan (lihat onLoggedIn() & boot() di bawah).
+  let dataOwnerId = null;
+  // currentRole: 'admin' (pemilik asli ATAU user tambahan berrole admin)
+  // | 'user' (user tambahan berrole user, akses terbatas). Dipakai
+  // script.js (lewat window.zayaproRole/window.zayaproIsOwner) utk
+  // menyembunyikan fitur yang cuma boleh dipakai pemilik asli (kelola
+  // User Account) atau admin (Reset Database Online).
+  let currentRole = 'admin';
   const pushTimers = {};
   let appStarted = false;
   // Channel Supabase Realtime (Broadcast) yang dipakai supaya sinyal
@@ -116,7 +135,7 @@
     removeItem: function (key) {
       localStorage.removeItem(key);
       if (currentUser && !isCloudExcluded(key)) {
-        sb.from('kv_store').delete().eq('user_id', currentUser.id).eq('key', key)
+        sb.from('kv_store').delete().eq('user_id', dataOwnerId).eq('key', key)
           .then(function (res) { if (res.error) console.error('Cloud sync (delete) gagal:', key, res.error); });
       }
     },
@@ -156,7 +175,7 @@
       try { payload = JSON.parse(rawValue); }
       catch (e) { payload = rawValue; } // string biasa (bukan JSON), simpan apa adanya
       sb.from('kv_store').upsert({
-        user_id: currentUser.id,
+        user_id: dataOwnerId,
         key: key,
         value: payload,
         updated_at: new Date().toISOString()
@@ -168,7 +187,7 @@
   }
 
   async function pullAllFromCloud() {
-    const { data, error } = await sb.from('kv_store').select('key,value').eq('user_id', currentUser.id);
+    const { data, error } = await sb.from('kv_store').select('key,value').eq('user_id', dataOwnerId);
     if (error) { console.error('Gagal menarik data cloud:', error); return false; }
 
     // Kumpulkan dulu key mana saja yang ADA di cloud sekarang, sambil
@@ -220,7 +239,7 @@
     if (!currentUser) return false; // mode lokal (tanpa akun) -- tidak ada apa2 di cloud utk ditarik
     try {
       const { data, error } = await sb.from('kv_store').select('key,value')
-        .eq('user_id', currentUser.id).in('key', keys);
+        .eq('user_id', dataOwnerId).in('key', keys);
       if (error) { console.error('Gagal menarik data cloud (sebagian):', error); return false; }
       data.forEach(function (row) {
         const v = row.value;
@@ -487,8 +506,49 @@
     return msg;
   }
 
+  // Client Supabase KEDUA, TERPISAH dari `sb` utama & sengaja
+  // `persistSession:false` -- dipakai KHUSUS saat pemilik akun
+  // membuat login baru utk user lain (lihat window.cloudAddMember di
+  // bawah). Kalau memakai `sb` biasa, memanggil sb.auth.signUp() utk
+  // ORANG LAIN akan MENGGANTI sesi login yang sedang aktif (pemilik
+  // akun) dengan sesi user baru itu -- pemilik keluar dari akunnya
+  // sendiri tanpa sengaja. Dengan client terpisah yang tidak
+  // menyimpan/memuat sesi apa pun, proses daftar akun baru ini sama
+  // sekali tidak menyentuh sesi login `sb` utama, jadi pemilik akun
+  // tetap login sebagai dirinya sendiri sesudahnya.
+  function createTempAuthClient() {
+    return window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+    });
+  }
+
+  // Dipanggil SEKALI tiap kali user login (baik lewat form maupun sesi
+  // lama yang dipakai otomatis di boot()), SEBELUM data cloud apa pun
+  // ditarik/didorong. Menentukan apakah `user` ini pemilik data
+  // sendiri, atau "user tambahan" (lihat workspace_members) yang
+  // datanya harus disamakan dengan pemilik aslinya.
+  async function resolveWorkspace(user) {
+    dataOwnerId = user.id; // default: dia pemilik data-nya sendiri
+    currentRole = 'admin';
+    try {
+      const { data, error } = await sb.from('workspace_members')
+        .select('owner_id,role').eq('member_id', user.id).maybeSingle();
+      if (!error && data) {
+        dataOwnerId = data.owner_id;
+        currentRole = data.role || 'user';
+      }
+    } catch (e) {
+      // Best-effort: kalau gagal dicek (mis. offline), anggap dia
+      // pemilik data-nya sendiri drpd memblokir app sama sekali.
+      console.error('Gagal memeriksa status User Account:', e);
+    }
+    window.zayaproIsOwner = (dataOwnerId === user.id);
+    window.zayaproRole = window.zayaproIsOwner ? 'admin' : currentRole;
+  }
+
   async function onLoggedIn(user, isNewSignup) {
     currentUser = user;
+    await resolveWorkspace(user);
     // Diekspos ke `window` (bukan cuma variabel lokal di dalam IIFE ini)
     // supaya script.js BISA membacanya secara sinkron -- dipakai sbg
     // bawaan "Nama Web" di halaman Data Diri (nama sebelum "@" pada
@@ -501,7 +561,10 @@
     // Nama yang diisi di kolom "Nama" saat daftar (user_metadata.full_name)
     // -- dipakai script.js sbg "Nama Web" bawaan, lihat getDefaultAppName().
     window.zayaproAccountName = (user.user_metadata && user.user_metadata.full_name) || null;
-    subscribeResetChannel(user.id);
+    // Pakai dataOwnerId (bukan user.id) supaya semua perangkat/akun yang
+    // berbagi data yang sama (pemilik + user tambahan) menerima sinyal
+    // "Reset Database Online" yang sama juga -- lihat resolveWorkspace().
+    subscribeResetChannel(dataOwnerId);
 
     // PERMINTAAN: Login Biometrik aktif SEJAK PERTAMA KALI app dibuka
     // (bukan cuma opsi manual di Pengaturan) -- jadi begitu akun baru
@@ -567,7 +630,7 @@
       const raw = localStorage.getItem(key);
       let payload;
       try { payload = JSON.parse(raw); } catch (e) { payload = raw; }
-      rows.push({ user_id: currentUser.id, key: key, value: payload, updated_at: new Date().toISOString() });
+      rows.push({ user_id: dataOwnerId, key: key, value: payload, updated_at: new Date().toISOString() });
     });
     if (!rows.length) return true;
     const { error } = await sb.from('kv_store').upsert(rows, { onConflict: 'user_id,key' });
@@ -1119,7 +1182,8 @@
       // mengeskpos email akun ke script.js.
       window.zayaproAccountEmail = currentUser.email || null;
       window.zayaproAccountName = (currentUser.user_metadata && currentUser.user_metadata.full_name) || null;
-      subscribeResetChannel(currentUser.id);
+      await resolveWorkspace(currentUser);
+      subscribeResetChannel(dataOwnerId);
 
       // Sesi lama dipakai otomatis TANPA user mengetik ulang
       // email/password -- kalau akun ini sudah pernah mengatur PIN
@@ -1162,7 +1226,7 @@
       // sini memastikan sisa data itu tetap ikut terhapus bersih.
       if (localStorage.getItem(RESET_PENDING_KEY) === '1') {
         try {
-          await sb.from('kv_store').delete().eq('user_id', currentUser.id);
+          await sb.from('kv_store').delete().eq('user_id', dataOwnerId);
         } catch (e) { console.error('Reset database (pembersihan ulang) gagal:', e); }
         Object.keys(localStorage).forEach(function (key) {
           if (key !== RESET_PENDING_KEY && !isCloudExcluded(key)) localStorage.removeItem(key);
@@ -1192,6 +1256,10 @@
   sb.auth.onAuthStateChange(function (event, session) {
     if (event === 'SIGNED_OUT') {
       currentUser = null;
+      dataOwnerId = null;
+      currentRole = 'admin';
+      window.zayaproIsOwner = undefined;
+      window.zayaproRole = undefined;
       unsubscribeResetChannel();
       // FIX "logout tidak bersih": sebelumnya localStorage TIDAK
       // pernah dibersihkan saat logout, jadi data akun (transaksi,
@@ -1245,6 +1313,10 @@
      di-reload -- lihat komentar di boot() untuk alasannya. */
   window.cloudResetDatabase = async function () {
     if (!currentUser) return { ok: false, reason: 'not_logged_in' };
+    // Jaga-jaga di sisi kode juga (bukan cuma tombolnya disembunyikan
+    // di script.js) -- user tambahan berrole 'user' TIDAK boleh
+    // menghapus seluruh data bersama.
+    if (currentRole === 'user' && !window.zayaproIsOwner) return { ok: false, reason: 'forbidden' };
 
     // PENTING: matikan kemampuan push & batalkan semua timer
     // tertunda SEBELUM mengirim request delete (bukan sesudahnya).
@@ -1258,7 +1330,7 @@
     resetting = true;
     Object.keys(pushTimers).forEach(function (k) { clearTimeout(pushTimers[k]); });
 
-    const { error } = await sb.from('kv_store').delete().eq('user_id', currentUser.id);
+    const { error } = await sb.from('kv_store').delete().eq('user_id', dataOwnerId);
     if (error) {
       console.error('Reset database (cloud) gagal:', error);
       setSyncBadge('err');
@@ -1292,6 +1364,116 @@
     // berubah dan TIDAK reload halaman setelah reset berhasil.
     resetting = false;
 
+    return { ok: true };
+  };
+
+  /* ==========================================================
+     HALAMAN "USER ACCOUNT" -- LOGIN SUNGGUHAN UNTUK USER TAMBAHAN
+     Dipakai script.js (halaman User Account di Pengaturan >
+     Informasi Pribadi). Berbeda dari versi lama yang cuma menyimpan
+     catatan lokal -- fungsi di bawah ini BENAR-BENAR membuat akun
+     Supabase Auth baru (jadi user itu bisa login sungguhan di popup
+     Masuk/Daftar dgn email & password yang dibuatkan), lalu
+     mendaftarkannya sebagai anggota workspace pemilik akun yang
+     sedang login, supaya begitu dia login, dia melihat & mengelola
+     data YANG SAMA dengan pemiliknya (lihat resolveWorkspace() &
+     dataOwnerId di atas).
+
+     BATASAN YANG PERLU DIKETAHUI (tolong sampaikan ke user kalau
+     ditanya):
+     - Cuma PEMILIK ASLI akun (yang pertama kali daftar, bukan
+       sekadar role 'admin') yang boleh menambah/mengedit/menghapus
+       user di sini -- dibatasi lewat kondisi window.zayaproIsOwner
+       di bawah & policy RLS di supabase-schema.sql.
+     - Mengedit user HANYA bisa mengubah Nama & Akses (role). Email &
+       Password TIDAK bisa diubah dari sini setelah dibuat -- itu
+       keterbatasan keamanan Supabase (mengubah email/password akun
+       ORANG LAIN butuh service_role key yang TIDAK BOLEH ditaruh di
+       kode sisi browser). User yang bersangkutan bisa ganti sendiri
+       password/PIN-nya lewat menu Ubah Password/PIN setelah dia
+       login pakai akunnya sendiri.
+     - Menghapus user di sini cuma mencabut aksesnya ke data bersama
+       (baris workspace_members-nya dihapus) -- akun login-nya
+       sendiri TETAP ada & tetap bisa dipakai untuk masuk, tapi
+       setelah dihapus dia akan melihat data KOSONG miliknya sendiri
+       (bukan data pemilik lagi), bukan dihapus total dari Supabase
+       Auth (itu juga butuh service_role key). */
+
+  // Dipanggil dari halaman User Account (tombol "Tambah User").
+  // Mengembalikan { ok: true } atau { ok:false, reason, error? }.
+  //   reason: 'forbidden' (bukan pemilik asli) | 'validation' |
+  //           'auth' (gagal di Supabase Auth, mis. email sudah
+  //           dipakai) | 'db' (gagal simpan ke workspace_members).
+  window.cloudAddMember = async function (opts) {
+    if (!currentUser || !window.zayaproIsOwner) return { ok: false, reason: 'forbidden' };
+    const name = String((opts && opts.name) || '').trim();
+    const email = String((opts && opts.email) || '').trim();
+    const password = String((opts && opts.password) || '');
+    const pin = String((opts && opts.pin) || '').trim();
+    const role = (opts && opts.role === 'admin') ? 'admin' : 'user';
+    if (!name || !email || password.length < 6 || !/^[0-9]{6}$/.test(pin)) {
+      return { ok: false, reason: 'validation' };
+    }
+    const pinHash = await computePinHash(email, pin);
+    const temp = createTempAuthClient();
+    let signUpResult;
+    try {
+      signUpResult = await temp.auth.signUp({
+        email: email,
+        password: password,
+        options: { data: { full_name: name, pin_hash: pinHash } }
+      });
+    } catch (err) {
+      return { ok: false, reason: 'auth', error: err };
+    }
+    if (signUpResult.error) return { ok: false, reason: 'auth', error: signUpResult.error };
+    const newUserId = signUpResult.data && signUpResult.data.user && signUpResult.data.user.id;
+    if (!newUserId) return { ok: false, reason: 'auth' };
+    const { error: insErr } = await sb.from('workspace_members').insert({
+      owner_id: currentUser.id,
+      member_id: newUserId,
+      role: role,
+      name: name
+    });
+    if (insErr) return { ok: false, reason: 'db', error: insErr };
+    return { ok: true };
+  };
+
+  // Dipanggil dari halaman User Account (render daftar). Cuma
+  // mengembalikan isi kalau yang login memang pemilik asli -- kalau
+  // bukan, kembalikan array kosong (dia memang tidak boleh lihat).
+  window.cloudListMembers = async function () {
+    if (!currentUser || !window.zayaproIsOwner) return [];
+    const { data, error } = await sb.from('workspace_members')
+      .select('member_id,name,role,created_at').eq('owner_id', currentUser.id)
+      .order('created_at', { ascending: true });
+    if (error) { console.error('Gagal memuat daftar User Account:', error); return []; }
+    return data || [];
+  };
+
+  // Dipanggil dari halaman User Account (submit form mode edit). Cuma
+  // Nama & Akses (role) yang bisa diubah -- lihat catatan batasan di
+  // atas. memberId = id auth Supabase user tsb (bukan id baris).
+  window.cloudUpdateMember = async function (memberId, opts) {
+    if (!currentUser || !window.zayaproIsOwner) return { ok: false, reason: 'forbidden' };
+    const name = String((opts && opts.name) || '').trim();
+    const role = (opts && opts.role === 'admin') ? 'admin' : 'user';
+    if (!name) return { ok: false, reason: 'validation' };
+    const { error } = await sb.from('workspace_members')
+      .update({ name: name, role: role })
+      .eq('owner_id', currentUser.id).eq('member_id', memberId);
+    if (error) return { ok: false, reason: 'db', error: error };
+    return { ok: true };
+  };
+
+  // Dipanggil dari tombol hapus di halaman User Account. Lihat
+  // catatan batasan di atas -- ini cuma mencabut akses ke data
+  // bersama, bukan menghapus akun login-nya secara total.
+  window.cloudDeleteMember = async function (memberId) {
+    if (!currentUser || !window.zayaproIsOwner) return { ok: false, reason: 'forbidden' };
+    const { error } = await sb.from('workspace_members')
+      .delete().eq('owner_id', currentUser.id).eq('member_id', memberId);
+    if (error) return { ok: false, reason: 'db', error: error };
     return { ok: true };
   };
 })();

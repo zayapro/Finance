@@ -5891,6 +5891,7 @@ tbody tr:last-child td{border-bottom:none;}
   white-space:nowrap;
 }
 .ua-email{font-size:11.5px;color:var(--ink-faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ua-field-hint{font-size:11px;line-height:1.5;color:var(--ink-faint);margin:6px 0 0;}
 .ua-actions{display:flex;gap:6px;flex-shrink:0;}
 .ua-empty{text-align:center;padding:34px 16px;color:var(--ink-faint);}
 .ua-empty svg{margin-bottom:8px;opacity:.6;}
@@ -13134,16 +13135,16 @@ html.dark-mode .bd-row-close{
        > .lap-filter-head + .lap-filter-card), supaya konsisten dgn
        halaman penuh lain di app ini.
 
-       Isi: daftar user login manual yang ditambahkan sendiri oleh
-       pemilik akun (Nama, Email, Password, PIN, Jabatan) -- murni
-       catatan internal siapa saja yang ikut mengelola aplikasi ini
-       di akun/perangkat ini, TERPISAH dari akun cloud (Supabase)
-       yang dipakai login ke app sendiri (lihat catatan singkat di
-       kartu ini & modal tambah/edit #userAccountFormModalOverlay).
-       Tersimpan di manualLoginUsers (localStorage, ikut cloudStorage
-       spy tetap tersinkron kalau user login akun cloud), lihat
-       renderUserAccountList()/openUserAccountFormModal() di
-       script.js. ---- -->
+       Isi: daftar user login SUNGGUHAN (Nama, Email, Password, PIN,
+       Akses) yang dibuatkan pemilik akun -- user ini BENAR-BENAR
+       terdaftar sbg akun Supabase Auth lewat window.cloudAddMember()
+       di cloud-sync.js, jadi bisa login sungguhan lewat popup Masuk/
+       Daftar & melihat data yang sama dgn pemiliknya. Cuma pemilik
+       asli akun yang boleh membuka halaman ini (lihat
+       window.zayaproIsOwner & applyRolePermissionsUI() di script.js).
+       Daftar SELALU ditarik ulang dari server (cloudListMembers()),
+       tidak disimpan lokal. Lihat renderUserAccountList()/
+       openUserAccountFormModal() di script.js. ---- -->
   <div class="detail-page-overlay lap-filter-overlay" id="userAccountOverlay">
     <div class="lap-filter-page">
       <div class="lap-filter-head">
@@ -13155,7 +13156,7 @@ html.dark-mode .bd-row-close{
       </div>
 
       <div class="lap-filter-card">
-        <p class="ua-intro">Tambahkan user login lain secara manual untuk ikut mengelola aplikasi ini -- lengkap dengan Nama, Email, Password, PIN &amp; Jabatan. Daftar ini catatan internal di akunmu, terpisah dari akun cloud yang kamu pakai masuk ke aplikasi.</p>
+        <p class="ua-intro">Tambahkan user login lain di sini -- dia akan benar-benar bisa login sendiri (pakai email &amp; password yang kamu buatkan) dan melihat data yang sama denganmu, sesuai Akses (Admin/User) yang kamu pilih.</p>
         <button type="button" class="ua-add-btn" id="userAccountAddBtn">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
           Tambah User
@@ -15903,9 +15904,12 @@ html.dark-mode .bd-row-close{
         </div>
       </div>
       <div class="form-row">
-        <label for="uaRoleInput">Jabatan</label>
-        <input type="text" id="uaRoleInput" list="uaRoleList" maxlength="30" placeholder="Pilih dari daftar atau ketik jabatan baru" required>
-        <datalist id="uaRoleList"></datalist>
+        <label for="uaRoleInput">Akses</label>
+        <select id="uaRoleInput" required>
+          <option value="user">User (akses terbatas)</option>
+          <option value="admin">Admin (akses penuh)</option>
+        </select>
+        <p class="ua-field-hint" id="uaEditHint" style="display:none;">Email, Password &amp; PIN cuma bisa diisi saat pertama kali dibuat -- tidak bisa diubah dari sini setelah user-nya jadi. User yang bersangkutan bisa gantinya sendiri lewat menu Ubah Password/PIN setelah dia login.</p>
       </div>
       <div class="modal-actions">
         <button type="button" class="btn btn-ghost" id="btnUaFormCancel">Batal</button>
