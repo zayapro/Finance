@@ -9864,6 +9864,20 @@ select#categoryFilter[hidden]{display:none;}
    popup Bukti Transaksi): dikasih angka z-index sendiri, lebih tinggi dari
    .lap-filter-overlay (700), bukan ikut var(--z-modal) generik lagi. */
 #deviceForgetConfirmOverlay{z-index:750;}
+/* FIX sama persis dgn #deviceForgetConfirmOverlay di atas -- modal
+   Tambah/Edit User (#userAccountFormModalOverlay) ini dibuka SAAT
+   halaman "User Account" (#userAccountOverlay, class .lap-filter-overlay,
+   z-index 700) masih terbuka, jadi kalau cuma ikut z-index:var(--z-modal)
+   generik (200), modalnya kebuka tapi ketutup total di belakang
+   halaman User Account -- keliatannya spt tombol "Tambah User" tidak
+   merespons, & modalnya baru nongol setelah halaman User Account
+   ditutup (nongol menimpa halaman Pengaturan di baliknya). */
+#userAccountFormModalOverlay{z-index:750;}
+/* FIX SAMA PERSIS -- #confirmOverlay (popup konfirmasi hapus generik,
+   dipakai jg utk hapus User Account) bisa dibuka SAAT halaman User
+   Account (z-index 700) masih terbuka -- tanpa override ini,
+   popupnya kebuka tapi ketutup total di belakang halaman itu. */
+#confirmOverlay{z-index:750;}
 
 /* ============ TOAST ============
    REDESIGN: sebelumnya kartu solid gelap (--forest-deep/--wine) dengan
