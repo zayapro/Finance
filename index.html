@@ -4377,10 +4377,16 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 .tdmp-glass{background:linear-gradient(135deg,#C9D6F5 0%,#F2E9FB 100%);}
 .tdmp-glass::after{
   content:'';position:absolute;inset:6px;border-radius:6px;
-  background:rgba(255,255,255,0.4);backdrop-filter:blur(3px);
-  border:1px solid rgba(255,255,255,0.6);
+  background:rgba(255,255,255,0.42);backdrop-filter:blur(4px) saturate(180%);
+  border:1px solid rgba(255,255,255,0.75);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.9);
 }
-.tdmp-dark{background:linear-gradient(180deg,#FA8B1E 0%,#FA8B1E 32%,#151B2C 68%,#151B2C 100%);}
+.tdmp-dark{background:linear-gradient(180deg,#FA8B1E 0%,#FA8B1E 30%,#000 70%,#000 100%);}
+.tdmp-dark::after{
+  content:'';position:absolute;inset:6px 6px 6px 6px;border-radius:6px;
+  background:rgba(28,28,32,0.65);backdrop-filter:blur(4px) saturate(180%);
+  border:1px solid rgba(255,255,255,0.12);
+}
 .tema-font-btn{
   position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
   border:1.5px solid var(--line);border-radius:14px;background:var(--paper);
@@ -11482,85 +11488,146 @@ body.is-scrolling *{
    SENGAJA TIDAK disentuh sama sekali -- tetap warna cerah sesuai
    preset Warna Aksen yg dipilih, supaya banner/tombol/grafik tetap
    jadi titik terang yg kontras & enak dilihat di atas latar gelap. ---- */
+html.glass-mode,
+html.dark-mode{
+  --glass-blur: blur(28px) saturate(190%);
+}
+
+/* ============ MODE GLASS (ala "Liquid Glass" iOS) ============
+   Material kaca terang: lapisan tembus pandang + blur+saturate kuat
+   (persis parameter "vibrancy" material iOS -- warna di belakang kaca
+   ikut lebih hidup/jenuh, bukan cuma buram polos), plus GARIS TEPI
+   TIPIS dua-warna (putih terang di sisi atas, gelap samar di sisi
+   bawah lewat box-shadow inset) yang meniru refleksi cahaya di tepi
+   panel kaca asli iOS -- inilah yang bikin glass composer app KAYA
+   Kontrol iOS/Notification Center, bukan cuma "putih transparan
+   polos". Latar halaman diganti gradient mesh warna lembut (mengikuti
+   warna aksen aktif) supaya materi kacanya kelihatan jelas. ---- */
 html.glass-mode{
-  --card: rgba(255,255,255,0.58);
+  --card: rgba(255,255,255,0.5);
 }
 html.glass-mode body{
   background:
-    radial-gradient(circle at 8% 4%, color-mix(in srgb, var(--primary-light) 55%, transparent) 0%, transparent 42%),
-    radial-gradient(circle at 92% 18%, color-mix(in srgb, var(--primary) 35%, transparent) 0%, transparent 46%),
-    radial-gradient(circle at 20% 92%, color-mix(in srgb, var(--primary-soft) 80%, transparent) 0%, transparent 50%),
-    linear-gradient(160deg, #EEF1F7 0%, #E7ECF5 55%, #EDEFF6 100%);
+    radial-gradient(circle at 6% 2%, color-mix(in srgb, var(--primary-light) 60%, transparent) 0%, transparent 40%),
+    radial-gradient(circle at 96% 14%, color-mix(in srgb, var(--primary) 40%, transparent) 0%, transparent 44%),
+    radial-gradient(circle at 15% 88%, color-mix(in srgb, var(--primary-soft) 85%, transparent) 0%, transparent 48%),
+    radial-gradient(circle at 85% 96%, color-mix(in srgb, var(--primary-light) 45%, transparent) 0%, transparent 42%),
+    linear-gradient(165deg, #EEF1F8 0%, #E5EAF6 50%, #EEF0F8 100%);
   background-attachment:fixed;
 }
-/* Permukaan utama yg dijadikan "kaca": panel body halaman (di bawah
-   banner), kartu popup Filter/Tema/halaman penuh, kartu Pratinjau
-   Tema, baris Tagihan & Hutang, modal struk, dan nav bar bawah. */
 html.glass-mode .page-body,
 html.glass-mode .lap-filter-page .lap-filter-card,
 html.glass-mode .tema-preview-card,
 html.glass-mode .bd-item,
 html.glass-mode .receipt-modal,
 html.glass-mode .notif-page-body,
-html.glass-mode .as-body{
-  background:rgba(255,255,255,0.42) !important;
-  backdrop-filter:blur(18px) saturate(1.5);
-  -webkit-backdrop-filter:blur(18px) saturate(1.5);
-  border:1px solid rgba(255,255,255,0.55);
-  box-shadow:0 8px 32px rgba(31,38,80,0.12);
+html.glass-mode .as-body,
+html.glass-mode .modal{
+  /* ---- Kaca tetap DASARNYA putih (demi kontras teks tetap aman utk
+     semua warna aksen), tapi dicampur SEDIKIT (8%) dgn warna aksen
+     aktif via color-mix() -- supaya begitu warna tema diganti di
+     halaman Tema (var(--primary) ikut berubah), rona kaca ini OTOMATIS
+     ikut sedikit condong ke warna itu (mis. agak kebiruan saat pilih
+     Safir, agak kehijauan saat pilih Zamrud), bukan putih netral yg
+     sama terus utk semua preset warna. ---- */
+  background:color-mix(in srgb, var(--primary) 8%, rgba(255,255,255,0.46)) !important;
+  backdrop-filter:var(--glass-blur);
+  -webkit-backdrop-filter:var(--glass-blur);
+  border:1px solid rgba(255,255,255,0.7);
+  box-shadow:
+    0 8px 32px rgba(31,38,80,0.14),
+    inset 0 1px 0 rgba(255,255,255,0.85),
+    inset 0 -1px 0 rgba(15,23,42,0.05);
 }
 html.glass-mode .bottom-nav{
-  background:rgba(255,255,255,0.55) !important;
-  backdrop-filter:blur(20px) saturate(1.6);
-  -webkit-backdrop-filter:blur(20px) saturate(1.6);
-  border-top:1px solid rgba(255,255,255,0.5);
+  background:color-mix(in srgb, var(--primary) 6%, rgba(255,255,255,0.55)) !important;
+  backdrop-filter:var(--glass-blur);
+  -webkit-backdrop-filter:var(--glass-blur);
+  border-top:1px solid rgba(255,255,255,0.75);
+  box-shadow:0 -1px 0 rgba(255,255,255,0.9) inset, 0 -8px 28px -10px rgba(31,38,80,0.16);
 }
 html.glass-mode .modal-overlay{
-  background:rgba(31,38,80,0.22);
-  backdrop-filter:blur(3px);
-  -webkit-backdrop-filter:blur(3px);
+  background:rgba(20,25,55,0.28);
+  backdrop-filter:blur(6px) saturate(140%);
+  -webkit-backdrop-filter:blur(6px) saturate(140%);
 }
 html.glass-mode .detail-page-overlay{
   background:rgba(238,241,247,0.001); /* biarkan gradient body tembus di belakang overlay halaman penuh */
 }
+/* Badge/pill/kotak ikon kecil (numpang var(--card) yg sudah transparan
+   di atas) sengaja TIDAK dikasih backdrop-filter satu-satu (perf) --
+   transparansinya saja sudah cukup terasa "kaca" di ukuran kecil. */
 
+/* ============ MODE GELAP (ala "Liquid Glass" iOS -- Dark) ============
+   BUKAN dark mode flat/solid biasa -- permukaan utamanya TETAP material
+   kaca tembus pandang (persis mode Glass di atas), cuma tintnya gelap
+   & latarnya near-black (#000000, gaya OLED true-black iOS) alih-alih
+   putih. Garis tepi tipisnya dibalik: highlight putih SAMAR (bukan
+   terang penuh spt mode Glass terang) di tepi atas supaya tetap
+   kelihatan "kaca", bukan sekadar kotak gelap. Warna aksen (banner,
+   tombol, grafik) SENGAJA TIDAK ikut digelapkan -- tetap secerah
+   preset Warna Aksen yg dipilih di atas, supaya jadi titik terang yg
+   kontras & "mengambang" di atas material kaca gelap, persis nuansa
+   Kontrol/Widget iOS dark mode. ---- */
 html.dark-mode{
-  --paper:#0F1420;
-  --card:#1A2236;
-  --ink:#F1F4FA;
-  --ink-soft:#A8B0C4;
-  --ink-faint:#8891A6;
-  --line:#2A3348;
-  --shadow-sm: 0 2px 10px rgba(0,0,0,0.28);
-  --shadow-md: 0 14px 36px rgba(0,0,0,0.4);
+  --paper:#000000;
+  --card: rgba(28,28,32,0.6);
+  --ink:#F5F6FA;
+  --ink-soft:#B4B9C6;
+  --ink-faint:#8A8F9E;
+  --line: rgba(255,255,255,0.09);
+  --shadow-sm: 0 2px 10px rgba(0,0,0,0.35);
+  --shadow-md: 0 14px 36px rgba(0,0,0,0.55);
 }
-/* Gradient body dari oranye/warna-aksen banner turun ke latar gelap
-   (nilai gelapnya SAMA dgn --paper di atas), gantikan gradient asli
-   yg turun ke putih (#f5f7fe) -- supaya transisi banner->body tetap
-   mulus, cuma warna akhirnya gelap, bukan putih. */
 html.dark-mode body{
-  background:linear-gradient(180deg,
-    var(--banner-orange) 0px,
-    var(--banner-orange) 155px,
-    color-mix(in srgb, var(--banner-orange) 55%, #0F1420) 190px,
-    color-mix(in srgb, var(--banner-orange) 22%, #0F1420) 220px,
-    #0F1420 252px,
-    #0F1420 100%);
+  background:
+    radial-gradient(circle at 10% 0%, color-mix(in srgb, var(--primary) 22%, transparent) 0%, transparent 38%),
+    radial-gradient(circle at 100% 20%, color-mix(in srgb, var(--primary-deep) 26%, transparent) 0%, transparent 42%),
+    linear-gradient(180deg,
+      var(--banner-orange) 0px,
+      var(--banner-orange) 155px,
+      color-mix(in srgb, var(--banner-orange) 45%, #000) 195px,
+      color-mix(in srgb, var(--banner-orange) 15%, #000) 225px,
+      #000000 254px,
+      #000000 100%);
+  background-attachment:fixed;
 }
-html.dark-mode .modal,
-html.dark-mode .bottom-nav{
-  background:var(--card);
+html.dark-mode .page-body,
+html.dark-mode .lap-filter-page .lap-filter-card,
+html.dark-mode .tema-preview-card,
+html.dark-mode .bd-item,
+html.dark-mode .receipt-modal,
+html.dark-mode .notif-page-body,
+html.dark-mode .as-body,
+html.dark-mode .modal{
+  /* Sama seperti mode Glass -- kaca gelap dicampur sedikit (14%, lebih
+     kental drpd Glass krn di atas latar gelap warnanya kurang terasa
+     kalau terlalu tipis) dgn warna aksen aktif, ikut berubah otomatis
+     tiap ganti preset warna di halaman Tema. */
+  background:color-mix(in srgb, var(--primary) 14%, rgba(28,28,32,0.62)) !important;
+  backdrop-filter:var(--glass-blur);
+  -webkit-backdrop-filter:var(--glass-blur);
+  border:1px solid rgba(255,255,255,0.09);
+  box-shadow:
+    0 8px 32px rgba(0,0,0,0.5),
+    inset 0 1px 0 rgba(255,255,255,0.07),
+    inset 0 -1px 0 rgba(0,0,0,0.3);
 }
 html.dark-mode .bottom-nav{
-  border-top:1px solid var(--line);
-  box-shadow:0 -6px 18px -8px rgba(0,0,0,0.4);
+  background:color-mix(in srgb, var(--primary) 12%, rgba(18,18,20,0.66)) !important;
+  backdrop-filter:var(--glass-blur);
+  -webkit-backdrop-filter:var(--glass-blur);
+  border-top:1px solid rgba(255,255,255,0.09);
+  box-shadow:0 -8px 28px -10px rgba(0,0,0,0.55);
 }
 html.dark-mode .modal-overlay{
-  background:rgba(0,0,0,0.55);
+  background:rgba(0,0,0,0.65);
+  backdrop-filter:blur(6px) saturate(140%);
+  -webkit-backdrop-filter:blur(6px) saturate(140%);
 }
-/* Placeholder input & elemen abu-abu muda (border halus, dst) yg
-   sebelumnya hardcode ke warna terang -- disamakan ke --line/--ink-faint
-   supaya tetap kebaca di atas latar gelap. */
+html.dark-mode .detail-page-overlay{
+  background:rgba(0,0,0,0.001); /* biarkan gradient body (near-black) tembus di belakang overlay halaman penuh */
+}
 html.dark-mode input,
 html.dark-mode select,
 html.dark-mode textarea{
