@@ -11518,20 +11518,23 @@ html.dark-mode{
    (.lap-filter-save-btn/.lap-filter-cancel-btn, border-radius:999px,
    dipakai di footer Batal/Selesai banyak popup), BUKAN semua tombol
    .btn-primary/.btn-ghost. ---- */
-html.glass-mode .page-body,
 html.glass-mode .lap-filter-page .lap-filter-card,
 html.glass-mode .tema-preview-card,
 html.glass-mode .bd-item,
 html.glass-mode .receipt-modal,
-html.glass-mode .notif-page-body,
 html.glass-mode .as-body,
 html.glass-mode .modal,
-/* ---- PERLUASAN GLOBAL: semua kartu/panel/sheet besar lain di seluruh
-   app (dashboard, laporan, notifikasi, tagihan, pengaturan, login/PIN,
-   AI chat, dst) numpang treatment kaca YANG SAMA PERSIS spt di atas --
-   supaya efek "Liquid Glass" konsisten di SETIAP halaman, bukan cuma
-   beberapa. Elemen kecil (badge/pill/kotak ikon ~20-40px) SENGAJA tetap
-   TIDAK dimasukkan ke sini (perf -- lihat catatan awal blok Glass). ---- */
+/* ---- CATATAN: .page-body & .notif-page-body SENGAJA DIKELUARKAN dari
+   daftar ini (permintaan user) -- keduanya BUKAN kartu diskrit spt yg
+   lain, melainkan KANVAS SELURUH HALAMAN yg di banyak halaman (Laporan/
+   Dompet/Pengaturan/Notifikasi) dipecah jadi 2 potongan DOM terpisah
+   (potongan "cap"/"top" yg bersudut lengkung menumpang banner + potongan
+   "rest" polos di bawahnya, radius/margin-nya dinolkan) supaya sambung
+   rata TANPA garis. Default theme sendiri TIDAK PERNAH memberi border
+   pada .page-body (cek CSS aslinya) -- jadi begitu kita tambah border di
+   sini, border itu muncul di KEDUA potongan scara terpisah & bikin garis
+   pembatas persis di sambungan (tempat radius berhenti). Dikeluarkan
+   total dari sini spy kembali rata tanpa garis, sama seperti Default. ---- */
 html.glass-mode .stat-card,
 html.glass-mode .section-card,
 html.glass-mode .income-shortcut-card,
@@ -11656,15 +11659,21 @@ html.dark-mode body{
       var(--paper) 100%);
   background-attachment:fixed;
 }
-html.dark-mode .page-body,
 html.dark-mode .lap-filter-page .lap-filter-card,
 html.dark-mode .tema-preview-card,
 html.dark-mode .bd-item,
 html.dark-mode .receipt-modal,
-html.dark-mode .notif-page-body,
 html.dark-mode .as-body,
 html.dark-mode .modal,
-/* ---- PERLUASAN GLOBAL (padanan mode gelap dari grup Glass di atas) ---- */
+/* ---- CATATAN: .page-body & .notif-page-body DIKELUARKAN dari daftar
+   ini (permintaan user, sama seperti di mode Glass di atas -- lihat
+   catatan lengkap di sana). Background-nya TETAP otomatis ikut gelap
+   tanpa perlu masuk daftar ini krn keduanya sudah pakai var(--card) di
+   CSS aslinya (lihat :root html.dark-mode yg menimpa var(--card) jadi
+   gelap) -- yg DIHILANGKAN di sini cuma border+box-shadow paksa yg
+   sebelumnya bikin garis pembatas persis di sambungan potongan
+   cap/rest (krn .page-body/.notif-page-body aslinya di Default TIDAK
+   PERNAH punya border sama sekali). ---- */
 html.dark-mode .stat-card,
 html.dark-mode .section-card,
 html.dark-mode .income-shortcut-card,
@@ -11713,6 +11722,14 @@ html.dark-mode .mini-topbar{
   border-top:1px solid rgba(255,255,255,0.09);
   box-shadow:0 -8px 24px -10px rgba(0,0,0,0.5);
 }
+/* Teks label menu bawah yg SEDANG AKTIF -- sebelumnya hardcode
+   #111827 (abu gelap nyaris hitam) krn didesain utk numpang di atas
+   nav putih; begitu latar nav ikut gelap (override di atas), teks
+   gelap ini jadi nyaris tak terbaca. Ditimpa jadi putih/terang
+   (var(--ink), yg di mode Dark = #F5F6FA) khusus saat mode Dark. */
+html.dark-mode .bn-item.active{
+  color:var(--ink) !important;
+}
 /* Kartu Saldo Total + Ringkasan -- numpang --card-fade-bg gelap yg
    sudah solid & bertint aksen (lihat :root html.dark-mode di atas). */
 html.dark-mode .saldo-card{
@@ -11733,6 +11750,18 @@ html.dark-mode .detail-page-overlay{
    dipaksa background:var(--card) semua varian jadi rata sama. Cukup
    digelapkan garis tepinya saja, tint warnanya biarkan numpang warna
    asli (sudah transparan & otomatis kelihatan di atas latar gelap). */
+/* Badan halaman Tagihan & Hutang (#bdAllOverlay) -- BEDA dari
+   .page-body biasa (Laporan/Dompet/Pengaturan) yg sudah otomatis
+   gelap krn pakai var(--card,#fff). Class .bd-page-body di halaman
+   ini SENGAJA hardcode putih polos (#FFFFFF, bukan variabel) atas
+   permintaan user sebelumnya utk tampilan Default -- akibatnya di
+   mode Dark class ini TIDAK ikut gelap sama sekali (tetap putih
+   terang) walau kartu-kartu di dalamnya (.bd-item/.bd-summary-card/
+   dst) sudah gelap lewat var(--card) -- inilah sumber "tidak
+   konsisten"-nya. Ditimpa balik ke var(--card) khusus di mode Dark. */
+html.dark-mode .bd-page-body{
+  background:var(--card) !important;
+}
 html.dark-mode .bd-summary-card{
   border-color:rgba(255,255,255,0.09);
 }
