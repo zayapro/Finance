@@ -9186,6 +9186,7 @@ const DELETE_CONFIRM_TEXT = {
   device: { title: 'Hapus perangkat ini?', desc: 'Tindakan ini tidak bisa dibatalkan.' },
   wallet: { title: 'Hapus akun bank/e-wallet ini?', desc: 'Tindakan ini tidak bisa dibatalkan.' },
   income: { title: 'Hapus catatan pendapatan ini?', desc: 'Tindakan ini tidak bisa dibatalkan.' },
+  useraccount: { title: 'Hapus user ini?', desc: 'Tindakan ini tidak bisa dibatalkan.' },
 };
 
 function openDeleteConfirm(id, kind) {
@@ -9278,6 +9279,11 @@ document.getElementById('btnConfirmDelete').addEventListener('click', () => {
       populateIncomeSourceSelect();
       if (document.getElementById('customSourceManageList')) renderCustomSourceManageList();
       renderSummary();
+    } else if (deletingKind === 'useraccount') {
+      manualLoginUsers = manualLoginUsers.filter(u => u.id !== deletingId);
+      persistManualLoginUsers();
+      showToast('User dihapus.');
+      renderUserAccountList();
       refreshIncomeSourcePage();
     } else if (deletingKind === 'platform') {
       const list = getCustomPlatformsForSource(deletingPlatformSource);
@@ -10006,6 +10012,7 @@ document.getElementById('dataDiriDoneBtn')?.addEventListener('click', confirmDat
    di bawah (tanpa logic tambahan lain) -- halaman ini SENGAJA masih
    kosong (placeholder "empty-state"), tinggal diisi kontennya nanti. ---- */
 function openUserAccountOverlay() {
+  renderUserAccountList();
   document.getElementById('userAccountOverlay')?.classList.add('open');
   lockBodyScroll();
 }
@@ -10015,6 +10022,165 @@ function closeUserAccountOverlay() {
 }
 document.getElementById('userAccountOpenBtn')?.addEventListener('click', openUserAccountOverlay);
 document.getElementById('userAccountBackBtn')?.addEventListener('click', closeUserAccountOverlay);
+
+/* ==========================================================
+   HALAMAN "USER ACCOUNT" -- DAFTAR USER LOGIN MANUAL
+   User yang sudah login (pemilik akun) bisa menambahkan user login
+   lain secara manual: Nama, Email, Password, PIN, & Jabatan. Ini
+   catatan internal yang tersimpan di cloudStorage (localStorage,
+   ikut tersinkron kalau pemilik login akun cloud) -- TERPISAH dari
+   akun cloud (Supabase) yang dipakai login ke aplikasi ini sendiri
+   (lihat cloud-sync.js), jadi menambah user di sini TIDAK membuat
+   akun tsb bisa benar-benar login sendiri ke app -- murni daftar
+   siapa saja yang ikut mengelola & jabatannya masing-masing.
+   Pola sama dengan modal "Tambah Sumber Manual" (customIncomeSources)
+   di atas: array + cloudStorage + render list + modal tambah/edit +
+   hapus lewat openDeleteConfirm(id,'useraccount'). ---- */
+const STORAGE_KEY_MANUAL_LOGIN_USERS = 'alirin_manual_login_users_v1';
+const USER_ROLE_PRESETS = ['Admin', 'Owner', 'Manajer Keuangan', 'Staf', 'Kasir', 'Akuntan'];
+function loadManualLoginUsers() {
+  try {
+    const raw = cloudStorage.getItem(STORAGE_KEY_MANUAL_LOGIN_USERS);
+    if (raw) return JSON.parse(raw);
+  } catch (e) { console.error('Gagal memuat user login manual', e); }
+  return [];
+}
+function persistManualLoginUsers() {
+  try { cloudStorage.setItem(STORAGE_KEY_MANUAL_LOGIN_USERS, JSON.stringify(manualLoginUsers)); }
+  catch (e) { showToast('Gagal menyimpan user login.', 'err'); }
+}
+let manualLoginUsers = loadManualLoginUsers();
+let editingUserAccountId = null;
+
+function userAccountInitials(name) {
+  const parts = (name || '').trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return '?';
+  return (parts[0][0] + (parts[1] ? parts[1][0] : '')).toUpperCase();
+}
+
+function renderUserRoleDatalist() {
+  const list = document.getElementById('uaRoleList');
+  if (!list) return;
+  const names = Array.from(new Set(USER_ROLE_PRESETS.concat(manualLoginUsers.map(u => u.role))));
+  list.innerHTML = names.map(r => `<option value="${escapeAttr(r)}"></option>`).join('');
+}
+
+function renderUserAccountList() {
+  const wrap = document.getElementById('userAccountList');
+  if (!wrap) return;
+  if (!manualLoginUsers.length) {
+    wrap.innerHTML = `
+      <div class="ua-empty">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>
+        <p>Belum ada user login yang ditambahkan. Ketuk "Tambah User" untuk mulai.</p>
+      </div>`;
+    return;
+  }
+  wrap.innerHTML = manualLoginUsers.map(u => `
+    <div class="ua-card">
+      <span class="ua-avatar">${escapeHtml(userAccountInitials(u.name))}</span>
+      <span class="ua-body">
+        <span class="ua-top-row">
+          <span class="ua-name">${escapeHtml(u.name)}</span>
+          <span class="ua-role-badge">${escapeHtml(u.role)}</span>
+        </span>
+        <span class="ua-email">${escapeHtml(u.email)}</span>
+      </span>
+      <span class="ua-actions">
+        <button type="button" class="icon-btn edit" data-uaedit="${escapeAttr(u.id)}" title="Edit user" aria-label="Edit ${escapeAttr(u.name)}">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        </button>
+        <button type="button" class="icon-btn del" data-uadel="${escapeAttr(u.id)}" title="Hapus user" aria-label="Hapus ${escapeAttr(u.name)}">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"/></svg>
+        </button>
+      </span>
+    </div>
+  `).join('');
+  wrap.querySelectorAll('[data-uaedit]').forEach(btn => {
+    btn.addEventListener('click', () => openUserAccountFormModal(btn.dataset.uaedit));
+  });
+  wrap.querySelectorAll('[data-uadel]').forEach(btn => {
+    btn.addEventListener('click', () => openDeleteConfirm(btn.dataset.uadel, 'useraccount'));
+  });
+}
+
+function setUserAccountFormMode(isEdit) {
+  const submitBtn = document.getElementById('uaFormSubmitBtn');
+  const heading = document.getElementById('userAccountFormHeading');
+  if (submitBtn) submitBtn.textContent = isEdit ? 'Simpan Perubahan' : 'Simpan User';
+  if (heading) heading.textContent = isEdit ? 'Edit User' : 'Tambah User';
+}
+
+function openUserAccountFormModal(editId) {
+  const form = document.getElementById('userAccountForm');
+  form.reset();
+  renderUserRoleDatalist();
+  if (editId) {
+    const u = manualLoginUsers.find(x => x.id === editId);
+    if (u) {
+      editingUserAccountId = u.id;
+      document.getElementById('uaNameInput').value = u.name;
+      document.getElementById('uaEmailInput').value = u.email;
+      document.getElementById('uaPasswordInput').value = u.password;
+      document.getElementById('uaPinInput').value = u.pin;
+      document.getElementById('uaRoleInput').value = u.role;
+      setUserAccountFormMode(true);
+    }
+  } else {
+    editingUserAccountId = null;
+    setUserAccountFormMode(false);
+  }
+  openModal(userAccountFormModal);
+}
+function closeUserAccountFormModal() {
+  closeModal(userAccountFormModal);
+  editingUserAccountId = null;
+}
+
+const userAccountFormModal = document.getElementById('userAccountFormModalOverlay');
+document.getElementById('userAccountAddBtn')?.addEventListener('click', () => openUserAccountFormModal(null));
+document.getElementById('userAccountFormCloseBtn')?.addEventListener('click', closeUserAccountFormModal);
+document.getElementById('btnUaFormCancel')?.addEventListener('click', closeUserAccountFormModal);
+userAccountFormModal?.addEventListener('click', (e) => { if (e.target === userAccountFormModal) closeUserAccountFormModal(); });
+
+[['uaPasswordToggle', 'uaPasswordInput'], ['uaPinToggle', 'uaPinInput']].forEach(function ([btnId, inputId]) {
+  const btn = document.getElementById(btnId);
+  const input = document.getElementById(inputId);
+  if (!btn || !input) return;
+  btn.addEventListener('click', function () {
+    input.type = input.type === 'password' ? 'text' : 'password';
+    btn.setAttribute('aria-pressed', String(input.type === 'text'));
+  });
+});
+
+document.getElementById('userAccountForm')?.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const name = document.getElementById('uaNameInput').value.trim();
+  const email = document.getElementById('uaEmailInput').value.trim();
+  const password = document.getElementById('uaPasswordInput').value;
+  const pin = document.getElementById('uaPinInput').value.trim();
+  const role = document.getElementById('uaRoleInput').value.trim();
+  if (!name || !email || !role) { showToast('Nama, email, & jabatan wajib diisi.', 'err'); return; }
+  if (password.length < 6) { showToast('Password minimal 6 karakter.', 'err'); return; }
+  if (!/^\d{6}$/.test(pin)) { showToast('PIN harus 6 digit angka.', 'err'); return; }
+  const dupe = manualLoginUsers.some(u => u.email.toLowerCase() === email.toLowerCase() && u.id !== editingUserAccountId);
+  if (dupe) { showToast('Email ini sudah dipakai user lain.', 'err'); return; }
+
+  if (editingUserAccountId) {
+    const target = manualLoginUsers.find(u => u.id === editingUserAccountId);
+    if (target) {
+      target.name = name; target.email = email; target.password = password; target.pin = pin; target.role = role;
+    }
+    persistManualLoginUsers();
+    showToast('User berhasil diperbarui.');
+  } else {
+    manualLoginUsers.push({ id: cryptoId(), name, email, password, pin, role, createdAt: Date.now() });
+    persistManualLoginUsers();
+    showToast('User baru berhasil ditambahkan.');
+  }
+  closeUserAccountFormModal();
+  renderUserAccountList();
+});
 
 /* ==========================================================
    PENGATURAN > PENGATURAN — "Widget" (#widgetOverlay). Pola buka/
