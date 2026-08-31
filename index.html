@@ -11505,6 +11505,16 @@ html.dark-mode{
    warna aksen aktif) supaya materi kacanya kelihatan jelas. ---- */
 html.glass-mode{
   --card: rgba(255,255,255,0.5);
+  /* Versi tembus pandang dari --card-fade-bg (dipakai kartu Saldo
+     Total/Ringkasan yg sengaja tidak pakai var(--card) polos, lihat
+     definisi aslinya di :root) -- putihnya diganti rgba supaya
+     backdrop-filter di bawah (lihat .saldo-card dst) betulan kelihatan,
+     tint di ujung kanan tetap ikut var(--primary) spt versi asli. */
+  --card-fade-bg: linear-gradient(to right,
+    rgba(255,255,255,0.55) 0%,
+    rgba(255,255,255,0.55) 45%,
+    color-mix(in srgb, var(--primary) 10%, rgba(255,255,255,0.5)) 70%,
+    color-mix(in srgb, var(--primary) 22%, rgba(255,255,255,0.42)) 100%);
 }
 html.glass-mode body{
   background:
@@ -11522,7 +11532,44 @@ html.glass-mode .bd-item,
 html.glass-mode .receipt-modal,
 html.glass-mode .notif-page-body,
 html.glass-mode .as-body,
-html.glass-mode .modal{
+html.glass-mode .modal,
+/* ---- PERLUASAN GLOBAL: semua kartu/panel/sheet besar lain di seluruh
+   app (dashboard, laporan, notifikasi, tagihan, pengaturan, login/PIN,
+   AI chat, dst) numpang treatment kaca YANG SAMA PERSIS spt di atas --
+   supaya efek "Liquid Glass" konsisten di SETIAP halaman, bukan cuma
+   beberapa. Elemen kecil (badge/pill/kotak ikon ~20-40px) SENGAJA tetap
+   TIDAK dimasukkan ke sini (perf -- lihat catatan awal blok Glass). ---- */
+html.glass-mode .stat-card,
+html.glass-mode .section-card,
+html.glass-mode .income-shortcut-card,
+html.glass-mode .isc-source-card,
+html.glass-mode .isc-recent-card,
+html.glass-mode .flow-tier-card,
+html.glass-mode .news-item,
+html.glass-mode .zp-skel-card,
+html.glass-mode .bd-note-card,
+html.glass-mode .ws-list,
+html.glass-mode .detail-total-card,
+html.glass-mode .detail-list-wrap,
+html.glass-mode .detail-target-card,
+html.glass-mode .isp-stat-card,
+html.glass-mode .lb-col,
+html.glass-mode .bantuan-row,
+html.glass-mode .bantuan-faq-item,
+html.glass-mode .tentang-doc-card,
+html.glass-mode .device-mgmt-card,
+html.glass-mode .tema-section,
+html.glass-mode .tema-preview-wrap,
+html.glass-mode .lap-filter-section,
+html.glass-mode .lap-filter-footer,
+html.glass-mode .lap-filter-footer--split,
+html.glass-mode .lap-sheet,
+html.glass-mode .notif-item,
+html.glass-mode .cloud-auth-card,
+html.glass-mode .pin-lock-sheet,
+html.glass-mode .ai-chat-panel,
+html.glass-mode .export-menu,
+html.glass-mode .toast{
   /* ---- Kaca tetap DASARNYA putih (demi kontras teks tetap aman utk
      semua warna aksen), tapi dicampur SEDIKIT (8%) dgn warna aksen
      aktif via color-mix() -- supaya begitu warna tema diganti di
@@ -11539,12 +11586,35 @@ html.glass-mode .modal{
     inset 0 1px 0 rgba(255,255,255,0.85),
     inset 0 -1px 0 rgba(15,23,42,0.05);
 }
-html.glass-mode .bottom-nav{
+html.glass-mode .bottom-nav,
+/* mini-topbar (versi mobile, fixed nempel ATAS layar) numpang persis
+   treatment .bottom-nav krn perannya sama -- bar chrome fixed di tepi
+   layar, BUKAN kartu konten biasa. */
+html.glass-mode .mini-topbar{
   background:color-mix(in srgb, var(--primary) 6%, rgba(255,255,255,0.55)) !important;
   backdrop-filter:var(--glass-blur);
   -webkit-backdrop-filter:var(--glass-blur);
   border-top:1px solid rgba(255,255,255,0.75);
   box-shadow:0 -1px 0 rgba(255,255,255,0.9) inset, 0 -8px 28px -10px rgba(31,38,80,0.16);
+}
+/* Kartu "Saldo Total" + "Ringkasan transaksi kamu" (.saldo-card/
+   .flow-deal-card/.fc-peek-handle) SENGAJA TIDAK ditimpa background-nya
+   di sini spt grup kartu di atas -- ketiganya numpang 1 variabel yg
+   sama (--card-fade-bg, ditimpa jadi versi tembus pandang tepat di
+   bawah) supaya sambungan mulus antar-ketiganya (sengaja dibuat tanpa
+   garis batas oleh desain aslinya) tetap terjaga, cuma blur+tepi kaca
+   yg ditambahkan di sini. */
+html.glass-mode .saldo-card,
+html.glass-mode .flow-deal-card,
+html.glass-mode .fc-peek-handle{
+  backdrop-filter:var(--glass-blur);
+  -webkit-backdrop-filter:var(--glass-blur);
+}
+html.glass-mode .saldo-card{
+  border:1px solid rgba(255,255,255,0.7);
+  box-shadow:
+    0 8px 32px rgba(31,38,80,0.14),
+    inset 0 1px 0 rgba(255,255,255,0.85);
 }
 html.glass-mode .modal-overlay{
   background:rgba(20,25,55,0.28);
@@ -11578,6 +11648,14 @@ html.dark-mode{
   --line: rgba(255,255,255,0.09);
   --shadow-sm: 0 2px 10px rgba(0,0,0,0.35);
   --shadow-md: 0 14px 36px rgba(0,0,0,0.55);
+  /* Versi gelap dari --card-fade-bg, sama alasannya spt di mode Glass
+     terang -- dasarnya dari --card gelap (bukan putih) supaya kartu
+     Saldo Total/Ringkasan tetap senada dgn kartu lain di dark mode. */
+  --card-fade-bg: linear-gradient(to right,
+    rgba(28,28,32,0.62) 0%,
+    rgba(28,28,32,0.62) 45%,
+    color-mix(in srgb, var(--primary) 16%, rgba(28,28,32,0.6)) 70%,
+    color-mix(in srgb, var(--primary) 30%, rgba(28,28,32,0.55)) 100%);
 }
 html.dark-mode body{
   background:
@@ -11599,7 +11677,39 @@ html.dark-mode .bd-item,
 html.dark-mode .receipt-modal,
 html.dark-mode .notif-page-body,
 html.dark-mode .as-body,
-html.dark-mode .modal{
+html.dark-mode .modal,
+/* ---- PERLUASAN GLOBAL (padanan mode gelap dari grup Glass di atas) ---- */
+html.dark-mode .stat-card,
+html.dark-mode .section-card,
+html.dark-mode .income-shortcut-card,
+html.dark-mode .isc-source-card,
+html.dark-mode .isc-recent-card,
+html.dark-mode .flow-tier-card,
+html.dark-mode .news-item,
+html.dark-mode .zp-skel-card,
+html.dark-mode .bd-note-card,
+html.dark-mode .ws-list,
+html.dark-mode .detail-total-card,
+html.dark-mode .detail-list-wrap,
+html.dark-mode .detail-target-card,
+html.dark-mode .isp-stat-card,
+html.dark-mode .lb-col,
+html.dark-mode .bantuan-row,
+html.dark-mode .bantuan-faq-item,
+html.dark-mode .tentang-doc-card,
+html.dark-mode .device-mgmt-card,
+html.dark-mode .tema-section,
+html.dark-mode .tema-preview-wrap,
+html.dark-mode .lap-filter-section,
+html.dark-mode .lap-filter-footer,
+html.dark-mode .lap-filter-footer--split,
+html.dark-mode .lap-sheet,
+html.dark-mode .notif-item,
+html.dark-mode .cloud-auth-card,
+html.dark-mode .pin-lock-sheet,
+html.dark-mode .ai-chat-panel,
+html.dark-mode .export-menu,
+html.dark-mode .toast{
   /* Sama seperti mode Glass -- kaca gelap dicampur sedikit (14%, lebih
      kental drpd Glass krn di atas latar gelap warnanya kurang terasa
      kalau terlalu tipis) dgn warna aksen aktif, ikut berubah otomatis
@@ -11613,12 +11723,28 @@ html.dark-mode .modal{
     inset 0 1px 0 rgba(255,255,255,0.07),
     inset 0 -1px 0 rgba(0,0,0,0.3);
 }
-html.dark-mode .bottom-nav{
+html.dark-mode .bottom-nav,
+html.dark-mode .mini-topbar{
   background:color-mix(in srgb, var(--primary) 12%, rgba(18,18,20,0.66)) !important;
   backdrop-filter:var(--glass-blur);
   -webkit-backdrop-filter:var(--glass-blur);
   border-top:1px solid rgba(255,255,255,0.09);
   box-shadow:0 -8px 28px -10px rgba(0,0,0,0.55);
+}
+/* Kartu Saldo Total + Ringkasan -- lihat catatan padanan di mode Glass
+   di atas: sengaja tidak ditimpa background di sini, numpang
+   --card-fade-bg gelap yg sudah ditimpa di :root html.dark-mode. */
+html.dark-mode .saldo-card,
+html.dark-mode .flow-deal-card,
+html.dark-mode .fc-peek-handle{
+  backdrop-filter:var(--glass-blur);
+  -webkit-backdrop-filter:var(--glass-blur);
+}
+html.dark-mode .saldo-card{
+  border:1px solid rgba(255,255,255,0.09);
+  box-shadow:
+    0 8px 32px rgba(0,0,0,0.5),
+    inset 0 1px 0 rgba(255,255,255,0.07);
 }
 html.dark-mode .modal-overlay{
   background:rgba(0,0,0,0.65);
