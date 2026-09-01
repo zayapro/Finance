@@ -2666,10 +2666,11 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
   padding:16px 16px 14px;box-shadow:var(--shadow-sm);
   position:relative;overflow:hidden;
+  box-sizing:border-box;width:100%;max-width:100%;
   transition:border-color .25s ease, box-shadow .25s ease;
 }
-.kurs-conv-row{display:flex;align-items:flex-end;gap:8px;}
-.kurs-conv-field{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px;}
+.kurs-conv-row{display:flex;align-items:flex-end;gap:8px;flex-wrap:nowrap;}
+.kurs-conv-field{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:6px;}
 .kurs-conv-label{font-size:11px;font-weight:700;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.04em;}
 /* ---- Field "Dari"/"Ke" kini tombol biasa (gaya sama persis dgn
    .lap-subpicker-field milik "Kategori" di popup Filter) yang membuka
@@ -2682,7 +2683,13 @@ tr.fade-up{animation:fadeRow .35s ease both;}
    selector scoped kalau suatu saat perlu override KHUSUS di sini tanpa
    ikut mengubah field "Kategori"/"Pilih Bulan" dst yg lain. ---- */
 select#kursFromSelect[hidden],select#kursToSelect[hidden]{display:none;}
-.kurs-currency-field{width:100%;}
+.kurs-currency-field{width:100%;min-width:0;}
+/* ---- Label kode mata uang ("USD"/"IDR") dikasih min-width:0 + ellipsis
+   scoped khusus di sini (bukan ubah .lap-subpicker-field aslinya yg
+   dipakai field lain) supaya kalau suatu saat kode/nama mata uang lebih
+   panjang drpd 3 huruf, tombolnya tetap AMAN tidak mendorong lebar
+   kartu meluber di layar sangat sempit (≤320px). ---- */
+.kurs-currency-field span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .kurs-swap-btn{
   flex-shrink:0;width:38px;height:38px;border-radius:50%;margin-bottom:1px;
   display:flex;align-items:center;justify-content:center;
@@ -2695,17 +2702,38 @@ select#kursFromSelect[hidden],select#kursToSelect[hidden]{display:none;}
 .kurs-amount-wrap{display:flex;flex-direction:column;gap:6px;margin-top:16px;}
 .kurs-amount-input{
   border:1px solid var(--line);border-radius:10px;padding:11px 14px;
-  font-family:'Poppins',sans-serif;font-size:17px;font-weight:600;
+  font-family:'Poppins',sans-serif;font-size:clamp(15px,4vw,17px);font-weight:600;
   background:var(--paper);color:var(--ink);outline:none;text-align:right;
   transition:border-color .15s ease;width:100%;box-sizing:border-box;
+  min-width:0;
 }
 .kurs-amount-input:focus{border-color:var(--forest-glow);background:var(--card);}
-.kurs-result-wrap{display:flex;flex-direction:column;gap:6px;margin-top:14px;}
+.kurs-result-wrap{display:flex;flex-direction:column;gap:6px;margin-top:14px;min-width:0;}
+/* ---- FIX kartu tidak rapi di beberapa browser/perangkat: sebelumnya
+   cuma "overflow-x:auto" diset di sini, tapi menurut spec CSS, begitu
+   SALAH SATU sumbu overflow diset ke bukan "visible", sumbu yg lain
+   ("overflow-y", yg tadinya defaultnya "visible") ikut otomatis dipaksa
+   jadi "auto" juga -- walau isinya sama sekali tidak overflow vertikal.
+   Efeknya: sebagian browser/WebView (terutama yg scrollbar-nya bergaya
+   klasik dgn tombol panah atas/bawah, umum di beberapa Android WebView
+   & Windows) menggambar SCROLLBAR VERTIKAL kosong (kelihatan spt kotak
+   panah ▲▼ kecil) menempel di angka HASIL, walau tak ada apa pun yg
+   perlu discroll ke bawah. "overflow-y:hidden" DIPAKSA di sini supaya
+   sumbu vertikal tidak pernah ikut jadi "auto" di browser mana pun,
+   sementara "overflow-x:auto" TETAP dipertahankan (angka hasil yg
+   sangat panjang, mis. kurs mata uang recehan, masih bisa digeser
+   horizontal, bukan malah kepotong/numpuk keluar kartu). Scrollbar
+   horizontalnya sendiri disembunyikan visualnya (bukan dimatikan
+   fungsinya) lewat properti scrollbar-width/::-webkit-scrollbar di
+   bawah supaya kartu tetap terlihat bersih di SEMUA browser. ---- */
 .kurs-result{
   font-family:'Poppins',sans-serif;font-weight:700;letter-spacing:-0.01em;
-  color:var(--primary-deep);font-size:clamp(22px,7vw,28px);line-height:1.25;
-  text-align:right;overflow-x:auto;white-space:nowrap;
+  color:var(--primary-deep);font-size:clamp(20px,7vw,28px);line-height:1.25;
+  text-align:right;overflow-x:auto;overflow-y:hidden;white-space:nowrap;
+  min-width:0;max-width:100%;
+  scrollbar-width:none;-ms-overflow-style:none;
 }
+.kurs-result::-webkit-scrollbar{display:none;width:0;height:0;}
 /* ---- SATU BARIS & responsive di semua lebar layar & ketiga tema
    (Default/Dark/Glass): row + justify-content:space-between, teks
    dibuat min-width:0 + overflow:hidden + text-overflow:ellipsis +
@@ -2826,6 +2854,28 @@ select#kursFromSelect[hidden],select#kursToSelect[hidden]{display:none;}
 @media (max-width:380px){
   .kurs-conv-row{gap:6px;}
   .kurs-populer-grid{gap:8px;}
+}
+/* ---- Layar sangat sempit (HP kecil/lipat, ≤340px): kartu konverter
+   dirapatkan sedikit lagi (padding/gap/font diturunkan tipis) supaya
+   field "Dari"/"Ke" + tombol tukar tidak pernah mepet/kepotong, tanpa
+   mengubah tampilan di lebar normal. ---- */
+@media (max-width:340px){
+  .kurs-conv-card{padding:13px 12px 12px;}
+  .kurs-conv-row{gap:5px;}
+  .lap-subpicker-field{padding:10px 10px;font-size:13.5px;}
+  .kurs-swap-btn{width:34px;height:34px;}
+  .kurs-amount-wrap,.kurs-result-wrap{margin-top:12px;}
+  .kurs-meta-row{flex-wrap:wrap;row-gap:8px;}
+  .kurs-meta-updated{white-space:normal;}
+}
+/* ---- Layar lebar (tablet/desktop -- halaman ini di-cap max-width:640px
+   lewat .lap-filter-page, jadi kartu bisa jauh lebih lebar drpd HP):
+   grid "Kurs Populer" dinaikkan jadi 3 kolom (bukan tetap 2) supaya
+   ruang ekstra terpakai rapi, bukan tiap kartu kurs jadi memanjang
+   kosong. Kartu konverter sendiri sudah otomatis responsive (isinya
+   pakai flex/clamp), tidak perlu override khusus. ---- */
+@media (min-width:481px){
+  .kurs-populer-grid{grid-template-columns:repeat(3,1fr);}
 }
 
 /* ============ SUMMARY CARDS ============ */
