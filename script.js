@@ -10893,7 +10893,7 @@ function kursUpdateResult() {
   }
   const converted = amount * (rTo / rFrom);
   resultEl.textContent = `${kursFormatRateNumber(converted)} ${toCode}`;
-  if (metaEl) metaEl.textContent = `Kurs terakhir diperbarui ${kursLastUpdateLabel} · sumber open.er-api.com`;
+  if (metaEl) metaEl.textContent = `Diperbarui ${kursLastUpdateLabel} · sumber open.er-api.com`;
 }
 
 async function kursFetchRates(showToastOnError = false) {
