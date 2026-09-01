@@ -10690,6 +10690,23 @@ const KURS_CURRENCIES = [
 // KURS_CURRENCIES di atas, tanpa IDR sendiri.
 const KURS_POPULER_CODES = ['USD', 'EUR', 'SGD', 'MYR', 'JPY', 'GBP', 'AUD', 'CNY'];
 
+// Emoji bendera per kode mata uang -- dipakai di kartu "Kurs Populer"
+// (kursRenderPopuler) supaya lebih gampang dikenali dari sekadar 2
+// huruf kode. Emoji dipilih (bukan gambar/ikon dari CDN luar) supaya
+// tidak perlu request jaringan tambahan & tetap tajam di semua ukuran
+// layar. Kalau suatu saat KURS_POPULER_CODES nambah kode baru yg belum
+// ada di sini, kursRenderPopuler otomatis fallback ke 2 huruf kode
+// seperti sebelumnya (lihat "kursFlagFor").
+const KURS_FLAG_EMOJI = {
+  USD: '🇺🇸', EUR: '🇪🇺', SGD: '🇸🇬', MYR: '🇲🇾',
+  JPY: '🇯🇵', GBP: '🇬🇧', AUD: '🇦🇺', CNY: '🇨🇳',
+  KRW: '🇰🇷', THB: '🇹🇭', HKD: '🇭🇰', CHF: '🇨🇭',
+  SAR: '🇸🇦', AED: '🇦🇪', INR: '🇮🇳', IDR: '🇮🇩',
+};
+function kursFlagFor(code) {
+  return KURS_FLAG_EMOJI[code] || code.slice(0, 2);
+}
+
 let kursRatesIDR = null;   // { USD: 0.0000564, EUR: ..., IDR: 1, ... } -- basis IDR
 let kursLastUpdateLabel = '';
 let kursFetching = false;
@@ -10807,7 +10824,7 @@ function kursRenderPopuler() {
     const rateLabel = idrPerUnit != null ? `Rp ${kursFormatRateNumber(idrPerUnit)}` : 'Tidak tersedia';
     return `
       <div class="kurs-populer-item">
-        <span class="kurs-populer-flag">${code.slice(0, 2)}</span>
+        <span class="kurs-populer-flag">${kursFlagFor(code)}</span>
         <div class="kurs-populer-main">
           <div class="kurs-populer-code">1 ${code}</div>
           <div class="kurs-populer-rate">${rateLabel}</div>
@@ -10851,8 +10868,23 @@ async function kursFetchRates(showToastOnError = false) {
   if (kursFetching) return;
   kursFetching = true;
   const refreshBtn = document.getElementById('kursRefreshBtn');
+  const convCard = document.querySelector('.kurs-conv-card');
+  const populerGrid = document.getElementById('kursPopulerGrid');
+  const amountInput = document.getElementById('kursAmountInput');
+  const metaEl = document.getElementById('kursMetaUpdated');
+
+  // ---- Nyalakan semua penanda loading: ikon berputar (.spinning),
+  // tombol & input jumlah dikunci, kartu hasil + grid kurs populer
+  // meredup/berdenyut (.is-kurs-refreshing, lihat CSS ~".kurs-conv-card
+  // .is-kurs-refreshing"), dan teks status langsung berubah supaya user
+  // dapat feedback SEKETIKA saat menekan Refresh, bukan cuma di akhir. ----
   refreshBtn?.classList.add('spinning');
   refreshBtn?.setAttribute('disabled', 'true');
+  amountInput?.setAttribute('disabled', 'true');
+  convCard?.classList.add('is-kurs-refreshing');
+  populerGrid?.classList.add('is-kurs-refreshing');
+  if (metaEl && kursRatesIDR) metaEl.textContent = 'Memperbarui kurs…';
+
   try {
     const res = await fetch('https://open.er-api.com/v6/latest/IDR');
     if (!res.ok) throw new Error('bad response');
@@ -10870,6 +10902,9 @@ async function kursFetchRates(showToastOnError = false) {
     kursFetching = false;
     refreshBtn?.classList.remove('spinning');
     refreshBtn?.removeAttribute('disabled');
+    amountInput?.removeAttribute('disabled');
+    convCard?.classList.remove('is-kurs-refreshing');
+    populerGrid?.classList.remove('is-kurs-refreshing');
     kursRenderPopuler();
     kursUpdateResult();
   }
