@@ -2650,17 +2650,37 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 }
 
 /* ---- Halaman "Kurs Mata Uang" (#kursOverlay) ----
-   Kartu konverter di atas (pilih "Dari"/"Ke" + tombol tukar bulat di
-   tengah, nominal, lalu hasil ditampilkan besar spt .calc-display-main)
-   + daftar "Kurs Populer" di bawah (grid kartu kecil per mata uang).
-   Select memakai gaya .isp-select yg sudah ada (dropdown filter Sumber
-   Pendapatan) supaya tidak menambah bahasa desain baru. Semua warna
-   pakai var(--...) jadi otomatis ikut dark-mode/glass-mode. */
-.kurs-conv-card{padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid var(--line);}
+   Header + kartu konverter dibungkus ".tema-sticky-head"/".tema-preview-
+   wrap" (class DAUR ULANG apa adanya dari halaman Tema, lihat catatan
+   lengkap di sana) supaya MENEMPEL (sticky) di puncak layar saat daftar
+   "Kurs Populer" di bawahnya (".lap-filter-card--rest") discroll -- jadi
+   konverter selalu kelihatan sementara user menelusuri daftar kurs.
+   Kartu konverter sendiri (.kurs-conv-card) & tiap kartu kurs populer
+   (.kurs-populer-item) sengaja diberi gaya "kartu" yg SAMA dgn
+   .lap-filter-section (border+radius+shadow var(--...)) supaya otomatis
+   senada dgn kartu sejenis di halaman lain, TERMASUK ikut didaftarkan
+   ke override dark-mode/glass-mode (.kurs-conv-card/.kurs-populer-item)
+   di dekat ".tema-section"/".lap-filter-section" supaya tampilannya
+   tetap rapi di ketiga tema (Default/Dark/Glass), bukan cuma Default. */
+.kurs-conv-card{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  padding:16px 16px 14px;box-shadow:var(--shadow-sm);
+}
 .kurs-conv-row{display:flex;align-items:flex-end;gap:8px;}
 .kurs-conv-field{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px;}
 .kurs-conv-label{font-size:11px;font-weight:700;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.04em;}
-.kurs-select{width:100%;}
+/* ---- Field "Dari"/"Ke" kini tombol biasa (gaya sama persis dgn
+   .lap-subpicker-field milik "Kategori" di popup Filter) yang membuka
+   bottom sheet daftar mata uang -- <select id="kursFromSelect">/
+   <select id="kursToSelect"> TETAP ada di HTML (disembunyikan via
+   [hidden]) semata sbg penyimpan nilai, lihat catatan lengkap di HTML
+   & di script.js dekat "kursPopulateSelects"/"BOTTOM SHEET: PILIH MATA
+   UANG". .kurs-currency-field cuma alias kosong (styling penuh sudah
+   didapat dari .lap-subpicker-field yg di-reuse), disediakan sbg
+   selector scoped kalau suatu saat perlu override KHUSUS di sini tanpa
+   ikut mengubah field "Kategori"/"Pilih Bulan" dst yg lain. ---- */
+select#kursFromSelect[hidden],select#kursToSelect[hidden]{display:none;}
+.kurs-currency-field{width:100%;}
 .kurs-swap-btn{
   flex-shrink:0;width:38px;height:38px;border-radius:50%;margin-bottom:1px;
   display:flex;align-items:center;justify-content:center;
@@ -2675,9 +2695,9 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   border:1px solid var(--line);border-radius:10px;padding:11px 14px;
   font-family:'Poppins',sans-serif;font-size:17px;font-weight:600;
   background:var(--paper);color:var(--ink);outline:none;text-align:right;
-  transition:border-color .15s ease;
+  transition:border-color .15s ease;width:100%;box-sizing:border-box;
 }
-.kurs-amount-input:focus{border-color:var(--forest-glow);background:#fff;}
+.kurs-amount-input:focus{border-color:var(--forest-glow);background:var(--card);}
 .kurs-result-wrap{display:flex;flex-direction:column;gap:6px;margin-top:14px;}
 .kurs-result{
   font-family:'Poppins',sans-serif;font-weight:700;letter-spacing:-0.01em;
@@ -2686,14 +2706,14 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 }
 .kurs-meta-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:14px;flex-wrap:wrap;}
 .kurs-meta-updated{font-size:11.5px;color:var(--ink-faint);}
-.kurs-refresh-btn{padding:6px 12px;font-size:11px;}
+.kurs-refresh-btn{padding:6px 12px;font-size:11px;flex-shrink:0;}
 .kurs-populer-head{padding:2px 2px 0;}
 .kurs-populer-head h3{margin:0 0 12px;font-size:14.5px;font-weight:700;color:var(--ink);font-family:'Poppins',sans-serif;}
 .kurs-populer-head h3 span{font-weight:600;color:var(--ink-faint);}
 .kurs-populer-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
 .kurs-populer-item{
-  display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:12px;
-  background:var(--paper);border:1px solid var(--line);
+  display:flex;align-items:center;gap:10px;padding:11px 12px;
+  background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow-sm);
 }
 .kurs-populer-flag{
   flex-shrink:0;width:34px;height:34px;border-radius:10px;
@@ -2704,6 +2724,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 .kurs-populer-main{min-width:0;flex:1;}
 .kurs-populer-code{font-size:12.5px;font-weight:700;color:var(--ink);}
 .kurs-populer-rate{font-size:11.5px;color:var(--ink-soft);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.kurs-populer-item.is-skeleton{background:var(--paper);box-shadow:none;}
 .kurs-populer-item.is-skeleton .kurs-populer-flag{background:var(--line);}
 .kurs-populer-item.is-skeleton .kurs-populer-code,
 .kurs-populer-item.is-skeleton .kurs-populer-rate{
@@ -12125,6 +12146,8 @@ html.glass-mode .tentang-doc-card,
 html.glass-mode .device-mgmt-card,
 html.glass-mode .tema-section,
 html.glass-mode .tema-preview-wrap,
+html.glass-mode .kurs-conv-card,
+html.glass-mode .kurs-populer-item,
 html.glass-mode .lap-filter-section,
 html.glass-mode .lap-filter-footer,
 html.glass-mode .lap-filter-footer--split,
@@ -12290,6 +12313,8 @@ html.dark-mode .tentang-doc-card,
 html.dark-mode .device-mgmt-card,
 html.dark-mode .tema-section,
 html.dark-mode .tema-preview-wrap,
+html.dark-mode .kurs-conv-card,
+html.dark-mode .kurs-populer-item,
 html.dark-mode .lap-filter-section,
 html.dark-mode .lap-filter-footer,
 html.dark-mode .lap-filter-footer--split,
@@ -12311,6 +12336,16 @@ html.dark-mode .toast{
     0 8px 24px rgba(0,0,0,0.45),
     inset 0 1px 0 rgba(255,255,255,0.05);
 }
+/* ---- UPDATE: field "Dari"/"Ke" di halaman Kurs SEKARANG bukan lagi
+   <select> native yg kelihatan (sudah diganti tombol .lap-subpicker-field
+   + bottom sheet custom ".kurs-currency-field"/"#kursCurrencySheetOverlay",
+   niru PERSIS pola "Kategori" di popup Filter -- lihat catatan lengkap
+   di HTML). <select id="kursFromSelect">/<select id="kursToSelect">
+   asli kini SELALU [hidden] (cuma penyimpan nilai), jadi fix
+   `color-scheme:dark` + ganti warna ikon panah yg DULU dipakai di sini
+   (utk bikin panel dropdown native-nya ikut gelap saat mode Dark) SUDAH
+   TIDAK PERLU LAGI -- sheet penggantinya otomatis ikut gelap lewat
+   override umum ".lap-sheet" di atas, sama seperti sheet Kategori. ---- */
 html.dark-mode .bottom-nav,
 html.dark-mode .mini-topbar{
   background:color-mix(in srgb, var(--primary) 10%, #101013) !important;
@@ -13819,7 +13854,18 @@ html.dark-mode .bd-row-close{
        Beranda (#fmHomeKursBtn) & grid "Menu Utama" halaman Fast Menu
        (#fmGridKursBtn). Struktur luar SAMA PERSIS dgn #kalkulatorOverlay/
        #fastMenuOverlay di atas (.detail-page-overlay.lap-filter-overlay >
-       .lap-filter-page > .lap-filter-head + .lap-filter-card).
+       .lap-filter-page > .lap-filter-head + .lap-filter-card) -- KECUALI
+       header + kartu konverter SEKARANG dibuat MENEMPEL (sticky) saat
+       discroll, niru PERSIS pola ".tema-sticky-head"/".tema-preview-wrap"
+       yg sudah dipakai di halaman Tema & Data Diri (class-nya didaur
+       ulang apa adanya, BUKAN class baru, supaya otomatis dapat semua
+       fix "banner bocor saat discroll" & override dark-mode/glass-mode
+       yg sudah ada utk pola ini -- lihat catatan lengkap di CSS
+       ".tema-sticky-head"). Konverter (pilih mata uang + nominal + hasil)
+       jadi unit yg tetap kelihatan di puncak layar, sedangkan daftar
+       "Kurs Populer" di ".lap-filter-card--rest" di bawahnya scroll
+       normal -- persis kartu Pratinjau (Tema) yg sticky sementara
+       section Warna Aksen dst scroll di bawahnya.
 
        Isinya konverter dua-arah (pilih mata uang "Dari"/"Ke" + nominal ->
        hasil) plus daftar "Kurs Populer" (kurs beberapa mata uang utama
@@ -13832,49 +13878,71 @@ html.dark-mode .bd-row-close{
        Logic lengkap ada di script.js dekat komentar "KURS MATA UANG". ---- -->
   <div class="detail-page-overlay lap-filter-overlay" id="kursOverlay">
     <div class="lap-filter-page">
-      <div class="lap-filter-head">
-        <button class="lap-filter-back-btn" id="kursBackBtn" type="button" aria-label="Tutup Kurs Mata Uang">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
-        </button>
-        <h2>Kurs Mata Uang</h2>
-        <span class="lap-filter-back-btn" style="visibility:hidden" aria-hidden="true"></span>
-      </div>
-
-      <div class="lap-filter-card">
-        <div class="kurs-conv-card">
-          <div class="kurs-conv-row">
-            <div class="kurs-conv-field">
-              <span class="kurs-conv-label">Dari</span>
-              <select class="isp-select kurs-select" id="kursFromSelect"></select>
-            </div>
-            <button type="button" class="kurs-swap-btn" id="kursSwapBtn" aria-label="Tukar mata uang">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/></svg>
-            </button>
-            <div class="kurs-conv-field">
-              <span class="kurs-conv-label">Ke</span>
-              <select class="isp-select kurs-select" id="kursToSelect"></select>
-            </div>
-          </div>
-
-          <div class="kurs-amount-wrap">
-            <span class="kurs-conv-label">Jumlah</span>
-            <input type="text" inputmode="decimal" autocomplete="off" class="kurs-amount-input" id="kursAmountInput" value="1">
-          </div>
-
-          <div class="kurs-result-wrap">
-            <span class="kurs-conv-label">Hasil</span>
-            <div class="kurs-result" id="kursResultDisplay">Memuat kurs&hellip;</div>
-          </div>
-
-          <div class="kurs-meta-row">
-            <span class="kurs-meta-updated" id="kursMetaUpdated">Mengambil kurs terbaru&hellip;</span>
-            <button type="button" class="news-refresh-btn kurs-refresh-btn" id="kursRefreshBtn">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
-              Refresh
-            </button>
-          </div>
+      <div class="tema-sticky-head" id="kursStickyHead">
+        <div class="lap-filter-head">
+          <button class="lap-filter-back-btn" id="kursBackBtn" type="button" aria-label="Tutup Kurs Mata Uang">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <h2>Kurs Mata Uang</h2>
+          <span class="lap-filter-back-btn" style="visibility:hidden" aria-hidden="true"></span>
         </div>
 
+        <div class="tema-preview-wrap">
+          <div class="kurs-conv-card">
+            <div class="kurs-conv-row">
+              <div class="kurs-conv-field">
+                <span class="kurs-conv-label">Dari</span>
+                <!-- ---- Tombol field ala Kategori (Filter): gaya + pola
+                     ".lap-subpicker-field" DIDAUR ULANG apa adanya (bukan
+                     class baru) supaya buka bottom sheet daftar mata uang
+                     (".lap-cat-list"/".lap-cat-item", niru PERSIS sheet
+                     "Kategori Transaksi") -- <select id="kursFromSelect">
+                     asli TETAP ada, disembunyikan via [hidden], semata
+                     sbg penyimpan nilai supaya kursUpdateResult/kursFetchRates
+                     dst di script.js tidak perlu diubah. Lihat blok
+                     "BOTTOM SHEET: PILIH MATA UANG (Kurs)" & komentar
+                     lengkap di script.js dekat "kursPopulateSelects". ---- -->
+                <button type="button" class="lap-subpicker-field kurs-currency-field has-value" id="kursFromFieldBtn" aria-haspopup="true">
+                  <span id="kursFromFieldLabel">USD</span>
+                  <span class="lap-subpicker-ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9l6 6 6-6"/></svg></span>
+                </button>
+                <select id="kursFromSelect" hidden aria-hidden="true"></select>
+              </div>
+              <button type="button" class="kurs-swap-btn" id="kursSwapBtn" aria-label="Tukar mata uang">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/></svg>
+              </button>
+              <div class="kurs-conv-field">
+                <span class="kurs-conv-label">Ke</span>
+                <button type="button" class="lap-subpicker-field kurs-currency-field has-value" id="kursToFieldBtn" aria-haspopup="true">
+                  <span id="kursToFieldLabel">IDR</span>
+                  <span class="lap-subpicker-ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9l6 6 6-6"/></svg></span>
+                </button>
+                <select id="kursToSelect" hidden aria-hidden="true"></select>
+              </div>
+            </div>
+
+            <div class="kurs-amount-wrap">
+              <span class="kurs-conv-label">Jumlah</span>
+              <input type="text" inputmode="decimal" autocomplete="off" class="kurs-amount-input" id="kursAmountInput" value="1">
+            </div>
+
+            <div class="kurs-result-wrap">
+              <span class="kurs-conv-label">Hasil</span>
+              <div class="kurs-result" id="kursResultDisplay">Memuat kurs&hellip;</div>
+            </div>
+
+            <div class="kurs-meta-row">
+              <span class="kurs-meta-updated" id="kursMetaUpdated">Mengambil kurs terbaru&hellip;</span>
+              <button type="button" class="news-refresh-btn kurs-refresh-btn" id="kursRefreshBtn">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+                Refresh
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="lap-filter-card lap-filter-card--rest" id="kursCard">
         <div class="kurs-populer-head">
           <h3>Kurs Populer <span>terhadap Rupiah</span></h3>
         </div>
@@ -13885,6 +13953,34 @@ html.dark-mode .bd-row-close{
     </div>
   </div>
   <!-- ===== /HALAMAN "KURS MATA UANG" ===== -->
+
+  <!-- ===== BOTTOM SHEET: PILIH MATA UANG (Kurs Mata Uang) =====
+       Menggantikan <select id="kursFromSelect">/<select id="kursToSelect">
+       bawaan browser dgn bottom sheet daftar radio, niru PERSIS pola
+       "BOTTOM SHEET: KATEGORI TRANSAKSI" (popup Filter Laporan) --
+       class-nya didaur ulang apa adanya (.lap-sheet-overlay/.lap-sheet/
+       .lap-cat-list/.lap-cat-item), BUKAN class baru, supaya otomatis
+       dapat semua gaya + fix (drag-to-close, override dark/glass-mode)
+       yang sudah ada utk pola sheet ini. SATU sheet ini dipakai
+       BERGANTIAN utk field "Dari" & "Ke" (ditandai lewat variabel
+       kursCurrencyPickerTarget di script.js, judul sheet ikut berubah
+       menyesuaikan) -- bukan 2 sheet terpisah, supaya tidak dobel
+       markup utk isi daftar yang sama persis (KURS_CURRENCIES). Logic
+       lengkap ada di script.js dekat komentar "KURS MATA UANG". ---- -->
+  <div class="lap-sheet-overlay" id="kursCurrencySheetOverlay">
+    <div class="lap-sheet" id="kursCurrencySheet">
+      <div class="lap-sheet-handle"></div>
+      <div class="lap-sheet-head">
+        <h3 id="kursCurrencySheetTitle">Pilih Mata Uang</h3>
+        <button type="button" class="lap-sheet-close-btn" id="kursCurrencySheetCloseBtn" aria-label="Tutup">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </div>
+      <div class="lap-cat-list" id="kursCurrencySheetList"></div>
+      <button type="button" class="btn btn-primary lap-filter-save-btn" id="kursCurrencySheetDoneBtn">Selesai</button>
+    </div>
+  </div>
+  <!-- ===== /BOTTOM SHEET: PILIH MATA UANG (Kurs Mata Uang) ===== -->
 
   <!-- ===== HALAMAN "SUMBER DANA UTAMA" (#sumberDanaUtamaOverlay) =====
        Halaman baru di Pengaturan > Pengaturan, dibuka dari baris

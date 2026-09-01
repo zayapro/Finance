@@ -10715,7 +10715,74 @@ function kursPopulateSelects() {
   toSel.innerHTML = optsHtml;
   fromSel.value = 'USD';
   toSel.value = 'IDR';
+  // <select> di atas kini cuma penyimpan nilai ([hidden]) -- tombol
+  // field "Dari"/"Ke" & bottom sheet "Pilih Mata Uang" yg ditampilkan
+  // ke user diisi/disamakan di sini juga, niru PERSIS
+  // populateCategoryFilter() -> renderLapCategorySheetList().
+  kursRenderCurrencySheetList();
+  updateKursFieldLabel('from');
+  updateKursFieldLabel('to');
 }
+
+/* ---- Bottom sheet "Pilih Mata Uang" (field "Dari"/"Ke" halaman Kurs
+   Mata Uang) -- niru PERSIS pola bottom sheet "Kategori Transaksi"
+   (popup Filter Laporan, lihat renderLapCategorySheetList/
+   openLapCategorySheet/closeLapCategorySheet & sekitarnya di atas).
+   <select id="kursFromSelect">/<select id="kursToSelect"> TETAP jadi
+   satu-satunya sumber nilai (dibaca kursUpdateResult, kursFetchRates,
+   dst) -- sheet ini cuma tampilan radio-list utk mengisi salah satu
+   select itu, dipakai BERGANTIAN utk "Dari" & "Ke" lewat variabel
+   kursCurrencyPickerTarget ('from'/'to') yg diset saat sheet dibuka. */
+function kursRenderCurrencySheetList() {
+  const wrap = document.getElementById('kursCurrencySheetList');
+  if (!wrap) return;
+  wrap.innerHTML = KURS_CURRENCIES.map(c => `<button type="button" class="lap-cat-item" data-value="${c.code}">${c.code} — ${c.name}</button>`).join('');
+}
+function markKursCurrencySheetActive(val) {
+  document.querySelectorAll('#kursCurrencySheetList .lap-cat-item').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.value === val);
+  });
+}
+function updateKursFieldLabel(target) {
+  const sel = document.getElementById(target === 'from' ? 'kursFromSelect' : 'kursToSelect');
+  const label = document.getElementById(target === 'from' ? 'kursFromFieldLabel' : 'kursToFieldLabel');
+  if (!sel || !label) return;
+  label.textContent = sel.value || '-';
+}
+let kursCurrencyPickerTarget = 'from';
+let kursCurrencyPendingValue = '';
+function openKursCurrencySheet(target) {
+  kursCurrencyPickerTarget = target;
+  const sel = document.getElementById(target === 'from' ? 'kursFromSelect' : 'kursToSelect');
+  kursCurrencyPendingValue = sel ? sel.value : '';
+  const titleEl = document.getElementById('kursCurrencySheetTitle');
+  if (titleEl) titleEl.textContent = target === 'from' ? 'Pilih Mata Uang (Dari)' : 'Pilih Mata Uang (Ke)';
+  markKursCurrencySheetActive(kursCurrencyPendingValue);
+  document.getElementById('kursCurrencySheetOverlay')?.classList.add('open');
+}
+function closeKursCurrencySheet() {
+  document.getElementById('kursCurrencySheetOverlay')?.classList.remove('open');
+}
+document.getElementById('kursFromFieldBtn')?.addEventListener('click', () => openKursCurrencySheet('from'));
+document.getElementById('kursToFieldBtn')?.addEventListener('click', () => openKursCurrencySheet('to'));
+document.getElementById('kursCurrencySheetCloseBtn')?.addEventListener('click', closeKursCurrencySheet);
+document.getElementById('kursCurrencySheetOverlay')?.addEventListener('click', (e) => {
+  if (e.target.id === 'kursCurrencySheetOverlay') closeKursCurrencySheet();
+});
+initLapSheetDrag(document.getElementById('kursCurrencySheetOverlay'), document.getElementById('kursCurrencySheet'), closeKursCurrencySheet);
+document.getElementById('kursCurrencySheetList')?.addEventListener('click', (e) => {
+  const btn = e.target.closest('.lap-cat-item');
+  if (!btn) return;
+  kursCurrencyPendingValue = btn.dataset.value;
+  markKursCurrencySheetActive(kursCurrencyPendingValue);
+});
+document.getElementById('kursCurrencySheetDoneBtn')?.addEventListener('click', () => {
+  const sel = document.getElementById(kursCurrencyPickerTarget === 'from' ? 'kursFromSelect' : 'kursToSelect');
+  if (sel && kursCurrencyPendingValue) sel.value = kursCurrencyPendingValue;
+  updateKursFieldLabel(kursCurrencyPickerTarget);
+  kursUpdateResult();
+  closeKursCurrencySheet();
+});
 
 function kursRenderPopulerSkeleton() {
   const grid = document.getElementById('kursPopulerGrid');
@@ -10826,6 +10893,8 @@ function kursInitOnce() {
     const tmp = fromSel.value;
     fromSel.value = toSel.value;
     toSel.value = tmp;
+    updateKursFieldLabel('from');
+    updateKursFieldLabel('to');
     kursUpdateResult();
   });
 
