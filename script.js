@@ -10436,6 +10436,218 @@ function closeFastMenuOverlay() {
 document.getElementById('fastMenuOpenBtn')?.addEventListener('click', openFastMenuOverlay);
 document.getElementById('fastMenuBackBtn')?.addEventListener('click', closeFastMenuOverlay);
 
+/* ---- Tombol "Lihat Semua" di kartu Fast Menu Beranda (#fastMenuHomeCard)
+   -- membuka halaman Fast Menu (#fastMenuOverlay) di atas, pakai fungsi
+   open yang sama dgn baris Pengaturan > Pengaturan > Fast Menu. ---- */
+document.getElementById('fastMenuHomeViewAllBtn')?.addEventListener('click', openFastMenuOverlay);
+
+/* ---- Grid "Menu Utama" di dalam halaman Fast Menu (#fastMenuGridRow) --
+   tiap tombol adalah pintasan yang SAMA PERSIS dgn 6 tombol kartu Fast
+   Menu Beranda (lihat listener #fmHomeAddTxBtn dst di dekat #miniAddBtn).
+   Overlay ditutup dulu (closeFastMenuOverlay) baru aksinya dijalankan,
+   supaya halaman/modal tujuan tidak tertutup/tertimpa oleh overlay Fast
+   Menu yang masih terbuka di atasnya. ---- */
+document.getElementById('fmGridAddTxBtn')?.addEventListener('click', () => {
+  closeFastMenuOverlay();
+  openAddModal();
+});
+document.getElementById('fmGridTagihanBtn')?.addEventListener('click', () => {
+  closeFastMenuOverlay();
+  if (window.zpShowPage) window.zpShowPage('tagihan');
+});
+document.getElementById('fmGridLaporanBtn')?.addEventListener('click', () => {
+  closeFastMenuOverlay();
+  if (window.zpShowPage) window.zpShowPage('laporan');
+});
+document.getElementById('fmGridDompetBtn')?.addEventListener('click', () => {
+  closeFastMenuOverlay();
+  if (window.zpShowPage) window.zpShowPage('dompet');
+});
+document.getElementById('fmGridSumberBtn')?.addEventListener('click', () => {
+  closeFastMenuOverlay();
+  openIncomeSourcePage();
+});
+document.getElementById('fmGridSayaBtn')?.addEventListener('click', () => {
+  closeFastMenuOverlay();
+  if (window.zpShowPage) window.zpShowPage('saya');
+});
+
+/* ---- Tombol pil "Atur Fast Menu" di footer halaman Fast Menu -- fitur
+   susun-ulang pintasan belum ada, jadi sementara kasih toast info spt
+   pola fitur lain yg belum jadi (mis. tiket pengaduan). ---- */
+document.getElementById('fastMenuAturBtn')?.addEventListener('click', () => {
+  showToast('Fitur atur Fast Menu segera hadir.');
+});
+
+/* ==========================================================
+   KALKULATOR (#kalkulatorOverlay) -- pintasan baru di kartu Fast Menu
+   Beranda (#fmHomeKalkulatorBtn) & grid "Menu Utama" halaman Fast Menu
+   (#fmGridKalkulatorBtn). Buka/tutup pola SAMA PERSIS dgn
+   openFastMenuOverlay/closeFastMenuOverlay di atas. Dibuka dari dalam
+   halaman Fast Menu -> halaman Fast Menu ditutup dulu (closeFastMenuOverlay)
+   supaya tombol Kembali di Kalkulator pulang ke Beranda, bukan menumpuk
+   balik ke halaman Fast Menu. ---- */
+function openKalkulatorOverlay() {
+  document.getElementById('kalkulatorOverlay')?.classList.add('open');
+  lockBodyScroll();
+}
+function closeKalkulatorOverlay() {
+  document.getElementById('kalkulatorOverlay')?.classList.remove('open');
+  unlockBodyScroll();
+}
+document.getElementById('kalkulatorBackBtn')?.addEventListener('click', closeKalkulatorOverlay);
+document.getElementById('fmHomeKalkulatorBtn')?.addEventListener('click', openKalkulatorOverlay);
+document.getElementById('fmGridKalkulatorBtn')?.addEventListener('click', () => {
+  closeFastMenuOverlay();
+  openKalkulatorOverlay();
+});
+
+/* ---- Mesin hitung Kalkulator -- state disimpan di objek `calcState`
+   plain (bukan class), 1 listener delegasi di wrapper #calcKeypad (bukan
+   per tombol) krn tombolnya banyak & seragam (lihat data-calc/data-digit/
+   data-op tiap tombol di index.html). Nominal ditampilkan dgn format
+   id-ID (titik ribuan, koma desimal) SAMA PERSIS dgn format nominal di
+   form Tambah Transaksi/Tagihan (lihat initTxAmountFormat di atas) --
+   tapi nilai mentah yg dipakai utk hitung tetap pakai '.' (standar JS),
+   koma cuma dipakai di tampilan supaya konsisten dgn kebiasaan angka di
+   Indonesia. */
+let calcState = { current: '', previous: null, operator: null, resetNext: false, error: false };
+
+function calcFormatDisplay(rawStr) {
+  if (rawStr === '' || rawStr === undefined || rawStr === null) return '0';
+  const neg = rawStr.startsWith('-');
+  const body = neg ? rawStr.slice(1) : rawStr;
+  const trailingDot = body.endsWith('.');
+  const [intPartRaw, decPartRaw] = body.split('.');
+  const intPart = intPartRaw === '' ? '0' : intPartRaw;
+  let out = Number(intPart).toLocaleString('id-ID');
+  if (trailingDot) out += ',';
+  else if (decPartRaw !== undefined) out += ',' + decPartRaw;
+  return (neg ? '-' : '') + out;
+}
+
+function calcUpdateDisplay() {
+  const mainEl = document.getElementById('calcDisplayMain');
+  const subEl = document.getElementById('calcDisplaySub');
+  if (!mainEl || !subEl) return;
+
+  if (calcState.error) {
+    mainEl.textContent = 'Tidak bisa dibagi 0';
+    subEl.innerHTML = '&nbsp;';
+  } else {
+    const mainRaw = calcState.current !== '' ? calcState.current
+      : (calcState.previous !== null ? String(calcState.previous) : '');
+    mainEl.textContent = calcFormatDisplay(mainRaw);
+    subEl.innerHTML = (calcState.previous !== null && calcState.operator)
+      ? `${calcFormatDisplay(String(calcState.previous))} ${calcState.operator}`
+      : '&nbsp;';
+  }
+
+  document.querySelectorAll('#calcKeypad .calc-btn--op').forEach(btn => {
+    btn.classList.toggle('is-active', !calcState.error && calcState.resetNext && btn.dataset.op === calcState.operator);
+  });
+}
+
+function calcCompute() {
+  const a = calcState.previous;
+  const b = parseFloat(calcState.current !== '' ? calcState.current : calcState.previous);
+  if (a === null || Number.isNaN(b)) return;
+  let result;
+  switch (calcState.operator) {
+    case '+': result = a + b; break;
+    case '−': result = a - b; break;
+    case '×': result = a * b; break;
+    case '÷':
+      if (b === 0) { calcState.error = true; calcState.current = ''; calcState.previous = null; calcState.operator = null; return; }
+      result = a / b; break;
+    default: return;
+  }
+  // Bulatkan sisa pembagian float (mis. 0.1+0.2) tanpa merusak angka besar.
+  result = Math.round((result + Number.EPSILON) * 1e8) / 1e8;
+  calcState.previous = result;
+  calcState.current = '';
+}
+
+function calcAppendDigit(d) {
+  if (calcState.error) calcClearAll();
+  if (calcState.resetNext) { calcState.current = ''; calcState.resetNext = false; }
+  if (calcState.current === '0') calcState.current = '';
+  const digitCount = calcState.current.replace(/[-.]/g, '').length;
+  if (digitCount >= 15) return;
+  calcState.current += d;
+  calcUpdateDisplay();
+}
+
+function calcAppendDecimal() {
+  if (calcState.error) calcClearAll();
+  if (calcState.resetNext) { calcState.current = ''; calcState.resetNext = false; }
+  if (calcState.current === '') calcState.current = '0';
+  if (!calcState.current.includes('.')) calcState.current += '.';
+  calcUpdateDisplay();
+}
+
+function calcSetOperator(op) {
+  if (calcState.error) calcClearAll();
+  if (calcState.current === '' && calcState.previous === null) return;
+  if (calcState.operator && !calcState.resetNext) {
+    calcCompute();
+  } else if (calcState.current !== '') {
+    calcState.previous = parseFloat(calcState.current);
+    calcState.current = '';
+  }
+  calcState.operator = op;
+  calcState.resetNext = true;
+  calcUpdateDisplay();
+}
+
+function calcEquals() {
+  if (calcState.error) return;
+  if (calcState.operator === null || calcState.previous === null) return;
+  calcCompute();
+  calcState.operator = null;
+  calcState.resetNext = true;
+  calcUpdateDisplay();
+}
+
+function calcPercent() {
+  if (calcState.error) calcClearAll();
+  if (calcState.current === '' && calcState.previous === null) return;
+  const base = calcState.current !== '' ? parseFloat(calcState.current) : calcState.previous;
+  const val = (calcState.previous !== null && calcState.operator)
+    ? calcState.previous * (base / 100)
+    : base / 100;
+  calcState.current = String(val);
+  calcUpdateDisplay();
+}
+
+function calcBackspace() {
+  if (calcState.error) { calcClearAll(); return; }
+  if (calcState.resetNext || calcState.current === '') return;
+  calcState.current = calcState.current.slice(0, -1);
+  calcUpdateDisplay();
+}
+
+function calcClearAll() {
+  calcState = { current: '', previous: null, operator: null, resetNext: false, error: false };
+  calcUpdateDisplay();
+}
+
+document.getElementById('calcKeypad')?.addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-calc]');
+  if (!btn) return;
+  const action = btn.dataset.calc;
+  if (action === 'digit') calcAppendDigit(btn.dataset.digit);
+  else if (action === 'decimal') calcAppendDecimal();
+  else if (action === 'op') calcSetOperator(btn.dataset.op);
+  else if (action === 'equals') calcEquals();
+  else if (action === 'percent') calcPercent();
+  else if (action === 'back') calcBackspace();
+  else if (action === 'clear') calcClearAll();
+});
+// Reset kalkulator tiap kali halamannya ditutup, supaya user berikutnya
+// selalu mulai dari layar bersih ("0") -- bukan nyisa hitungan terakhir.
+document.getElementById('kalkulatorBackBtn')?.addEventListener('click', calcClearAll);
+
 /* ==========================================================
    PENGATURAN > PENGATURAN — "Sumber Dana Utama"
    (#sumberDanaUtamaOverlay). Pola buka/tutup SAMA PERSIS dgn
