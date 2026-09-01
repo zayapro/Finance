@@ -12641,6 +12641,25 @@ document.getElementById('historyJumpBtn').addEventListener('click', scrollToTran
 document.getElementById('miniHistoryBtn').addEventListener('click', scrollToTransactionTable);
 document.getElementById('miniAddBtn').addEventListener('click', () => openAddModal());
 
+// ---- Kartu "Fast Menu" di Beranda (#fastMenuHomeCard) ----
+// Tiap tombol adalah pintasan ke fitur yang sudah ada di aplikasi:
+// Tambah Transaksi, Tagihan & Hutang, Laporan, Dompet, Sumber
+// Pendapatan, dan Pengaturan (tab "Saya" di navigasi bawah).
+document.getElementById('fmHomeAddTxBtn')?.addEventListener('click', () => openAddModal());
+document.getElementById('fmHomeTagihanBtn')?.addEventListener('click', () => {
+  if (window.zpShowPage) window.zpShowPage('tagihan');
+});
+document.getElementById('fmHomeLaporanBtn')?.addEventListener('click', () => {
+  if (window.zpShowPage) window.zpShowPage('laporan');
+});
+document.getElementById('fmHomeDompetBtn')?.addEventListener('click', () => {
+  if (window.zpShowPage) window.zpShowPage('dompet');
+});
+document.getElementById('fmHomeSumberBtn')?.addEventListener('click', () => openIncomeSourcePage());
+document.getElementById('fmHomeSayaBtn')?.addEventListener('click', () => {
+  if (window.zpShowPage) window.zpShowPage('saya');
+});
+
 notifBtn.addEventListener('click', (e) => {
   e.stopPropagation();
   notifPanel.classList.contains('open') ? closeNotifPanel() : openNotifPanel();

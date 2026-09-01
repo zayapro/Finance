@@ -2474,6 +2474,97 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   .isc-shortcut-item{width:62px;}
 }
 
+/* ---- Kartu "Fast Menu" (beranda) ----
+   Kartu pintasan akses cepat ke fitur-fitur utama aplikasi (Tambah
+   Transaksi, Tagihan, Laporan, Dompet, Sumber Pendapatan, Pengaturan),
+   diletakkan tepat DI ATAS kartu "Sumber Pendapatan" (lihat
+   .income-shortcut-card di atas). Memakai bahasa desain yang sama
+   (header teks gradien + baris gelembung ikon bulat berlabel) tapi
+   versi lebih ringan/statis -- tanpa animasi mengambang & satelit
+   khusus milik kartu Sumber Pendapatan -- supaya tetap terasa satu
+   keluarga desain namun ringkas sebagai menu pintasan murni. */
+.fast-menu-card{
+  padding:20px 22px 22px;
+  position:relative;overflow:hidden;isolation:isolate;
+  border-top:2.5px solid #2563EB;
+  background:var(--card);
+}
+.fast-menu-card::before{
+  content:'';position:absolute;inset:0;z-index:0;pointer-events:none;
+  background:linear-gradient(135deg,
+    rgba(37,99,235,0.10) 0%,
+    rgba(37,99,235,0.04) 40%,
+    rgba(124,58,237,0.05) 75%,
+    rgba(124,58,237,0.09) 100%);
+}
+.fast-menu-card::after{
+  content:'';position:absolute;top:-42px;right:-34px;width:140px;height:140px;border-radius:50%;
+  background:radial-gradient(circle, rgba(37,99,235,0.14), transparent 72%);
+  pointer-events:none;z-index:0;
+}
+.fast-menu-card .isc-shortcut-head{margin-bottom:0;}
+.fm-menu-row{
+  position:relative;z-index:1;display:flex;justify-content:space-between;align-items:flex-start;
+  gap:6px;margin-top:20px;padding:0 2px;
+}
+.fm-menu-item{
+  position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:9px;
+  flex:1;min-width:0;background:none;border:none;cursor:pointer;padding:2px 2px 0;
+}
+/* ---- Gaya ikon ala iOS (squircle/rounded-square + gradasi glossy) ----
+   Bukan lagi lingkaran polos: bentuknya kotak membulat (radius ~22%
+   dari lebar, meniru rasio "squircle" ikon aplikasi iOS), warnanya
+   gradasi lembut dari --fm-color (bukan warna datar), ditambah lapisan
+   kilau tipis di sepertiga atas (::before, gradien putih transparan)
+   supaya terasa mengkilap/glossy khas ikon iOS, dan bayangannya jatuh
+   ke bawah (bukan cincin melingkar seperti gaya bubble sebelumnya). */
+.fm-menu-ic{
+  position:relative;overflow:hidden;
+  width:50px;height:50px;border-radius:14px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;color:#fff;
+  /* Warna dasar polos (bukan color-mix()) supaya kompatibel di semua
+     browser/WebView, termasuk yang lebih tua -- kesan gradasi &
+     kedalamannya didapat dari lapisan ::before (kilau putih tipis di
+     atas) + box-shadow rgba biasa di bawah, bukan dari mencampur
+     --fm-color lewat fungsi CSS yang lebih baru. */
+  background:var(--fm-color,#2563EB);
+  box-shadow:0 5px 10px -3px rgba(0,0,0,0.3),
+    inset 0 1px 0 rgba(255,255,255,0.4),
+    inset 0 -1.5px 2px rgba(0,0,0,0.22);
+  transition:transform .22s cubic-bezier(.34,1.56,.64,1), box-shadow .22s ease;
+}
+.fm-menu-ic::before{
+  content:'';position:absolute;inset:0;z-index:1;pointer-events:none;
+  background:linear-gradient(165deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.12) 32%, rgba(255,255,255,0) 55%);
+}
+.fm-menu-ic svg{position:relative;z-index:2;filter:drop-shadow(0 1px 1px rgba(0,0,0,0.12));}
+.fm-menu-item:hover .fm-menu-ic{
+  transform:translateY(-3px) scale(1.06);
+  box-shadow:0 9px 16px -4px rgba(0,0,0,0.32),
+    inset 0 1px 0 rgba(255,255,255,0.45),
+    inset 0 -1.5px 2px rgba(0,0,0,0.24);
+}
+.fm-menu-item:active .fm-menu-ic{transform:translateY(-1px) scale(0.98);}
+.fm-menu-label{font-size:11px;font-weight:700;color:var(--ink);text-align:center;line-height:1.32;white-space:nowrap;max-width:none;}
+@media (max-width:680px){
+  .fm-menu-row{
+    flex-wrap:nowrap;justify-content:flex-start;gap:20px;
+    overflow-x:auto;overflow-y:visible;
+    padding:2px 4px 6px;margin-left:-4px;margin-right:-4px;
+    scroll-snap-type:x proximity;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+  }
+  .fm-menu-row::-webkit-scrollbar{display:none;}
+  .fm-menu-item{flex:0 0 auto;width:64px;scroll-snap-align:start;}
+  .fm-menu-label{white-space:normal;max-width:64px;}
+}
+@media (max-width:380px){
+  .fm-menu-ic{width:46px;height:46px;border-radius:13px;}
+  .fm-menu-label{font-size:10.5px;max-width:66px;}
+  .fm-menu-item{width:58px;}
+}
+
 /* ============ SUMMARY CARDS ============ */
 .summary-grid{
   display:grid;
@@ -12554,6 +12645,60 @@ html.dark-mode .bd-row-close{
       </div>
     </div>
   </div>
+
+  <!-- ===== KARTU FAST MENU (akses cepat fitur utama) =====
+       Diletakkan tepat DI ATAS kartu "Sumber Pendapatan" di bawah ini
+       (permintaan user). Isinya pintasan ke fitur-fitur utama yang
+       sudah ada di aplikasi: Tambah Transaksi, Tagihan, Laporan,
+       Dompet, Sumber Pendapatan, & Pengaturan -- listener klik tiap
+       tombol ada di script.js dekat listener #miniAddBtn. -->
+  <section class="section-card fast-menu-card" id="fastMenuHomeCard">
+    <div class="isc-shortcut-head">
+      <div>
+        <h2>Fast Menu</h2>
+        <span class="section-subtitle">Akses cepat fitur utama aplikasi</span>
+      </div>
+    </div>
+    <div class="fm-menu-row" id="fastMenuHomeRow">
+      <button type="button" class="fm-menu-item" id="fmHomeAddTxBtn" title="Tambah Transaksi">
+        <span class="fm-menu-ic" style="--fm-color:#059669;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>
+        </span>
+        <span class="fm-menu-label">Tambah</span>
+      </button>
+      <button type="button" class="fm-menu-item" id="fmHomeTagihanBtn" title="Tagihan &amp; Hutang">
+        <span class="fm-menu-ic" style="--fm-color:#B45309;">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2.5h12v19l-2.5-1.6L13 21.5l-1.9-1.6-1.6 1.6-1.5-1.6L6 21.5v-19Z"/><path d="M8.5 8h7M8.5 12h7M8.5 16h4"/></svg>
+        </span>
+        <span class="fm-menu-label">Tagihan</span>
+      </button>
+      <button type="button" class="fm-menu-item" id="fmHomeLaporanBtn" title="Laporan">
+        <span class="fm-menu-ic" style="--fm-color:#2563EB;">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V11"/><path d="M12 21V5"/><path d="M20 21v-8"/><path d="M3 21h18"/></svg>
+        </span>
+        <span class="fm-menu-label">Laporan</span>
+      </button>
+      <button type="button" class="fm-menu-item" id="fmHomeDompetBtn" title="Dompet">
+        <span class="fm-menu-ic" style="--fm-color:#7C3AED;">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8a2 2 0 0 1 2-2h11.5a1.5 1.5 0 0 1 1.5 1.5V9"/><rect x="3" y="8" width="18" height="12" rx="2"/><path d="M16 14.25h2.5"/></svg>
+        </span>
+        <span class="fm-menu-label">Dompet</span>
+      </button>
+      <button type="button" class="fm-menu-item" id="fmHomeSumberBtn" title="Sumber Pendapatan">
+        <span class="fm-menu-ic" style="--fm-color:#0891B2;">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+        </span>
+        <span class="fm-menu-label">Pendapatan</span>
+      </button>
+      <button type="button" class="fm-menu-item" id="fmHomeSayaBtn" title="Pengaturan">
+        <span class="fm-menu-ic" style="--fm-color:#475569;">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </span>
+        <span class="fm-menu-label">Pengaturan</span>
+      </button>
+    </div>
+  </section>
+  <!-- ===== /KARTU FAST MENU ===== -->
 
   <!-- ===== KARTU JALAN PINTAS SUMBER PENDAPATAN ===== -->
   <section class="section-card income-shortcut-card" id="incomeShortcutCard">
