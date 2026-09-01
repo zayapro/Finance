@@ -2649,6 +2649,73 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   .calc-btn--zero{padding-left:22px;}
 }
 
+/* ---- Halaman "Kurs Mata Uang" (#kursOverlay) ----
+   Kartu konverter di atas (pilih "Dari"/"Ke" + tombol tukar bulat di
+   tengah, nominal, lalu hasil ditampilkan besar spt .calc-display-main)
+   + daftar "Kurs Populer" di bawah (grid kartu kecil per mata uang).
+   Select memakai gaya .isp-select yg sudah ada (dropdown filter Sumber
+   Pendapatan) supaya tidak menambah bahasa desain baru. Semua warna
+   pakai var(--...) jadi otomatis ikut dark-mode/glass-mode. */
+.kurs-conv-card{padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid var(--line);}
+.kurs-conv-row{display:flex;align-items:flex-end;gap:8px;}
+.kurs-conv-field{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px;}
+.kurs-conv-label{font-size:11px;font-weight:700;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.04em;}
+.kurs-select{width:100%;}
+.kurs-swap-btn{
+  flex-shrink:0;width:38px;height:38px;border-radius:50%;margin-bottom:1px;
+  display:flex;align-items:center;justify-content:center;
+  background:color-mix(in srgb, var(--primary) 14%, var(--paper));
+  color:var(--primary-deep);border:1px solid transparent;cursor:pointer;
+  transition:transform .18s ease,background .15s ease;
+}
+.kurs-swap-btn:hover{background:color-mix(in srgb, var(--primary) 22%, var(--paper));}
+.kurs-swap-btn:active{transform:scale(.9) rotate(180deg);}
+.kurs-amount-wrap{display:flex;flex-direction:column;gap:6px;margin-top:16px;}
+.kurs-amount-input{
+  border:1px solid var(--line);border-radius:10px;padding:11px 14px;
+  font-family:'Poppins',sans-serif;font-size:17px;font-weight:600;
+  background:var(--paper);color:var(--ink);outline:none;text-align:right;
+  transition:border-color .15s ease;
+}
+.kurs-amount-input:focus{border-color:var(--forest-glow);background:#fff;}
+.kurs-result-wrap{display:flex;flex-direction:column;gap:6px;margin-top:14px;}
+.kurs-result{
+  font-family:'Poppins',sans-serif;font-weight:700;letter-spacing:-0.01em;
+  color:var(--primary-deep);font-size:clamp(22px,7vw,28px);line-height:1.25;
+  text-align:right;overflow-x:auto;white-space:nowrap;
+}
+.kurs-meta-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:14px;flex-wrap:wrap;}
+.kurs-meta-updated{font-size:11.5px;color:var(--ink-faint);}
+.kurs-refresh-btn{padding:6px 12px;font-size:11px;}
+.kurs-populer-head{padding:2px 2px 0;}
+.kurs-populer-head h3{margin:0 0 12px;font-size:14.5px;font-weight:700;color:var(--ink);font-family:'Poppins',sans-serif;}
+.kurs-populer-head h3 span{font-weight:600;color:var(--ink-faint);}
+.kurs-populer-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+.kurs-populer-item{
+  display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:12px;
+  background:var(--paper);border:1px solid var(--line);
+}
+.kurs-populer-flag{
+  flex-shrink:0;width:34px;height:34px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  background:color-mix(in srgb, var(--primary) 14%, var(--paper));
+  color:var(--primary-deep);font-size:10.5px;font-weight:800;
+}
+.kurs-populer-main{min-width:0;flex:1;}
+.kurs-populer-code{font-size:12.5px;font-weight:700;color:var(--ink);}
+.kurs-populer-rate{font-size:11.5px;color:var(--ink-soft);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.kurs-populer-item.is-skeleton .kurs-populer-flag{background:var(--line);}
+.kurs-populer-item.is-skeleton .kurs-populer-code,
+.kurs-populer-item.is-skeleton .kurs-populer-rate{
+  height:10px;border-radius:5px;background:var(--line);color:transparent;
+}
+.kurs-populer-item.is-skeleton .kurs-populer-code{width:34px;margin-bottom:5px;}
+.kurs-populer-item.is-skeleton .kurs-populer-rate{width:58px;}
+@media (max-width:380px){
+  .kurs-conv-row{gap:6px;}
+  .kurs-populer-grid{gap:8px;}
+}
+
 /* ============ SUMMARY CARDS ============ */
 .summary-grid{
   display:grid;
@@ -12790,6 +12857,12 @@ html.dark-mode .bd-row-close{
         </span>
         <span class="fm-menu-label">Kalkulator</span>
       </button>
+      <button type="button" class="fm-menu-item" id="fmHomeKursBtn" title="Kurs Mata Uang">
+        <span class="fm-menu-ic" style="--fm-color:#0D9488;">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/></svg>
+        </span>
+        <span class="fm-menu-label">Kurs</span>
+      </button>
     </div>
   </section>
   <!-- ===== /KARTU FAST MENU ===== -->
@@ -13661,6 +13734,12 @@ html.dark-mode .bd-row-close{
             </span>
             <span class="fm-menu-label">Kalkulator</span>
           </button>
+          <button type="button" class="fm-menu-item" id="fmGridKursBtn" title="Kurs Mata Uang">
+            <span class="fm-menu-ic" style="--fm-color:#0D9488;">
+              <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/></svg>
+            </span>
+            <span class="fm-menu-label">Kurs</span>
+          </button>
         </div>
       </div>
 
@@ -13734,6 +13813,78 @@ html.dark-mode .bd-row-close{
     </div>
   </div>
   <!-- ===== /HALAMAN "KALKULATOR" ===== -->
+
+  <!-- ===== HALAMAN "KURS MATA UANG" (#kursOverlay) =====
+       Halaman baru, dibuka dari pintasan "Kurs" di kartu Fast Menu
+       Beranda (#fmHomeKursBtn) & grid "Menu Utama" halaman Fast Menu
+       (#fmGridKursBtn). Struktur luar SAMA PERSIS dgn #kalkulatorOverlay/
+       #fastMenuOverlay di atas (.detail-page-overlay.lap-filter-overlay >
+       .lap-filter-page > .lap-filter-head + .lap-filter-card).
+
+       Isinya konverter dua-arah (pilih mata uang "Dari"/"Ke" + nominal ->
+       hasil) plus daftar "Kurs Populer" (kurs beberapa mata uang utama
+       terhadap Rupiah). Datanya diambil REAL-TIME dari API yang SAMA
+       dgn yang sudah dipakai banner beranda (open.er-api.com, lihat
+       fetchUsdIdrRate di script.js) -- cuma sekali panggil dgn basis
+       IDR (bukan basis USD spt banner) supaya SATU response itu saja
+       sudah cukup utk menghitung kurs SEMUA pasangan mata uang tanpa
+       perlu fetch berulang tiap kali user ganti pilihan "Dari"/"Ke".
+       Logic lengkap ada di script.js dekat komentar "KURS MATA UANG". ---- -->
+  <div class="detail-page-overlay lap-filter-overlay" id="kursOverlay">
+    <div class="lap-filter-page">
+      <div class="lap-filter-head">
+        <button class="lap-filter-back-btn" id="kursBackBtn" type="button" aria-label="Tutup Kurs Mata Uang">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <h2>Kurs Mata Uang</h2>
+        <span class="lap-filter-back-btn" style="visibility:hidden" aria-hidden="true"></span>
+      </div>
+
+      <div class="lap-filter-card">
+        <div class="kurs-conv-card">
+          <div class="kurs-conv-row">
+            <div class="kurs-conv-field">
+              <span class="kurs-conv-label">Dari</span>
+              <select class="isp-select kurs-select" id="kursFromSelect"></select>
+            </div>
+            <button type="button" class="kurs-swap-btn" id="kursSwapBtn" aria-label="Tukar mata uang">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/></svg>
+            </button>
+            <div class="kurs-conv-field">
+              <span class="kurs-conv-label">Ke</span>
+              <select class="isp-select kurs-select" id="kursToSelect"></select>
+            </div>
+          </div>
+
+          <div class="kurs-amount-wrap">
+            <span class="kurs-conv-label">Jumlah</span>
+            <input type="text" inputmode="decimal" autocomplete="off" class="kurs-amount-input" id="kursAmountInput" value="1">
+          </div>
+
+          <div class="kurs-result-wrap">
+            <span class="kurs-conv-label">Hasil</span>
+            <div class="kurs-result" id="kursResultDisplay">Memuat kurs&hellip;</div>
+          </div>
+
+          <div class="kurs-meta-row">
+            <span class="kurs-meta-updated" id="kursMetaUpdated">Mengambil kurs terbaru&hellip;</span>
+            <button type="button" class="news-refresh-btn kurs-refresh-btn" id="kursRefreshBtn">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+              Refresh
+            </button>
+          </div>
+        </div>
+
+        <div class="kurs-populer-head">
+          <h3>Kurs Populer <span>terhadap Rupiah</span></h3>
+        </div>
+        <div class="kurs-populer-grid" id="kursPopulerGrid">
+          <!-- Diisi JS (kursRenderPopuler) -- skeleton loading dulu, lalu kartu kurs asli begitu data datang. -->
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- ===== /HALAMAN "KURS MATA UANG" ===== -->
 
   <!-- ===== HALAMAN "SUMBER DANA UTAMA" (#sumberDanaUtamaOverlay) =====
        Halaman baru di Pengaturan > Pengaturan, dibuka dari baris

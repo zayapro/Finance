@@ -10649,6 +10649,218 @@ document.getElementById('calcKeypad')?.addEventListener('click', (e) => {
 document.getElementById('kalkulatorBackBtn')?.addEventListener('click', calcClearAll);
 
 /* ==========================================================
+   KURS MATA UANG (#kursOverlay) -- pintasan baru di kartu Fast Menu
+   Beranda (#fmHomeKursBtn) & grid "Menu Utama" halaman Fast Menu
+   (#fmGridKursBtn). Buka/tutup pola SAMA PERSIS dgn
+   openKalkulatorOverlay/closeKalkulatorOverlay di atas. Dibuka dari
+   dalam halaman Fast Menu -> halaman Fast Menu ditutup dulu supaya
+   tombol Kembali di sini pulang ke Beranda, bukan menumpuk balik ke
+   halaman Fast Menu (pola sama persis dgn Kalkulator).
+
+   Datanya REAL-TIME dari API yang SAMA dgn banner beranda
+   (open.er-api.com, lihat fetchUsdIdrRate/fxBaseRate di atas) --
+   bedanya di sini basisnya IDR (bukan USD) & diambil SEKALI per sesi
+   (+ tombol Refresh manual, + auto-refresh 5 menit spt banner), krn
+   satu response dgn basis IDR sudah memuat kurs SEMUA mata uang
+   sekaligus (rates[X] = berapa X per 1 Rupiah) -- jadi kurs pasangan
+   mana pun (mis. USD -> SGD) bisa dihitung dari 1 response itu saja
+   tanpa fetch ulang tiap kali user ganti pilihan "Dari"/"Ke":
+     amount(A->B) = amount * rates[B] / rates[A]
+   (karena rates['IDR'] selalu 1, rumus ini otomatis benar juga utk
+   pasangan yg melibatkan IDR langsung). ---- */
+const KURS_CURRENCIES = [
+  { code: 'IDR', name: 'Rupiah Indonesia' },
+  { code: 'USD', name: 'Dolar Amerika Serikat' },
+  { code: 'EUR', name: 'Euro' },
+  { code: 'SGD', name: 'Dolar Singapura' },
+  { code: 'MYR', name: 'Ringgit Malaysia' },
+  { code: 'JPY', name: 'Yen Jepang' },
+  { code: 'GBP', name: 'Poundsterling Inggris' },
+  { code: 'AUD', name: 'Dolar Australia' },
+  { code: 'CNY', name: 'Yuan Tiongkok' },
+  { code: 'KRW', name: 'Won Korea Selatan' },
+  { code: 'THB', name: 'Baht Thailand' },
+  { code: 'HKD', name: 'Dolar Hong Kong' },
+  { code: 'CHF', name: 'Franc Swiss' },
+  { code: 'SAR', name: 'Riyal Arab Saudi' },
+  { code: 'AED', name: 'Dirham Uni Emirat Arab' },
+  { code: 'INR', name: 'Rupee India' },
+];
+// Daftar kartu "Kurs Populer" (terhadap Rupiah) -- subset dari
+// KURS_CURRENCIES di atas, tanpa IDR sendiri.
+const KURS_POPULER_CODES = ['USD', 'EUR', 'SGD', 'MYR', 'JPY', 'GBP', 'AUD', 'CNY'];
+
+let kursRatesIDR = null;   // { USD: 0.0000564, EUR: ..., IDR: 1, ... } -- basis IDR
+let kursLastUpdateLabel = '';
+let kursFetching = false;
+let kursFetchFailed = false;
+let kursRefreshInterval = null;
+
+function kursFormatRateNumber(n) {
+  // Angka kurs bisa sangat kecil (mis. JPY per Rupiah) atau besar (Rupiah
+  // per USD) -- pakai jumlah desimal yg menyesuaikan besar-kecilnya
+  // angka supaya tidak membulat jadi 0 utk mata uang yg nilainya kecil.
+  if (!Number.isFinite(n)) return '-';
+  const abs = Math.abs(n);
+  const decimals = abs === 0 ? 0 : abs >= 100 ? 0 : abs >= 1 ? 2 : abs >= 0.01 ? 4 : 6;
+  return n.toLocaleString('id-ID', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+}
+
+function kursPopulateSelects() {
+  const fromSel = document.getElementById('kursFromSelect');
+  const toSel = document.getElementById('kursToSelect');
+  if (!fromSel || !toSel || fromSel.options.length) return; // sudah diisi sebelumnya
+  const optsHtml = KURS_CURRENCIES.map(c => `<option value="${c.code}">${c.code} — ${c.name}</option>`).join('');
+  fromSel.innerHTML = optsHtml;
+  toSel.innerHTML = optsHtml;
+  fromSel.value = 'USD';
+  toSel.value = 'IDR';
+}
+
+function kursRenderPopulerSkeleton() {
+  const grid = document.getElementById('kursPopulerGrid');
+  if (!grid) return;
+  grid.innerHTML = KURS_POPULER_CODES.map(() => `
+    <div class="kurs-populer-item is-skeleton">
+      <span class="kurs-populer-flag">&nbsp;</span>
+      <div class="kurs-populer-main">
+        <div class="kurs-populer-code">&nbsp;</div>
+        <div class="kurs-populer-rate">&nbsp;</div>
+      </div>
+    </div>`).join('');
+}
+
+function kursRenderPopuler() {
+  const grid = document.getElementById('kursPopulerGrid');
+  if (!grid) return;
+  if (!kursRatesIDR) { kursRenderPopulerSkeleton(); return; }
+  grid.innerHTML = KURS_POPULER_CODES.map(code => {
+    const rate = kursRatesIDR[code];
+    const idrPerUnit = rate ? 1 / rate : null;
+    const rateLabel = idrPerUnit != null ? `Rp ${kursFormatRateNumber(idrPerUnit)}` : 'Tidak tersedia';
+    return `
+      <div class="kurs-populer-item">
+        <span class="kurs-populer-flag">${code.slice(0, 2)}</span>
+        <div class="kurs-populer-main">
+          <div class="kurs-populer-code">1 ${code}</div>
+          <div class="kurs-populer-rate">${rateLabel}</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function kursUpdateResult() {
+  const resultEl = document.getElementById('kursResultDisplay');
+  const metaEl = document.getElementById('kursMetaUpdated');
+  if (!resultEl) return;
+  const fromCode = document.getElementById('kursFromSelect')?.value;
+  const toCode = document.getElementById('kursToSelect')?.value;
+  const amountRaw = document.getElementById('kursAmountInput')?.value ?? '';
+  const amount = parseFloat(String(amountRaw).replace(/\./g, '').replace(',', '.'));
+
+  if (!kursRatesIDR) {
+    resultEl.textContent = kursFetchFailed ? 'Kurs tidak tersedia' : 'Memuat kurs…';
+    if (metaEl) metaEl.textContent = kursFetchFailed
+      ? 'Gagal mengambil kurs terbaru. Coba tekan Refresh.'
+      : 'Mengambil kurs terbaru…';
+    return;
+  }
+  if (!Number.isFinite(amount) || !fromCode || !toCode) {
+    resultEl.textContent = '-';
+    return;
+  }
+  const rFrom = kursRatesIDR[fromCode];
+  const rTo = kursRatesIDR[toCode];
+  if (!rFrom || !rTo) {
+    resultEl.textContent = 'Mata uang tidak didukung';
+    return;
+  }
+  const converted = amount * (rTo / rFrom);
+  resultEl.textContent = `${kursFormatRateNumber(converted)} ${toCode}`;
+  if (metaEl) metaEl.textContent = `Kurs terakhir diperbarui ${kursLastUpdateLabel} · sumber open.er-api.com`;
+}
+
+async function kursFetchRates(showToastOnError = false) {
+  if (kursFetching) return;
+  kursFetching = true;
+  const refreshBtn = document.getElementById('kursRefreshBtn');
+  refreshBtn?.classList.add('spinning');
+  refreshBtn?.setAttribute('disabled', 'true');
+  try {
+    const res = await fetch('https://open.er-api.com/v6/latest/IDR');
+    if (!res.ok) throw new Error('bad response');
+    const data = await res.json();
+    if (!data || !data.rates || !data.rates.USD) throw new Error('no rates');
+    kursRatesIDR = data.rates;
+    kursFetchFailed = false;
+    kursLastUpdateLabel = data.time_last_update_utc
+      ? new Date(data.time_last_update_utc).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })
+      : new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
+  } catch (e) {
+    kursFetchFailed = true;
+    if (showToastOnError) showToast('Gagal mengambil kurs terbaru. Periksa koneksi internet.', 'err');
+  } finally {
+    kursFetching = false;
+    refreshBtn?.classList.remove('spinning');
+    refreshBtn?.removeAttribute('disabled');
+    kursRenderPopuler();
+    kursUpdateResult();
+  }
+}
+
+let kursInited = false;
+function kursInitOnce() {
+  if (kursInited) return;
+  kursInited = true;
+  kursPopulateSelects();
+  kursRenderPopulerSkeleton();
+
+  document.getElementById('kursFromSelect')?.addEventListener('change', kursUpdateResult);
+  document.getElementById('kursToSelect')?.addEventListener('change', kursUpdateResult);
+  document.getElementById('kursAmountInput')?.addEventListener('input', kursUpdateResult);
+  document.getElementById('kursRefreshBtn')?.addEventListener('click', () => kursFetchRates(true));
+  document.getElementById('kursSwapBtn')?.addEventListener('click', () => {
+    const fromSel = document.getElementById('kursFromSelect');
+    const toSel = document.getElementById('kursToSelect');
+    if (!fromSel || !toSel) return;
+    const tmp = fromSel.value;
+    fromSel.value = toSel.value;
+    toSel.value = tmp;
+    kursUpdateResult();
+  });
+
+  kursFetchRates();
+  // Auto-refresh berkala spt banner beranda (lihat initBannerFx), tapi
+  // cuma jalan selagi halaman Kurs ini sedang terbuka -- dihentikan lagi
+  // saat ditutup lewat closeKursOverlay, supaya tidak terus polling API
+  // di belakang layar padahal user sudah pindah halaman.
+}
+
+function openKursOverlay() {
+  document.getElementById('kursOverlay')?.classList.add('open');
+  lockBodyScroll();
+  kursInitOnce();
+  kursUpdateResult();
+  if (!kursRefreshInterval) {
+    kursRefreshInterval = setInterval(() => kursFetchRates(), 5 * 60 * 1000);
+  }
+}
+function closeKursOverlay() {
+  document.getElementById('kursOverlay')?.classList.remove('open');
+  unlockBodyScroll();
+  if (kursRefreshInterval) {
+    clearInterval(kursRefreshInterval);
+    kursRefreshInterval = null;
+  }
+}
+document.getElementById('kursBackBtn')?.addEventListener('click', closeKursOverlay);
+document.getElementById('fmHomeKursBtn')?.addEventListener('click', openKursOverlay);
+document.getElementById('fmGridKursBtn')?.addEventListener('click', () => {
+  closeFastMenuOverlay();
+  openKursOverlay();
+});
+
+/* ==========================================================
    PENGATURAN > PENGATURAN — "Sumber Dana Utama"
    (#sumberDanaUtamaOverlay). Pola buka/tutup SAMA PERSIS dgn
    openFastMenuOverlay/closeFastMenuOverlay di atas -- halaman ini
