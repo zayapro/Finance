@@ -2852,8 +2852,19 @@ select#kursFromSelect[hidden],select#kursToSelect[hidden]{display:none;}
   .lap-subpicker-field{padding:10px 10px;font-size:13.5px;}
   .kurs-swap-btn{width:34px;height:34px;}
   .kurs-amount-wrap,.kurs-result-wrap{margin-top:12px;}
-  .kurs-meta-row{flex-wrap:wrap;row-gap:8px;}
-  .kurs-meta-updated{white-space:normal;}
+}
+/* ---- Versi mobile (HP, layar <=480px): teks "Diperbarui ... · sumber
+   open.er-api.com" jangan lagi disejajarkan dengan tombol Refresh (di
+   layar sempit dia kepotong "..." krn desktop rule di atas pakai
+   white-space:nowrap+ellipsis). Di sini baris dipecah jadi 2 tingkat:
+   tombol Refresh tetap nempel kanan-atas (order:1, align-self:flex-end),
+   teks sumber turun ke baris sendiri persis di bawahnya (order:2,
+   full-width, wrap normal, TANPA ellipsis) supaya selalu utuh terbaca
+   & rapi -- tidak numpuk/keteser dgn tombol lagi di HP mana pun. ---- */
+@media (max-width:480px){
+  .kurs-meta-row{flex-direction:column;align-items:flex-start;flex-wrap:nowrap;row-gap:8px;}
+  .kurs-refresh-btn{order:1;align-self:flex-end;}
+  .kurs-meta-updated{order:2;flex:0 0 auto;width:100%;white-space:normal;overflow:visible;text-overflow:clip;}
 }
 /* ---- Layar lebar (tablet/desktop -- halaman ini di-cap max-width:640px
    lewat .lap-filter-page, jadi kartu bisa jauh lebih lebar drpd HP):
@@ -2982,7 +2993,7 @@ select#kursFromSelect[hidden],select#kursToSelect[hidden]{display:none;}
 .stat-card.stat-special.isc-source-card:hover{box-shadow:0 16px 34px rgba(5,150,105,0.17);border-color:rgba(5,150,105,0.30);}
 .isc-source-card .icon-badge.special{background:linear-gradient(140deg,#34D399,#065F46);box-shadow:0 8px 16px -4px rgba(5,150,105,0.45);}
 
-.stat-card.stat-special.isc-recent-card{border-top-color:var(--forest-glow);--fc-accent:#2563EB;--fc-accent-strong:#1D4ED8;--fc-accent-soft:rgba(37,99,235,0.35);}
+.stat-card.stat-special.isc-recent-card{border-top-color:#2563EB;--fc-accent:#2563EB;--fc-accent-strong:#1D4ED8;--fc-accent-soft:rgba(37,99,235,0.35);}
 .stat-card.stat-special.isc-recent-card::before{background:linear-gradient(160deg, rgba(37,99,235,0.08), transparent 58%);}
 .stat-card.stat-special.isc-recent-card::after{background:radial-gradient(circle, rgba(37,99,235,0.16), transparent 72%);}
 .stat-card.stat-special.isc-recent-card:hover{box-shadow:0 16px 34px rgba(37,99,235,0.17);border-color:rgba(37,99,235,0.28);}
