@@ -10707,6 +10707,35 @@ function kursFlagFor(code) {
   return KURS_FLAG_EMOJI[code] || code.slice(0, 2);
 }
 
+// Nama negara/kawasan per kode mata uang -- ditampilkan sbg sub-label
+// kecil di tiap kartu "Kurs Populer" (di antara "1 USD" & nominal Rp)
+// biar kodenya langsung jelas mata uang negara mana, tanpa perlu
+// user menghafal kode ISO. EUR & CNY sengaja pakai kawasan/nama umum
+// ("Uni Eropa"/"Tiongkok") krn bukan 1 negara tunggal / nama resmi
+// panjang. Kalau kode belum terdaftar di sini, otomatis fallback ke
+// string kosong (baris sub-label tidak dirender, lihat kursRenderPopuler).
+const KURS_COUNTRY_NAME = {
+  IDR: 'Indonesia',
+  USD: 'Amerika Serikat',
+  EUR: 'Uni Eropa',
+  SGD: 'Singapura',
+  MYR: 'Malaysia',
+  JPY: 'Jepang',
+  GBP: 'Inggris',
+  AUD: 'Australia',
+  CNY: 'Tiongkok',
+  KRW: 'Korea Selatan',
+  THB: 'Thailand',
+  HKD: 'Hong Kong',
+  CHF: 'Swiss',
+  SAR: 'Arab Saudi',
+  AED: 'Uni Emirat Arab',
+  INR: 'India',
+};
+function kursCountryFor(code) {
+  return KURS_COUNTRY_NAME[code] || '';
+}
+
 let kursRatesIDR = null;   // { USD: 0.0000564, EUR: ..., IDR: 1, ... } -- basis IDR
 let kursLastUpdateLabel = '';
 let kursFetching = false;
@@ -10809,6 +10838,7 @@ function kursRenderPopulerSkeleton() {
       <span class="kurs-populer-flag">&nbsp;</span>
       <div class="kurs-populer-main">
         <div class="kurs-populer-code">&nbsp;</div>
+        <div class="kurs-populer-country">&nbsp;</div>
         <div class="kurs-populer-rate">&nbsp;</div>
       </div>
     </div>`).join('');
@@ -10822,11 +10852,13 @@ function kursRenderPopuler() {
     const rate = kursRatesIDR[code];
     const idrPerUnit = rate ? 1 / rate : null;
     const rateLabel = idrPerUnit != null ? `Rp ${kursFormatRateNumber(idrPerUnit)}` : 'Tidak tersedia';
+    const country = kursCountryFor(code);
     return `
       <div class="kurs-populer-item">
         <span class="kurs-populer-flag">${kursFlagFor(code)}</span>
         <div class="kurs-populer-main">
           <div class="kurs-populer-code">1 ${code}</div>
+          ${country ? `<div class="kurs-populer-country">${country}</div>` : ''}
           <div class="kurs-populer-rate">${rateLabel}</div>
         </div>
       </div>`;
@@ -10907,6 +10939,22 @@ async function kursFetchRates(showToastOnError = false) {
     populerGrid?.classList.remove('is-kurs-refreshing');
     kursRenderPopuler();
     kursUpdateResult();
+    // ---- Kasih efek "pop" singkat di angka hasil begitu refresh
+    // selesai (lihat @keyframes kursResultPop di CSS) supaya user
+    // dapat konfirmasi visual jelas bahwa kurs sudah diperbarui,
+    // bukan cuma teks yg diam-diam berganti. Class dilepas lagi
+    // setelah animasinya kelar (via 'animationend') supaya bisa
+    // ditrigger ulang tiap kali tombol Refresh ditekan. ----
+    const resultEl = document.getElementById('kursResultDisplay');
+    if (resultEl && !kursFetchFailed) {
+      resultEl.classList.remove('kurs-result-pop');
+      // force reflow biar animasi restart walau class-nya sama persis
+      void resultEl.offsetWidth;
+      resultEl.classList.add('kurs-result-pop');
+      resultEl.addEventListener('animationend', () => {
+        resultEl.classList.remove('kurs-result-pop');
+      }, { once: true });
+    }
   }
 }
 

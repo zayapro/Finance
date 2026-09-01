@@ -2665,6 +2665,8 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 .kurs-conv-card{
   background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
   padding:16px 16px 14px;box-shadow:var(--shadow-sm);
+  position:relative;overflow:hidden;
+  transition:border-color .25s ease, box-shadow .25s ease;
 }
 .kurs-conv-row{display:flex;align-items:flex-end;gap:8px;}
 .kurs-conv-field{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px;}
@@ -2704,15 +2706,16 @@ select#kursFromSelect[hidden],select#kursToSelect[hidden]{display:none;}
   color:var(--primary-deep);font-size:clamp(22px,7vw,28px);line-height:1.25;
   text-align:right;overflow-x:auto;white-space:nowrap;
 }
-/* ---- Ditumpuk (kolom) SENGAJA & konsisten di semua lebar layar &
-   ketiga tema (Default/Dark/Glass), bukan row yg "jatuh" acak ke kiri
-   pas teks kepanjangan lalu nyisain ruang kosong besar di kanan
-   (itu bug lama krn justify-content:space-between + flex-wrap saat
-   cuma 1 item nyangkut di 1 baris). Tombol dibuat align-self:flex-end
-   biar nempel rapi di ujung kanan blok teks, bukan full-width. ---- */
-.kurs-meta-row{display:flex;flex-direction:column;align-items:flex-end;gap:8px;margin-top:14px;}
-.kurs-meta-updated{font-size:11.5px;color:var(--ink-faint);line-height:1.45;text-align:right;align-self:stretch;}
-.kurs-refresh-btn{padding:6px 12px;font-size:11px;flex-shrink:0;align-self:flex-end;}
+/* ---- SATU BARIS & responsive di semua lebar layar & ketiga tema
+   (Default/Dark/Glass): row + justify-content:space-between, teks
+   dibuat min-width:0 + overflow:hidden + text-overflow:ellipsis +
+   white-space:nowrap supaya kalau kepanjangan dia dipotong "…" dan
+   TIDAK memaksa row wrap ke bawah / tombol keteser. Tombol
+   flex-shrink:0 biar ukurannya tetap konsisten walau teks di
+   sebelahnya berubah-ubah panjang. ---- */
+.kurs-meta-row{display:flex;flex-direction:row;flex-wrap:nowrap;align-items:center;justify-content:space-between;gap:8px;margin-top:14px;}
+.kurs-meta-updated{flex:1 1 auto;min-width:0;font-size:11.5px;color:var(--ink-faint);line-height:1.45;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.kurs-refresh-btn{padding:6px 12px;font-size:11px;flex-shrink:0;white-space:nowrap;}
 .kurs-populer-head{padding:2px 2px 0;}
 .kurs-populer-head h3{margin:0 0 12px;font-size:14.5px;font-weight:700;color:var(--ink);font-family:'Poppins',sans-serif;}
 .kurs-populer-head h3 span{font-weight:600;color:var(--ink-faint);}
@@ -2733,15 +2736,24 @@ select#kursFromSelect[hidden],select#kursToSelect[hidden]{display:none;}
    line-height 1 biar tetap center pas di lingkaran 34x34px. ---- */
 .kurs-populer-flag:not(:empty){font-size:17px;line-height:1;}
 .kurs-populer-main{min-width:0;flex:1;}
-.kurs-populer-code{font-size:12.5px;font-weight:700;color:var(--ink);}
-.kurs-populer-rate{font-size:11.5px;color:var(--ink-soft);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.kurs-populer-code{font-size:12.5px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+/* ---- Sub-label nama negara/kawasan (mis. "Amerika Serikat" di bawah
+   "1 USD") -- font lebih kecil & lebih redup drpd kode supaya tetap
+   jelas mana yg utama (kode+rate), tapi tetap terbaca rapi. Dipotong
+   "…" (bukan wrap 2 baris) kalau namanya kepanjangan buat kartu sempit
+   (mis. "Uni Emirat Arab" di lebar HP kecil) supaya tinggi tiap kartu
+   tetap SERAGAM & grid 2 kolom gak jadi "loncat-loncat" tingginya. ---- */
+.kurs-populer-country{font-size:10.5px;font-weight:600;color:var(--ink-faint);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.01em;}
+.kurs-populer-rate{font-size:11.5px;color:var(--ink-soft);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .kurs-populer-item.is-skeleton{background:var(--paper);box-shadow:none;}
 .kurs-populer-item.is-skeleton .kurs-populer-flag{background:var(--line);}
 .kurs-populer-item.is-skeleton .kurs-populer-code,
+.kurs-populer-item.is-skeleton .kurs-populer-country,
 .kurs-populer-item.is-skeleton .kurs-populer-rate{
   height:10px;border-radius:5px;background:var(--line);color:transparent;
 }
 .kurs-populer-item.is-skeleton .kurs-populer-code{width:34px;margin-bottom:5px;}
+.kurs-populer-item.is-skeleton .kurs-populer-country{width:52px;margin-bottom:5px;}
 .kurs-populer-item.is-skeleton .kurs-populer-rate{width:58px;}
 
 /* ---- Efek loading saat tombol Refresh (#kursRefreshBtn) ditekan ----
@@ -2761,6 +2773,55 @@ select#kursFromSelect[hidden],select#kursToSelect[hidden]{display:none;}
   animation:kursPulse 1.1s ease-in-out infinite;
 }
 @keyframes kursPulse{0%,100%{opacity:.5;}50%{opacity:.85;}}
+/* ---- Efek tambahan di level KARTU (.kurs-conv-card) sendiri saat
+   refresh berlangsung: (1) border/glow "berdenyut" halus biar kartu
+   kelihatan "hidup" sedang bekerja, (2) sapuan cahaya (shimmer) yang
+   meluncur dari kiri ke kanan lewat pseudo-element ::after -- murni
+   dekoratif/pointer-events:none, TIDAK mengganggu klik apa pun di
+   dalam kartu (termasuk saat tombol Refresh & input jumlah sedang
+   disabled). Kartu perlu position:relative + overflow:hidden (sudah
+   diset di .kurs-conv-card) supaya sapuannya kepotong rapi sesuai
+   radius kartu & tidak keluar ke elemen lain. ---- */
+.kurs-conv-card.is-kurs-refreshing{
+  border-color:color-mix(in srgb, var(--primary) 45%, var(--line));
+  box-shadow:0 0 0 3px color-mix(in srgb, var(--primary) 12%, transparent), var(--shadow-sm);
+  animation:kursCardGlow 1.6s ease-in-out infinite;
+}
+@keyframes kursCardGlow{
+  0%,100%{box-shadow:0 0 0 3px color-mix(in srgb, var(--primary) 10%, transparent), var(--shadow-sm);}
+  50%{box-shadow:0 0 0 5px color-mix(in srgb, var(--primary) 20%, transparent), var(--shadow-sm);}
+}
+.kurs-conv-card.is-kurs-refreshing::after{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(100deg,
+    transparent 30%,
+    color-mix(in srgb, var(--primary) 16%, transparent) 45%,
+    color-mix(in srgb, var(--primary) 28%, transparent) 50%,
+    color-mix(in srgb, var(--primary) 16%, transparent) 55%,
+    transparent 70%);
+  background-size:220% 100%;
+  animation:kursShimmerSweep 1.4s ease-in-out infinite;
+}
+@keyframes kursShimmerSweep{
+  0%{background-position:140% 0;}
+  100%{background-position:-40% 0;}
+}
+/* ---- "Pop" singkat pas angka hasil konversi BARU selesai datang
+   (ditempel/lepas otomatis via JS di kursFetchRates -> kursUpdateResult,
+   lihat script.js), biar terasa jelas ada perubahan/refresh berhasil,
+   bukan cuma cepat berganti diam-diam. ---- */
+.kurs-result.kurs-result-pop{animation:kursResultPop .45s cubic-bezier(.22,.9,.3,1);}
+@keyframes kursResultPop{
+  0%{opacity:.35;transform:scale(.95);}
+  55%{opacity:1;transform:scale(1.025);}
+  100%{transform:scale(1);}
+}
+@media (prefers-reduced-motion:reduce){
+  .kurs-conv-card.is-kurs-refreshing,
+  .kurs-conv-card.is-kurs-refreshing::after,
+  .kurs-populer-grid.is-kurs-refreshing .kurs-populer-item:not(.is-skeleton),
+  .kurs-result.kurs-result-pop{animation:none;}
+}
 .kurs-amount-input:disabled{opacity:.6;cursor:default;}
 @media (max-width:380px){
   .kurs-conv-row{gap:6px;}
