@@ -11533,18 +11533,17 @@ let ccLastGeocodeAt = 0;
 // ccCameraSettings.showMap (popup Pengaturan Kamera, #ccMapToggleInput).
 let ccMapImg = null;
 let ccMapImgKey = null;
-// ---- Prefetch peta LIVE (lihat ccPrefetchLiveMap) -- dijalankan terus
-// di background selagi GPS watchPosition aktif (BUKAN nunggu tombol
-// jepret ditekan dulu spt ccLoadMapForFix), supaya begitu user jepret,
-// petanya (kemungkinan besar) SUDAH siap di memori & langsung tampil
-// di render PERTAMA -- bukan "menyusul" stlh network round-trip.
-// ccLiveMapImg/ccLiveMapImgKey menyimpan hasil prefetch terakhir yg
-// SELESAI dimuat; ccLiveMapPrefetchingKey menandai key yg SEDANG dalam
-// proses dimuat (biar tidak double-request titik yg sama selagi masih
-// nunggu response sebelumnya).
-let ccLiveMapImg = null;
-let ccLiveMapImgKey = null;
-let ccLiveMapPrefetchingKey = null;
+// ---- Status muat peta mini utk jepretan yg lagi aktif (ccMapStatusKey
+// dibandingkan ke ccMapKeyFor(ccCapturedFix), sama spt ccMapImgKey) --
+// dipakai ccDrawMapThumbnail utk nampilin kartu "Memuat peta..." SELAGI
+// request (atau retry-nya) masih jalan, lihat ccLoadMapForFix.
+let ccMapStatus = null;      // null | 'loading' | 'failed'
+let ccMapStatusKey = null;
+let ccMapRetryCount = 0;
+let ccMapRetryTimer = null;
+let ccMapSpinnerTimer = null; // jadwal render-ulang berkala biar animasi spinner "Memuat peta..." jalan
+const CC_MAP_MAX_RETRIES = 3;
+const CC_MAP_RETRY_DELAY_MS = 1500; // jeda dasar antar-retry, dilipatgandakan tiap percobaan (backoff)
 let ccLastGeocodeLat = null;
 let ccLastGeocodeLng = null;
 let ccGeocodeAbort = null;
@@ -12572,11 +12571,6 @@ function ccOnPosition(pos) {
   // titik yg ditampilkan/distempel ke foto lebih stabil & presisi
   // dibanding cuma pakai satu bacaan mentah -- lihat ccUpdateFixBuffer().
   const avg = ccUpdateFixBuffer(ccLastFix);
-  // Muat-duluan peta mini utk titik terkini SELAGI masih di layar live
-  // (fire-and-forget, sudah di-throttle di dalam) -- lihat catatan di
-  // ccPrefetchLiveMap. Ini yg bikin peta bisa langsung nempel di foto
-  // SAAT jepret, bukan nyusul stlh delay network.
-  ccPrefetchLiveMap(avg);
   ccHideError();
   const panel = document.getElementById('ccInfoPanel');
   if (panel) panel.hidden = false;
@@ -12729,8 +12723,9 @@ function ccStopCamera() {
   ccLastFix = null; ccAvgFix = null; ccFixBuffer = [];
   ccLastAddress = ''; ccLastPlaceName = '';
   ccLastGeocodeAt = 0; ccLastGeocodeLat = null; ccLastGeocodeLng = null;
-  ccLiveMapImg = null; ccLiveMapImgKey = null; ccLiveMapPrefetchingKey = null;
-  ccLastMapPrefetchAt = 0; ccLastMapPrefetchLat = null; ccLastMapPrefetchLng = null;
+  if (ccMapRetryTimer) { clearTimeout(ccMapRetryTimer); ccMapRetryTimer = null; }
+  if (ccMapSpinnerTimer) { clearTimeout(ccMapSpinnerTimer); ccMapSpinnerTimer = null; }
+  ccMapStatus = null; ccMapStatusKey = null; ccMapRetryCount = 0;
 }
 document.getElementById('ccToggleBtn')?.addEventListener('click', () => {
   if (ccActive) ccStopCamera(); else ccStartCamera();
@@ -12855,18 +12850,6 @@ function ccWrapCanvasText(ctx, text, maxWidth) {
 // ccLoadMapForFix di bawah).
 const CC_MAP_ZOOM = 16;
 const CC_MAP_PX = 260; // px persegi, sisi kartu peta mini yg diminta dr API (lebih besar dr ukuran tampil final, spy tetap tajam pas di-downscale ke stempel foto)
-// Throttle utk prefetch peta LIVE (ccPrefetchLiveMap, dipanggil dr tiap
-// tick ccOnPosition) -- polanya SAMA spt throttle reverse-geocode
-// (CC_GEOCODE_MIN_INTERVAL_MS/DELTA_M di atas) supaya kuota harian
-// Geoapify tidak boros dipanggil di SETIAP tick GPS (yg bisa beberapa
-// kali per detik) -- cukup refresh peta kalau titik sudah pindah
-// lumayan (>15m, cukup utk zoom 16 supaya framing-nya masih relevan)
-// ATAU sudah lewat jeda minimum sejak prefetch terakhir.
-const CC_MAP_PREFETCH_MIN_INTERVAL_MS = 10000;
-const CC_MAP_PREFETCH_MIN_DELTA_M = 15;
-let ccLastMapPrefetchAt = 0;
-let ccLastMapPrefetchLat = null;
-let ccLastMapPrefetchLng = null;
 function ccBuildStaticMapUrl(lat, lng) {
   if (!CC_GEOAPIFY_KEY) return null;
   const marker = `lonlat:${lng},${lat};color:%23FF3B30;size:medium;icon:location-dot;iconsize:small;whitecircle:no`;
@@ -12884,13 +12867,32 @@ function ccMapKeyFor(fix) {
 // stlh stempel pertama (tanpa peta) langsung tampil, spy foto TETAP cepat
 // muncul walau internetnya lambat -- begitu peta selesai dimuat, stempel
 // digambar ULANG (ccRenderStampedPhoto lagi) supaya petanya "muncul
-// menyusul" di foto yg sama. Kalau gagal/CORS/limit kuota Geoapify habis,
-// dibiarkan diam2 saja -- foto TETAP tersimpan normal, cuma tanpa peta.
-function ccLoadMapForFix(fix) {
+// menyusul" di foto yg sama.
+// Kalau request gagal (jaringan tidak stabil/CORS/kuota Geoapify habis),
+// dicoba ULANG otomatis sampai CC_MAP_MAX_RETRIES kali dgn jeda yg makin
+// panjang (backoff) -- SELAGI mencoba, ccMapStatus diset 'loading' supaya
+// ccDrawMapThumbnail bisa nampilin kartu "Memuat peta..." di foto (baik
+// percobaan pertama maupun tiap retry-nya). Baru kalau retry terakhir
+// tetap gagal, ccMapStatus diset 'failed' & dibiarkan diam2 -- foto TETAP
+// tersimpan normal, cuma tanpa peta.
+function ccLoadMapForFix(fix, _retryCount) {
+  const isRetry = typeof _retryCount === 'number';
+  const retryCount = isRetry ? _retryCount : 0;
   if (!ccCameraSettings.showMap || !fix || typeof fix.lat !== 'number' || typeof fix.lng !== 'number') return;
-  const url = ccBuildStaticMapUrl(fix.lat, fix.lng);
-  if (!url) return;
   const key = ccMapKeyFor(fix);
+  // Percobaan pertama (bukan retry): reset status/hitungan retry &
+  // langsung tandai 'loading' supaya indikator muncul SEBELUM request
+  // network dimulai (termasuk saat baru jepret & foto pertama tampil
+  // tanpa peta dulu).
+  if (!isRetry) {
+    if (ccMapRetryTimer) { clearTimeout(ccMapRetryTimer); ccMapRetryTimer = null; }
+    ccMapRetryCount = 0;
+    ccMapStatus = 'loading';
+    ccMapStatusKey = key;
+    if (ccMapKeyFor(ccCapturedFix) === key) ccRenderStampedPhoto(ccEditAddressText, ccEditPlaceText);
+  }
+  const url = ccBuildStaticMapUrl(fix.lat, fix.lng);
+  if (!url) { ccMapStatus = 'failed'; return; }
   const img = new Image();
   img.crossOrigin = 'anonymous';
   img.onload = () => {
@@ -12900,44 +12902,30 @@ function ccLoadMapForFix(fix) {
     if (ccMapKeyFor(ccCapturedFix) !== key) return;
     ccMapImg = img;
     ccMapImgKey = key;
+    ccMapStatus = null;
+    ccMapStatusKey = null;
     if (ccCameraSettings.showMap) ccRenderStampedPhoto(ccEditAddressText, ccEditPlaceText);
   };
-  img.onerror = () => { /* diam2 dilewati -- lihat catatan di atas */ };
-  img.src = url;
-}
-// Muat-duluan (prefetch) peta utk titik GPS TERKINI selagi kamera masih
-// live/preview -- dipanggil dr ccOnPosition() tiap ada bacaan GPS baru
-// (sudah di-throttle, lihat CC_MAP_PREFETCH_MIN_*). TIDAK menunggu
-// tombol jepret ditekan -- tujuannya supaya pas user benar2 jepret,
-// ccCaptureFoto() tinggal PAKAI ccLiveMapImg yg (kemungkinan besar)
-// sudah siap, bukan mulai request baru dr nol -- jadi peta bisa
-// langsung nempel di render PERTAMA foto, bukan "menyusul".
-function ccPrefetchLiveMap(fix) {
-  if (!ccCameraSettings.showMap || !fix || typeof fix.lat !== 'number' || typeof fix.lng !== 'number') return;
-  const key = ccMapKeyFor(fix);
-  // Titik yg sama persis dgn hasil prefetch terakhir (atau yg lagi
-  // dalam proses dimuat) -- tidak perlu request ulang.
-  if (key === ccLiveMapImgKey || key === ccLiveMapPrefetchingKey) return;
-  const now = Date.now();
-  const movedEnough = ccLastMapPrefetchLat === null
-    || ccHaversineMeters(ccLastMapPrefetchLat, ccLastMapPrefetchLng, fix.lat, fix.lng) >= CC_MAP_PREFETCH_MIN_DELTA_M;
-  const dueForRefresh = (now - ccLastMapPrefetchAt) >= CC_MAP_PREFETCH_MIN_INTERVAL_MS;
-  if (ccLastMapPrefetchAt !== 0 && !(movedEnough && dueForRefresh)) return;
-  const url = ccBuildStaticMapUrl(fix.lat, fix.lng);
-  if (!url) return;
-  ccLastMapPrefetchAt = now; ccLastMapPrefetchLat = fix.lat; ccLastMapPrefetchLng = fix.lng;
-  ccLiveMapPrefetchingKey = key;
-  const img = new Image();
-  img.crossOrigin = 'anonymous';
-  img.onload = () => {
-    if (ccLiveMapPrefetchingKey === key) ccLiveMapPrefetchingKey = null;
-    ccLiveMapImg = img;
-    ccLiveMapImgKey = key;
-  };
   img.onerror = () => {
-    // Gagal (kuota/CORS/dst.) -- diamkan, ccCaptureFoto() ttp fallback
-    // ke ccLoadMapForFix() biasa (muat menyusul setelah jepret).
-    if (ccLiveMapPrefetchingKey === key) ccLiveMapPrefetchingKey = null;
+    // Jepretan sudah berganti selagi request ini berjalan -- tidak perlu
+    // retry lagi utk titik yg sudah tidak relevan.
+    if (ccMapKeyFor(ccCapturedFix) !== key) return;
+    if (retryCount < CC_MAP_MAX_RETRIES) {
+      // Backoff: jeda makin panjang tiap percobaan (1.5s, 3s, 4.5s, ...)
+      // supaya tidak langsung membombardir server pas jaringan lagi
+      // goyang/putus-nyambung.
+      ccMapRetryCount = retryCount + 1;
+      ccMapRetryTimer = setTimeout(() => {
+        ccMapRetryTimer = null;
+        ccLoadMapForFix(fix, retryCount + 1);
+      }, CC_MAP_RETRY_DELAY_MS * (retryCount + 1));
+    } else {
+      // Retry terakhir tetap gagal -- menyerah diam2, kartu "Memuat
+      // peta..." dilepas & foto tetap tersimpan normal tanpa peta.
+      ccMapStatus = 'failed';
+      ccMapStatusKey = null;
+      if (ccMapKeyFor(ccCapturedFix) === key) ccRenderStampedPhoto(ccEditAddressText, ccEditPlaceText);
+    }
   };
   img.src = url;
 }
@@ -12946,12 +12934,80 @@ function ccPrefetchLiveMap(fix) {
 // ccMapImg sudah siap & cocok dgn jepretan yg lagi distempel (ccMapImgKey
 // == kunci ccCapturedFix saat itu).
 function ccDrawMapThumbnail(ctx, w, h) {
-  if (!ccCameraSettings.showMap || !ccMapImg || ccMapImgKey !== ccMapKeyFor(ccCapturedFix)) return;
+  if (!ccCameraSettings.showMap) return;
+  const capturedKey = ccMapKeyFor(ccCapturedFix);
+  const ready = ccMapImg && ccMapImgKey === capturedKey;
+  const loading = !ready && ccMapStatus === 'loading' && ccMapStatusKey === capturedKey;
+  if (!ready && !loading) return;
   const size = Math.max(72, Math.round(w * 0.22));
   const margin = Math.max(12, Math.round(w * 0.025));
   const x = w - size - margin;
   const y = margin;
   const radius = Math.round(size * 0.14);
+  if (loading) {
+    // Kartu placeholder "Memuat peta..." -- bentuk & posisi SAMA persis
+    // dgn kartu peta asli (supaya tidak "loncat" begitu peta beneran
+    // selesai dimuat & menggantikannya), isinya cuma teks + putaran
+    // spinner sederhana biar kelihatan masih aktif proses (bukan macet),
+    // penting terutama pas jaringan lambat/tidak stabil.
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,0.45)';
+    ctx.shadowBlur = Math.max(6, Math.round(size * 0.08));
+    ctx.shadowOffsetY = Math.max(2, Math.round(size * 0.03));
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.arcTo(x + size, y, x + size, y + size, radius);
+    ctx.arcTo(x + size, y + size, x, y + size, radius);
+    ctx.arcTo(x, y + size, x, y, radius);
+    ctx.arcTo(x, y, x + size, y, radius);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(20,22,28,0.72)';
+    ctx.fill();
+    ctx.shadowColor = 'transparent';
+    // Spinner: busur putus-putus di tengah kartu, sudutnya digeser
+    // berdasarkan waktu berjalan (Date.now()) supaya animasinya jalan
+    // sendiri tiap kali stempel digambar ulang selama masih loading.
+    const cx = x + size / 2, cy = y + size * 0.42, r = size * 0.15;
+    const spin = (Date.now() / 260) % (Math.PI * 2);
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, spin, spin + Math.PI * 1.3);
+    ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+    ctx.lineWidth = Math.max(2, size * 0.03);
+    ctx.lineCap = 'round';
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+    ctx.font = `600 ${Math.max(9, Math.round(size * 0.1))}px Poppins, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText('Memuat peta…', cx, y + size * 0.62);
+    ctx.textAlign = 'left';
+    ctx.restore();
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.arcTo(x + size, y, x + size, y + size, radius);
+    ctx.arcTo(x + size, y + size, x, y + size, radius);
+    ctx.arcTo(x, y + size, x, y, radius);
+    ctx.arcTo(x, y, x + size, y, radius);
+    ctx.closePath();
+    ctx.lineWidth = Math.max(1.5, size * 0.018);
+    ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+    ctx.stroke();
+    ctx.restore();
+    // Selagi masih loading, jadwalkan satu render ulang lagi supaya
+    // spinner-nya terus berputar (bukan cuma diam di satu sudut) --
+    // dibatalkan otomatis begitu status berubah (peta siap/gagal) krn
+    // syarat `loading` di atas jadi false.
+    if (!ccMapSpinnerTimer) {
+      ccMapSpinnerTimer = setTimeout(() => {
+        ccMapSpinnerTimer = null;
+        if (ccMapStatus === 'loading' && ccMapStatusKey === ccMapKeyFor(ccCapturedFix)) {
+          ccRenderStampedPhoto(ccEditAddressText, ccEditPlaceText);
+        }
+      }, 180);
+    }
+    return;
+  }
   ctx.save();
   // Bayangan tipis di belakang kartu peta spy kebaca jelas biarpun latar
   // fotonya terang/kontras rendah -- gaya kartu "melayang" ala GPS Map
@@ -13163,21 +13219,13 @@ async function ccCaptureFoto() {
   // digambar ulang otomatis begitu peta selesai dimuat.
   ccMapImg = null;
   ccMapImgKey = null;
-  // Kalau prefetch LIVE (ccPrefetchLiveMap, jalan terus di background
-  // selagi GPS live) kebetulan SUDAH punya peta utk titik yg SAMA persis
-  // dgn ccCapturedFix, pakai LANGSUNG -- tidak perlu nunggu network lagi,
-  // jadi peta bisa langsung nempel di render PERTAMA di bawah (lihat
-  // ccRenderStampedPhoto beberapa baris ke bawah), bukan "menyusul".
-  const capturedKey = ccMapKeyFor(ccCapturedFix);
-  if (ccLiveMapImg && ccLiveMapImgKey === capturedKey) {
-    ccMapImg = ccLiveMapImg;
-    ccMapImgKey = ccLiveMapImgKey;
-  } else {
-    // Belum ada/tidak cocok (mis. baru pindah lokasi, atau prefetch
-    // masih dlm proses/gagal) -- fallback spt sebelumnya: muat dr nol,
-    // stempel digambar ulang otomatis begitu selesai.
-    ccLoadMapForFix(ccCapturedFix);
-  }
+  // Peta mini SELALU mulai dimuat dari nol persis saat jepret ditekan
+  // (bukan prefetch selagi masih live-preview) -- foto pertama tampil
+  // TANPA peta dulu (kartu "Memuat peta..." yg tampil, lihat
+  // ccDrawMapThumbnail), lalu digambar ulang otomatis begitu peta
+  // selesai dimuat (atau setelah beberapa kali retry, lihat
+  // ccLoadMapForFix) supaya tetap tahan jaringan yg tidak stabil.
+  ccLoadMapForFix(ccCapturedFix);
 
   // Kilat putih sekilas ala shutter kamera bawaan HP -- murni efek
   // visual, tidak menunda proses stempel/encode di bawah ini.
