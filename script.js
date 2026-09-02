@@ -11866,6 +11866,58 @@ function ccHideError() {
 function ccFormatCoord(v) {
   return typeof v === 'number' && isFinite(v) ? v.toFixed(6) + '°' : '–';
 }
+// ---- Model perangkat SPESIFIK (mis. "Samsung SM-A525F") di baris "Tipe
+// Perangkat" ----
+// Fungsi deviceMgmtGuessAndroidBrand/deviceMgmtMatchBrandRule/
+// deviceMgmtFetchClientHintsModel di bawah ini DAUR ULANG apa adanya dari
+// fitur "Manajemen Perangkat" (lihat komentarnya lebih lengkap dekat
+// definisi asli, cari "ANDROID_BRAND_RULES") -- dipakai lagi di sini spy
+// halaman Koordinat Kamera TIDAK perlu logic parsing model terpisah
+// sendiri. ccResolvedDeviceModel diisi ASYNC lewat Client Hints API
+// (jauh lebih akurat drpd tebak dari string User-Agent biasa) begitu
+// kamera pertama kali dibuka (lihat ccEnrichDeviceModelFromClientHints,
+// dipanggil dari ccStartCamera) -- baru terisi beberapa saat SETELAH
+// kamera aktif (async), makanya field "Tipe Perangkat" bisa sempat
+// tampil generik dulu ("Mobile • Android") lalu berubah jadi lebih
+// spesifik ("Mobile • Android (Samsung SM-A525F)") begitu hasilnya
+// datang -- BUKAN bug, memang begitu cara kerja API-nya.
+//
+// PENTING -- keterbatasan yg TIDAK BISA diakali dari kode web manapun:
+// 1) Android: SEBAGIAN device/browser (terutama Chrome versi baru krn
+//    kebijakan "User-Agent Reduction" Google sendiri) sudah tidak lagi
+//    membocorkan kode model sama sekali baik lewat UA string maupun
+//    Client Hints -- di situ label APA ADANYA jatuh ke "Android" polos,
+//    bukan krn parsernya salah.
+// 2) iPhone/iPad: Apple SENGAJA TIDAK PERNAH menyediakan info model
+//    spesifik (mis. "iPhone 13", "iPhone 15 Pro") ke JavaScript di
+//    browser manapun (Safari, Chrome iOS, dst semua sama) -- ini
+//    kebijakan privasi Apple di level sistem operasi, bukan sesuatu yg
+//    bisa "diperbaiki" dari sisi web app. Web browser di iOS SELALU
+//    cuma melaporkan "iPhone" atau "iPad" generik, tidak pernah versi/
+//    model. Satu-satunya cara dapat model iPhone spesifik adalah lewat
+//    APLIKASI NATIVE (bukan web) yg diberi izin akses API perangkat
+//    khusus Apple -- di luar jangkauan web app spt ini.
+let ccResolvedDeviceModel = null;
+let ccDeviceModelEnrichStarted = false;
+function ccEnrichDeviceModelFromClientHints() {
+  if (ccDeviceModelEnrichStarted) return;
+  ccDeviceModelEnrichStarted = true;
+  if (typeof deviceMgmtFetchClientHintsModel !== 'function') return;
+  deviceMgmtFetchClientHintsModel().then((rawModel) => {
+    if (!rawModel) return; // tidak didukung/gagal -- biarkan tebakan UA string (kalau ada) apa adanya
+    const guess = typeof deviceMgmtMatchBrandRule === 'function' ? deviceMgmtMatchBrandRule(rawModel) : null;
+    if (!guess) return;
+    ccResolvedDeviceModel = guess.brand ? `${guess.brand} ${guess.model}` : guess.model;
+    // Kamera mungkin masih aktif saat hasil Client Hints ini baru datang
+    // (prosesnya async) -- refresh label yg sudah kadung tampil generik
+    // spy user tidak perlu tutup-buka halaman lagi cuma utk lihat versi
+    // yg lebih spesifik.
+    if (ccActive) {
+      const typeEl = document.getElementById('ccDeviceType');
+      if (typeEl) typeEl.textContent = ccGetDeviceType();
+    }
+  });
+}
 // Deteksi tipe perangkat (Mobile/Tablet/Desktop) + OS dari User-Agent
 // browser -- ini deteksi sisi client based on navigator.userAgent,
 // jadi otomatis kebaca APAKAH foto diambil dari HP (mobile) atau dari
@@ -11882,7 +11934,23 @@ function ccGetDeviceType() {
   const isTablet = /iPad|Tablet/i.test(ua) || (/Android/i.test(ua) && !/Mobile/i.test(ua)) || (shortSide >= 600 && /Android|iPhone|iPod/i.test(ua));
   const isMobile = !isTablet && /Android|iPhone|iPod|Mobile|Windows Phone/i.test(ua);
   const type = isTablet ? 'Tablet' : (isMobile ? 'Mobile' : 'Desktop');
-  return `${type} • ${os}`;
+  // Model spesifik (mis. "Samsung SM-A525F") CUMA bisa terisi utk
+  // Android -- lihat catatan lengkap di ccResolvedDeviceModel di atas
+  // soal kenapa iPhone/iPad tidak pernah bisa dapat model spesifik sama
+  // sekali. Prioritas: hasil Client Hints (ccResolvedDeviceModel, lebih
+  // akurat) kalau sudah datang, kalau belum/tidak tersedia baru fallback
+  // ke tebakan dari string User-Agent (deviceMgmtGuessAndroidBrand).
+  let model = '';
+  if (/Android/i.test(ua)) {
+    if (ccResolvedDeviceModel) {
+      model = ccResolvedDeviceModel;
+    } else if (typeof deviceMgmtGuessAndroidBrand === 'function') {
+      const guess = deviceMgmtGuessAndroidBrand(ua);
+      if (guess) model = guess.brand ? `${guess.brand} ${guess.model}` : guess.model;
+    }
+  }
+  const osLabel = model ? `${os} (${model})` : os;
+  return `${type} • ${osLabel}`;
 }
 // Label kamera fisik yg dipakai (mis. "Kamera belakang, 12MP" kalau
 // browser mengizinkan lihat track.label -- Chrome/Android biasanya
@@ -12254,6 +12322,7 @@ async function ccStartCamera() {
     const panel = document.getElementById('ccInfoPanel');
     if (panel) panel.hidden = false;
     ccUpdateDeviceInfo();
+    ccEnrichDeviceModelFromClientHints();
     const placeholder = document.getElementById('ccCamPlaceholder');
     if (placeholder) placeholder.hidden = true;
     if (hint) hint.hidden = true;
@@ -12712,7 +12781,15 @@ document.getElementById('ccCopyBtn')?.addEventListener('click', () => {
 document.getElementById('ccMapsBtn')?.addEventListener('click', () => {
   const fix = ccAvgFix || ccLastFix;
   if (!fix) { showToast('Tunggu GPS mendapat titik lokasi dulu', 'err'); return; }
-  window.open(`https://www.google.com/maps?q=${fix.lat},${fix.lng}`, '_blank', 'noopener');
+  // Titik pin TETAP presisi di koordinat GPS asli (lat,lng) -- nama
+  // tempat cuma ditambahkan sbg LABEL yg tampil di balon info Google
+  // Maps lewat format "lat,lng(label)" (dokumentasi lama Google Maps,
+  // masih didukung) -- BUKAN diganti jadi pencarian teks bebas yg
+  // pin-nya bisa meleset dari titik GPS asli. Kalau nama tempat tidak
+  // terdeteksi (mis. lokasi di tengah kebun/jalan tanpa POI), fallback
+  // ke titik koordinat polos spt sebelumnya.
+  const label = ccLastPlaceName ? `(${encodeURIComponent(ccLastPlaceName)})` : '';
+  window.open(`https://www.google.com/maps?q=${fix.lat},${fix.lng}${label}`, '_blank', 'noopener');
 });
 
 function openCameraCoordOverlay() {
