@@ -10437,6 +10437,10 @@ function openFastMenuOverlay() {
 function closeFastMenuOverlay() {
   document.getElementById('fastMenuOverlay')?.classList.remove('open');
   unlockBodyScroll();
+  // Kalau halaman ditutup selagi mode "Atur Fast Menu" masih aktif,
+  // matikan dulu mode-editnya supaya lain kali dibuka lagi tampilannya
+  // balik ke grid 3 kolom normal (bukan nyangkut di daftar mode-edit).
+  if (fastMenuEditMode) setFastMenuEditMode(false);
 }
 document.getElementById('fastMenuOpenBtn')?.addEventListener('click', openFastMenuOverlay);
 document.getElementById('fastMenuBackBtn')?.addEventListener('click', closeFastMenuOverlay);
@@ -10477,12 +10481,190 @@ document.getElementById('fmGridSayaBtn')?.addEventListener('click', () => {
   if (window.zpShowPage) window.zpShowPage('saya');
 });
 
-/* ---- Tombol pil "Atur Fast Menu" di footer halaman Fast Menu -- fitur
-   susun-ulang pintasan belum ada, jadi sementara kasih toast info spt
-   pola fitur lain yg belum jadi (mis. tiket pengaduan). ---- */
+/* ==========================================================
+   ATUR FAST MENU — urutan & sembunyikan/tampilkan pintasan
+   Preferensi tersimpan di cloudStorage (ikut kartu Fast Menu Beranda
+   #fastMenuHomeRow MAUPUN grid "Menu Utama" #fastMenuGridRow, karena
+   isinya sama persis lewat atribut data-fmkey yang dipasang di tiap
+   tombol pintasan -- lihat markup #fastMenuHomeRow/#fastMenuGridRow
+   di index.html).
+
+   Tombol pil "Atur Fast Menu" di footer mengubah grid "Menu Utama"
+   jadi mode-edit (daftar vertikal 1 kolom, lihat CSS .fm-menu-grid
+   .fm-edit-mode): tiap baris dapat panah naik/turun (ganti urutan)
+   & ikon mata (sembunyikan/tampilkan). Setiap perubahan langsung
+   disimpan (auto-save), jadi tombol pil cuma berfungsi buka/tutup
+   mode-edit -- teksnya berubah jadi "Selesai Mengatur" selama aktif. */
+const FAST_MENU_SETTINGS_KEY = 'alirin_fast_menu_settings_v1';
+const FAST_MENU_ORDER_DEFAULT = ['addtx', 'tagihan', 'laporan', 'dompet', 'pendapatan', 'pengaturan', 'kalkulator', 'kurs', 'scanner', 'camera'];
+let fastMenuEditMode = false;
+
+function loadFastMenuSettings() {
+  let order = FAST_MENU_ORDER_DEFAULT.slice();
+  let hidden = {};
+  try {
+    const raw = JSON.parse(cloudStorage.getItem(FAST_MENU_SETTINGS_KEY) || '{}');
+    if (Array.isArray(raw.order)) {
+      // Saring cuma key yg valid & tidak dobel dari yg tersimpan, lalu
+      // sisipkan key yg belum ada (mis. pintasan baru dari update
+      // aplikasi berikutnya) di bagian akhir supaya tidak hilang.
+      const validSaved = raw.order.filter((k, i) => FAST_MENU_ORDER_DEFAULT.includes(k) && raw.order.indexOf(k) === i);
+      const missing = FAST_MENU_ORDER_DEFAULT.filter((k) => !validSaved.includes(k));
+      order = [...validSaved, ...missing];
+    }
+    if (raw.hidden && typeof raw.hidden === 'object') hidden = raw.hidden;
+  } catch (e) { /* abaikan, pakai default */ }
+  return { order, hidden };
+}
+
+function saveFastMenuSettings(settings) {
+  try { cloudStorage.setItem(FAST_MENU_SETTINGS_KEY, JSON.stringify(settings)); } catch (e) { /* abaikan */ }
+}
+
+function fastMenuReorderContainer(container, order) {
+  if (!container) return;
+  order.forEach((key) => {
+    const el = container.querySelector(`.fm-menu-item[data-fmkey="${key}"]`);
+    if (el) container.appendChild(el);
+  });
+}
+
+// `editing=true` (dipakai grid "Menu Utama" selama mode-edit aktif)
+// membuat item yg disembunyikan tetap tampil tapi diredupkan (class
+// fm-item-hidden), supaya masih bisa dipencet ikon matanya utk
+// ditampilkan lagi. Selain itu (browsing biasa / kartu Beranda)
+// item yg disembunyikan langsung display:none.
+function fastMenuApplyVisibility(container, hidden, editing) {
+  if (!container) return;
+  container.querySelectorAll('.fm-menu-item[data-fmkey]').forEach((el) => {
+    const isHidden = !!hidden[el.dataset.fmkey];
+    el.classList.toggle('fm-item-hidden', isHidden && !!editing);
+    el.style.display = (isHidden && !editing) ? 'none' : '';
+  });
+}
+
+function applyFastMenuSettings(settings) {
+  const s = settings || loadFastMenuSettings();
+  const homeRow = document.getElementById('fastMenuHomeRow');
+  const gridRow = document.getElementById('fastMenuGridRow');
+  fastMenuReorderContainer(homeRow, s.order);
+  fastMenuReorderContainer(gridRow, s.order);
+  fastMenuApplyVisibility(homeRow, s.hidden, false);
+  fastMenuApplyVisibility(gridRow, s.hidden, fastMenuEditMode);
+
+  // Kalau SEMUA pintasan di kartu Fast Menu Beranda disembunyikan,
+  // sembunyikan seluruh kartunya juga (pola sama dgn deviceSocialSection
+  // di applyWidgetSettings) supaya tidak menyisakan kartu kosong.
+  const homeCard = document.getElementById('fastMenuHomeCard');
+  if (homeCard) {
+    const allHidden = FAST_MENU_ORDER_DEFAULT.every((k) => !!s.hidden[k]);
+    homeCard.style.display = allHidden ? 'none' : '';
+  }
+}
+
+const FAST_MENU_EDIT_ICONS = {
+  up: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>',
+  down: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>',
+  eye: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg>',
+  eyeOff: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.6 18.6 0 0 1-2.35 3.44M6.61 6.61C3.9 8.36 2 12 2 12s4 8 11 8a9.9 9.9 0 0 0 5.39-1.61M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>',
+};
+
+// Pasang panah naik/turun + ikon mata di tiap baris grid "Menu Utama"
+// selagi mode-edit aktif. Dipanggil ulang tiap kali urutan/visibilitas
+// berubah supaya status disabled (item paling atas/bawah) & ikon mata
+// (terbuka/tercoret) selalu sinkron.
+function renderFastMenuEditControls() {
+  const gridRow = document.getElementById('fastMenuGridRow');
+  if (!gridRow) return;
+  const settings = loadFastMenuSettings();
+  const items = [...gridRow.querySelectorAll('.fm-menu-item[data-fmkey]')];
+  items.forEach((el, idx) => {
+    el.querySelector('.fm-edit-controls')?.remove();
+    const key = el.dataset.fmkey;
+    const isHidden = !!settings.hidden[key];
+    const wrap = document.createElement('span');
+    wrap.className = 'fm-edit-controls';
+    wrap.innerHTML =
+      `<span class="fm-edit-btn fm-up-btn${idx === 0 ? ' is-disabled' : ''}" role="button" tabindex="0" aria-label="Naikkan urutan">${FAST_MENU_EDIT_ICONS.up}</span>` +
+      `<span class="fm-edit-btn fm-down-btn${idx === items.length - 1 ? ' is-disabled' : ''}" role="button" tabindex="0" aria-label="Turunkan urutan">${FAST_MENU_EDIT_ICONS.down}</span>` +
+      `<span class="fm-edit-btn fm-eye-btn${isHidden ? ' is-hidden' : ''}" role="button" tabindex="0" aria-label="${isHidden ? 'Tampilkan pintasan' : 'Sembunyikan pintasan'}">${isHidden ? FAST_MENU_EDIT_ICONS.eyeOff : FAST_MENU_EDIT_ICONS.eye}</span>`;
+    el.appendChild(wrap);
+  });
+}
+
+function setFastMenuEditMode(on) {
+  fastMenuEditMode = on;
+  const gridRow = document.getElementById('fastMenuGridRow');
+  const aturBtn = document.getElementById('fastMenuAturBtn');
+  const subtitle = document.getElementById('fastMenuGridSubtitle');
+  gridRow?.classList.toggle('fm-edit-mode', on);
+  if (aturBtn) aturBtn.textContent = on ? 'Selesai Mengatur' : 'Atur Fast Menu';
+  if (subtitle) {
+    subtitle.textContent = on
+      ? 'Pakai panah naik/turun untuk urutkan, ikon mata untuk sembunyikan/tampilkan pintasan.'
+      : 'Pilih fitur favoritmu untuk akses cepat tanpa perlu bolak-balik ke Beranda.';
+  }
+  if (on) {
+    renderFastMenuEditControls();
+  } else {
+    gridRow?.querySelectorAll('.fm-edit-controls').forEach((c) => c.remove());
+  }
+  fastMenuApplyVisibility(gridRow, loadFastMenuSettings().hidden, on);
+}
+
 document.getElementById('fastMenuAturBtn')?.addEventListener('click', () => {
-  showToast('Fitur atur Fast Menu segera hadir.');
+  setFastMenuEditMode(!fastMenuEditMode);
 });
+
+/* ---- Interaksi selama mode-edit (panah naik/turun & ikon mata) ----
+   Listener dipasang di FASE CAPTURE pada container #fastMenuGridRow
+   supaya jalan LEBIH DULU drpd listener klik tiap tombol pintasan
+   (#fmGridAddTxBtn dst, yg akan membuka fitur & menutup halaman Fast
+   Menu kalau tidak dicegat). Selama mode-edit aktif, propagation
+   langsung dihentikan (stopPropagation) apa pun yg diklik di dalam
+   grid -- supaya listener klik navigasi bawaan tombol pintasan tidak
+   pernah kebagian jalan & salah pencet tidak berujung pindah
+   halaman. ---- */
+document.getElementById('fastMenuGridRow')?.addEventListener('click', (e) => {
+  if (!fastMenuEditMode) return;
+  e.stopPropagation();
+  e.preventDefault();
+
+  const controlBtn = e.target.closest('.fm-edit-btn');
+  if (!controlBtn || controlBtn.classList.contains('is-disabled')) return;
+  const item = controlBtn.closest('.fm-menu-item[data-fmkey]');
+  if (!item) return;
+  const key = item.dataset.fmkey;
+  const settings = loadFastMenuSettings();
+
+  if (controlBtn.classList.contains('fm-up-btn')) {
+    const i = settings.order.indexOf(key);
+    if (i > 0) {
+      [settings.order[i - 1], settings.order[i]] = [settings.order[i], settings.order[i - 1]];
+      saveFastMenuSettings(settings);
+      applyFastMenuSettings(settings);
+      renderFastMenuEditControls();
+    }
+  } else if (controlBtn.classList.contains('fm-down-btn')) {
+    const i = settings.order.indexOf(key);
+    if (i > -1 && i < settings.order.length - 1) {
+      [settings.order[i + 1], settings.order[i]] = [settings.order[i], settings.order[i + 1]];
+      saveFastMenuSettings(settings);
+      applyFastMenuSettings(settings);
+      renderFastMenuEditControls();
+    }
+  } else if (controlBtn.classList.contains('fm-eye-btn')) {
+    if (settings.hidden[key]) delete settings.hidden[key];
+    else settings.hidden[key] = true;
+    saveFastMenuSettings(settings);
+    applyFastMenuSettings(settings);
+    renderFastMenuEditControls();
+    showToast(settings.hidden[key] ? 'Pintasan disembunyikan' : 'Pintasan ditampilkan');
+  }
+}, true);
+
+// Terapkan preferensi urutan/visibilitas tersimpan begitu halaman dimuat.
+applyFastMenuSettings(loadFastMenuSettings());
 
 /* ==========================================================
    KALKULATOR (#kalkulatorOverlay) -- pintasan baru di kartu Fast Menu

@@ -2571,6 +2571,38 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 .fm-menu-grid .fm-menu-item{width:auto;}
 .fm-menu-grid .fm-menu-label{white-space:normal;max-width:none;}
 
+/* ---- Mode "Atur Fast Menu" (#fastMenuGridRow.fm-edit-mode) ----
+   Diaktifkan lewat tombol pil "Atur Fast Menu" di footer halaman Fast
+   Menu (lihat toggleFastMenuEditMode() di script.js). Grid 3 kolom
+   biasa diubah jadi daftar vertikal 1 kolom supaya kontrol urutan
+   (panah atas/bawah) & tampil/sembunyi (ikon mata) muat & mudah
+   disentuh di HP. Tap ke pintasan dinonaktifkan selama mode ini aktif
+   (lihat fastMenuGridRow click-listener) supaya tidak salah pencet
+   & malah pindah halaman ketika sedang mengatur. ---- */
+.fm-menu-grid.fm-edit-mode{
+  display:flex;flex-direction:column;gap:3px;margin-top:10px;
+}
+.fm-menu-grid.fm-edit-mode .fm-menu-item{
+  flex-direction:row;align-items:center;justify-content:flex-start;gap:14px;
+  width:100%;padding:9px 6px;border-radius:12px;cursor:default;
+}
+.fm-menu-grid.fm-edit-mode .fm-menu-item:active{background:color-mix(in srgb, var(--ink) 6%, transparent);}
+.fm-menu-grid.fm-edit-mode .fm-menu-ic{width:40px;height:40px;border-radius:11px;flex-shrink:0;}
+.fm-menu-grid.fm-edit-mode .fm-menu-item:hover .fm-menu-ic{transform:none;box-shadow:0 4px 10px -3px rgba(0,0,0,0.22);}
+.fm-menu-grid.fm-edit-mode .fm-menu-label{text-align:left;white-space:nowrap;font-size:13px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;}
+.fm-menu-item.fm-item-hidden{opacity:0.42;}
+.fm-menu-item.fm-item-hidden .fm-menu-ic{filter:grayscale(0.55);}
+.fm-edit-controls{display:flex;align-items:center;gap:5px;margin-left:auto;flex-shrink:0;}
+.fm-edit-btn{
+  width:30px;height:30px;border-radius:9px;border:1px solid var(--line);
+  background:var(--card);display:flex;align-items:center;justify-content:center;
+  color:var(--ink-faint);cursor:pointer;flex-shrink:0;padding:0;-webkit-tap-highlight-color:transparent;
+  transition:background .15s ease,color .15s ease,opacity .15s ease,border-color .15s ease;
+}
+.fm-edit-btn:active{transform:scale(0.92);}
+.fm-edit-btn.is-disabled{opacity:0.3;pointer-events:none;}
+.fm-edit-btn.fm-eye-btn.is-hidden{color:var(--danger,#DC2626);border-color:color-mix(in srgb, var(--danger,#DC2626) 40%, var(--line));}
+
 /* ---- Halaman "Kalkulator" (#kalkulatorOverlay) ----
    Layar hasil di atas (angka besar rata kanan, format id-ID: titik
    pemisah ribuan + koma desimal -- SAMA PERSIS dgn format nominal di
@@ -13549,61 +13581,61 @@ html.dark-mode .bd-row-close{
       </button>
     </div>
     <div class="fm-menu-row" id="fastMenuHomeRow">
-      <button type="button" class="fm-menu-item" id="fmHomeAddTxBtn" title="Tambah Transaksi">
+      <button type="button" class="fm-menu-item" id="fmHomeAddTxBtn" data-fmkey="addtx" title="Tambah Transaksi">
         <span class="fm-menu-ic" style="--fm-color:#059669;">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>
         </span>
         <span class="fm-menu-label">Tambah</span>
       </button>
-      <button type="button" class="fm-menu-item" id="fmHomeTagihanBtn" title="Tagihan &amp; Hutang">
+      <button type="button" class="fm-menu-item" id="fmHomeTagihanBtn" data-fmkey="tagihan" title="Tagihan &amp; Hutang">
         <span class="fm-menu-ic" style="--fm-color:#B45309;">
           <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2.5h12v19l-2.5-1.6L13 21.5l-1.9-1.6-1.6 1.6-1.5-1.6L6 21.5v-19Z"/><path d="M8.5 8h7M8.5 12h7M8.5 16h4"/></svg>
         </span>
         <span class="fm-menu-label">Tagihan</span>
       </button>
-      <button type="button" class="fm-menu-item" id="fmHomeLaporanBtn" title="Laporan">
+      <button type="button" class="fm-menu-item" id="fmHomeLaporanBtn" data-fmkey="laporan" title="Laporan">
         <span class="fm-menu-ic" style="--fm-color:#2563EB;">
           <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V11"/><path d="M12 21V5"/><path d="M20 21v-8"/><path d="M3 21h18"/></svg>
         </span>
         <span class="fm-menu-label">Laporan</span>
       </button>
-      <button type="button" class="fm-menu-item" id="fmHomeDompetBtn" title="Dompet">
+      <button type="button" class="fm-menu-item" id="fmHomeDompetBtn" data-fmkey="dompet" title="Dompet">
         <span class="fm-menu-ic" style="--fm-color:#7C3AED;">
           <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8a2 2 0 0 1 2-2h11.5a1.5 1.5 0 0 1 1.5 1.5V9"/><rect x="3" y="8" width="18" height="12" rx="2"/><path d="M16 14.25h2.5"/></svg>
         </span>
         <span class="fm-menu-label">Dompet</span>
       </button>
-      <button type="button" class="fm-menu-item" id="fmHomeSumberBtn" title="Sumber Pendapatan">
+      <button type="button" class="fm-menu-item" id="fmHomeSumberBtn" data-fmkey="pendapatan" title="Sumber Pendapatan">
         <span class="fm-menu-ic" style="--fm-color:#0891B2;">
           <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
         </span>
         <span class="fm-menu-label">Pendapatan</span>
       </button>
-      <button type="button" class="fm-menu-item" id="fmHomeSayaBtn" title="Pengaturan">
+      <button type="button" class="fm-menu-item" id="fmHomeSayaBtn" data-fmkey="pengaturan" title="Pengaturan">
         <span class="fm-menu-ic" style="--fm-color:#475569;">
           <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         </span>
         <span class="fm-menu-label">Pengaturan</span>
       </button>
-      <button type="button" class="fm-menu-item" id="fmHomeKalkulatorBtn" title="Kalkulator">
+      <button type="button" class="fm-menu-item" id="fmHomeKalkulatorBtn" data-fmkey="kalkulator" title="Kalkulator">
         <span class="fm-menu-ic" style="--fm-color:#F2672B;">
           <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2.4"/><line x1="8" y1="6.3" x2="16" y2="6.3"/><line x1="8" y1="11" x2="8" y2="11.01"/><line x1="12" y1="11" x2="12" y2="11.01"/><line x1="16" y1="11" x2="16" y2="11.01"/><line x1="8" y1="15" x2="8" y2="15.01"/><line x1="12" y1="15" x2="12" y2="15.01"/><line x1="16" y1="15" x2="16" y2="15.01"/><line x1="8" y1="19" x2="8" y2="19.01"/><line x1="12" y1="19" x2="12" y2="19.01"/><line x1="16" y1="19" x2="16" y2="19.01"/></svg>
         </span>
         <span class="fm-menu-label">Kalkulator</span>
       </button>
-      <button type="button" class="fm-menu-item" id="fmHomeKursBtn" title="Kurs Mata Uang">
+      <button type="button" class="fm-menu-item" id="fmHomeKursBtn" data-fmkey="kurs" title="Kurs Mata Uang">
         <span class="fm-menu-ic" style="--fm-color:#0D9488;">
           <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/></svg>
         </span>
         <span class="fm-menu-label">Kurs</span>
       </button>
-      <button type="button" class="fm-menu-item" id="fmHomeBarcodeBtn" title="Scanner Barcode">
+      <button type="button" class="fm-menu-item" id="fmHomeBarcodeBtn" data-fmkey="scanner" title="Scanner Barcode">
         <span class="fm-menu-ic" style="--fm-color:#4F46E5;">
           <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="7" y1="8" x2="7" y2="16"/><line x1="10.5" y1="8" x2="10.5" y2="16"/><line x1="14" y1="8" x2="14" y2="16"/><line x1="17.5" y1="8" x2="17.5" y2="16"/></svg>
         </span>
         <span class="fm-menu-label">Scanner</span>
       </button>
-      <button type="button" class="fm-menu-item" id="fmHomeCoordBtn" title="Koordinat Kamera">
+      <button type="button" class="fm-menu-item" id="fmHomeCoordBtn" data-fmkey="camera" title="Koordinat Kamera">
         <span class="fm-menu-ic" style="--fm-color:#DC2626;">
           <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z"/><circle cx="12" cy="13" r="4"/></svg>
         </span>
@@ -14435,64 +14467,64 @@ html.dark-mode .bd-row-close{
       <div class="lap-filter-card">
         <div class="fm-grid-head">
           <h3 class="fm-grid-title">Menu Utama</h3>
-          <p class="fm-grid-subtitle">Pilih fitur favoritmu untuk akses cepat tanpa perlu bolak-balik ke Beranda.</p>
+          <p class="fm-grid-subtitle" id="fastMenuGridSubtitle">Pilih fitur favoritmu untuk akses cepat tanpa perlu bolak-balik ke Beranda.</p>
         </div>
         <div class="fm-menu-grid" id="fastMenuGridRow">
-          <button type="button" class="fm-menu-item" id="fmGridAddTxBtn" title="Tambah Transaksi">
+          <button type="button" class="fm-menu-item" id="fmGridAddTxBtn" data-fmkey="addtx" title="Tambah Transaksi">
             <span class="fm-menu-ic" style="--fm-color:#059669;">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>
             </span>
             <span class="fm-menu-label">Tambah</span>
           </button>
-          <button type="button" class="fm-menu-item" id="fmGridTagihanBtn" title="Tagihan &amp; Hutang">
+          <button type="button" class="fm-menu-item" id="fmGridTagihanBtn" data-fmkey="tagihan" title="Tagihan &amp; Hutang">
             <span class="fm-menu-ic" style="--fm-color:#B45309;">
               <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2.5h12v19l-2.5-1.6L13 21.5l-1.9-1.6-1.6 1.6-1.5-1.6L6 21.5v-19Z"/><path d="M8.5 8h7M8.5 12h7M8.5 16h4"/></svg>
             </span>
             <span class="fm-menu-label">Tagihan</span>
           </button>
-          <button type="button" class="fm-menu-item" id="fmGridLaporanBtn" title="Laporan">
+          <button type="button" class="fm-menu-item" id="fmGridLaporanBtn" data-fmkey="laporan" title="Laporan">
             <span class="fm-menu-ic" style="--fm-color:#2563EB;">
               <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V11"/><path d="M12 21V5"/><path d="M20 21v-8"/><path d="M3 21h18"/></svg>
             </span>
             <span class="fm-menu-label">Laporan</span>
           </button>
-          <button type="button" class="fm-menu-item" id="fmGridDompetBtn" title="Dompet">
+          <button type="button" class="fm-menu-item" id="fmGridDompetBtn" data-fmkey="dompet" title="Dompet">
             <span class="fm-menu-ic" style="--fm-color:#7C3AED;">
               <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8a2 2 0 0 1 2-2h11.5a1.5 1.5 0 0 1 1.5 1.5V9"/><rect x="3" y="8" width="18" height="12" rx="2"/><path d="M16 14.25h2.5"/></svg>
             </span>
             <span class="fm-menu-label">Dompet</span>
           </button>
-          <button type="button" class="fm-menu-item" id="fmGridSumberBtn" title="Sumber Pendapatan">
+          <button type="button" class="fm-menu-item" id="fmGridSumberBtn" data-fmkey="pendapatan" title="Sumber Pendapatan">
             <span class="fm-menu-ic" style="--fm-color:#0891B2;">
               <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
             </span>
             <span class="fm-menu-label">Pendapatan</span>
           </button>
-          <button type="button" class="fm-menu-item" id="fmGridSayaBtn" title="Pengaturan">
+          <button type="button" class="fm-menu-item" id="fmGridSayaBtn" data-fmkey="pengaturan" title="Pengaturan">
             <span class="fm-menu-ic" style="--fm-color:#475569;">
               <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
             </span>
             <span class="fm-menu-label">Pengaturan</span>
           </button>
-          <button type="button" class="fm-menu-item" id="fmGridKalkulatorBtn" title="Kalkulator">
+          <button type="button" class="fm-menu-item" id="fmGridKalkulatorBtn" data-fmkey="kalkulator" title="Kalkulator">
             <span class="fm-menu-ic" style="--fm-color:#F2672B;">
               <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2.4"/><line x1="8" y1="6.3" x2="16" y2="6.3"/><line x1="8" y1="11" x2="8" y2="11.01"/><line x1="12" y1="11" x2="12" y2="11.01"/><line x1="16" y1="11" x2="16" y2="11.01"/><line x1="8" y1="15" x2="8" y2="15.01"/><line x1="12" y1="15" x2="12" y2="15.01"/><line x1="16" y1="15" x2="16" y2="15.01"/><line x1="8" y1="19" x2="8" y2="19.01"/><line x1="12" y1="19" x2="12" y2="19.01"/><line x1="16" y1="19" x2="16" y2="19.01"/></svg>
             </span>
             <span class="fm-menu-label">Kalkulator</span>
           </button>
-          <button type="button" class="fm-menu-item" id="fmGridKursBtn" title="Kurs Mata Uang">
+          <button type="button" class="fm-menu-item" id="fmGridKursBtn" data-fmkey="kurs" title="Kurs Mata Uang">
             <span class="fm-menu-ic" style="--fm-color:#0D9488;">
               <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/></svg>
             </span>
             <span class="fm-menu-label">Kurs</span>
           </button>
-          <button type="button" class="fm-menu-item" id="fmGridBarcodeBtn" title="Scanner Barcode">
+          <button type="button" class="fm-menu-item" id="fmGridBarcodeBtn" data-fmkey="scanner" title="Scanner Barcode">
             <span class="fm-menu-ic" style="--fm-color:#4F46E5;">
               <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="7" y1="8" x2="7" y2="16"/><line x1="10.5" y1="8" x2="10.5" y2="16"/><line x1="14" y1="8" x2="14" y2="16"/><line x1="17.5" y1="8" x2="17.5" y2="16"/></svg>
             </span>
             <span class="fm-menu-label">Scanner</span>
           </button>
-          <button type="button" class="fm-menu-item" id="fmGridCoordBtn" title="Koordinat Kamera">
+          <button type="button" class="fm-menu-item" id="fmGridCoordBtn" data-fmkey="camera" title="Koordinat Kamera">
             <span class="fm-menu-ic" style="--fm-color:#DC2626;">
               <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z"/><circle cx="12" cy="13" r="4"/></svg>
             </span>
