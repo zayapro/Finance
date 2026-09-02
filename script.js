@@ -11507,6 +11507,22 @@ let ccAvgFix = null;           // { lat, lng, accuracy, altitude, timestamp } --
 let ccFixBuffer = [];          // buffer beberapa bacaan GPS terakhir dipakai utk hitung ccAvgFix
 let ccLastAddress = '';
 let ccLastPlaceName = '';      // nama tempat (POI) kalau terdeteksi, mis. "Indomaret", "Kantor Pos" dst.
+// ---- Edit alamat manual (setelah jepret, sebelum simpan) --------------
+// ccRawFrameCanvas menyimpan frame foto MENTAH (belum ada stempel teks)
+// persis saat tombol jepret ditekan -- dipakai sbg "bahan baku" utk
+// menggambar ULANG stempel tiap kali user mengoreksi alamat lewat
+// panel edit (ccEditPanel), TANPA perlu ambil ulang frame dari video
+// (yg sudah berubah/bergerak). ccCapturedFix membekukan bacaan GPS/waktu
+// persis saat jepret (watchPosition GPS tetap jalan di background
+// walau video disembunyikan saat preview, jadi HARUS dibekukan di sini
+// supaya koordinat/waktu yg distempel tidak diam2 berubah saat user lagi
+// mengetik alamat). ccEditAddressText/ccEditPlaceText menyimpan alamat &
+// nama tempat versi TERKINI (awalnya = hasil deteksi otomatis, lalu bisa
+// ditimpa user lewat form edit) yg sedang dipakai di foto preview.
+let ccRawFrameCanvas = null;
+let ccCapturedFix = null;
+let ccEditAddressText = '';
+let ccEditPlaceText = '';
 let ccLastGeocodeAt = 0;
 let ccLastGeocodeLat = null;
 let ccLastGeocodeLng = null;
@@ -11794,7 +11810,11 @@ const CC_POI_CATEGORY_KEYS = [
   'shop', 'amenity', 'office', 'tourism', 'leisure', 'craft',
   'healthcare', 'building', 'man_made', 'historic', 'aeroway',
 ];
-function ccExtractPlaceName(data, fullAddress) {
+// Dipisah dari ccExtractPlaceName() supaya bisa dicek TERPISAH apakah
+// titik GPS memang PERSIS jatuh di atas POI ber-nama (dipakai ccReverseGeocode
+// utk memutuskan perlu tidaknya lanjut cari POI TERDEKAT via Overpass --
+// lihat ccFetchNearbyPOI di bawah).
+function ccExtractExactPOIName(data) {
   if (!data) return '';
   // 1) Cara paling andal: field "name" resmi hasil Nominatim -- hanya
   //    terisi kalau titik GPS memang tepat berada di sebuah POI ber-nama
@@ -11813,6 +11833,12 @@ function ccExtractPlaceName(data, fullAddress) {
   for (const key of CC_POI_CATEGORY_KEYS) {
     if (addr[key]) return String(addr[key]).trim();
   }
+  return '';
+}
+function ccExtractPlaceName(data, fullAddress) {
+  if (!data) return '';
+  const exact = ccExtractExactPOIName(data);
+  if (exact) return exact;
   // 3) Fallback lanjutan -- kalau titik GPS TIDAK persis jatuh di POI
   //    ber-nama apa pun (mis. di tengah jalan/lahan kosong/area
   //    perumahan biasa, kasus paling umum), tetap tampilkan nama
@@ -11915,6 +11941,61 @@ async function ccFetchNominatim(lat, lng, signal) {
 // habis/key salah, alamat & nama tempat tetap dapat dari Nominatim,
 // aplikasi tidak pernah macet total gara2 satu provider bermasalah.
 const CC_GEOCODE_PROVIDERS = [ccFetchLocationIQ, ccFetchGeoapify, ccFetchNominatim];
+
+// ---- Pencarian POI TERDEKAT via Overpass API (OpenStreetMap) ----------
+// LocationIQ/Geoapify/Nominatim di atas HANYA mengembalikan nama POI kalau
+// titik GPS PERSIS ada di atas POI tsb. Padahal akurasi GPS HP biasanya
+// cuma ±5-15m (lihat kolom "Akurasi" di kartu ini), jadi warung/toko yg
+// sebenarnya ada di titik itu sering "terlewat" hanya krn koordinatnya
+// geser sedikit. Overpass API -- bagian dari ekosistem OpenStreetMap yg
+// SAMA (data publik, GRATIS, TANPA API key & TANPA kartu kredit, beda dgn
+// Google Places yg mewajibkan billing aktif) -- dipakai di sini utk
+// mencari POI ber-nama dlm radius kecil dari titik GPS, lalu ambil yg
+// PALING DEKAT. Hanya dipanggil SEBAGAI FALLBACK, yaitu kalau provider
+// reverse-geocode di atas TIDAK menemukan POI persis di titik GPS
+// (lihat pemanggilannya di ccReverseGeocode).
+const CC_OVERPASS_ENDPOINT = 'https://overpass-api.de/api/interpreter';
+const CC_OVERPASS_RADIUS_M = 60; // radius pencarian POI terdekat dari titik GPS (meter)
+async function ccFetchNearbyPOI(lat, lng, signal) {
+  const r = CC_OVERPASS_RADIUS_M;
+  // Cari node/way ber-tag kategori POI (shop/amenity/office/craft/
+  // healthcare) yg JUGA punya "name" -- POI tanpa nama tidak berguna utk
+  // ditampilkan. "out center tags" supaya "way" (bangunan berbentuk
+  // area, bukan cuma titik) tetap dapat titik tengahnya (center) & tag2nya.
+  const query = `[out:json][timeout:10];(
+    node(around:${r},${lat},${lng})[shop][name];
+    node(around:${r},${lat},${lng})[amenity][name];
+    node(around:${r},${lat},${lng})[office][name];
+    node(around:${r},${lat},${lng})[craft][name];
+    node(around:${r},${lat},${lng})[healthcare][name];
+    way(around:${r},${lat},${lng})[shop][name];
+    way(around:${r},${lat},${lng})[amenity][name];
+  );out center tags;`;
+  const res = await fetch(CC_OVERPASS_ENDPOINT, {
+    method: 'POST',
+    body: 'data=' + encodeURIComponent(query),
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    signal,
+  });
+  if (!res.ok) throw new Error('overpass-fail');
+  const json = await res.json();
+  const elements = (json && Array.isArray(json.elements)) ? json.elements : [];
+  if (!elements.length) return null;
+  // Overpass tidak mengurutkan hasil by jarak -- dihitung manual di sini,
+  // ambil yg PALING DEKAT dgn titik GPS (pakai ccHaversineMeters yg sudah
+  // ada, dipakai juga utk rata-rata bacaan GPS di atas).
+  let best = null, bestDist = Infinity;
+  for (const el of elements) {
+    const elLat = el.lat != null ? el.lat : (el.center && el.center.lat);
+    const elLng = el.lon != null ? el.lon : (el.center && el.center.lon);
+    if (elLat == null || elLng == null || !el.tags || !el.tags.name) continue;
+    const dist = ccHaversineMeters(lat, lng, elLat, elLng);
+    if (dist < bestDist) { bestDist = dist; best = el; }
+  }
+  if (!best) return null;
+  return { name: String(best.tags.name).trim(), distance: bestDist };
+}
+
 async function ccReverseGeocode(lat, lng) {
   if (ccGeocodeAbort) { try { ccGeocodeAbort.abort(); } catch (e) {} }
   ccGeocodeAbort = (typeof AbortController !== 'undefined') ? new AbortController() : null;
@@ -11945,7 +12026,29 @@ async function ccReverseGeocode(lat, lng) {
     const builtAddress = ccBuildFullAddress(data);
     ccLastAddress = builtAddress || 'Alamat tidak ditemukan';
     if (addrEl) addrEl.textContent = ccLastAddress;
-    ccLastPlaceName = ccExtractPlaceName(data, builtAddress);
+    // Cek dulu apakah titik GPS PERSIS jatuh di atas POI ber-nama (toko/
+    // warung/kantor/dst). Kalau TIDAK (kasus paling umum -- titik geser
+    // sedikit dari POI aslinya krn akurasi GPS), coba cari POI TERDEKAT
+    // dlm radius kecil via Overpass DULU, sebelum jatuh ke fallback nama
+    // wilayah administratif (dusun/kelurahan/kecamatan dst.) yg terlalu
+    // umum spt "Panyakalan" -- supaya nama toko/warung yg sebenarnya ada
+    // di sekitar titik tsb tetap kedeteksi & ditampilkan.
+    let placeName = ccExtractExactPOIName(data);
+    let placeSuffix = '';
+    if (!placeName) {
+      try {
+        const nearby = await ccFetchNearbyPOI(lat, lng, signal);
+        if (nearby && nearby.name) {
+          placeName = nearby.name;
+          placeSuffix = ` (±${Math.round(nearby.distance)} m)`;
+        }
+      } catch (e) {
+        if (e && e.name === 'AbortError') return; // digantikan request titik GPS yg lebih baru
+        // Overpass gagal/timeout -- diamkan, lanjut ke fallback administratif biasa di bawah
+      }
+    }
+    if (!placeName) placeName = ccExtractPlaceName(data, builtAddress);
+    ccLastPlaceName = placeName ? (placeName + placeSuffix) : '';
     if (placeEl) placeEl.textContent = ccLastPlaceName || '–';
     if (placeRow) placeRow.hidden = !ccLastPlaceName;
   } catch (e) {
@@ -12197,28 +12300,22 @@ function ccWrapCanvasText(ctx, text, maxWidth) {
   if (line) lines.push(line);
   return lines;
 }
-function ccCaptureFoto() {
-  const video = document.getElementById('ccVideo');
+// Menggambar ULANG frame foto mentah (ccRawFrameCanvas) + stempel teks
+// alamat/koordinat/waktu ke canvas final yg ditampilkan/diunduh. Dipisah
+// dari ccCaptureFoto() supaya bisa dipanggil BERKALI-KALI dgn addrText/
+// placeText yg berbeda -- pertama kali otomatis pakai hasil deteksi GPS
+// (ccLastAddress/ccLastPlaceName), lalu bisa dipanggil ULANG dgn versi
+// yg sudah dikoreksi user lewat panel edit (lihat ccEditApplyBtn),
+// TANPA mengubah foto aslinya (frame kamera) sama sekali -- yg berubah
+// cuma teks stempelnya.
+function ccRenderStampedPhoto(addrText, placeText) {
   const canvas = document.getElementById('ccCanvas');
   const photo = document.getElementById('ccPhotoPreview');
-  if (!video || !canvas || !photo || !video.videoWidth) {
-    ccShowError('Kamera belum siap, tunggu sebentar lalu coba lagi.');
-    return;
-  }
-  const w = video.videoWidth, h = video.videoHeight;
+  if (!canvas || !photo || !ccRawFrameCanvas) return;
+  const w = ccRawFrameCanvas.width, h = ccRawFrameCanvas.height;
   canvas.width = w; canvas.height = h;
   const ctx = canvas.getContext('2d');
-  ctx.drawImage(video, 0, 0, w, h);
-
-  // Kilat putih sekilas ala shutter kamera bawaan HP -- murni efek
-  // visual, tidak menunda proses stempel/encode di bawah ini.
-  const flashEl = document.getElementById('ccFlash');
-  if (flashEl) {
-    flashEl.classList.remove('is-flashing');
-    void flashEl.offsetWidth; // paksa reflow supaya animasi bisa diulang tiap jepret
-    flashEl.classList.add('is-flashing');
-    setTimeout(() => flashEl.classList.remove('is-flashing'), 340);
-  }
+  ctx.drawImage(ccRawFrameCanvas, 0, 0, w, h);
 
   // Susun teks stempel: alamat (bisa berbaris banyak) + baris
   // koordinat presisi + baris resolusi/kamera + waktu, gaya watermark
@@ -12227,15 +12324,17 @@ function ccCaptureFoto() {
   const fsSmall = Math.max(13, Math.round(w * 0.022));
   const fsAddr = Math.max(15, Math.round(w * 0.026));
   const fsPlace = Math.max(17, Math.round(w * 0.03));
-  // Pakai titik hasil rata-rata (ccAvgFix) -- lebih stabil/presisi drpd
-  // satu bacaan mentah tunggal (ccLastFix) -- lihat ccUpdateFixBuffer().
-  const fix = ccAvgFix || ccLastFix;
+  // Pakai bacaan GPS yg DIBEKUKAN persis saat jepret (ccCapturedFix) --
+  // BUKAN ccAvgFix/ccLastFix langsung -- supaya koordinat/waktu yg
+  // distempel tidak ikut berubah kalau user berlama-lama mengedit alamat
+  // sementara GPS di background terus memperbarui posisi.
+  const fix = ccCapturedFix;
   const lat = fix ? ccFormatCoord(fix.lat) : '–';
   const lng = fix ? ccFormatCoord(fix.lng) : '–';
   const acc = fix && typeof fix.accuracy === 'number' ? `± ${fix.accuracy.toFixed(1)} m (${ccAccuracyQualityLabel(fix.accuracy)})` : '–';
   const when = new Date(fix ? fix.timestamp : Date.now()).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'medium' });
-  const addr = ccLastAddress || 'Alamat tidak diketahui';
-  const placeName = ccLastPlaceName || '';
+  const addr = addrText || 'Alamat tidak diketahui';
+  const placeName = placeText || '';
   const camLabel = ccGetCameraLabel();
   const deviceLine = `${w} × ${h} px  •  ${camLabel}  •  ${ccGetDeviceType()}  •  JPEG`;
 
@@ -12273,6 +12372,64 @@ function ccCaptureFoto() {
 
   const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
   photo.src = dataUrl;
+
+  // Tipe & ukuran file dihitung ULANG tiap kali stempel digambar ulang
+  // (mis. setelah user menerapkan edit alamat) -- panjang teks alamat yg
+  // beda dikit bisa geser ukuran file JPEG hasil encode.
+  const typeEl = document.getElementById('ccImgType');
+  const sizeEl = document.getElementById('ccImgSize');
+  if (typeEl) typeEl.textContent = 'JPEG (image/jpeg)';
+  if (sizeEl) sizeEl.textContent = ccDataUrlSizeLabel(dataUrl);
+}
+function ccCaptureFoto() {
+  const video = document.getElementById('ccVideo');
+  const canvas = document.getElementById('ccCanvas');
+  const photo = document.getElementById('ccPhotoPreview');
+  if (!video || !canvas || !photo || !video.videoWidth) {
+    ccShowError('Kamera belum siap, tunggu sebentar lalu coba lagi.');
+    return;
+  }
+  const w = video.videoWidth, h = video.videoHeight;
+  // Simpan frame MENTAH (belum distempel) ke canvas TERPISAH yg tidak
+  // ditumpuk ke layar -- ini "bahan baku" yg dipakai ULANG oleh
+  // ccRenderStampedPhoto() tiap kali user mengedit alamat, supaya
+  // gambarnya SELALU frame persis saat jepret, bukan frame video yg
+  // sudah berubah/bergerak lagi.
+  if (!ccRawFrameCanvas) ccRawFrameCanvas = document.createElement('canvas');
+  ccRawFrameCanvas.width = w; ccRawFrameCanvas.height = h;
+  ccRawFrameCanvas.getContext('2d').drawImage(video, 0, 0, w, h);
+  // Bekukan bacaan GPS/waktu persis saat jepret -- lihat catatan di
+  // deklarasi ccCapturedFix di atas.
+  ccCapturedFix = ccAvgFix || ccLastFix;
+
+  // Kilat putih sekilas ala shutter kamera bawaan HP -- murni efek
+  // visual, tidak menunda proses stempel/encode di bawah ini.
+  const flashEl = document.getElementById('ccFlash');
+  if (flashEl) {
+    flashEl.classList.remove('is-flashing');
+    void flashEl.offsetWidth; // paksa reflow supaya animasi bisa diulang tiap jepret
+    flashEl.classList.add('is-flashing');
+    setTimeout(() => flashEl.classList.remove('is-flashing'), 340);
+  }
+
+  // Nilai awal alamat/nama tempat yg dipakai di stempel = hasil deteksi
+  // otomatis (GPS/Overpass) saat ini -- disalin ke variabel EDITABLE
+  // terpisah (ccEditAddressText/ccEditPlaceText) supaya user bisa
+  // mengoreksi/melengkapinya (mis. isi nama toko sendiri, tambah
+  // patokan/RT-RW) lewat tombol pensil SEBELUM foto disimpan, tanpa
+  // menyentuh hasil deteksi otomatis aslinya (ccLastAddress/ccLastPlaceName
+  // tetap dipakai lagi sbg titik awal tiap kali jepret foto baru).
+  ccEditAddressText = ccLastAddress || 'Alamat tidak diketahui';
+  ccEditPlaceText = ccLastPlaceName || '';
+  const placeInput = document.getElementById('ccEditPlaceInput');
+  const addrInput = document.getElementById('ccEditAddrInput');
+  if (placeInput) placeInput.value = ccEditPlaceText;
+  if (addrInput) addrInput.value = ccEditAddressText;
+  const editPanel = document.getElementById('ccEditPanel');
+  if (editPanel) editPanel.hidden = true; // panel ditutup dulu, dibuka via tombol pensil (ccEditAddressBtn)
+
+  ccRenderStampedPhoto(ccEditAddressText, ccEditPlaceText);
+
   photo.hidden = false;
   video.hidden = true;
   const switchBtnAfterCapture = document.getElementById('ccSwitchCamBtn');
@@ -12290,12 +12447,6 @@ function ccCaptureFoto() {
   const infoPanelAfterCapture = document.getElementById('ccInfoPanel');
   if (infoPanelAfterCapture) infoPanelAfterCapture.hidden = true;
 
-  // Tipe & ukuran file baru bisa dihitung dari hasil JPEG yg sudah
-  // di-encode ini -- isi panel meta foto (§ Tipe Gambar/Ukuran File).
-  const typeEl = document.getElementById('ccImgType');
-  const sizeEl = document.getElementById('ccImgSize');
-  if (typeEl) typeEl.textContent = 'JPEG (image/jpeg)';
-  if (sizeEl) sizeEl.textContent = ccDataUrlSizeLabel(dataUrl);
   const photoMeta = document.getElementById('ccPhotoMetaPanel');
   if (photoMeta) photoMeta.hidden = false;
 
@@ -12317,10 +12468,55 @@ document.getElementById('ccRetakeBtn')?.addEventListener('click', () => {
   if (savedRow) savedRow.hidden = true;
   const photoMeta = document.getElementById('ccPhotoMetaPanel');
   if (photoMeta) photoMeta.hidden = true;
+  // Panel edit alamat (kalau sempat dibuka) ikut ditutup & dikosongkan --
+  // foto lama dibuang, jadi koreksi alamat yg belum "Diterapkan" ikut
+  // gugur; jepretan berikutnya mulai lagi dari hasil deteksi otomatis.
+  const editPanel = document.getElementById('ccEditPanel');
+  if (editPanel) editPanel.hidden = true;
+  ccEditAddressText = ''; ccEditPlaceText = ''; ccCapturedFix = null;
   // Balik ke mode live video -- tumpuk lagi panel detail GPS/alamat di
   // atas kamera (disembunyikan sementara saat preview foto tadi).
   const infoPanel = document.getElementById('ccInfoPanel');
   if (infoPanel) infoPanel.hidden = false;
+});
+// ---- Panel edit alamat manual (tombol pensil di ccSavedRow) -----------
+// Dibuka/ditutup via tombol pensil (ccEditAddressBtn) -- form berisi
+// nama tempat (opsional) & alamat lengkap, diisi awal dgn nilai TERKINI
+// (ccEditAddressText/ccEditPlaceText, yg awalnya = hasil deteksi
+// otomatis, bisa berubah kalau user sudah pernah "Terapkan" sebelumnya).
+document.getElementById('ccEditAddressBtn')?.addEventListener('click', () => {
+  const panel = document.getElementById('ccEditPanel');
+  if (!panel) return;
+  const opening = panel.hidden;
+  panel.hidden = !opening;
+  if (opening) {
+    const placeInput = document.getElementById('ccEditPlaceInput');
+    const addrInput = document.getElementById('ccEditAddrInput');
+    if (placeInput) placeInput.value = ccEditPlaceText || '';
+    if (addrInput) addrInput.value = ccEditAddressText || '';
+    if (addrInput) { addrInput.focus(); addrInput.select(); }
+  }
+});
+document.getElementById('ccEditCancelBtn')?.addEventListener('click', () => {
+  const panel = document.getElementById('ccEditPanel');
+  if (panel) panel.hidden = true;
+});
+document.getElementById('ccEditApplyBtn')?.addEventListener('click', () => {
+  const placeInput = document.getElementById('ccEditPlaceInput');
+  const addrInput = document.getElementById('ccEditAddrInput');
+  const newAddr = addrInput ? addrInput.value.trim() : ccEditAddressText;
+  const newPlace = placeInput ? placeInput.value.trim() : ccEditPlaceText;
+  if (!newAddr) { showToast('Alamat tidak boleh kosong', 'err'); return; }
+  ccEditAddressText = newAddr;
+  ccEditPlaceText = newPlace;
+  // Gambar ULANG stempel di atas frame foto yg SAMA PERSIS (ccRawFrameCanvas)
+  // dgn teks alamat/nama tempat versi koreksi user -- foto & koordinat/
+  // waktu yg sudah dibekukan (ccCapturedFix) TIDAK berubah, cuma teksnya.
+  ccRenderStampedPhoto(ccEditAddressText, ccEditPlaceText);
+  const panel = document.getElementById('ccEditPanel');
+  if (panel) panel.hidden = true;
+  showToast('Alamat pada foto diperbarui');
+  if (navigator.vibrate) { try { navigator.vibrate(30); } catch (e) {} }
 });
 document.getElementById('ccDownloadBtn')?.addEventListener('click', () => {
   const canvas = document.getElementById('ccCanvas');

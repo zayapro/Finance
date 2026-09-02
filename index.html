@@ -3092,6 +3092,38 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 }
 .cc-side-btn:active{transform:scale(0.88);background:rgba(11,18,32,0.78);}
 .cc-side-btn--accent{color:#FFD166;}
+/* ---- Panel edit alamat manual (muncul setelah jepret, via tombol
+   pensil di ccSavedRow) -- kartu gelap mengambang tepat di atas baris
+   tombol konfirmasi, gaya konsisten dgn cc-info-panel/cc-gps-badge yg
+   juga transparan-gelap di atas kamera/foto. */
+.cc-edit-panel{
+  position:absolute;left:12px;right:12px;z-index:5;
+  bottom:calc(96px + env(safe-area-inset-bottom, 0px));
+  background:rgba(11,18,32,0.88);backdrop-filter:blur(6px);
+  border:1px solid rgba(255,255,255,0.16);border-radius:16px;
+  padding:14px;display:flex;flex-direction:column;gap:7px;
+  max-height:64vh;overflow-y:auto;
+  box-shadow:0 8px 24px rgba(0,0,0,0.35);
+}
+.cc-edit-panel[hidden]{display:none;}
+.cc-edit-label{
+  font-size:10.5px;font-weight:600;text-transform:uppercase;
+  letter-spacing:.04em;color:rgba(255,255,255,0.6);margin-top:4px;
+}
+.cc-edit-label:first-child{margin-top:0;}
+.cc-edit-input,.cc-edit-textarea{
+  width:100%;background:rgba(255,255,255,0.09);
+  border:1px solid rgba(255,255,255,0.22);border-radius:10px;
+  padding:9px 11px;font:inherit;font-size:13.5px;color:#fff;
+  resize:none;box-sizing:border-box;
+}
+.cc-edit-input::placeholder,.cc-edit-textarea::placeholder{color:rgba(255,255,255,0.42);}
+.cc-edit-input:focus,.cc-edit-textarea:focus{
+  outline:none;border-color:var(--primary,#F2672B);
+  background:rgba(255,255,255,0.13);
+}
+.cc-edit-actions{display:flex;gap:10px;margin-top:6px;}
+.cc-edit-actions .btn{flex:1;padding:10px;font-size:13px;justify-content:center;}
 @media (max-width:380px){
   .cc-shutter-row{gap:26px;}
   .cc-shutter-btn{width:60px;height:60px;}
@@ -15035,12 +15067,34 @@ html.dark-mode .bd-row-close{
             </button>
           </div>
 
+          <!-- Panel edit alamat manual -- muncul/hilang lewat tombol
+               pensil (ccEditAddressBtn) di ccSavedRow di bawah. Diisi
+               otomatis dgn hasil deteksi GPS saat foto diambil, tapi
+               user bisa mengoreksi/melengkapinya (mis. nama toko,
+               patokan, RT/RW) SEBELUM menekan "Simpan Foto" -- lihat
+               ccEditApplyBtn/ccRenderStampedPhoto di script.js. -->
+          <div class="cc-edit-panel" id="ccEditPanel" hidden>
+            <label class="cc-edit-label" for="ccEditPlaceInput">Nama Tempat (opsional)</label>
+            <input type="text" id="ccEditPlaceInput" class="cc-edit-input" placeholder="mis. Toko Berkah Jaya" maxlength="60" autocomplete="off">
+            <label class="cc-edit-label" for="ccEditAddrInput">Alamat Lengkap</label>
+            <textarea id="ccEditAddrInput" class="cc-edit-textarea" rows="3" placeholder="Tulis alamat lengkap di sini…" maxlength="220"></textarea>
+            <div class="cc-edit-actions">
+              <button type="button" class="btn btn-ghost" id="ccEditCancelBtn">Batal</button>
+              <button type="button" class="btn btn-primary" id="ccEditApplyBtn">Terapkan ke Foto</button>
+            </div>
+          </div>
+
           <!-- Baris konfirmasi setelah foto diambil, pola sama dgn
                layar review kamera bawaan HP: silang (Ambil Ulang) di
-               kiri, centang warna aksen (Simpan Foto) di kanan. -->
+               kiri, centang warna aksen (Simpan Foto) di kanan. Tombol
+               pensil di TENGAH (Edit Alamat) -- buka/tutup ccEditPanel
+               di atas supaya alamat bisa dikoreksi manual sblm disimpan. -->
           <div class="cc-shutter-row cc-shutter-row--saved" id="ccSavedRow" hidden>
             <button type="button" class="cc-side-btn" id="ccRetakeBtn" aria-label="Ambil Ulang">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+            <button type="button" class="cc-side-btn" id="ccEditAddressBtn" aria-label="Edit Alamat">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="M15 5l4 4"/></svg>
             </button>
             <button type="button" class="cc-shutter-btn cc-shutter-btn--save" id="ccDownloadBtn" aria-label="Simpan Foto">
               <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
