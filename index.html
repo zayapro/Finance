@@ -2954,8 +2954,18 @@ tr.fade-up{animation:fadeRow .35s ease both;}
    info koordinat+alamat+waktu di-"stempel" langsung ke gambar lewat
    <canvas> (gaya khas app GPS Map Camera) sebelum disimpan. Logic
    lengkap ada di script.js dekat komentar "KOORDINAT KAMERA". ---- */
+/* object-fit:contain (BUKAN cover) -- sengaja diubah supaya preview
+   PERSIS menampilkan foto UTUH apa adanya, sama seperti file yg
+   beneran tersimpan/diunduh (ccDownloadBtn baca dari canvas yg SAMA
+   tanpa dipotong). Sebelumnya pakai "cover" yg memotong tepi kiri-
+   kanan/atas-bawah foto supaya pas mengisi bingkai persegi -- membuat
+   preview terlihat BEDA (terpotong/ter-zoom) dari hasil yg sungguh
+   disimpan, apalagi setelah foto diputar (rotasi 90/270 mengubah
+   rasio potret<->lanskap). Area kosong di kiri-kanan/atas-bawah
+   (letterbox) otomatis terisi warna gelap bingkai (.bc-cam-frame) di
+   baliknya -- gaya wajar app kamera saat menampilkan hasil jepretan. */
 .cc-photo-preview{
-  position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:3;
+  position:absolute;inset:0;width:100%;height:100%;object-fit:contain;z-index:3;
 }
 .cc-photo-preview[hidden]{display:none;}
 /* Kilat putih sekilas saat tombol jepret ditekan -- murni efek visual
@@ -3046,12 +3056,29 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 .cc-status-btn--text{font-size:11px;font-weight:700;letter-spacing:0.3px;}
 .cc-status-btn.is-active{color:#FFD166;opacity:1;}
 .cc-status-btn.cc-status-btn--unsupported{opacity:0.4;}
+/* Ikon tombol rotasi kamera (#ccRotateBtn) berputar HALUS mengikuti
+   derajat aktif -- lihat ccRenderRotateBtn di script.js yg mengeset
+   svg.style.transform tiap kali disiklus. */
+#ccRotateBtn svg{transition:transform .25s ease;}
 .cc-status-btn .cc-status-full-badge{
   display:flex;align-items:center;justify-content:center;
   border:1.4px solid rgba(255,255,255,0.9);border-radius:5px;
   padding:2px 6px;font-size:10px;font-weight:700;letter-spacing:0.3px;
 }
 .cc-status-btn.is-active .cc-status-full-badge{border-color:#FFD166;}
+/* Badge kecil "A" di pojok ikon flash -- cuma tampil pas mode Otomatis
+   (lihat ccRenderFlashBtn di script.js, 3 mode: Mati/Nyala/Otomatis
+   disiklus dgn tap tombol #ccFlashBtn yg sama). */
+.cc-status-btn{position:relative;}
+.cc-flash-auto-badge{
+  position:absolute;top:-2px;right:-3px;
+  display:flex;align-items:center;justify-content:center;
+  width:12px;height:12px;border-radius:50%;
+  background:#FFD166;color:#1a1200;
+  font-size:8.5px;font-weight:800;line-height:1;
+  filter:none;
+}
+.cc-flash-auto-badge[hidden]{display:none;}
 /* Panel info koordinat -- versi DASAR (dipakai kalau dipanggil di luar
    #ccCamFrame). Di dalam halaman Koordinat Kamera sendiri, panel ini
    DITUMPUK LANGSUNG di atas video/foto lewat override
@@ -3065,19 +3092,19 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:10px;
 }
 .cc-info-panel[hidden]{display:none;}
-.cc-info-row{display:flex;align-items:center;gap:7px;font-size:9.5px;font-weight:500;color:var(--ink);}
+.cc-info-row{display:flex;align-items:center;gap:7px;font-size:9.5px;font-weight:400;color:var(--ink);}
 .cc-info-row svg{flex-shrink:0;opacity:.7;color:var(--ink-soft);}
 .cc-info-row--time{font-size:8px;font-weight:400;color:var(--ink-faint);padding-top:2px;border-top:1px solid var(--line);}
 /* Nama tempat (POI) -- kalau terdeteksi, ditonjolkan lebih besar &
    berwarna aksen di ATAS baris alamat (gaya khas app GPS Map Camera
    yg menyorot nama lokasi dulu baru alamat lengkapnya). */
-.cc-info-row--place{font-size:11px;font-weight:700;color:var(--primary-deep,#C2410C);}
+.cc-info-row--place{font-size:11px;font-weight:600;color:var(--primary-deep,#C2410C);}
 .cc-info-row--place svg{opacity:.9;color:var(--primary,#F2672B);}
 .cc-info-row--place[hidden]{display:none;}
 .cc-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px 12px;}
 .cc-info-item{display:flex;flex-direction:column;gap:1px;min-width:0;}
-.cc-info-label{font-size:7.5px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;color:var(--ink-faint);}
-.cc-info-value{font-size:10px;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.cc-info-label{font-size:7.5px;font-weight:500;text-transform:uppercase;letter-spacing:.03em;color:var(--ink-faint);}
+.cc-info-value{font-size:10px;font-weight:500;color:var(--ink);font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .cc-btn-row{display:flex;flex-direction:column;gap:10px;margin-top:14px;}
 .cc-btn-row[hidden]{display:none;}
 @media (max-width:380px){
@@ -3098,7 +3125,45 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   padding:10px clamp(18px, 6vw, 32px) calc(20px + env(safe-area-inset-bottom, 0px));
 }
 .cc-shutter-row[hidden]{display:none;}
-.cc-shutter-row--saved{justify-content:space-between;}
+/* ---- Baris konfirmasi setelah jepret (Ambil Ulang/Edit/Simpan) --
+   TIDAK lagi pakai justify-content:space-between (yg dulu menempelkan
+   tombol Ambil Ulang & Simpan mepet ke tepi kiri-kanan layar, jadi
+   kelihatan "nabrak"/nyaris tumpang tindih dgn lengkungan tepi layar
+   HP & posisi bekas tombol jepret bulat besar). Sekarang dikelompokkan
+   di TENGAH dgn jarak konsisten (gap) supaya ketiganya kelihatan sbg
+   satu grup rapi & seimbang, bukan tersebar ke ujung2 layar. */
+.cc-shutter-row--saved{
+  justify-content:center;align-items:flex-end;
+  gap:clamp(30px, 11vw, 54px);
+  padding-bottom:calc(26px + env(safe-area-inset-bottom, 0px));
+}
+.cc-saved-item{
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+}
+.cc-saved-item-label{
+  font-size:10.5px;font-weight:600;color:rgba(255,255,255,0.75);
+  text-shadow:0 1px 3px rgba(0,0,0,0.5);letter-spacing:.01em;
+}
+.cc-saved-item-label--accent{color:#8CF2A6;font-weight:700;}
+/* Tombol Simpan Foto dibuat menonjol sbg aksi utama (bukan cuma warna
+   oranye biasa spt tombol jepret) -- gradasi hijau "sukses/tersimpan"
+   + cincin glow lembut berdenyut di belakangnya, supaya jelas beda
+   dari tombol jepret bulat putih sebelumnya & terlihat mengundang utk
+   ditekan (bukan cuma centang polos kecil). */
+.cc-saved-item--main{position:relative;}
+.cc-save-btn-ring{
+  position:absolute;left:50%;top:0;
+  width:clamp(58px, 16vw, 72px);height:clamp(58px, 16vw, 72px);
+  transform:translateX(-50%);border-radius:50%;
+  background:radial-gradient(circle, rgba(76,217,123,0.55) 0%, rgba(76,217,123,0) 70%);
+  animation:ccSaveRingPulse 2.2s ease-out infinite;
+  pointer-events:none;
+}
+@keyframes ccSaveRingPulse{
+  0%{transform:translateX(-50%) scale(0.92);opacity:0.9;}
+  70%{transform:translateX(-50%) scale(1.55);opacity:0;}
+  100%{transform:translateX(-50%) scale(1.55);opacity:0;}
+}
 .cc-shutter-btn{
   width:clamp(58px, 16vw, 72px);height:clamp(58px, 16vw, 72px);
   border-radius:50%;flex-shrink:0;padding:4px;
@@ -3113,9 +3178,9 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 }
 .cc-shutter-btn:active .cc-shutter-btn-inner{transform:scale(0.8);}
 .cc-shutter-btn--save{
-  border-color:transparent;
-  background:linear-gradient(135deg,var(--primary,#F2672B),var(--primary-deep,#C2410C));
-  box-shadow:0 4px 16px color-mix(in srgb, var(--primary,#F2672B) 45%, transparent);
+  border-color:transparent;position:relative;z-index:1;
+  background:linear-gradient(135deg,#4CD97B,#1FA95C);
+  box-shadow:0 4px 18px rgba(31,169,92,0.5),0 1.5px 4px rgba(0,0,0,0.25);
 }
 .cc-side-btn{
   width:clamp(38px, 11vw, 48px);height:clamp(38px, 11vw, 48px);
@@ -3283,7 +3348,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   position:absolute;left:0;right:0;bottom:0;z-index:2;margin:0;
   border:none;border-radius:0;
   background:linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.5) 60%, transparent 100%);
-  padding:26px 14px 108px;gap:7px;
+  padding:22px 14px 128px;gap:6px;
 }
 #cameraCoordOverlay #ccCamFrame .cc-info-row{color:#fff;}
 #cameraCoordOverlay #ccCamFrame .cc-info-row svg{color:rgba(255,255,255,0.78);opacity:1;}
@@ -15101,6 +15166,7 @@ html.dark-mode .bd-row-close{
           <div class="cc-status-bar" id="ccStatusBar" hidden>
             <button type="button" class="cc-status-btn" id="ccFlashBtn" aria-label="Lampu kilat kamera">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/><line x1="3" y1="3" x2="21" y2="21" stroke-width="2"/></svg>
+              <span class="cc-flash-auto-badge" id="ccFlashAutoBadge" hidden>A</span>
             </button>
             <button type="button" class="cc-status-btn cc-status-btn--text" id="ccHdrBtn" aria-label="HDR">HDR</button>
             <button type="button" class="cc-status-btn" id="ccFilterBtn" aria-label="Filter warna: Normal">
@@ -15108,6 +15174,23 @@ html.dark-mode .bd-row-close{
             </button>
             <button type="button" class="cc-status-btn cc-status-btn--text" id="ccFullBtn" aria-label="Resolusi kamera, buka pengaturan">
               <span class="cc-status-full-badge" id="ccFullLabel">AUTO</span>
+            </button>
+            <!-- Tombol ROTASI KAMERA baru -- tap menyiklus 0/90/180/270
+                 derajat searah jarum jam, ikon panah rotasi ikut
+                 berputar visual sesuai derajat aktif (lihat
+                 ccRenderRotateBtn di script.js). Efeknya diterapkan
+                 LANGSUNG ke preview <video> SEKALIGUS dibakar permanen
+                 ke hasil jepretan (ccCaptureFoto). -->
+            <button type="button" class="cc-status-btn" id="ccRotateBtn" aria-label="Putar kamera">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3.06-6.78"/><polyline points="21 3 21 9 15 9"/></svg>
+            </button>
+            <button type="button" class="cc-status-btn is-active" id="ccSoundBtn" aria-label="Matikan suara jepret">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="4 9 8 9 12 5 12 19 8 15 4 15 4 9"/>
+                <path id="ccSoundWave1" d="M15.5 8.5a5 5 0 0 1 0 7"/>
+                <path id="ccSoundWave2" d="M18.3 6a9 9 0 0 1 0 12"/>
+                <line id="ccSoundMuteLine" x1="3" y1="3" x2="21" y2="21" stroke-width="2" opacity="0"/>
+              </svg>
             </button>
           </div>
 
@@ -15215,15 +15298,25 @@ html.dark-mode .bd-row-close{
                pensil di TENGAH (Edit Alamat) -- buka/tutup ccEditPanel
                di atas supaya alamat bisa dikoreksi manual sblm disimpan. -->
           <div class="cc-shutter-row cc-shutter-row--saved" id="ccSavedRow" hidden>
-            <button type="button" class="cc-side-btn" id="ccRetakeBtn" aria-label="Ambil Ulang">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-            </button>
-            <button type="button" class="cc-side-btn" id="ccEditAddressBtn" aria-label="Edit Alamat">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="M15 5l4 4"/></svg>
-            </button>
-            <button type="button" class="cc-shutter-btn cc-shutter-btn--save" id="ccDownloadBtn" aria-label="Simpan Foto">
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-            </button>
+            <div class="cc-saved-item">
+              <button type="button" class="cc-side-btn" id="ccRetakeBtn" aria-label="Ambil Ulang">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              </button>
+              <span class="cc-saved-item-label">Ulang</span>
+            </div>
+            <div class="cc-saved-item">
+              <button type="button" class="cc-side-btn" id="ccEditAddressBtn" aria-label="Edit Alamat">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="M15 5l4 4"/></svg>
+              </button>
+              <span class="cc-saved-item-label">Edit</span>
+            </div>
+            <div class="cc-saved-item cc-saved-item--main">
+              <span class="cc-save-btn-ring" aria-hidden="true"></span>
+              <button type="button" class="cc-shutter-btn cc-shutter-btn--save" id="ccDownloadBtn" aria-label="Simpan Foto">
+                <svg width="27" height="27" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              </button>
+              <span class="cc-saved-item-label cc-saved-item-label--accent">Simpan</span>
+            </div>
           </div>
         </div>
 

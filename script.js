@@ -11546,10 +11546,149 @@ let ccMaxCapableRes = null;    // {width,height} kemampuan maksimum kamera peran
 // gigi #ccSettingsBtn) -- supaya user bisa lihat sekilas resolusi yg
 // lagi aktif (AUTO/HD/FULL/4K/8K) tanpa buka popup dulu, & bisa
 // langsung tap utk ganti.
-let ccTorchOn = false;
+// ---- BARIS STATUS BAR KAMERA (flash/HDR/filter warna/label resolusi) --
+// Baris ikon ala app kamera GPS bawaan HP (#ccStatusBar) di bagian atas
+// video. Flash = lampu kilat FISIK (torch) kamera perangkat lewat
+// MediaStreamTrack.applyConstraints({advanced:[{torch}]}) -- BUKAN
+// cuma ikon dekoratif, betulan menyalakan/mematikan senter kamera kalau
+// perangkat/browser mendukung (kebanyakan Chrome Android; Safari/iOS
+// & sebagian besar kamera DEPAN umumnya TIDAK punya lampu kilat sama
+// sekali -- makanya selalu dicek dulu via getCapabilities().torch
+// sebelum tombol dianggap aktif, lihat ccCheckTorchSupport()). HDR &
+// filter warna diterapkan sbg CSS filter betulan ke <video> (preview
+// live) SEKALIGUS "dibakar" permanen ke hasil jepretan (canvas) --
+// bukan cuma efek visual di preview doang. Tombol "FULL" cuma
+// pintasan/label yg terhubung ke popup Pengaturan Kamera (resolusi)
+// yg SUDAH ADA (#ccSettingsSheetOverlay, sama persis dgn tombol roda-
+// gigi #ccSettingsBtn) -- supaya user bisa lihat sekilas resolusi yg
+// lagi aktif (AUTO/HD/FULL/4K/8K) tanpa buka popup dulu, & bisa
+// langsung tap utk ganti.
+let ccTorchOn = false;          // status FISIK torch saat ini (bisa berubah sekilas di mode Otomatis)
 let ccTorchSupported = false;
+// ---- MODE LAMPU KILAT: 3 tahap (MATI -> NYALA -> OTOMATIS -> ulang) --
+// tap tombol #ccFlashBtn menyiklus 3 mode ini, PERSIS pola app kamera
+// bawaan HP. "Nyala" = torch fisik menyala TERUS selama kamera aktif
+// (senter). "Mati" = torch fisik selalu off. "Otomatis" = torch TETAP
+// off selama preview (supaya tidak boros baterai/menyilaukan terus2an),
+// tapi begitu tombol jepret ditekan, frame video diukur dulu tingkat
+// terangnya (ccMeasureBrightness) -- kalau gelap, torch dinyalakan
+// SEBENTAR pas & sesaat sebelum jepretan diambil lalu dimatikan lagi
+// segera sesudahnya (lihat ccCaptureFoto()). Web API standar TIDAK
+// punya konsep "auto-flash" bawaan (torch cuma boolean on/off) jadi
+// perilaku "Otomatis" ini memang disimulasikan lewat pengukuran
+// kecerahan frame, bukan fitur hardware auto-flash asli.
+const CC_FLASH_MODE_KEY = 'alirin_cc_flash_mode_v1';
+const CC_FLASH_MODES = ['off', 'on', 'auto'];
+const CC_FLASH_MODE_LABEL = {
+  off:  'Lampu kilat: Mati (tap untuk Nyala)',
+  on:   'Lampu kilat: Nyala (tap untuk Otomatis)',
+  auto: 'Lampu kilat: Otomatis (tap untuk Mati)',
+};
+function ccLoadFlashMode() {
+  try {
+    const raw = localStorage.getItem(CC_FLASH_MODE_KEY);
+    return CC_FLASH_MODES.includes(raw) ? raw : 'off';
+  } catch (e) { return 'off'; }
+}
+function ccSaveFlashMode(mode) {
+  try { localStorage.setItem(CC_FLASH_MODE_KEY, mode); } catch (e) {}
+}
+let ccFlashMode = ccLoadFlashMode();
 let ccHdrOn = false;
 let ccColorMode = 'normal'; // 'normal' | 'vivid' | 'bw' -- di-cycle lewat tombol filter (3 lingkaran)
+// ---- ROTASI KAMERA -- tombol #ccRotateBtn di status bar, di-tap
+// menyiklus 0 -> 90 -> 180 -> 270 -> 0 derajat (searah jarum jam).
+// Diterapkan sbg CSS transform LANGSUNG ke <video> (preview live) lewat
+// ccApplyRotationPreview() SEKALIGUS "dibakar" permanen ke hasil
+// jepretan (ccRawFrameCanvas di ccCaptureFoto, canvas diputar &
+// dimensinya ditukar utk 90/270 derajat) -- supaya foto yg TERSIMPAN
+// beneran ikut berputar, bukan cuma preview di layar doang. Preferensi
+// disimpan per-perangkat (localStorage) spy diingat lintas sesi, sama
+// pola dgn CC_FLASH_MODE_KEY di atas.
+const CC_ROTATION_KEY = 'alirin_cc_rotation_v1';
+function ccLoadRotation() {
+  try {
+    const raw = parseInt(localStorage.getItem(CC_ROTATION_KEY), 10);
+    return [0, 90, 180, 270].includes(raw) ? raw : 0;
+  } catch (e) { return 0; }
+}
+function ccSaveRotation(deg) {
+  try { localStorage.setItem(CC_ROTATION_KEY, String(deg)); } catch (e) {}
+}
+let ccRotation = ccLoadRotation(); // 0 | 90 | 180 | 270 -- derajat rotasi searah jarum jam
+// ---- SUARA JEPRET (shutter sound) -- tombol speaker di status bar
+// (#ccSoundBtn), gaya sama dgn tombol flash/HDR/filter di sebelahnya.
+// Statusnya disimpan per-perangkat (localStorage) spy preferensi
+// on/off-nya diingat lintas sesi, DEFAULT nyala (true) spy perilakunya
+// senada app kamera bawaan HP yg default bunyi jepret aktif. Suaranya
+// disintesis langsung lewat Web Audio API (dua "klik" nada tinggi
+// beruntun, meniru bunyi shutter kamera) -- TIDAK butuh file audio
+// eksternal, jadi selalu siap tanpa nunggu unduhan/lisensi berkas.
+const CC_SOUND_KEY = 'alirin_cc_shutter_sound_v1';
+function ccLoadSoundSetting() {
+  try {
+    const raw = localStorage.getItem(CC_SOUND_KEY);
+    return raw === null ? true : raw === '1';
+  } catch (e) { return true; }
+}
+function ccSaveSoundSetting(on) {
+  try { localStorage.setItem(CC_SOUND_KEY, on ? '1' : '0'); } catch (e) {}
+}
+let ccSoundOn = ccLoadSoundSetting();
+let ccSharedAudioCtx = null;
+function ccRenderSoundBtn() {
+  const btn = document.getElementById('ccSoundBtn');
+  if (!btn) return;
+  btn.classList.toggle('is-active', ccSoundOn);
+  btn.setAttribute('aria-label', ccSoundOn ? 'Matikan suara jepret' : 'Nyalakan suara jepret');
+  const wave1 = document.getElementById('ccSoundWave1');
+  const wave2 = document.getElementById('ccSoundWave2');
+  const muteLine = document.getElementById('ccSoundMuteLine');
+  if (wave1) wave1.setAttribute('opacity', ccSoundOn ? '1' : '0');
+  if (wave2) wave2.setAttribute('opacity', ccSoundOn ? '1' : '0');
+  if (muteLine) muteLine.setAttribute('opacity', ccSoundOn ? '0' : '1');
+}
+function ccToggleSound() {
+  ccSoundOn = !ccSoundOn;
+  ccSaveSoundSetting(ccSoundOn);
+  ccRenderSoundBtn();
+  if (ccSoundOn) ccPlayShutterSound(); // kasih contoh bunyinya langsung saat dinyalakan
+  if (navigator.vibrate) { try { navigator.vibrate(15); } catch (e) {} }
+}
+document.getElementById('ccSoundBtn')?.addEventListener('click', ccToggleSound);
+// Bunyi "klik" shutter disintesis dgn 2 nada pendek beruntun (nada
+// tinggi->rendah, super singkat) lewat Web Audio API -- dipanggil PAS
+// saat ccCaptureFoto() menjepret, cuma kalau ccSoundOn true. AudioContext
+// dibuat sekali & dipakai ulang (browser membatasi jumlah context aktif),
+// dan resume() dipanggil tiap kali jaga2 kalau browser men-suspend
+// context saat tab tidak fokus.
+function ccPlayShutterSound() {
+  if (!ccSoundOn) return;
+  try {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return;
+    if (!ccSharedAudioCtx) ccSharedAudioCtx = new Ctx();
+    const ctx = ccSharedAudioCtx;
+    if (ctx.state === 'suspended') ctx.resume();
+    const now = ctx.currentTime;
+    const clicks = [
+      { start: 0,     freq: 1500, dur: 0.045, gain: 0.35 },
+      { start: 0.05,  freq: 900,  dur: 0.06,  gain: 0.28 },
+    ];
+    clicks.forEach(c => {
+      const osc = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(c.freq, now + c.start);
+      gainNode.gain.setValueAtTime(0, now + c.start);
+      gainNode.gain.linearRampToValueAtTime(c.gain, now + c.start + 0.004);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, now + c.start + c.dur);
+      osc.connect(gainNode); gainNode.connect(ctx.destination);
+      osc.start(now + c.start);
+      osc.stop(now + c.start + c.dur + 0.01);
+    });
+  } catch (e) { /* Web Audio tidak didukung/diblokir -- diamkan, jangan ganggu proses jepret */ }
+}
 const CC_COLOR_FILTERS = {
   normal: '',
   vivid: 'saturate(1.4) contrast(1.1)',
@@ -11569,6 +11708,15 @@ function ccApplyPreviewFilter() {
   const video = document.getElementById('ccVideo');
   if (video) video.style.filter = ccComputeFilterCss();
 }
+// Terapkan rotasi yg lagi aktif (ccRotation) ke preview <video> lewat
+// CSS transform -- frame kamera (.bc-cam-frame) berbentuk BUJUR SANGKAR
+// (aspect-ratio 1/1) & video mengisi penuh 100% x 100% dgn object-fit
+// cover, jadi rotasi 90/180/270 derajat SELALU tetap pas di dalam
+// bingkai tanpa perlu penyesuaian skala/ukuran tambahan.
+function ccApplyRotationPreview() {
+  const video = document.getElementById('ccVideo');
+  if (video) video.style.transform = ccRotation ? `rotate(${ccRotation}deg)` : '';
+}
 function ccCheckTorchSupport() {
   ccTorchSupported = false;
   try {
@@ -11584,26 +11732,82 @@ function ccCheckTorchSupport() {
 function ccRenderFlashBtn() {
   const btn = document.getElementById('ccFlashBtn');
   if (!btn) return;
-  btn.classList.toggle('is-active', ccTorchOn);
-  btn.setAttribute('aria-label', ccTorchOn ? 'Matikan lampu kilat' : 'Nyalakan lampu kilat');
+  const isOn = ccFlashMode === 'on';
+  const isAuto = ccFlashMode === 'auto';
+  btn.classList.toggle('is-active', isOn || isAuto);
+  btn.classList.toggle('cc-flash-btn--auto', isAuto);
+  btn.setAttribute('aria-label', CC_FLASH_MODE_LABEL[ccFlashMode] || 'Lampu kilat');
   const svg = btn.querySelector('svg');
-  if (svg) svg.querySelector('line')?.setAttribute('opacity', ccTorchOn ? '0' : '1');
+  // Garis dicoret cuma tampil di mode Mati -- di mode Nyala & Otomatis
+  // ikon bolt tampil polos (warna beda: kuning solid utk Nyala, lihat
+  // CSS .cc-flash-btn--auto utk gaya khusus mode Otomatis).
+  if (svg) svg.querySelector('line')?.setAttribute('opacity', ccFlashMode === 'off' ? '1' : '0');
+  const badge = document.getElementById('ccFlashAutoBadge');
+  if (badge) badge.hidden = !isAuto;
 }
-async function ccToggleTorch() {
-  if (!ccActive || !ccStream) return;
-  if (!ccTorchSupported) { showToast('Lampu kilat tidak didukung kamera ini', 'err'); return; }
+// Terapkan/lepas torch FISIK ke track video yg sedang aktif -- dipakai
+// bareng oleh ccCycleFlashMode() (mode Nyala/Mati) & ccCaptureFoto()
+// (kilat sekilas di mode Otomatis). Gagal diam2 kalau browser/perangkat
+// menolak (mis. stream baru banget dibuka) -- torch memang best-effort,
+// tidak menghalangi alur jepret foto tetap lanjut.
+async function ccSetTorch(on) {
+  if (!ccStream) return;
   const track = ccStream.getVideoTracks()[0];
   if (!track) return;
-  const next = !ccTorchOn;
   try {
-    await track.applyConstraints({ advanced: [{ torch: next }] });
-    ccTorchOn = next;
-    ccRenderFlashBtn();
-    if (navigator.vibrate) { try { navigator.vibrate(15); } catch (e) {} }
-  } catch (e) {
-    showToast('Gagal mengaktifkan lampu kilat', 'err');
-  }
+    await track.applyConstraints({ advanced: [{ torch: !!on }] });
+    ccTorchOn = !!on;
+  } catch (e) { /* diamkan -- lihat catatan di atas */ }
 }
+// Siklus 3 mode lampu kilat: Mati -> Nyala -> Otomatis -> Mati -> ...
+async function ccCycleFlashMode() {
+  if (!ccActive || !ccStream) return;
+  if (!ccTorchSupported) { showToast('Lampu kilat tidak didukung kamera ini', 'err'); return; }
+  const idx = CC_FLASH_MODES.indexOf(ccFlashMode);
+  const next = CC_FLASH_MODES[(idx + 1) % CC_FLASH_MODES.length];
+  ccFlashMode = next;
+  ccSaveFlashMode(next);
+  ccRenderFlashBtn();
+  // Torch fisik cuma menyala TERUS di preview kalau mode = Nyala.
+  // Mode Mati & Otomatis sama2 off di preview (Otomatis baru menyala
+  // sekilas PAS jepret, lihat ccCaptureFoto()).
+  await ccSetTorch(next === 'on');
+  showToast(`Lampu kilat: ${next === 'off' ? 'Mati' : next === 'on' ? 'Nyala' : 'Otomatis'}`);
+  if (navigator.vibrate) { try { navigator.vibrate(15); } catch (e) {} }
+}
+// Dipanggil tiap kali stream kamera baru aktif (pertama kali/ganti
+// kamera) -- torch fisik SELALU mati dulu di stream baru (tidak ada API
+// utk "pindahkan" state torch antar stream), jadi kalau mode tersimpan
+// = Nyala, torch perlu dinyalakan ULANG di sini supaya tetap konsisten
+// dgn pilihan user, bukan diam2 balik mati.
+async function ccReapplyFlashMode() {
+  if (ccTorchSupported && ccFlashMode === 'on') { await ccSetTorch(true); }
+  else { ccTorchOn = false; }
+  ccRenderFlashBtn();
+}
+// Ukur kecerahan rata2 frame video SEKARANG (0=gelap total, 255=terang
+// penuh) -- digambar ke canvas kecil (32x24px, sengaja mini spy super
+// cepat/murah) lalu dirata2 nilai RGB semua pikselnya. Dipakai HANYA
+// oleh mode Otomatis utk memutuskan perlu-tidaknya kilat sekilas saat
+// jepret (lihat ccCaptureFoto()) -- bukan diukur dari cahaya sensor
+// fisik (browser tidak punya API lightmeter), tapi dari gelap-terangnya
+// gambar kamera itu sendiri, cukup akurat utk kondisi kurang cahaya.
+function ccMeasureBrightness(video) {
+  try {
+    const sw = 32, sh = 24;
+    const c = document.createElement('canvas');
+    c.width = sw; c.height = sh;
+    const ctx = c.getContext('2d', { willReadFrequently: true });
+    ctx.drawImage(video, 0, 0, sw, sh);
+    const data = ctx.getImageData(0, 0, sw, sh).data;
+    let sum = 0;
+    for (let i = 0; i < data.length; i += 4) {
+      sum += (data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114);
+    }
+    return sum / (data.length / 4); // 0-255
+  } catch (e) { return 255; } // gagal ukur -- anggap terang spy TIDAK maksa nyalain torch
+}
+const CC_AUTO_FLASH_DARK_THRESHOLD = 80; // di bawah nilai ini (dari 255) dianggap "kurang cahaya"
 function ccRenderColorBtns() {
   const hdrBtn = document.getElementById('ccHdrBtn');
   if (hdrBtn) hdrBtn.classList.toggle('is-active', ccHdrOn);
@@ -11613,6 +11817,30 @@ function ccRenderColorBtns() {
     filterBtn.setAttribute('aria-label', 'Filter warna: ' + (CC_COLOR_LABELS[ccColorMode] || 'Normal'));
   }
 }
+function ccRenderRotateBtn() {
+  const btn = document.getElementById('ccRotateBtn');
+  if (!btn) return;
+  btn.classList.toggle('is-active', ccRotation !== 0);
+  btn.setAttribute('aria-label', `Putar kamera (saat ini ${ccRotation}°)`);
+  // Ikon panah rotasi ikut berputar visual sesuai derajat yg lagi aktif
+  // -- jadi tombolnya sendiri jadi indikator arah rotasi saat ini.
+  const svg = btn.querySelector('svg');
+  if (svg) svg.style.transform = ccRotation ? `rotate(${ccRotation}deg)` : '';
+}
+// Siklus rotasi 0 -> 90 -> 180 -> 270 -> 0 derajat (searah jarum jam)
+// tiap tombol #ccRotateBtn ditekan. Langsung diterapkan ke preview video
+// (ccApplyRotationPreview) & disimpan (ccSaveRotation) supaya diingat
+// lintas sesi -- efeknya baru "dibakar" ke piksel hasil jepretan nanti
+// saat tombol jepret ditekan, lihat ccCaptureFoto().
+function ccCycleRotation() {
+  ccRotation = (ccRotation + 90) % 360;
+  ccSaveRotation(ccRotation);
+  ccApplyRotationPreview();
+  ccRenderRotateBtn();
+  showToast(`Rotasi kamera: ${ccRotation}°`);
+  if (navigator.vibrate) { try { navigator.vibrate(15); } catch (e) {} }
+}
+document.getElementById('ccRotateBtn')?.addEventListener('click', ccCycleRotation);
 function ccToggleHdr() {
   ccHdrOn = !ccHdrOn;
   ccApplyPreviewFilter();
@@ -11652,8 +11880,7 @@ document.getElementById('ccModeRow')?.addEventListener('click', (e) => {
   if (btn.id === 'ccModeResBtn') { ccOpenSettingsSheet(); return; }
   const mode = btn.dataset.mode;
   if (mode === 'foto') return; // sudah aktif, tidak ada apa2 yg perlu terjadi
-  const labels = { video: 'Mode Video', potret: 'Mode Potret', more: 'Menu Selengkapnya' };
-  showToast(`${labels[mode] || 'Mode ini'} belum tersedia di kamera web`, 'err');
+  showToast('Dalam mode pengembangan!', 'err');
   if (navigator.vibrate) { try { navigator.vibrate(15); } catch (e2) {} }
 });
 function ccResetStatusBarState() {
@@ -11665,7 +11892,7 @@ function ccResetStatusBarState() {
   ccTorchOn = false;
   ccTorchSupported = false;
 }
-document.getElementById('ccFlashBtn')?.addEventListener('click', ccToggleTorch);
+document.getElementById('ccFlashBtn')?.addEventListener('click', ccCycleFlashMode);
 document.getElementById('ccHdrBtn')?.addEventListener('click', ccToggleHdr);
 document.getElementById('ccFilterBtn')?.addEventListener('click', ccCycleColorMode);
 document.getElementById('ccFullBtn')?.addEventListener('click', () => ccOpenSettingsSheet());
@@ -11686,16 +11913,27 @@ const CC_RESOLUTION_PRESETS = [
   { key: '4k',     label: '4K UHD',   sub: '3840 × 2160 px', w: 3840, h: 2160 },
   { key: '8k',     label: '8K UHD',   sub: '7680 × 4320 px', w: 7680, h: 4320 },
 ];
+// Default resolusi kamera SEKARANG "Full HD" (1920x1080) -- bukan lagi
+// "Otomatis" tanpa target sama sekali. Constraint width/height ttp
+// dipasang sbg "ideal" (lihat ccBuildVideoConstraints di bawah), jadi
+// browser TETAP menyesuaikan ke kemampuan asli kamera perangkat kalau
+// perangkatnya cuma sanggup di bawah 1080p (mis. HP lama) -- tidak
+// pernah gagal/dipaksakan -- tapi kalau kameranya sanggup, hasilnya
+// sekarang default langsung 1080p (bukan resolusi rendah bawaan browser
+// spt 480x640 yg suka kepilih otomatis kalau tidak diminta apa-apa).
+// User tetap bisa ganti manual ke HD/4K/8K/Otomatis lewat Pengaturan
+// Kamera kapan saja, pilihan itu disimpan & dipakai lagi di sesi
+// berikutnya.
 function ccLoadCameraSettings() {
   try {
     const raw = localStorage.getItem(CC_CAMERA_SETTINGS_KEY);
-    if (!raw) return { enabled: false, resolution: 'auto' };
+    if (!raw) return { enabled: true, resolution: 'fullhd' };
     const parsed = JSON.parse(raw);
     return {
-      enabled: !!parsed.enabled,
-      resolution: CC_RESOLUTION_PRESETS.some(p => p.key === parsed.resolution) ? parsed.resolution : 'auto',
+      enabled: parsed.enabled === undefined ? true : !!parsed.enabled,
+      resolution: CC_RESOLUTION_PRESETS.some(p => p.key === parsed.resolution) ? parsed.resolution : 'fullhd',
     };
-  } catch (e) { return { enabled: false, resolution: 'auto' }; }
+  } catch (e) { return { enabled: true, resolution: 'fullhd' }; }
 }
 function ccSaveCameraSettings(settings) {
   try { localStorage.setItem(CC_CAMERA_SETTINGS_KEY, JSON.stringify(settings)); } catch (e) {}
@@ -12369,10 +12607,13 @@ async function ccStartCamera() {
     const statusBar = document.getElementById('ccStatusBar');
     if (statusBar) statusBar.hidden = false;
     ccCheckTorchSupport();
-    ccRenderFlashBtn();
+    ccReapplyFlashMode();
     ccRenderColorBtns();
     ccRenderFullBtn();
+    ccRenderSoundBtn();
     ccApplyPreviewFilter();
+    ccApplyRotationPreview();
+    ccRenderRotateBtn();
     ccSetGpsStatus('Mencari sinyal GPS…', 'searching');
     ccWatchId = navigator.geolocation.watchPosition(ccOnPosition, ccOnPositionError, CC_GPS_OPTIONS);
     const toggleRow = document.getElementById('ccToggleRow');
@@ -12484,8 +12725,9 @@ async function ccSwitchCamera() {
     // dipertahankan & langsung diterapkan lagi ke video yg baru.
     ccTorchOn = false;
     ccCheckTorchSupport();
-    ccRenderFlashBtn();
+    ccReapplyFlashMode();
     ccApplyPreviewFilter();
+    ccApplyRotationPreview();
     showToast(newFacing === 'user' ? 'Kamera depan aktif' : 'Kamera belakang aktif');
     if (switchBtn) switchBtn.classList.toggle('is-flipping', newFacing === 'user');
     if (navigator.vibrate) { try { navigator.vibrate(30); } catch (e) {} }
@@ -12504,8 +12746,9 @@ async function ccSwitchCamera() {
       ccUpdateDeviceInfo();
       ccTorchOn = false;
       ccCheckTorchSupport();
-      ccRenderFlashBtn();
+      ccReapplyFlashMode();
       ccApplyPreviewFilter();
+      ccApplyRotationPreview();
       showToast('Kamera lainnya tidak tersedia di perangkat ini', 'err');
     } catch (e2) {
       // Kamera lama pun gagal dipulihkan (jarang) -- jangan tinggalkan
@@ -12648,7 +12891,7 @@ function ccRenderStampedPhoto(addrText, placeText) {
   if (typeEl) typeEl.textContent = 'JPEG (image/jpeg)';
   if (sizeEl) sizeEl.textContent = ccDataUrlSizeLabel(dataUrl);
 }
-function ccCaptureFoto() {
+async function ccCaptureFoto() {
   const video = document.getElementById('ccVideo');
   const canvas = document.getElementById('ccCanvas');
   const photo = document.getElementById('ccPhotoPreview');
@@ -12656,12 +12899,39 @@ function ccCaptureFoto() {
     ccShowError('Kamera belum siap, tunggu sebentar lalu coba lagi.');
     return;
   }
-  const w = video.videoWidth, h = video.videoHeight;
-  // Simpan frame MENTAH (belum distempel) ke canvas TERPISAH yg tidak
-  // ditumpuk ke layar -- ini "bahan baku" yg dipakai ULANG oleh
-  // ccRenderStampedPhoto() tiap kali user mengedit alamat, supaya
-  // gambarnya SELALU frame persis saat jepret, bukan frame video yg
-  // sudah berubah/bergerak lagi.
+  // ---- Mode Otomatis: nyalakan torch SEBENTAR kalau frame kedeteksi
+  // gelap, sebelum frame diambil -- ini yg "mensimulasikan" auto-flash
+  // (Web API tidak punya flash-utk-foto-diam bawaan, cuma torch on/off).
+  // Dikasih jeda singkat (120ms) setelah torch dinyalakan spy sensor
+  // kamera sempat menyesuaikan exposure-nya dgn cahaya tambahan itu,
+  // baru frame-nya diambil. Mode Nyala/Mati TIDAK lewat sini sama
+  // sekali (torch-nya sudah menyala/mati terus dari sebelumnya).
+  let autoFlashFired = false;
+  if (ccFlashMode === 'auto' && ccTorchSupported) {
+    const brightness = ccMeasureBrightness(video);
+    if (brightness < CC_AUTO_FLASH_DARK_THRESHOLD) {
+      await ccSetTorch(true);
+      autoFlashFired = true;
+      await new Promise(resolve => setTimeout(resolve, 120));
+    }
+  }
+  const vw = video.videoWidth, vh = video.videoHeight;
+  // Rotasi yg lagi aktif (ccRotation, lihat tombol #ccRotateBtn) ikut
+  // "dibakar" permanen ke frame MENTAH di sini -- utk 90/270 derajat,
+  // lebar & tinggi canvas DITUKAR (potret <-> lanskap) supaya hasil
+  // jepretan beneran berputar, bukan cuma gepeng/terpotong. Frame
+  // digambar dgn translate ke titik tengah canvas BARU lalu diputar
+  // (ctx.rotate, searah jarum jam sama spt CSS rotate() di preview)
+  // sebelum drawImage dgn ukuran ASLI video, dipusatkan ke titik nol --
+  // teknik standar rotasi canvas.
+  const rotated90 = (ccRotation === 90 || ccRotation === 270);
+  const w = rotated90 ? vh : vw;
+  const h = rotated90 ? vw : vh;
+  // Simpan frame MENTAH (belum distempel, SUDAH diputar) ke canvas
+  // TERPISAH yg tidak ditumpuk ke layar -- ini "bahan baku" yg dipakai
+  // ULANG oleh ccRenderStampedPhoto() tiap kali user mengedit alamat,
+  // supaya gambarnya SELALU frame persis saat jepret, bukan frame video
+  // yg sudah berubah/bergerak lagi.
   if (!ccRawFrameCanvas) ccRawFrameCanvas = document.createElement('canvas');
   ccRawFrameCanvas.width = w; ccRawFrameCanvas.height = h;
   const ccRawCtx = ccRawFrameCanvas.getContext('2d');
@@ -12671,8 +12941,20 @@ function ccCaptureFoto() {
   // terlihat di preview saat tombol jepret ditekan, bukan cuma efek
   // CSS di layar yg hilang begitu foto disimpan.
   ccRawCtx.filter = ccComputeFilterCss();
-  ccRawCtx.drawImage(video, 0, 0, w, h);
+  if (ccRotation) {
+    ccRawCtx.save();
+    ccRawCtx.translate(w / 2, h / 2);
+    ccRawCtx.rotate(ccRotation * Math.PI / 180);
+    ccRawCtx.drawImage(video, -vw / 2, -vh / 2, vw, vh);
+    ccRawCtx.restore();
+  } else {
+    ccRawCtx.drawImage(video, 0, 0, w, h);
+  }
   ccRawCtx.filter = 'none';
+  // Torch yg dinyalakan sekilas utk mode Otomatis dimatikan LAGI segera
+  // stlh frame diambil -- "Otomatis" cuma menyala per-jepretan, bukan
+  // terus2an spt mode Nyala.
+  if (autoFlashFired) ccSetTorch(false);
   // Bekukan bacaan GPS/waktu persis saat jepret -- lihat catatan di
   // deklarasi ccCapturedFix di atas.
   ccCapturedFix = ccAvgFix || ccLastFix;
@@ -12686,6 +12968,10 @@ function ccCaptureFoto() {
     flashEl.classList.add('is-flashing');
     setTimeout(() => flashEl.classList.remove('is-flashing'), 340);
   }
+  // Bunyi "klik" shutter -- cuma bunyi kalau ccSoundOn true (lihat
+  // tombol speaker #ccSoundBtn di status bar), tidak menunda proses
+  // stempel/encode di bawah ini sama sekali (murni efek suara).
+  ccPlayShutterSound();
 
   // Nilai awal alamat/nama tempat yg dipakai di stempel = hasil deteksi
   // otomatis (GPS/Overpass) saat ini -- disalin ke variabel EDITABLE
