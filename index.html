@@ -2668,9 +2668,17 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 .bc-mode-tabs .tab-btn svg{flex-shrink:0;opacity:0.85;}
 .bc-mode-tabs .tab-btn.active svg{opacity:1;}
 /* 3 pil sekarang muat di satu baris (Upload/Kamera/QR Generator) --
-   font & padding dikecilkan dikit spesial di sini supaya tetap rapi
-   1 baris di layar sempit tanpa harus turun ke baris ke-2. */
-.bc-mode-tabs .tab-btn{font-size:12.5px;padding:8px 8px;}
+   font, padding & gap dikecilkan supaya LABEL TEKS TETAP KELIHATAN
+   UTUH (bukan kepotong "...") di lebar kartu standar; svg ikon juga
+   diperkecil dikit (15px->13px) buat kasih ruang ekstra ke teks. */
+.bc-mode-tabs .tab-btn{font-size:11.5px;padding:8px 4px;gap:4px;}
+.bc-mode-tabs .tab-btn svg{width:13px;height:13px;}
+/* Ketebalan teks pil sedikit diturunkan (700 -> 600) supaya tidak
+   terlalu "berat" dilihat pas 3 label sekaligus berdempetan; pil yang
+   sedang aktif tetap dikasih 700 dikit lebih tebal drpd yg nonaktif
+   biar tetap kelihatan jelas mana mode yg lagi dipilih. */
+.bc-mode-tabs .tab-btn{font-weight:600;}
+.bc-mode-tabs .tab-btn.active{font-weight:700;}
 /* Pil "QR Generator" -- fitur belum dibangun, jadi dibuat non-aktif
    scr visual (warna pudar + titik penanda kecil di pojok ikon) tapi
    TETAP bisa diklik supaya nunjukin toast info "belum tersedia"
@@ -2688,8 +2696,8 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   background:var(--brass,#D97706);border:1.4px solid var(--card);
 }
 @media (max-width:380px){
-  .bc-mode-tabs .tab-btn{font-size:11px;padding:7px 5px;gap:4px;}
-  .bc-mode-tabs .tab-btn svg{width:13px;height:13px;}
+  .bc-mode-tabs .tab-btn{font-size:10px;padding:7px 2px;gap:3px;}
+  .bc-mode-tabs .tab-btn svg{width:12px;height:12px;}
 }
 .bc-panel{display:none;flex-direction:column;gap:14px;}
 .bc-panel.active{display:flex;}
@@ -14445,7 +14453,7 @@ html.dark-mode .bd-row-close{
             <div class="bc-cam-placeholder" id="bcCamPlaceholder" aria-hidden="true">
               <span class="bc-cam-placeholder-ring"></span>
               <span class="bc-cam-placeholder-badge">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z"/><circle cx="12" cy="13" r="4.2"/></svg>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M21 21H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3m3-3h6l2 3h4a2 2 0 0 1 2 2v9.34m-7.72-2.06a4 4 0 1 1-5.56-5.56"/></svg>
               </span>
             </div>
             <div class="bc-cam-watermark" aria-hidden="true">
