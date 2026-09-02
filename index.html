@@ -2931,19 +2931,39 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 }
 .cc-gps-dot.is-locked{background:#34D399;box-shadow:0 0 6px 1px rgba(52,211,153,0.6);}
 .cc-gps-dot.is-error{background:#F87171;box-shadow:0 0 6px 1px rgba(248,113,113,0.6);}
-/* Tombol ganti kamera depan/belakang -- pil bulat pojok kanan-atas
+/* Tombol ganti kamera depan/belakang & tombol pengaturan kamera --
+   pil bulat kembar, ditumpuk BERDAMPINGAN dlm satu wadah
+   (.cc-top-actions, lihat definisi wadahnya di bawah) pojok kanan-atas
    kartu kamera, senada visual dgn .cc-gps-badge (blur+gelap) tapi di
-   sisi berlawanan spy tidak tumpuk dgn badge status GPS. */
+   sisi berlawanan spy tidak tumpuk dgn badge status GPS. Posisi
+   (top/right) SEKARANG dipindah ke wadahnya (.cc-top-actions), BUKAN
+   lagi di sini -- supaya kedua tombol bisa "duduk" sejajar dlm satu
+   baris lewat flex, gampang nambah tombol baru lagi nanti tanpa
+   itung-itung posisi absolute satu-satu. */
 .cc-switch-cam-btn{
-  position:absolute;top:12px;right:12px;z-index:2;
   display:flex;align-items:center;justify-content:center;
-  width:34px;height:34px;border-radius:50%;
+  width:34px;height:34px;border-radius:50%;flex-shrink:0;
   background:rgba(11,18,32,0.6);backdrop-filter:blur(4px);
   border:1px solid rgba(255,255,255,0.16);color:#fff;
   cursor:pointer;transition:background .15s ease, transform .15s ease;
 }
 .cc-switch-cam-btn:active{transform:scale(0.9);background:rgba(11,18,32,0.8);}
 .cc-switch-cam-btn[hidden]{display:none;}
+/* Ikon "flip camera" ikut berputar 180° & tetap dlm posisi terbalik
+   selama kamera DEPAN yg aktif (class .is-flipping ditoggle di
+   ccSwitchCamera(), script.js) -- balik lagi normal saat kamera
+   BELAKANG aktif. Fungsinya sbg indikator visual mode kamera mana yg
+   sedang aktif sekarang, bukan cuma animasi transisi sesaat. */
+.cc-switch-cam-btn svg{transition:transform .35s ease;}
+.cc-switch-cam-btn.is-flipping svg{transform:rotateY(180deg);}
+/* Wadah baris tombol pojok kanan-atas (ganti kamera + pengaturan) --
+   dulu posisi absolute-nya ada langsung di masing2 tombol (cuma 1
+   tombol), sekarang dipindah ke sini supaya keduanya sejajar rapi
+   lewat flex & jaraknya konsisten, TANPA tabrakan satu sama lain. */
+.cc-top-actions{
+  position:absolute;top:12px;right:12px;z-index:2;
+  display:flex;align-items:center;gap:8px;
+}
 /* Panel info koordinat -- versi DASAR (dipakai kalau dipanggil di luar
    #ccCamFrame). Di dalam halaman Koordinat Kamera sendiri, panel ini
    DITUMPUK LANGSUNG di atas video/foto lewat override
@@ -3035,7 +3055,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
    menampung panel info/tombol aksi spt sebelumnya) supaya kamera
    betul-betul mengisi hampir seluruh layar (full-frame) begitu aktif,
    persis pengalaman aplikasi kamera bawaan HP. ---- */
-#cameraCoordOverlay .lap-filter-page{height:100dvh;overflow:hidden;}
+#cameraCoordOverlay .lap-filter-page{height:100dvh;overflow:hidden;position:relative;}
 #cameraCoordOverlay .cc-card{
   flex:1;min-height:0;display:flex;flex-direction:column;gap:0;
   padding:0;margin:0;border-radius:0;overflow:hidden;background:#0B1220;
@@ -3043,6 +3063,39 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 #cameraCoordOverlay #ccCamFrame{
   flex:1 1 auto;min-height:180px;width:100%;height:auto;
   aspect-ratio:auto;max-height:none;border-radius:0;
+}
+/* ---- BENAR-BENAR FULL LAYAR: header "Koordinat Kamera" tadinya masih
+   pakai gaya ".lap-filter-head" biasa (latar solid + padding besar
+   bawaan halaman lain), jadi kamera baru mulai di BAWAH bar header itu
+   -- bukan full screen. Sekarang header dilepas dari alur normal
+   (position:absolute, ditumpuk MENGAMBANG di atas video dgn latar
+   gradasi gelap transparan yg cuma kebaca krn teks/ikonnya putih),
+   spy #ccCamFrame (yg sudah flex:1 mengisi SISA tinggi .cc-card) kini
+   betul2 mulai dari y=0 (paling atas layar, di bawah status bar HP
+   saja) sampai paling bawah -- persis app kamera bawaan HP yg
+   kontrolnya melayang di atas preview, bukan di kartu terpisah. Badge
+   GPS/tombol ganti kamera (top:12px bawaan) digeser turun sedikit di
+   bawah supaya tidak tertumpuk dgn tombol back/judul yg melayang ini,
+   lihat override "#cameraCoordOverlay #ccCamFrame .cc-gps-badge" dkk
+   di bawah. */
+#cameraCoordOverlay .lap-filter-head{
+  position:absolute;top:0;left:0;right:0;z-index:5;
+  background:linear-gradient(to bottom, rgba(6,10,20,0.6) 0%, rgba(6,10,20,0.25) 65%, transparent 100%);
+  padding:calc(10px + env(safe-area-inset-top,0px)) 14px 26px;
+  pointer-events:none;
+}
+#cameraCoordOverlay .lap-filter-head > *{pointer-events:auto;}
+#cameraCoordOverlay .lap-filter-back-btn{
+  background:rgba(11,18,32,0.55);backdrop-filter:blur(4px);
+  width:34px;height:34px;
+}
+#cameraCoordOverlay .lap-filter-back-btn:hover{background:rgba(11,18,32,0.8);}
+#cameraCoordOverlay .lap-filter-head h2{
+  font-size:15.5px;font-weight:700;color:#fff;text-shadow:0 1px 5px rgba(0,0,0,0.5);
+}
+#cameraCoordOverlay #ccCamFrame .cc-gps-badge,
+#cameraCoordOverlay #ccCamFrame .cc-top-actions{
+  top:calc(52px + env(safe-area-inset-top,0px));
 }
 /* Panel info koordinat & panel meta foto, DITUMPUK LANGSUNG di atas
    video/foto (bukan lagi kartu putih di bawah) -- lihat catatan di
@@ -3067,7 +3120,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
    diambil, ditumpuk sbg pil kecil melayang di ATAS (bukan bawah, supaya
    tidak menutupi tombol Ambil Ulang/Simpan Foto di bawah foto). */
 #cameraCoordOverlay #ccCamFrame .cc-info-panel--photometa{
-  bottom:auto;top:12px;left:50%;right:auto;transform:translateX(-50%);
+  bottom:auto;top:calc(52px + env(safe-area-inset-top,0px));left:50%;right:auto;transform:translateX(-50%);
   z-index:4;
   background:rgba(11,18,32,0.6);backdrop-filter:blur(4px);
   border-radius:999px;padding:7px 16px;
@@ -3088,6 +3141,45 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   box-shadow:0 -6px 18px -8px rgba(0,0,0,0.28);position:relative;z-index:2;
 }
 #cameraCoordOverlay .cc-bottom-sheet .cc-btn-row{margin-top:0;}
+/* ---- Popup "Pengaturan Kamera" (#ccSettingsSheetOverlay) -- dibuka
+   dari tombol roda-gigi baru (#ccSettingsBtn) di ".cc-top-actions",
+   sebelah tombol ganti kamera. Struktur DAUR ULANG apa adanya dari
+   pola bottom sheet "Pilih Mata Uang"/"Kategori" (.lap-sheet-overlay/
+   .lap-sheet + .lap-sheet-handle/.lap-sheet-head), isinya:
+   1) toggle on/off "Resolusi Kustom" (daur ulang .settings-toggle dari
+      baris "Kunci PIN"/"Login Biometrik" di halaman Pengaturan) --
+      OFF = kamera pakai resolusi bawaan browser (hemat resource),
+      ON = daftar resolusi di bawahnya jadi aktif & bisa dipilih.
+   2) daftar radio resolusi (daur ulang .lap-cat-list/.lap-cat-item
+      dari sheet "Pilih Mata Uang") -- Otomatis/HD/Full HD/4K/8K, tiap
+      baris py sub-teks dimensi piksel + catatan kalau ternyata di
+      atas kemampuan maksimum kamera perangkat (baru diketahui SETELAH
+      kamera pernah aktif, lihat ccDetectMaxCapableRes() di script.js)
+      -- tetap bisa dipilih (constraint dipasang sbg "ideal" bukan
+      "exact" jadi tidak pernah gagal keras), browser otomatis
+      membulatkan ke resolusi terdekat yg sanggup dicapai perangkat.
+   Logic lengkap ada di script.js dekat komentar "PENGATURAN KAMERA". */
+.cc-settings-hint{
+  font-size:11.5px;line-height:1.5;color:var(--ink-faint);
+  padding:0 2px 4px;
+}
+.cc-settings-hint[hidden]{display:none;}
+.cc-res-item-sub{
+  display:block;font-size:11px;font-weight:400;color:var(--ink-faint);
+  margin-top:2px;
+}
+.cc-res-item-sub.cc-res-unsupported{color:#D97706;}
+.lap-cat-item.cc-res-item{
+  flex-direction:column;align-items:flex-start;gap:2px;
+  padding:11px 2px;position:relative;
+}
+.lap-cat-item.cc-res-item::after{position:absolute;top:13px;right:2px;}
+#ccSettingsSheet .lap-cat-list{
+  transition:opacity .15s ease;
+}
+#ccSettingsSheet.cc-res-disabled .lap-cat-list{
+  opacity:0.4;pointer-events:none;
+}
 
 /* ---- Halaman "Kurs Mata Uang" (#kursOverlay) ----
    Header + kartu konverter dibungkus ".tema-sticky-head"/".tema-preview-
@@ -14752,15 +14844,23 @@ html.dark-mode .bd-row-close{
             <span class="cc-gps-dot" id="ccGpsDot"></span>
             <span id="ccGpsStatus">Mencari sinyal GPS…</span>
           </div>
-          <!-- Tombol ganti kamera depan/belakang -- HANYA tampil saat
-               kamera aktif & belum ada foto yg diambil (disembunyikan
-               lagi begitu masuk mode preview foto, lihat ccCaptureFoto/
-               ccRetakeBtn). Ikonnya "flip camera" khas, ditaruh
-               pojok kanan-atas kartu kamera spy gampang dijangkau ibu
-               jari saat pegang HP satu tangan. -->
-          <button type="button" class="cc-switch-cam-btn" id="ccSwitchCamBtn" hidden aria-label="Ganti kamera depan/belakang">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 17.5A2.5 2.5 0 0 1 17.5 20h-11A2.5 2.5 0 0 1 4 17.5v-8A2.5 2.5 0 0 1 6.5 7h2l1.5-2h4L15.5 7h2A2.5 2.5 0 0 1 20 9.5Z"/><path d="M8 3.5 6 6M16 3.5 18 6"/><path d="M9 13a3 3 0 1 0 6 0 3 3 0 0 0-6 0Z"/><path d="M4.5 11 3 9.5M19.5 11 21 9.5"/></svg>
-          </button>
+          <!-- Baris tombol pojok kanan-atas: ganti kamera depan/
+               belakang + pengaturan kamera (resolusi & toggle) --
+               DIBUNGKUS satu wadah (.cc-top-actions, lihat CSS-nya)
+               supaya keduanya sejajar rapi & gampang nambah tombol
+               lain lagi nanti. Tombol pengaturan (baru) SELALU
+               tampil bareng tombol ganti kamera -- disembunyikan lagi
+               begitu kamera nonaktif/masuk mode preview foto, pola
+               visibility-nya SAMA PERSIS dgn ccSwitchCamBtn (lihat
+               ccStartCamera/ccStopCamera/ccCaptureFoto di script.js). -->
+          <div class="cc-top-actions">
+            <button type="button" class="cc-switch-cam-btn" id="ccSettingsBtn" hidden aria-label="Pengaturan Kamera">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>
+            </button>
+            <button type="button" class="cc-switch-cam-btn" id="ccSwitchCamBtn" hidden aria-label="Ganti kamera depan/belakang">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 17.5A2.5 2.5 0 0 1 17.5 20h-11A2.5 2.5 0 0 1 4 17.5v-8A2.5 2.5 0 0 1 6.5 7h2l1.5-2h4L15.5 7h2A2.5 2.5 0 0 1 20 9.5Z"/><path d="M8 3.5 6 6M16 3.5 18 6"/><path d="M9 13a3 3 0 1 0 6 0 3 3 0 0 0-6 0Z"/><path d="M4.5 11 3 9.5M19.5 11 21 9.5"/></svg>
+            </button>
+          </div>
           <p class="bc-cam-hint" id="ccCameraHint">Tekan tombol di bawah untuk mengaktifkan kamera &amp; GPS, lalu arahkan ke lokasi yang ingin diabadikan.</p>
 
           <!-- Kilat putih sekilas saat tombol jepret ditekan (efek
@@ -14859,6 +14959,44 @@ html.dark-mode .bd-row-close{
     </div>
   </div>
   <!-- ===== /HALAMAN "KOORDINAT KAMERA" ===== -->
+
+  <!-- ===== POPUP "PENGATURAN KAMERA" (#ccSettingsSheetOverlay) =====
+       Dibuka dari tombol roda-gigi baru (#ccSettingsBtn) di pojok
+       kanan-atas halaman Koordinat Kamera (sebelah tombol ganti
+       kamera). Struktur SAMA PERSIS dgn popup "Pilih Mata Uang" di
+       atas (.lap-sheet-overlay > .lap-sheet > .lap-sheet-handle +
+       .lap-sheet-head), isinya toggle on/off "Resolusi Kustom" +
+       daftar radio resolusi (Otomatis/HD/Full HD/4K/8K) yg otomatis
+       menyesuaikan kemampuan maksimum kamera perangkat yg dipakai.
+       Logic lengkap ada di script.js dekat komentar "PENGATURAN
+       KAMERA". ---------------------------------------------------- -->
+  <div class="lap-sheet-overlay" id="ccSettingsSheetOverlay">
+    <div class="lap-sheet" id="ccSettingsSheet">
+      <div class="lap-sheet-handle"></div>
+      <div class="lap-sheet-head">
+        <h3>Pengaturan Kamera</h3>
+        <button type="button" class="lap-sheet-close-btn" id="ccSettingsCloseBtn" aria-label="Tutup">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </div>
+
+      <div class="settings-row settings-row-toggle" id="ccResToggleRow">
+        <span class="settings-row-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="14" height="14" rx="2.5"/><path d="M17 9.5 21 7v10l-4-2.5"/></svg>
+        </span>
+        <span class="settings-row-title">Resolusi Kustom<span class="settings-row-title-sub">Atur resolusi kamera secara manual</span></span>
+        <label class="settings-toggle">
+          <input type="checkbox" id="ccResToggleInput">
+          <span class="settings-toggle-track"><span class="settings-toggle-thumb"></span></span>
+        </label>
+      </div>
+      <p class="cc-settings-hint" id="ccResHint">Pilih resolusi di bawah -- perangkat akan otomatis dibulatkan ke kemampuan maksimum kamera kalau resolusi yg dipilih ternyata terlalu tinggi.</p>
+      <div class="lap-cat-list" id="ccResolutionList"></div>
+
+      <button type="button" class="btn btn-primary lap-filter-save-btn" id="ccSettingsDoneBtn">Terapkan</button>
+    </div>
+  </div>
+  <!-- ===== /POPUP "PENGATURAN KAMERA" ===== -->
 
   <!-- ===== BOTTOM SHEET: PILIH MATA UANG (Kurs Mata Uang) =====
        Menggantikan <select id="kursFromSelect">/<select id="kursToSelect">

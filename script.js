@@ -11311,6 +11311,148 @@ let ccLastGeocodeAt = 0;
 let ccLastGeocodeLat = null;
 let ccLastGeocodeLng = null;
 let ccGeocodeAbort = null;
+let ccMaxCapableRes = null;    // {width,height} kemampuan maksimum kamera perangkat -- baru terisi SETELAH kamera pernah aktif, lihat ccDetectMaxCapableRes()
+
+// ---- PENGATURAN KAMERA (toggle resolusi kustom + pilihan HD/Full
+// HD/4K/8K) -- disimpan per-perangkat (localStorage), dibaca setiap
+// kamera akan diaktifkan/di-switch supaya constraint width/height yg
+// dikirim ke getUserMedia ikut menyesuaikan. Constraint SELALU dipasang
+// sbg "ideal" (bukan "min"/"exact") -- artinya getUserMedia TIDAK
+// PERNAH gagal keras walau perangkat tidak sanggup capai resolusi yg
+// diminta; browser otomatis membulatkan ke resolusi TERDEKAT yg
+// sanggup dicapai kamera fisiknya sendiri ("menyesuaikan perangkat").
+const CC_CAMERA_SETTINGS_KEY = 'alirin_cc_camera_settings_v1';
+const CC_RESOLUTION_PRESETS = [
+  { key: 'auto',   label: 'Otomatis', sub: 'Menyesuaikan default kamera perangkat', w: null,  h: null },
+  { key: 'hd',     label: 'HD',       sub: '1280 × 720 px',  w: 1280, h: 720 },
+  { key: 'fullhd', label: 'Full HD',  sub: '1920 × 1080 px', w: 1920, h: 1080 },
+  { key: '4k',     label: '4K UHD',   sub: '3840 × 2160 px', w: 3840, h: 2160 },
+  { key: '8k',     label: '8K UHD',   sub: '7680 × 4320 px', w: 7680, h: 4320 },
+];
+function ccLoadCameraSettings() {
+  try {
+    const raw = localStorage.getItem(CC_CAMERA_SETTINGS_KEY);
+    if (!raw) return { enabled: false, resolution: 'auto' };
+    const parsed = JSON.parse(raw);
+    return {
+      enabled: !!parsed.enabled,
+      resolution: CC_RESOLUTION_PRESETS.some(p => p.key === parsed.resolution) ? parsed.resolution : 'auto',
+    };
+  } catch (e) { return { enabled: false, resolution: 'auto' }; }
+}
+function ccSaveCameraSettings(settings) {
+  try { localStorage.setItem(CC_CAMERA_SETTINGS_KEY, JSON.stringify(settings)); } catch (e) {}
+}
+let ccCameraSettings = ccLoadCameraSettings();
+let ccSettingsPendingResolution = ccCameraSettings.resolution;
+// Bangun object constraint video utk getUserMedia berdasarkan
+// pengaturan tersimpan -- dipakai bareng-bareng oleh ccStartCamera()
+// & ccSwitchCamera() supaya keduanya SELALU konsisten menerapkan
+// resolusi yg sama, tidak ada logic constraint yg ke-duplikasi/beda
+// sendiri-sendiri di 2 tempat.
+function ccBuildVideoConstraints(facingMode) {
+  const base = { facingMode };
+  if (!ccCameraSettings.enabled) return base;
+  const preset = CC_RESOLUTION_PRESETS.find(p => p.key === ccCameraSettings.resolution);
+  if (!preset || !preset.w || !preset.h) return base;
+  base.width = { ideal: preset.w };
+  base.height = { ideal: preset.h };
+  return base;
+}
+// Deteksi kemampuan resolusi maksimum kamera yg SEDANG aktif (lewat
+// MediaStreamTrack.getCapabilities(), kalau didukung browser -- mis.
+// Chrome/Edge Android, TIDAK semua browser py ini spt Safari) supaya
+// popup Pengaturan bisa kasih catatan "di atas kemampuan perangkat"
+// pada opsi yg terlalu tinggi. Kalau tidak didukung, cukup diamkan --
+// constraint "ideal" tetap aman dipasang tanpa perlu tau batasnya
+// duluan.
+function ccDetectMaxCapableRes() {
+  try {
+    const track = ccStream && ccStream.getVideoTracks && ccStream.getVideoTracks()[0];
+    if (!track || typeof track.getCapabilities !== 'function') return;
+    const caps = track.getCapabilities();
+    if (caps && caps.width && caps.height) {
+      ccMaxCapableRes = { width: caps.width.max || null, height: caps.height.max || null };
+    }
+  } catch (e) { /* browser tidak mendukung getCapabilities -- abaikan diam2 */ }
+}
+function ccRenderResolutionList() {
+  const wrap = document.getElementById('ccResolutionList');
+  if (!wrap) return;
+  wrap.innerHTML = CC_RESOLUTION_PRESETS.map(p => {
+    const overCap = p.w && ccMaxCapableRes && ccMaxCapableRes.width && p.w > ccMaxCapableRes.width;
+    const subText = overCap
+      ? `${p.sub} <span class="cc-res-unsupported">· melebihi maks kamera (${ccMaxCapableRes.width}×${ccMaxCapableRes.height})</span>`
+      : p.sub;
+    return `<button type="button" class="lap-cat-item cc-res-item" data-value="${p.key}">${p.label}<span class="cc-res-item-sub">${subText}</span></button>`;
+  }).join('');
+}
+function ccMarkResolutionActive(val) {
+  document.querySelectorAll('#ccResolutionList .cc-res-item').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.value === val);
+  });
+}
+function ccOpenSettingsSheet() {
+  ccSettingsPendingResolution = ccCameraSettings.resolution;
+  const toggleInput = document.getElementById('ccResToggleInput');
+  if (toggleInput) toggleInput.checked = ccCameraSettings.enabled;
+  const sheet = document.getElementById('ccSettingsSheet');
+  if (sheet) sheet.classList.toggle('cc-res-disabled', !ccCameraSettings.enabled);
+  ccRenderResolutionList();
+  ccMarkResolutionActive(ccSettingsPendingResolution);
+  document.getElementById('ccSettingsSheetOverlay')?.classList.add('open');
+}
+function ccCloseSettingsSheet() {
+  document.getElementById('ccSettingsSheetOverlay')?.classList.remove('open');
+}
+document.getElementById('ccSettingsBtn')?.addEventListener('click', ccOpenSettingsSheet);
+document.getElementById('ccSettingsCloseBtn')?.addEventListener('click', ccCloseSettingsSheet);
+document.getElementById('ccSettingsSheetOverlay')?.addEventListener('click', (e) => {
+  if (e.target.id === 'ccSettingsSheetOverlay') ccCloseSettingsSheet();
+});
+initLapSheetDrag(document.getElementById('ccSettingsSheetOverlay'), document.getElementById('ccSettingsSheet'), ccCloseSettingsSheet);
+document.getElementById('ccResToggleInput')?.addEventListener('change', (e) => {
+  const sheet = document.getElementById('ccSettingsSheet');
+  if (sheet) sheet.classList.toggle('cc-res-disabled', !e.target.checked);
+});
+document.getElementById('ccResolutionList')?.addEventListener('click', (e) => {
+  const btn = e.target.closest('.cc-res-item');
+  if (!btn) return;
+  ccSettingsPendingResolution = btn.dataset.value;
+  ccMarkResolutionActive(ccSettingsPendingResolution);
+});
+document.getElementById('ccSettingsDoneBtn')?.addEventListener('click', async () => {
+  const toggleInput = document.getElementById('ccResToggleInput');
+  ccCameraSettings = {
+    enabled: toggleInput ? toggleInput.checked : false,
+    resolution: ccSettingsPendingResolution || 'auto',
+  };
+  ccSaveCameraSettings(ccCameraSettings);
+  ccCloseSettingsSheet();
+  // Kalau kamera lagi aktif, langsung terapkan resolusi baru saat itu
+  // juga (minta stream baru dgn constraint terbaru, gantikan stream
+  // lama) -- tanpa perlu keluar-masuk halaman Koordinat Kamera dulu.
+  if (ccActive && ccStream) {
+    showToast('Menerapkan resolusi kamera…');
+    try {
+      const newStream = await navigator.mediaDevices.getUserMedia({ video: ccBuildVideoConstraints(ccFacingMode), audio: false });
+      ccStream.getTracks().forEach(t => t.stop());
+      ccStream = newStream;
+      const video = document.getElementById('ccVideo');
+      if (video) {
+        video.srcObject = ccStream;
+        video.addEventListener('loadedmetadata', ccUpdateDeviceInfo, { once: true });
+        await video.play().catch(() => {});
+      }
+      ccDetectMaxCapableRes();
+      ccUpdateDeviceInfo();
+      showToast('Resolusi kamera diterapkan');
+    } catch (e) {
+      showToast('Resolusi tidak didukung, kembali ke sebelumnya', 'err');
+    }
+  }
+});
+
 
 // Berapa lama (ms) & berapa jauh (m) bacaan GPS lama masih dianggap
 // relevan utk dirata-ratakan bareng bacaan baru -- kalau user pindah
@@ -11471,6 +11613,18 @@ function ccExtractPlaceName(data) {
   for (const key of CC_POI_CATEGORY_KEYS) {
     if (addr[key]) return String(addr[key]).trim();
   }
+  // 3) Fallback lanjutan -- kalau titik GPS TIDAK persis jatuh di POI
+  //    ber-nama apa pun (mis. di tengah jalan/lahan kosong/area
+  //    perumahan biasa, kasus paling umum), tetap tampilkan nama
+  //    LOKASI dari wilayah administratif terkecil yg tersedia (dusun/
+  //    kelurahan/desa > kecamatan > kota/kabupaten) supaya baris "nama
+  //    lokasi" DI TITIK KOORDINAT ini tidak pernah kosong -- selalu
+  //    ada nama yg mewakili posisi tsb, senada app GPS Map Camera yg
+  //    selalu punya judul lokasi di atas alamat lengkapnya.
+  const adminFallback = addr.village || addr.suburb || addr.neighbourhood || addr.hamlet
+    || addr.city_district || addr.subdistrict || addr.county || addr.district
+    || addr.town || addr.city || addr.municipality;
+  if (adminFallback) return String(adminFallback).trim();
   return '';
 }
 // Susun alamat lengkap & rapi dari komponen alamat (bukan cuma pakai
@@ -11589,13 +11743,14 @@ async function ccStartCamera() {
   }
   if (toggleBtn) toggleBtn.disabled = true;
   try {
-    ccStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: ccFacingMode }, audio: false });
+    ccStream = await navigator.mediaDevices.getUserMedia({ video: ccBuildVideoConstraints(ccFacingMode), audio: false });
     const video = document.getElementById('ccVideo');
     if (video) {
       video.srcObject = ccStream; video.hidden = false;
       video.addEventListener('loadedmetadata', ccUpdateDeviceInfo, { once: true });
       await video.play().catch(() => {});
     }
+    ccDetectMaxCapableRes();
     const panel = document.getElementById('ccInfoPanel');
     if (panel) panel.hidden = false;
     ccUpdateDeviceInfo();
@@ -11603,7 +11758,9 @@ async function ccStartCamera() {
     if (placeholder) placeholder.hidden = true;
     if (hint) hint.hidden = true;
     const switchBtn = document.getElementById('ccSwitchCamBtn');
-    if (switchBtn) switchBtn.hidden = false;
+    if (switchBtn) { switchBtn.hidden = false; switchBtn.classList.toggle('is-flipping', ccFacingMode === 'user'); }
+    const settingsBtn = document.getElementById('ccSettingsBtn');
+    if (settingsBtn) settingsBtn.hidden = false;
     ccActive = true;
     ccSetGpsStatus('Mencari sinyal GPS…', 'searching');
     ccWatchId = navigator.geolocation.watchPosition(ccOnPosition, ccOnPositionError, CC_GPS_OPTIONS);
@@ -11632,6 +11789,9 @@ function ccStopCamera() {
   if (placeholder) placeholder.hidden = false;
   const switchBtn = document.getElementById('ccSwitchCamBtn');
   if (switchBtn) switchBtn.hidden = true;
+  const settingsBtn = document.getElementById('ccSettingsBtn');
+  if (settingsBtn) settingsBtn.hidden = true;
+  ccMaxCapableRes = null;
   const hint = document.getElementById('ccCameraHint');
   if (hint) hint.hidden = false;
   const badge = document.getElementById('ccGpsBadge');
@@ -11676,7 +11836,7 @@ async function ccSwitchCamera() {
   if (switchBtn) switchBtn.disabled = true;
   const newFacing = ccFacingMode === 'environment' ? 'user' : 'environment';
   try {
-    const newStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: newFacing }, audio: false });
+    const newStream = await navigator.mediaDevices.getUserMedia({ video: ccBuildVideoConstraints(newFacing), audio: false });
     if (ccStream) { ccStream.getTracks().forEach(t => t.stop()); }
     ccStream = newStream;
     ccFacingMode = newFacing;
@@ -11686,8 +11846,10 @@ async function ccSwitchCamera() {
       video.addEventListener('loadedmetadata', ccUpdateDeviceInfo, { once: true });
       await video.play().catch(() => {});
     }
+    ccDetectMaxCapableRes();
     ccUpdateDeviceInfo();
     showToast(newFacing === 'user' ? 'Kamera depan aktif' : 'Kamera belakang aktif');
+    if (switchBtn) switchBtn.classList.toggle('is-flipping', newFacing === 'user');
     if (navigator.vibrate) { try { navigator.vibrate(30); } catch (e) {} }
   } catch (e) {
     showToast('Kamera lainnya tidak tersedia di perangkat ini', 'err');
@@ -11807,6 +11969,8 @@ function ccCaptureFoto() {
   video.hidden = true;
   const switchBtnAfterCapture = document.getElementById('ccSwitchCamBtn');
   if (switchBtnAfterCapture) switchBtnAfterCapture.hidden = true;
+  const settingsBtnAfterCapture = document.getElementById('ccSettingsBtn');
+  if (settingsBtnAfterCapture) settingsBtnAfterCapture.hidden = true;
   const actionsRow = document.getElementById('ccActionsRow');
   if (actionsRow) actionsRow.hidden = true;
   const savedRow = document.getElementById('ccSavedRow');
@@ -11837,6 +12001,8 @@ document.getElementById('ccRetakeBtn')?.addEventListener('click', () => {
   if (video) video.hidden = false;
   const switchBtn = document.getElementById('ccSwitchCamBtn');
   if (switchBtn) switchBtn.hidden = false;
+  const settingsBtn = document.getElementById('ccSettingsBtn');
+  if (settingsBtn) settingsBtn.hidden = false;
   const actionsRow = document.getElementById('ccActionsRow');
   if (actionsRow) actionsRow.hidden = false;
   const savedRow = document.getElementById('ccSavedRow');
