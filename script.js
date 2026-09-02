@@ -11776,7 +11776,7 @@ const CC_POI_CATEGORY_KEYS = [
   'shop', 'amenity', 'office', 'tourism', 'leisure', 'craft',
   'healthcare', 'building', 'man_made', 'historic', 'aeroway',
 ];
-function ccExtractPlaceName(data) {
+function ccExtractPlaceName(data, fullAddress) {
   if (!data) return '';
   // 1) Cara paling andal: field "name" resmi hasil Nominatim -- hanya
   //    terisi kalau titik GPS memang tepat berada di sebuah POI ber-nama
@@ -11807,6 +11807,16 @@ function ccExtractPlaceName(data) {
     || addr.city_district || addr.subdistrict || addr.county || addr.district
     || addr.town || addr.city || addr.municipality;
   if (adminFallback) return String(adminFallback).trim();
+  // 4) Fallback TERAKHIR -- kalau bahkan field administratif di atas
+  //    kosong semua (titik GPS di area yg datanya minim di Nominatim),
+  //    JANGAN biarkan baris "nama tempat" kosong sementara "alamat"
+  //    di bawahnya tetap tampil (itu yg bikin nama tempat kelihatan
+  //    "telat"/nggak sinkron dgn alamat). Ambil saja segmen pertama
+  //    dari alamat GPS yg SAMA PERSIS baru saja disusun (fullAddress),
+  //    supaya nama tempat & alamat dijamin selalu berubah BARENG dari
+  //    titik GPS yg sama, tiap kali geocode selesai.
+  const addrFirstSegment = (fullAddress || '').split(',')[0].trim();
+  if (addrFirstSegment) return addrFirstSegment;
   return '';
 }
 // Susun alamat lengkap & rapi dari komponen alamat (bukan cuma pakai
@@ -11846,9 +11856,14 @@ async function ccReverseGeocode(lat, lng) {
     });
     if (!res.ok) throw new Error('geocode-fail');
     const data = await res.json();
+    // Susun alamat LEBIH DULU, baru turunkan nama tempat darinya kalau
+    // tidak ada POI/wilayah administratif yg cocok -- supaya nama
+    // tempat & alamat 100% dari titik GPS yg sama & selalu ganti
+    // bareng tiap kali hasil geocode baru ini masuk (lihat poin 4 di
+    // ccExtractPlaceName).
     ccLastAddress = ccBuildFullAddress(data) || 'Alamat tidak ditemukan';
     if (addrEl) addrEl.textContent = ccLastAddress;
-    ccLastPlaceName = ccExtractPlaceName(data);
+    ccLastPlaceName = ccExtractPlaceName(data, ccLastAddress);
     if (placeEl) placeEl.textContent = ccLastPlaceName || '–';
     if (placeRow) placeRow.hidden = !ccLastPlaceName;
   } catch (e) {
