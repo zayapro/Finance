@@ -2413,7 +2413,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 @media (max-width:640px), (prefers-reduced-motion:reduce){
   .isc-shortcut-ic::before{animation:none;opacity:0;}
 }
-.isc-shortcut-label{font-size:11px;font-weight:700;color:var(--ink);text-align:center;line-height:1.32;white-space:nowrap;max-width:none;}
+.isc-shortcut-label{font-size:11px;font-weight:600;color:var(--ink);text-align:center;line-height:1.32;white-space:nowrap;max-width:none;}
 .isc-shortcut-item.is-manual .isc-shortcut-label{color:#B45309;}
 
 /* ---- Ikon satelit (sub-platform) yang mengorbit ikon utama saat hover ----
@@ -2634,6 +2634,112 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   .calc-btn{font-size:16px;}
   .calc-btn--op{font-size:19px;}
   .calc-btn--zero{padding-left:22px;}
+}
+
+/* ---- Halaman "Scanner Barcode" (#barcodeOverlay) ----
+   2 mode dipilih lewat tab pil ".tabs" yg sudah ada (Scan Kamera /
+   Upload Gambar), masing-masing panel disembunyikan/ditampilkan lewat
+   .bc-panel.active (mengikuti pola .lap-panel di halaman Laporan).
+   .bc-reader-box adalah wadah kosong tempat library html5-qrcode
+   menyuntikkan elemen <video> (mode kamera) atau <img>+<canvas> hasil
+   deteksi (mode upload) -- makanya sengaja dibiarkan tanpa konten
+   statis di HTML, semua diisi via JS saat overlay dibuka/dipakai. */
+.bc-card{display:flex;flex-direction:column;gap:16px;}
+.bc-mode-tabs{margin-bottom:2px;}
+.bc-panel{display:none;flex-direction:column;gap:14px;}
+.bc-panel.active{display:flex;}
+
+.bc-cam-frame{
+  position:relative;width:100%;aspect-ratio:1/1;max-height:340px;
+  border-radius:18px;overflow:hidden;background:#0B1220;
+  display:flex;align-items:center;justify-content:center;
+}
+.bc-reader-box{width:100%;height:100%;}
+.bc-reader-box video{width:100% !important;height:100% !important;object-fit:cover;}
+/* Bingkai 4 sudut ala viewfinder scanner -- murni dekoratif (pointer-
+   events:none), cuma menegaskan "arahkan barcode ke sini" saat kamera
+   aktif; tetap kelihatan juga saat kamera belum aktif (background
+   gelap polos) sebagai preview area. */
+.bc-scan-corners{position:absolute;inset:14%;pointer-events:none;z-index:2;}
+.bc-scan-corners span{position:absolute;width:26px;height:26px;border:3px solid #fff;opacity:0.85;}
+.bc-scan-corners span:nth-child(1){top:0;left:0;border-right:none;border-bottom:none;border-radius:8px 0 0 0;}
+.bc-scan-corners span:nth-child(2){top:0;right:0;border-left:none;border-bottom:none;border-radius:0 8px 0 0;}
+.bc-scan-corners span:nth-child(3){bottom:0;left:0;border-right:none;border-top:none;border-radius:0 0 0 8px;}
+.bc-scan-corners span:nth-child(4){bottom:0;right:0;border-left:none;border-top:none;border-radius:0 0 8px 0;}
+.bc-cam-hint{
+  position:absolute;left:12px;right:12px;bottom:10px;z-index:2;
+  margin:0;text-align:center;font-size:11px;font-weight:600;color:#fff;
+  background:rgba(11,18,32,0.55);backdrop-filter:blur(3px);
+  border-radius:999px;padding:7px 12px;line-height:1.35;
+}
+.bc-cam-toggle-btn{
+  width:100%;display:flex;align-items:center;justify-content:center;gap:8px;
+  padding:13px;border-radius:999px;font-size:14px;font-weight:700;border:none;
+}
+.bc-cam-toggle-btn.is-active{background:var(--wine);box-shadow:0 4px 14px color-mix(in srgb, var(--wine) 30%, transparent);}
+
+.bc-upload-drop{
+  display:block;width:100%;aspect-ratio:1/1;max-height:340px;
+  border-radius:18px;border:2px dashed var(--line);background:var(--paper);
+  cursor:pointer;overflow:hidden;transition:border-color .18s ease,background .18s ease;
+}
+.bc-upload-drop:hover{border-color:var(--fc-accent,var(--primary));}
+.bc-upload-drop.has-preview{border-style:solid;background:#0B1220;}
+.bc-upload-empty{
+  width:100%;height:100%;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:8px;color:var(--ink-faint);text-align:center;padding:20px;
+}
+.bc-upload-drop.has-preview .bc-upload-empty{display:none;}
+.bc-upload-title{font-size:13.5px;font-weight:700;color:var(--ink-soft);}
+.bc-upload-sub{font-size:11.5px;font-weight:500;}
+.bc-reader-box--upload{width:100%;height:100%;}
+.bc-reader-box--upload img,.bc-reader-box--upload canvas{
+  width:100% !important;height:100% !important;object-fit:contain;
+}
+.bc-upload-again-btn{
+  align-self:center;font-size:12.5px;font-weight:700;color:var(--fc-accent-strong,var(--primary-deep));
+  background:none;border:none;text-decoration:underline;padding:2px;cursor:pointer;
+}
+
+.bc-result{
+  border-radius:16px;padding:14px 15px 13px;
+  background:color-mix(in srgb, var(--brass) 10%, var(--card));
+  border:1px solid color-mix(in srgb, var(--brass) 30%, var(--line));
+  display:flex;flex-direction:column;gap:9px;animation:bcResultIn .28s ease both;
+}
+@keyframes bcResultIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+.bc-result-head{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.bc-result-label{font-size:12px;font-weight:800;color:#065F46;}
+.bc-result-format{
+  font-size:9.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;
+  color:var(--ink-faint);background:var(--card);border:1px solid var(--line);
+  border-radius:999px;padding:3px 9px;white-space:nowrap;
+}
+.bc-result-value{
+  font-family:'Poppins',sans-serif;font-size:15px;font-weight:600;color:var(--ink);
+  word-break:break-word;line-height:1.4;
+}
+.bc-result-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:2px;}
+.bc-result-btn{
+  font-size:12px;font-weight:700;padding:8px 14px;border-radius:999px;
+  border:1.4px solid var(--line);background:var(--card);color:var(--ink-soft);
+  cursor:pointer;transition:all .15s ease;
+}
+.bc-result-btn:hover{border-color:var(--fc-accent,var(--primary));color:var(--fc-accent-strong,var(--primary-deep));}
+.bc-result-btn--accent{
+  border-color:transparent;background:linear-gradient(135deg,var(--primary),var(--primary-deep));color:#fff;
+}
+.bc-result-btn--accent:hover{color:#fff;opacity:0.92;}
+
+.bc-error{
+  margin:0;font-size:12.5px;font-weight:600;color:#B91C1C;
+  background:color-mix(in srgb, var(--wine) 10%, var(--card));
+  border:1px solid color-mix(in srgb, var(--wine) 28%, var(--line));
+  border-radius:12px;padding:10px 13px;line-height:1.45;
+}
+@media (max-width:380px){
+  .bc-cam-frame,.bc-upload-drop{max-height:280px;}
+  .bc-result-value{font-size:13.5px;}
 }
 
 /* ---- Halaman "Kurs Mata Uang" (#kursOverlay) ----
@@ -13052,6 +13158,12 @@ html.dark-mode .bd-row-close{
         </span>
         <span class="fm-menu-label">Kurs</span>
       </button>
+      <button type="button" class="fm-menu-item" id="fmHomeBarcodeBtn" title="Scanner Barcode">
+        <span class="fm-menu-ic" style="--fm-color:#4F46E5;">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="7" y1="8" x2="7" y2="16"/><line x1="10.5" y1="8" x2="10.5" y2="16"/><line x1="14" y1="8" x2="14" y2="16"/><line x1="17.5" y1="8" x2="17.5" y2="16"/></svg>
+        </span>
+        <span class="fm-menu-label">Scanner</span>
+      </button>
     </div>
   </section>
   <!-- ===== /KARTU FAST MENU ===== -->
@@ -13929,6 +14041,12 @@ html.dark-mode .bd-row-close{
             </span>
             <span class="fm-menu-label">Kurs</span>
           </button>
+          <button type="button" class="fm-menu-item" id="fmGridBarcodeBtn" title="Scanner Barcode">
+            <span class="fm-menu-ic" style="--fm-color:#4F46E5;">
+              <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="7" y1="8" x2="7" y2="16"/><line x1="10.5" y1="8" x2="10.5" y2="16"/><line x1="14" y1="8" x2="14" y2="16"/><line x1="17.5" y1="8" x2="17.5" y2="16"/></svg>
+            </span>
+            <span class="fm-menu-label">Scanner</span>
+          </button>
         </div>
       </div>
 
@@ -14107,6 +14225,93 @@ html.dark-mode .bd-row-close{
     </div>
   </div>
   <!-- ===== /HALAMAN "KURS MATA UANG" ===== -->
+
+  <!-- ===== HALAMAN "SCANNER BARCODE" (#barcodeOverlay) =====
+       Halaman baru, dibuka dari pintasan "Scanner" di kartu Fast Menu
+       Beranda (#fmHomeBarcodeBtn) maupun grid "Menu Utama" di halaman
+       Fast Menu (#fmGridBarcodeBtn). Struktur luar SAMA PERSIS dgn
+       #kalkulatorOverlay (.detail-page-overlay.lap-filter-overlay >
+       .lap-filter-page > .lap-filter-head + .lap-filter-card).
+
+       Dua mode dipilih lewat tab pil ".tabs" (komponen yg sama dgn tab
+       Aktifitas/Tabungan/Aset di halaman Laporan):
+       1) "Scan Kamera" -- live scan pakai kamera perangkat (getUserMedia),
+          arahkan ke barcode/QR lalu otomatis terbaca begitu terdeteksi.
+       2) "Upload Gambar" -- pilih foto barcode dari galeri, didekode
+          langsung dari file gambarnya (tidak perlu kamera aktif).
+       Keduanya berbagi satu wadah hasil (#bcResult) di bawahnya --
+       teks hasil scan, format barcode-nya, tombol Salin/Buka Link (utk
+       hasil berupa URL)/Scan Lagi.
+
+       Library dekode (html5-qrcode, mendukung QR + banyak format
+       barcode 1D lain: EAN-13/8, Code128/39, UPC, ITF, dll) dimuat
+       LAZY dari CDN cuma sekali saat overlay ini pertama kali dibuka
+       (bukan di head halaman dari awal) supaya tidak membebani waktu
+       muat awal aplikasi utk fitur yg belum tentu dipakai. Logic
+       lengkap ada di script.js dekat komentar "SCANNER BARCODE". ---- -->
+  <div class="detail-page-overlay lap-filter-overlay" id="barcodeOverlay">
+    <div class="lap-filter-page">
+      <div class="lap-filter-head">
+        <button class="lap-filter-back-btn" id="barcodeBackBtn" type="button" aria-label="Tutup Scanner Barcode">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <h2>Scanner Barcode</h2>
+        <span class="lap-filter-back-btn" style="visibility:hidden" aria-hidden="true"></span>
+      </div>
+
+      <div class="lap-filter-card bc-card">
+        <div class="tabs bc-mode-tabs" id="barcodeModeTabs">
+          <span class="tab-indicator" aria-hidden="true"></span>
+          <button type="button" class="tab-btn active" data-bcmode="camera">Scan Kamera</button>
+          <button type="button" class="tab-btn" data-bcmode="upload">Upload Gambar</button>
+        </div>
+
+        <!-- Panel: Scan Kamera -->
+        <div class="bc-panel active" data-bc-panel="camera" id="bcPanelCamera">
+          <div class="bc-cam-frame">
+            <div id="bcReaderCamera" class="bc-reader-box"></div>
+            <div class="bc-scan-corners" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+            <p class="bc-cam-hint" id="bcCameraHint">Tekan tombol di bawah untuk mengaktifkan kamera, lalu arahkan ke barcode/QR code.</p>
+          </div>
+          <button type="button" class="btn btn-primary bc-cam-toggle-btn" id="bcCameraToggleBtn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z"/><circle cx="12" cy="13" r="4"/></svg>
+            Aktifkan Kamera
+          </button>
+        </div>
+
+        <!-- Panel: Upload Gambar -->
+        <div class="bc-panel" data-bc-panel="upload" id="bcPanelUpload">
+          <label class="bc-upload-drop" id="bcUploadDrop" for="bcUploadInput">
+            <div id="bcReaderUpload" class="bc-reader-box bc-reader-box--upload" hidden></div>
+            <div class="bc-upload-empty" id="bcUploadEmpty">
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <span class="bc-upload-title">Upload gambar barcode</span>
+              <span class="bc-upload-sub">Ketuk untuk pilih dari galeri (PNG/JPG)</span>
+            </div>
+          </label>
+          <input type="file" accept="image/*" id="bcUploadInput" hidden>
+          <button type="button" class="bc-upload-again-btn" id="bcUploadAgainBtn" hidden>Pilih Gambar Lain</button>
+        </div>
+
+        <!-- Hasil scan (dipakai bersama kedua mode) -->
+        <div class="bc-result" id="bcResult" hidden>
+          <div class="bc-result-head">
+            <span class="bc-result-label">✓ Barcode Terbaca</span>
+            <span class="bc-result-format" id="bcResultFormat"></span>
+          </div>
+          <div class="bc-result-value" id="bcResultValue"></div>
+          <div class="bc-result-actions">
+            <button type="button" class="bc-result-btn" id="bcCopyBtn">Salin</button>
+            <button type="button" class="bc-result-btn bc-result-btn--accent" id="bcOpenBtn" hidden>Buka Link</button>
+            <button type="button" class="bc-result-btn" id="bcRescanBtn">Scan Lagi</button>
+          </div>
+        </div>
+
+        <p class="bc-error" id="bcError" hidden></p>
+      </div>
+    </div>
+  </div>
+  <!-- ===== /HALAMAN "SCANNER BARCODE" ===== -->
 
   <!-- ===== BOTTOM SHEET: PILIH MATA UANG (Kurs Mata Uang) =====
        Menggantikan <select id="kursFromSelect">/<select id="kursToSelect">

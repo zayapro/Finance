@@ -11013,6 +11013,253 @@ document.getElementById('fmGridKursBtn')?.addEventListener('click', () => {
 });
 
 /* ==========================================================
+   SCANNER BARCODE (#barcodeOverlay) -- pintasan baru di kartu Fast
+   Menu Beranda (#fmHomeBarcodeBtn) & grid "Menu Utama" halaman Fast
+   Menu (#fmGridBarcodeBtn). Buka/tutup pola SAMA PERSIS dgn
+   openKursOverlay/closeKursOverlay di atas.
+
+   Dua mode ("Scan Kamera" & "Upload Gambar") berbagi 1 instance
+   library html5-qrcode per mode (dimuat LAZY dari CDN, cuma sekali,
+   baru saat overlay ini pertama kali dibuka -- bukan di awal load
+   aplikasi, supaya tidak membebani fitur yg belum tentu dipakai).
+   Library ini dipilih (bukan cuma pakai jsQR polos) krn mendukung
+   banyak format barcode 1D (EAN-13/8, Code128/39, UPC, ITF, dll)
+   SEKALIGUS QR Code dalam satu decoder yg sama -- sesuai permintaan
+   "scanner barcode", bukan cuma QR. ---------------------------- */
+const BC_CDN_URL = 'https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js';
+const BC_FORMATS_SUPPORT = () => (window.Html5QrcodeSupportedFormats ? [
+  Html5QrcodeSupportedFormats.QR_CODE, Html5QrcodeSupportedFormats.AZTEC,
+  Html5QrcodeSupportedFormats.CODABAR, Html5QrcodeSupportedFormats.CODE_39,
+  Html5QrcodeSupportedFormats.CODE_93, Html5QrcodeSupportedFormats.CODE_128,
+  Html5QrcodeSupportedFormats.DATA_MATRIX, Html5QrcodeSupportedFormats.MAXICODE,
+  Html5QrcodeSupportedFormats.ITF, Html5QrcodeSupportedFormats.EAN_13,
+  Html5QrcodeSupportedFormats.EAN_8, Html5QrcodeSupportedFormats.PDF_417,
+  Html5QrcodeSupportedFormats.RSS_14, Html5QrcodeSupportedFormats.RSS_EXPANDED,
+  Html5QrcodeSupportedFormats.UPC_A, Html5QrcodeSupportedFormats.UPC_E,
+  Html5QrcodeSupportedFormats.UPC_EAN_EXTENSION,
+] : undefined);
+
+let bcMode = 'camera';
+let bcLibLoadingPromise = null;
+let bcCamReader = null;      // instance Html5Qrcode terikat #bcReaderCamera
+let bcUploadReader = null;   // instance Html5Qrcode terikat #bcReaderUpload
+let bcCamActive = false;
+
+function bcLoadLib() {
+  if (window.Html5Qrcode) return Promise.resolve();
+  if (bcLibLoadingPromise) return bcLibLoadingPromise;
+  bcLibLoadingPromise = new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = BC_CDN_URL;
+    s.onload = () => resolve();
+    s.onerror = () => { bcLibLoadingPromise = null; reject(new Error('load-fail')); };
+    document.head.appendChild(s);
+  });
+  return bcLibLoadingPromise;
+}
+
+function bcShowError(msg) {
+  const err = document.getElementById('bcError');
+  if (err) { err.textContent = msg; err.hidden = false; }
+}
+function bcHideError() {
+  const err = document.getElementById('bcError');
+  if (err) err.hidden = true;
+}
+function bcResetResult() {
+  const box = document.getElementById('bcResult');
+  if (box) box.hidden = true;
+  const val = document.getElementById('bcResultValue');
+  if (val) val.textContent = '';
+  bcHideError();
+}
+// Nama format barcode ZXing/html5-qrcode (mis. "QR_CODE") diubah jadi
+// label ramah-baca (mis. "QR Code") utk chip di kartu hasil.
+function bcFormatLabel(raw) {
+  if (!raw) return '';
+  return String(raw).replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+function bcShowResult(text, formatRaw) {
+  const box = document.getElementById('bcResult');
+  const valEl = document.getElementById('bcResultValue');
+  const fmtEl = document.getElementById('bcResultFormat');
+  if (!box || !valEl) return;
+  valEl.textContent = text;
+  if (fmtEl) fmtEl.textContent = bcFormatLabel(formatRaw);
+  box.hidden = false;
+  bcHideError();
+  const isUrl = /^https?:\/\//i.test(text.trim());
+  const openBtn = document.getElementById('bcOpenBtn');
+  if (openBtn) {
+    openBtn.hidden = !isUrl;
+    openBtn.dataset.url = isUrl ? text.trim() : '';
+  }
+  if (navigator.vibrate) { try { navigator.vibrate(60); } catch (e) {} }
+  if (bcMode === 'camera') bcStopCamera(); // hemat baterai, berhenti otomatis begitu dapat hasil
+}
+
+function bcStopCamera() {
+  const toggleBtn = document.getElementById('bcCameraToggleBtn');
+  const hint = document.getElementById('bcCameraHint');
+  bcCamActive = false;
+  if (toggleBtn) {
+    toggleBtn.classList.remove('is-active');
+    toggleBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z"/><circle cx="12" cy="13" r="4"/></svg> Aktifkan Kamera';
+  }
+  if (hint) hint.hidden = false;
+  if (bcCamReader) {
+    bcCamReader.stop().catch(() => {}).finally(() => { try { bcCamReader.clear(); } catch (e) {} });
+  }
+}
+
+async function bcStartCamera() {
+  bcHideError();
+  bcResetResult();
+  const toggleBtn = document.getElementById('bcCameraToggleBtn');
+  const hint = document.getElementById('bcCameraHint');
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    bcShowError('Kamera tidak didukung di perangkat/browser ini. Coba gunakan mode Upload Gambar.');
+    return;
+  }
+  if (toggleBtn) toggleBtn.textContent = 'Memuat kamera…';
+  try {
+    await bcLoadLib();
+    if (!bcCamReader) bcCamReader = new Html5Qrcode('bcReaderCamera', { formatsToSupport: BC_FORMATS_SUPPORT(), verbose: false });
+    await bcCamReader.start(
+      { facingMode: 'environment' },
+      { fps: 10, qrbox: (vw, vh) => { const s = Math.floor(Math.min(vw, vh) * 0.7); return { width: s, height: s }; } },
+      (decodedText, result) => {
+        const fmt = result?.result?.format?.formatName || result?.result?.formatName || '';
+        bcShowResult(decodedText, fmt);
+      },
+      () => { /* frame tanpa barcode terdeteksi -- abaikan, ini dipanggil terus tiap frame */ }
+    );
+    bcCamActive = true;
+    if (hint) hint.hidden = true;
+    if (toggleBtn) {
+      toggleBtn.classList.add('is-active');
+      toggleBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg> Matikan Kamera';
+    }
+  } catch (e) {
+    bcCamActive = false;
+    const denied = e && (e.name === 'NotAllowedError' || /permission/i.test(String(e)));
+    bcShowError(denied
+      ? 'Izin kamera ditolak. Aktifkan izin kamera untuk situs ini di pengaturan browser, lalu coba lagi.'
+      : (e && e.message === 'load-fail'
+        ? 'Gagal memuat komponen scanner. Periksa koneksi internet lalu coba lagi.'
+        : 'Tidak bisa mengakses kamera di perangkat ini. Coba mode Upload Gambar.'));
+    if (toggleBtn) toggleBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z"/><circle cx="12" cy="13" r="4"/></svg> Aktifkan Kamera';
+  }
+}
+
+document.getElementById('bcCameraToggleBtn')?.addEventListener('click', () => {
+  if (bcCamActive) bcStopCamera(); else bcStartCamera();
+});
+
+async function bcDecodeImageFile(file) {
+  if (!file) return;
+  bcHideError();
+  bcResetResult();
+  const drop = document.getElementById('bcUploadDrop');
+  const empty = document.getElementById('bcUploadEmpty');
+  const readerBox = document.getElementById('bcReaderUpload');
+  const againBtn = document.getElementById('bcUploadAgainBtn');
+  drop?.classList.add('has-preview');
+  if (empty) empty.hidden = true;
+  if (readerBox) readerBox.hidden = false;
+  if (againBtn) againBtn.hidden = false;
+  try {
+    await bcLoadLib();
+    if (!bcUploadReader) bcUploadReader = new Html5Qrcode('bcReaderUpload', { formatsToSupport: BC_FORMATS_SUPPORT(), verbose: false });
+    // scanFile mengembalikan teks hasil (Promise<string>) & langsung
+    // menampilkan gambar+kotak deteksi di dalam #bcReaderUpload karena
+    // showImage=true -- tidak menyertakan info format barcode-nya
+    // (beda dgn callback mode kamera di atas), jadi chip format
+    // dikosongkan saja utk hasil dari mode upload ini.
+    const decodedText = await bcUploadReader.scanFile(file, true);
+    bcShowResult(decodedText, '');
+  } catch (e) {
+    bcShowError('Barcode tidak terbaca dari gambar ini. Coba foto yang lebih jelas, terang, dan tidak buram.');
+  }
+}
+document.getElementById('bcUploadInput')?.addEventListener('change', (e) => {
+  const file = e.target.files && e.target.files[0];
+  if (file) bcDecodeImageFile(file);
+});
+document.getElementById('bcUploadAgainBtn')?.addEventListener('click', () => {
+  const input = document.getElementById('bcUploadInput');
+  if (input) { input.value = ''; input.click(); }
+});
+
+document.getElementById('bcCopyBtn')?.addEventListener('click', () => {
+  const text = document.getElementById('bcResultValue')?.textContent || '';
+  if (!text) return;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => showToast('Hasil scan disalin')).catch(() => showToast('Gagal menyalin', 'err'));
+  }
+});
+document.getElementById('bcOpenBtn')?.addEventListener('click', (e) => {
+  const url = e.currentTarget.dataset.url;
+  if (url) window.open(url, '_blank', 'noopener');
+});
+document.getElementById('bcRescanBtn')?.addEventListener('click', () => {
+  bcResetResult();
+  if (bcMode === 'camera') {
+    bcStartCamera();
+  } else {
+    const drop = document.getElementById('bcUploadDrop');
+    const empty = document.getElementById('bcUploadEmpty');
+    const readerBox = document.getElementById('bcReaderUpload');
+    const againBtn = document.getElementById('bcUploadAgainBtn');
+    drop?.classList.remove('has-preview');
+    if (empty) empty.hidden = false;
+    if (readerBox) { readerBox.hidden = true; readerBox.innerHTML = ''; }
+    if (againBtn) againBtn.hidden = true;
+    const input = document.getElementById('bcUploadInput');
+    if (input) input.value = '';
+  }
+});
+
+function switchBarcodeMode(mode) {
+  if (!mode || mode === bcMode) return;
+  bcMode = mode;
+  const container = document.getElementById('barcodeModeTabs');
+  container?.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.bcmode === mode));
+  updateTabIndicator(container);
+  document.querySelectorAll('.bc-panel').forEach(p => p.classList.toggle('active', p.dataset.bcPanel === mode));
+  bcResetResult();
+  if (mode === 'upload') bcStopCamera();
+}
+document.getElementById('barcodeModeTabs')?.addEventListener('click', (e) => {
+  const btn = e.target.closest('.tab-btn');
+  if (!btn) return;
+  switchBarcodeMode(btn.dataset.bcmode);
+});
+
+function openBarcodeOverlay() {
+  document.getElementById('barcodeOverlay')?.classList.add('open');
+  lockBodyScroll();
+  requestAnimationFrame(() => updateTabIndicator(document.getElementById('barcodeModeTabs')));
+}
+function closeBarcodeOverlay() {
+  document.getElementById('barcodeOverlay')?.classList.remove('open');
+  unlockBodyScroll();
+  bcStopCamera();
+}
+document.getElementById('barcodeBackBtn')?.addEventListener('click', closeBarcodeOverlay);
+document.getElementById('fmHomeBarcodeBtn')?.addEventListener('click', openBarcodeOverlay);
+document.getElementById('fmGridBarcodeBtn')?.addEventListener('click', () => {
+  closeFastMenuOverlay();
+  openBarcodeOverlay();
+});
+// Kamera dimatikan otomatis kalau user pindah tab/app diminimize --
+// mencegah kamera terus menyala diam-diam di belakang layar (boros
+// baterai & isu privasi) kalau lupa menutup overlay dgn benar.
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && bcCamActive) bcStopCamera();
+});
+
+/* ==========================================================
    PENGATURAN > PENGATURAN — "Sumber Dana Utama"
    (#sumberDanaUtamaOverlay). Pola buka/tutup SAMA PERSIS dgn
    openFastMenuOverlay/closeFastMenuOverlay di atas -- halaman ini
