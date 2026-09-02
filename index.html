@@ -2902,6 +2902,16 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:3;
 }
 .cc-photo-preview[hidden]{display:none;}
+/* Kilat putih sekilas saat tombol jepret ditekan -- murni efek visual
+   (pointer-events:none), ditumpuk PALING atas (z-index tertinggi di
+   kartu kamera) sebentar lalu memudar, gaya khas shutter kamera bawaan
+   HP. Dipicu lewat JS (class .is-flashing) di ccCaptureFoto(). */
+.cc-flash{position:absolute;inset:0;z-index:6;background:#fff;opacity:0;pointer-events:none;}
+.cc-flash.is-flashing{animation:ccFlashPop .32s ease-out;}
+@keyframes ccFlashPop{0%{opacity:0.85;}100%{opacity:0;}}
+@media (prefers-reduced-motion:reduce){
+  .cc-flash.is-flashing{animation:none;opacity:0;}
+}
 /* Badge status GPS -- pil kecil pojok kiri-atas kartu kamera, warna
    titik menandakan status (kuning=mencari, hijau=akurat/terkunci,
    merah=gagal/izin ditolak). Statis, TANPA animasi/kedip. */
@@ -2934,10 +2944,14 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 }
 .cc-switch-cam-btn:active{transform:scale(0.9);background:rgba(11,18,32,0.8);}
 .cc-switch-cam-btn[hidden]{display:none;}
-/* Panel info koordinat -- kartu terpisah DI BAWAH kamera (bukan
-   ditumpuk transparan di atas video) supaya angka lintang/bujur tetap
-   gampang dibaca & bisa disalin/diseleksi kapan saja, tidak tertutup
-   preview kamera/foto. */
+/* Panel info koordinat -- versi DASAR (dipakai kalau dipanggil di luar
+   #ccCamFrame). Di dalam halaman Koordinat Kamera sendiri, panel ini
+   DITUMPUK LANGSUNG di atas video/foto lewat override
+   "#cameraCoordOverlay #ccCamFrame .cc-info-panel" di bawah -- supaya
+   detail yang tampil di layar (nama tempat/alamat/koordinat/dst)
+   PERSIS sama & di posisi yang sama dengan yang nanti "distempel" ke
+   foto saat tombol jepret ditekan (lihat ccCaptureFoto() di script.js),
+   bukan lagi kartu terpisah di bawah kamera. */
 .cc-info-panel{
   margin-top:12px;background:var(--card);border:1px solid var(--line);
   border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:10px;
@@ -2958,10 +2972,54 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 .cc-info-value{font-size:13.5px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .cc-btn-row{display:flex;flex-direction:column;gap:10px;margin-top:14px;}
 .cc-btn-row[hidden]{display:none;}
-.cc-btn-row--actions,.cc-btn-row--saved{flex-direction:row;flex-wrap:wrap;}
-.cc-btn-row--actions .bc-cam-toggle-btn,.cc-btn-row--saved .bc-cam-toggle-btn{flex:1 1 100%;order:-1;}
 @media (max-width:380px){
   .cc-info-grid{grid-template-columns:1fr;}
+}
+/* ---- Baris tombol ala kamera bawaan HP -- ditumpuk MENGAMBANG di
+   bagian bawah #ccCamFrame (bukan lagi baris tombol kotak di kartu
+   terpisah), supaya "jepret"-nya persis pengalaman kamera native:
+   lingkaran putih besar di tengah utk memotret, dua tombol bulat kecil
+   kaca (gelap-transparan) di kiri-kanannya utk aksi sekunder. Setelah
+   foto diambil (.cc-shutter-row--saved), pola yg sama dipakai lagi tapi
+   isinya "Ambil Ulang" (silang, kiri) & "Simpan Foto" (centang warna
+   aksen, kanan) meniru layar konfirmasi kamera bawaan HP. */
+.cc-shutter-row{
+  position:absolute;left:0;right:0;bottom:0;z-index:4;
+  display:flex;align-items:center;justify-content:center;gap:34px;
+  padding:10px 26px calc(20px + env(safe-area-inset-bottom, 0px));
+}
+.cc-shutter-row[hidden]{display:none;}
+.cc-shutter-row--saved{justify-content:space-between;}
+.cc-shutter-btn{
+  width:68px;height:68px;border-radius:50%;flex-shrink:0;padding:4px;
+  display:flex;align-items:center;justify-content:center;
+  background:transparent;border:3.5px solid #fff;color:#fff;cursor:pointer;
+  box-shadow:0 2px 14px rgba(0,0,0,0.35);transition:transform .12s ease;
+}
+.cc-shutter-btn:active{transform:scale(0.94);}
+.cc-shutter-btn-inner{
+  width:100%;height:100%;border-radius:50%;background:#fff;
+  transition:transform .12s ease;
+}
+.cc-shutter-btn:active .cc-shutter-btn-inner{transform:scale(0.8);}
+.cc-shutter-btn--save{
+  border-color:transparent;
+  background:linear-gradient(135deg,var(--primary,#F2672B),var(--primary-deep,#C2410C));
+  box-shadow:0 4px 16px color-mix(in srgb, var(--primary,#F2672B) 45%, transparent);
+}
+.cc-side-btn{
+  width:46px;height:46px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(11,18,32,0.55);backdrop-filter:blur(4px);
+  border:1px solid rgba(255,255,255,0.18);color:#fff;cursor:pointer;
+  transition:transform .12s ease,background .15s ease;
+}
+.cc-side-btn:active{transform:scale(0.88);background:rgba(11,18,32,0.78);}
+.cc-side-btn--accent{color:#FFD166;}
+@media (max-width:380px){
+  .cc-shutter-row{gap:26px;}
+  .cc-shutter-btn{width:60px;height:60px;}
+  .cc-side-btn{width:40px;height:40px;}
 }
 /* ---- FULL-FRAME: kamera Koordinat Kamera mengisi SISA tinggi layar
    (bukan kotak rasio 1:1 terbatas max-height:340px spt sebelumnya),
@@ -2970,11 +3028,13 @@ tr.fade-up{animation:fadeRow .35s ease both;}
    "#cameraCoordOverlay ..." spy TIDAK ikut mengubah tampilan Scanner
    Barcode (#barcodeOverlay) yg berbagi class .bc-cam-frame/.cc-card
    yg sama. Strukturnya: header biasa di atas (tetap normal, bukan
-   overlay) -> #ccCamFrame flex:1 (isi semua sisa ruang vertikal) ->
-   .cc-bottom-sheet di bawahnya (panel info+tombol, TIDAK menumpuk di
-   atas video, cuma ambil ruang seperlunya & bisa di-scroll sendiri
-   kalau kontennya lebih tinggi drpd sisa layar, mis. HP posisi
-   landscape) supaya kamera tetap selalu kelihatan penuh. ---- */
+   overlay) -> #ccCamFrame flex:1 (isi semua sisa ruang vertikal, dan
+   SEKARANG jadi wadah utk panel info + baris tombol jepret yg
+   ditumpuk langsung di atasnya) -> .cc-bottom-sheet kecil di bawahnya
+   (cuma tombol "Aktifkan Kamera & GPS" awal + pesan error, bukan lagi
+   menampung panel info/tombol aksi spt sebelumnya) supaya kamera
+   betul-betul mengisi hampir seluruh layar (full-frame) begitu aktif,
+   persis pengalaman aplikasi kamera bawaan HP. ---- */
 #cameraCoordOverlay .lap-filter-page{height:100dvh;overflow:hidden;}
 #cameraCoordOverlay .cc-card{
   flex:1;min-height:0;display:flex;flex-direction:column;gap:0;
@@ -2984,18 +3044,49 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   flex:1 1 auto;min-height:180px;width:100%;height:auto;
   aspect-ratio:auto;max-height:none;border-radius:0;
 }
+/* Panel info koordinat & panel meta foto, DITUMPUK LANGSUNG di atas
+   video/foto (bukan lagi kartu putih di bawah) -- lihat catatan di
+   definisi dasar .cc-info-panel di atas. Warna dibalik jadi terang
+   (putih) di atas latar gradasi gelap transparan supaya tetap kebaca
+   apa pun warna video di baliknya, senada gaya "stempel" GPS Map
+   Camera yg ditempel ke hasil foto. */
+#cameraCoordOverlay #ccCamFrame .cc-info-panel{
+  position:absolute;left:0;right:0;bottom:0;z-index:2;margin:0;
+  border:none;border-radius:0;
+  background:linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.5) 60%, transparent 100%);
+  padding:26px 14px 108px;gap:7px;
+}
+#cameraCoordOverlay #ccCamFrame .cc-info-row{color:#fff;}
+#cameraCoordOverlay #ccCamFrame .cc-info-row svg{color:rgba(255,255,255,0.78);opacity:1;}
+#cameraCoordOverlay #ccCamFrame .cc-info-row--place{color:#FFD166;}
+#cameraCoordOverlay #ccCamFrame .cc-info-row--place svg{color:#FFD166;opacity:1;}
+#cameraCoordOverlay #ccCamFrame .cc-info-row--time{color:rgba(255,255,255,0.72);border-top-color:rgba(255,255,255,0.2);}
+#cameraCoordOverlay #ccCamFrame .cc-info-label{color:rgba(255,255,255,0.62);}
+#cameraCoordOverlay #ccCamFrame .cc-info-value{color:#fff;}
+/* Panel meta foto (Tipe Gambar/Ukuran File) -- cuma muncul stlh foto
+   diambil, ditumpuk sbg pil kecil melayang di ATAS (bukan bawah, supaya
+   tidak menutupi tombol Ambil Ulang/Simpan Foto di bawah foto). */
+#cameraCoordOverlay #ccCamFrame .cc-info-panel--photometa{
+  bottom:auto;top:12px;left:50%;right:auto;transform:translateX(-50%);
+  z-index:4;
+  background:rgba(11,18,32,0.6);backdrop-filter:blur(4px);
+  border-radius:999px;padding:7px 16px;
+}
+#cameraCoordOverlay #ccCamFrame .cc-info-panel--photometa .cc-info-grid{
+  display:flex;gap:16px;
+}
+#cameraCoordOverlay #ccCamFrame .cc-info-panel--photometa .cc-info-item{
+  flex-direction:row;align-items:baseline;gap:5px;
+}
+#cameraCoordOverlay #ccCamFrame .cc-info-panel--photometa .cc-info-label{font-size:9px;}
+#cameraCoordOverlay #ccCamFrame .cc-info-panel--photometa .cc-info-value{font-size:11px;white-space:nowrap;}
 #cameraCoordOverlay .cc-bottom-sheet{
-  flex:0 1 auto;width:100%;max-height:52dvh;overflow-y:auto;
+  flex:0 0 auto;width:100%;overflow-y:auto;
   background:var(--card);display:flex;flex-direction:column;gap:12px;
   padding:14px 14px calc(14px + env(safe-area-inset-bottom, 0px));
   border-top-left-radius:20px;border-top-right-radius:20px;
   box-shadow:0 -6px 18px -8px rgba(0,0,0,0.28);position:relative;z-index:2;
 }
-/* .cc-info-panel/.cc-btn-row punya margin-top bawaan (dipakai di
-   konteks lain di luar bottom-sheet ini) -- di dalam .cc-bottom-sheet
-   spacing-nya sudah diatur lewat "gap" flex parent, jadi margin bawaan
-   itu ditiadakan di sini supaya jaraknya tidak dobel. */
-#cameraCoordOverlay .cc-bottom-sheet .cc-info-panel{margin-top:0;}
 #cameraCoordOverlay .cc-bottom-sheet .cc-btn-row{margin-top:0;}
 
 /* ---- Halaman "Kurs Mata Uang" (#kursOverlay) ----
@@ -14671,73 +14762,95 @@ html.dark-mode .bd-row-close{
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 17.5A2.5 2.5 0 0 1 17.5 20h-11A2.5 2.5 0 0 1 4 17.5v-8A2.5 2.5 0 0 1 6.5 7h2l1.5-2h4L15.5 7h2A2.5 2.5 0 0 1 20 9.5Z"/><path d="M8 3.5 6 6M16 3.5 18 6"/><path d="M9 13a3 3 0 1 0 6 0 3 3 0 0 0-6 0Z"/><path d="M4.5 11 3 9.5M19.5 11 21 9.5"/></svg>
           </button>
           <p class="bc-cam-hint" id="ccCameraHint">Tekan tombol di bawah untuk mengaktifkan kamera &amp; GPS, lalu arahkan ke lokasi yang ingin diabadikan.</p>
+
+          <!-- Kilat putih sekilas saat tombol jepret ditekan (efek
+               shutter ala kamera bawaan HP) -- lihat ccCaptureFoto(). -->
+          <div class="cc-flash" id="ccFlash" aria-hidden="true"></div>
+
+          <!-- Panel detail GPS/alamat -- DITUMPUK LANGSUNG di atas
+               video (bukan lagi kartu terpisah di bawah kamera) supaya
+               yang tampil di layar PERSIS sama dgn yg nanti "distempel"
+               ke foto saat tombol jepret ditekan (lihat ccCaptureFoto
+               di script.js yg menyusun teks stempel dari data yg
+               sama persis). -->
+          <div class="cc-info-panel" id="ccInfoPanel" hidden>
+            <div class="cc-info-row cc-info-row--place" id="ccPlaceRow" hidden>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h1m4 0h1m-6 4h1m4 0h1m-6 4h1m4 0h1"/></svg>
+              <span id="ccPlaceName">–</span>
+            </div>
+            <div class="cc-info-row cc-info-row--address">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+              <span id="ccAddress">Mencari alamat lengkap…</span>
+            </div>
+            <div class="cc-info-grid">
+              <div class="cc-info-item"><span class="cc-info-label">Lintang (Lat)</span><span class="cc-info-value" id="ccLat">–</span></div>
+              <div class="cc-info-item"><span class="cc-info-label">Bujur (Lng)</span><span class="cc-info-value" id="ccLng">–</span></div>
+              <div class="cc-info-item"><span class="cc-info-label">Akurasi</span><span class="cc-info-value" id="ccAccuracy">–</span></div>
+              <div class="cc-info-item"><span class="cc-info-label">Ketinggian</span><span class="cc-info-value" id="ccAlt">–</span></div>
+              <div class="cc-info-item"><span class="cc-info-label">Resolusi</span><span class="cc-info-value" id="ccResolution">–</span></div>
+              <div class="cc-info-item"><span class="cc-info-label">Kamera</span><span class="cc-info-value" id="ccDeviceCam">–</span></div>
+              <div class="cc-info-item"><span class="cc-info-label">Tipe Perangkat</span><span class="cc-info-value" id="ccDeviceType">–</span></div>
+            </div>
+            <div class="cc-info-row cc-info-row--time">
+              <span id="ccTimestamp">–</span>
+            </div>
+          </div>
+
+          <!-- Muncul HANYA setelah foto diambil (bukan sejak kamera
+               aktif) -- karena tipe & ukuran file baru bisa dihitung
+               dari hasil JPEG yg sudah di-encode lewat canvas, bukan
+               dari stream video. Ditumpuk sbg pil kecil di ATAS foto
+               supaya tidak menutupi tombol Ambil Ulang/Simpan di
+               bawah. -->
+          <div class="cc-info-panel cc-info-panel--photometa" id="ccPhotoMetaPanel" hidden>
+            <div class="cc-info-grid">
+              <div class="cc-info-item"><span class="cc-info-label">Tipe</span><span class="cc-info-value" id="ccImgType">–</span></div>
+              <div class="cc-info-item"><span class="cc-info-label">Ukuran</span><span class="cc-info-value" id="ccImgSize">–</span></div>
+            </div>
+          </div>
+
+          <!-- Baris tombol jepret ala kamera bawaan HP -- lingkaran
+               putih besar di tengah utk memotret, dua tombol bulat
+               kecil kaca di kiri-kanan utk aksi sekunder (salin
+               koordinat & buka Maps). Mengambang LANGSUNG di atas
+               video, bukan lagi tombol kotak di kartu terpisah. -->
+          <div class="cc-shutter-row" id="ccActionsRow" hidden>
+            <button type="button" class="cc-side-btn" id="ccCopyBtn" aria-label="Salin Koordinat">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            </button>
+            <button type="button" class="cc-shutter-btn" id="ccCaptureBtn" aria-label="Ambil Foto">
+              <span class="cc-shutter-btn-inner"></span>
+            </button>
+            <button type="button" class="cc-side-btn cc-side-btn--accent" id="ccMapsBtn" aria-label="Buka di Maps">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+            </button>
+          </div>
+
+          <!-- Baris konfirmasi setelah foto diambil, pola sama dgn
+               layar review kamera bawaan HP: silang (Ambil Ulang) di
+               kiri, centang warna aksen (Simpan Foto) di kanan. -->
+          <div class="cc-shutter-row cc-shutter-row--saved" id="ccSavedRow" hidden>
+            <button type="button" class="cc-side-btn" id="ccRetakeBtn" aria-label="Ambil Ulang">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+            <button type="button" class="cc-shutter-btn cc-shutter-btn--save" id="ccDownloadBtn" aria-label="Simpan Foto">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            </button>
+          </div>
         </div>
 
-        <!-- Panel bawah (scrollable) -- menampung info GPS/alamat &
-             semua tombol aksi, DIPISAH dari #ccCamFrame supaya kamera
-             di atas bisa jadi flex:1 dan otomatis mengisi SISA tinggi
-             layar yg tersedia (full-frame, menyesuaikan tinggi layar
-             tiap perangkat) tanpa terpotong rasio/aspect-ratio tetap
-             spt sebelumnya. Kalau kontennya kebetulan lebih tinggi drpd
-             ruang yg tersisa (mis. HP dlm mode landscape), panel ini
-             sendiri yg di-scroll (overflow-y:auto), BUKAN seluruh
-             halaman, jadi kamera tetap kelihatan penuh. -->
+        <!-- Panel bawah (scrollable) -- sekarang cuma menampung tombol
+             "Aktifkan Kamera & GPS" awal (sebelum kamera menyala) &
+             pesan error, DIPISAH dari #ccCamFrame supaya kamera di
+             atas bisa jadi flex:1 dan mengisi HAMPIR SELURUH layar
+             (full-frame) begitu aktif -- detail & tombol jepret sudah
+             pindah ke atas kamera, persis pengalaman kamera bawaan HP. -->
         <div class="cc-bottom-sheet" id="ccBottomSheet">
-        <div class="cc-info-panel" id="ccInfoPanel" hidden>
-          <div class="cc-info-row cc-info-row--place" id="ccPlaceRow" hidden>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h1m4 0h1m-6 4h1m4 0h1m-6 4h1m4 0h1"/></svg>
-            <span id="ccPlaceName">–</span>
-          </div>
-          <div class="cc-info-row cc-info-row--address">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-            <span id="ccAddress">Mencari alamat lengkap…</span>
-          </div>
-          <div class="cc-info-grid">
-            <div class="cc-info-item"><span class="cc-info-label">Lintang (Lat)</span><span class="cc-info-value" id="ccLat">–</span></div>
-            <div class="cc-info-item"><span class="cc-info-label">Bujur (Lng)</span><span class="cc-info-value" id="ccLng">–</span></div>
-            <div class="cc-info-item"><span class="cc-info-label">Akurasi</span><span class="cc-info-value" id="ccAccuracy">–</span></div>
-            <div class="cc-info-item"><span class="cc-info-label">Ketinggian</span><span class="cc-info-value" id="ccAlt">–</span></div>
-            <div class="cc-info-item"><span class="cc-info-label">Resolusi</span><span class="cc-info-value" id="ccResolution">–</span></div>
-            <div class="cc-info-item"><span class="cc-info-label">Kamera</span><span class="cc-info-value" id="ccDeviceCam">–</span></div>
-            <div class="cc-info-item"><span class="cc-info-label">Tipe Perangkat</span><span class="cc-info-value" id="ccDeviceType">–</span></div>
-          </div>
-          <div class="cc-info-row cc-info-row--time">
-            <span id="ccTimestamp">–</span>
-          </div>
-        </div>
-
-        <!-- Muncul HANYA setelah foto diambil (bukan sejak kamera aktif) --
-             karena tipe & ukuran file baru bisa dihitung dari hasil JPEG
-             yg sudah di-encode lewat canvas, bukan dari stream video. -->
-        <div class="cc-info-panel" id="ccPhotoMetaPanel" hidden>
-          <div class="cc-info-grid">
-            <div class="cc-info-item"><span class="cc-info-label">Tipe Gambar</span><span class="cc-info-value" id="ccImgType">–</span></div>
-            <div class="cc-info-item"><span class="cc-info-label">Ukuran File</span><span class="cc-info-value" id="ccImgSize">–</span></div>
-          </div>
-        </div>
-
         <div class="cc-btn-row" id="ccToggleRow">
           <button type="button" class="btn btn-primary bc-cam-toggle-btn" id="ccToggleBtn">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z"/><circle cx="12" cy="13" r="4"/></svg>
             Aktifkan Kamera &amp; GPS
           </button>
-        </div>
-
-        <div class="cc-btn-row cc-btn-row--actions" id="ccActionsRow" hidden>
-          <button type="button" class="btn btn-primary bc-cam-toggle-btn" id="ccCaptureBtn">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z"/><circle cx="12" cy="13" r="4"/></svg>
-            Ambil Foto
-          </button>
-          <button type="button" class="bc-result-btn" id="ccCopyBtn">Salin Koordinat</button>
-          <button type="button" class="bc-result-btn bc-result-btn--accent" id="ccMapsBtn">Buka di Maps</button>
-        </div>
-
-        <div class="cc-btn-row cc-btn-row--saved" id="ccSavedRow" hidden>
-          <button type="button" class="btn btn-primary bc-cam-toggle-btn" id="ccDownloadBtn">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            Simpan Foto
-          </button>
-          <button type="button" class="bc-result-btn" id="ccRetakeBtn">Ambil Ulang</button>
         </div>
 
         <p class="bc-error" id="ccError" hidden></p>

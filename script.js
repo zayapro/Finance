@@ -8750,7 +8750,12 @@ function applyAppSettings(settings) {
   // digambar ulang sebagai gambar SVG (kotak membulat berwarna aksen +
   // ikon putih), supaya tab browser & hasil pencarian tetap tampil rapi
   // walau pengguna belum pernah mengunggah favicon sendiri.
-  const faviconHref = settings.favicon || settings.logo || buildDefaultFaviconDataUrl(iconPreset.svg, preset.color);
+  // Warna aksen favicon diambil dari CSS var --primary yg SEDANG aktif
+  // (sumbernya applyGlobalTheme(), bukan dari APP_ICON_PRESETS -- entri
+  // ikon itu tidak punya field warna sendiri) supaya kotak favicon ikut
+  // warna tema yg dipilih user, bukan warna hardcode/undefined.
+  const faviconAccentColor = (getComputedStyle(document.documentElement).getPropertyValue('--primary') || '').trim() || '#F2672B';
+  const faviconHref = settings.favicon || settings.logo || buildDefaultFaviconDataUrl(iconPreset.svg, faviconAccentColor);
   const faviconLink = document.getElementById('appFaviconLink');
   if (faviconLink) faviconLink.setAttribute('href', faviconHref);
   const touchIconLink = document.getElementById('appTouchIconLink');
@@ -11735,6 +11740,16 @@ function ccCaptureFoto() {
   const ctx = canvas.getContext('2d');
   ctx.drawImage(video, 0, 0, w, h);
 
+  // Kilat putih sekilas ala shutter kamera bawaan HP -- murni efek
+  // visual, tidak menunda proses stempel/encode di bawah ini.
+  const flashEl = document.getElementById('ccFlash');
+  if (flashEl) {
+    flashEl.classList.remove('is-flashing');
+    void flashEl.offsetWidth; // paksa reflow supaya animasi bisa diulang tiap jepret
+    flashEl.classList.add('is-flashing');
+    setTimeout(() => flashEl.classList.remove('is-flashing'), 340);
+  }
+
   // Susun teks stempel: alamat (bisa berbaris banyak) + baris
   // koordinat presisi + baris resolusi/kamera + waktu, gaya watermark
   // app GPS Map Camera.
@@ -11796,6 +11811,12 @@ function ccCaptureFoto() {
   if (actionsRow) actionsRow.hidden = true;
   const savedRow = document.getElementById('ccSavedRow');
   if (savedRow) savedRow.hidden = false;
+  // Panel detail GPS/alamat disembunyikan sementara di mode preview foto
+  // -- infonya sudah "distempel" permanen ke gambar di atas, jadi tidak
+  // perlu ditumpuk dobel di atas foto statis (lihat ccRetakeBtn utk
+  // memunculkannya lagi begitu kembali ke mode live video).
+  const infoPanelAfterCapture = document.getElementById('ccInfoPanel');
+  if (infoPanelAfterCapture) infoPanelAfterCapture.hidden = true;
 
   // Tipe & ukuran file baru bisa dihitung dari hasil JPEG yg sudah
   // di-encode ini -- isi panel meta foto (§ Tipe Gambar/Ukuran File).
@@ -11822,6 +11843,10 @@ document.getElementById('ccRetakeBtn')?.addEventListener('click', () => {
   if (savedRow) savedRow.hidden = true;
   const photoMeta = document.getElementById('ccPhotoMetaPanel');
   if (photoMeta) photoMeta.hidden = true;
+  // Balik ke mode live video -- tumpuk lagi panel detail GPS/alamat di
+  // atas kamera (disembunyikan sementara saat preview foto tadi).
+  const infoPanel = document.getElementById('ccInfoPanel');
+  if (infoPanel) infoPanel.hidden = false;
 });
 document.getElementById('ccDownloadBtn')?.addEventListener('click', () => {
   const canvas = document.getElementById('ccCanvas');
