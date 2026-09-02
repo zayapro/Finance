@@ -11825,22 +11825,33 @@ document.getElementById('ccToggleBtn')?.addEventListener('click', () => {
 });
 // Ganti kamera depan <-> belakang tanpa mematikan sesi GPS yg lagi
 // jalan (watchPosition tetap nyala terus selama proses ganti kamera).
-// Strategi: minta stream BARU dulu, baru matikan stream LAMA setelah
-// yg baru berhasil didapat -- supaya kalau device cuma py 1 kamera
-// fisik (getUserMedia gagal utk facingMode lain), video lama tetap
-// jalan & tidak tiba2 hitam/mati.
+// ---- FIX "ganti ke kamera depan tidak bisa" ----
+// Strategi LAMA (minta stream BARU dulu, baru matikan stream LAMA)
+// ternyata GAGAL di kebanyakan HP: hardware kamera cuma bisa dipegang
+// SATU stream dlm satu waktu (Chrome Android dkk TIDAK BISA buka
+// kamera depan & belakang sekaligus scr bersamaan) -- jadi begitu
+// stream baru diminta sementara stream lama masih aktif, getUserMedia
+// langsung gagal (NotReadableError/OverconstrainedError) walau
+// kameranya sendiri sebenarnya ADA & normal. Makanya urutannya
+// dibalik: stream LAMA di-stop DULU, baru minta yg BARU -- video
+// sempat hitam sesaat (persis app kamera bawaan HP saat ganti kamera),
+// tapi inilah yg bikin ganti kamera BENERAN jalan. Kalau ternyata
+// stream baru tetap gagal (mis. device cuma py 1 kamera fisik), kode
+// di bawah otomatis mencoba memulihkan kamera LAMA lagi supaya user
+// tidak ditinggal layar hitam.
 async function ccSwitchCamera() {
   if (ccSwitchingCam || !ccActive) return;
   ccSwitchingCam = true;
   const switchBtn = document.getElementById('ccSwitchCamBtn');
   if (switchBtn) switchBtn.disabled = true;
+  const oldFacing = ccFacingMode;
   const newFacing = ccFacingMode === 'environment' ? 'user' : 'environment';
+  const video = document.getElementById('ccVideo');
+  if (ccStream) { ccStream.getTracks().forEach(t => t.stop()); ccStream = null; }
   try {
     const newStream = await navigator.mediaDevices.getUserMedia({ video: ccBuildVideoConstraints(newFacing), audio: false });
-    if (ccStream) { ccStream.getTracks().forEach(t => t.stop()); }
     ccStream = newStream;
     ccFacingMode = newFacing;
-    const video = document.getElementById('ccVideo');
     if (video) {
       video.srcObject = ccStream;
       video.addEventListener('loadedmetadata', ccUpdateDeviceInfo, { once: true });
@@ -11852,13 +11863,32 @@ async function ccSwitchCamera() {
     if (switchBtn) switchBtn.classList.toggle('is-flipping', newFacing === 'user');
     if (navigator.vibrate) { try { navigator.vibrate(30); } catch (e) {} }
   } catch (e) {
-    showToast('Kamera lainnya tidak tersedia di perangkat ini', 'err');
+    // Kamera tujuan gagal dibuka -- coba pulihkan kamera LAMA lagi
+    // dulu supaya user tidak ditinggal layar hitam permanen, baru
+    // kasih tau kalau kamera satunya memang tidak tersedia.
+    try {
+      ccStream = await navigator.mediaDevices.getUserMedia({ video: ccBuildVideoConstraints(oldFacing), audio: false });
+      ccFacingMode = oldFacing;
+      if (video) {
+        video.srcObject = ccStream;
+        video.addEventListener('loadedmetadata', ccUpdateDeviceInfo, { once: true });
+        await video.play().catch(() => {});
+      }
+      ccUpdateDeviceInfo();
+      showToast('Kamera lainnya tidak tersedia di perangkat ini', 'err');
+    } catch (e2) {
+      // Kamera lama pun gagal dipulihkan (jarang) -- jangan tinggalkan
+      // layar hitam tanpa penjelasan, tutup sesi & minta aktifkan ulang.
+      ccStopCamera();
+      ccShowError('Kamera terputus saat mencoba ganti kamera. Tekan "Aktifkan Kamera & GPS" lagi.');
+    }
   } finally {
     ccSwitchingCam = false;
     if (switchBtn) switchBtn.disabled = false;
   }
 }
 document.getElementById('ccSwitchCamBtn')?.addEventListener('click', ccSwitchCamera);
+
 
 // Bungkus teks panjang (mis. alamat hasil geocoding) jadi beberapa
 // baris di dalam lebar maksimum tertentu -- dipakai saat menempel
