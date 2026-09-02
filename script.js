@@ -12850,10 +12850,28 @@ function ccWrapCanvasText(ctx, text, maxWidth) {
 // ccLoadMapForFix di bawah).
 const CC_MAP_ZOOM = 16;
 const CC_MAP_PX = 260; // px persegi, sisi kartu peta mini yg diminta dr API (lebih besar dr ukuran tampil final, spy tetap tajam pas di-downscale ke stempel foto)
+// FIX (kartu "Memuat peta..." muncul lalu hilang tanpa peta): endpoint
+// maps.geoapify.com/v1/staticmap TIDAK mengirim header
+// Access-Control-Allow-Origin. Padahal di ccLoadMapForFix gambar dimuat
+// dgn img.crossOrigin = 'anonymous' (WAJIB, krn hasilnya digambar ke
+// <canvas> yg lalu di-export jadi file foto -- tanpa crossOrigin, canvas
+// jadi "tainted" & toBlob/toDataURL akan gagal/dilarang browser).
+// Kombinasi crossOrigin='anonymous' + response TANPA header CORS bikin
+// browser SELALU gagal memuat gambar (img.onerror langsung/cepat), tidak
+// peduli internet lancar atau API key valid -- makanya retry (backoff
+// ccMapRetryTimer) percuma & akhirnya nyerah stlh CC_MAP_MAX_RETRIES,
+// kartu "Memuat peta..." pun dilepas tanpa peta pernah tampil.
+// Solusi: lewatkan URL Geoapify via wsrv.nl (proxy resize-gambar publik,
+// gratis, tanpa API key sendiri) yg SELALU membalas dgn
+// "Access-Control-Allow-Origin: *", jadi aman dipakai bareng
+// crossOrigin='anonymous' & tidak menaint canvas. Kalau nanti wsrv.nl
+// bermasalah, ganti proxy di SATU tempat ini saja (mis. proxy sendiri lwt
+// Supabase Edge Function) tanpa perlu ubah ccLoadMapForFix/ccDrawMapThumbnail.
 function ccBuildStaticMapUrl(lat, lng) {
   if (!CC_GEOAPIFY_KEY) return null;
   const marker = `lonlat:${lng},${lat};color:%23FF3B30;size:medium;icon:location-dot;iconsize:small;whitecircle:no`;
-  return `https://maps.geoapify.com/v1/staticmap?style=osm-carto&width=${CC_MAP_PX}&height=${CC_MAP_PX}&center=lonlat:${lng},${lat}&zoom=${CC_MAP_ZOOM}&marker=${encodeURIComponent(marker)}&apiKey=${encodeURIComponent(CC_GEOAPIFY_KEY)}`;
+  const geoapifyUrl = `https://maps.geoapify.com/v1/staticmap?style=osm-carto&width=${CC_MAP_PX}&height=${CC_MAP_PX}&center=lonlat:${lng},${lat}&zoom=${CC_MAP_ZOOM}&marker=${encodeURIComponent(marker)}&apiKey=${encodeURIComponent(CC_GEOAPIFY_KEY)}`;
+  return `https://wsrv.nl/?url=${encodeURIComponent(geoapifyUrl)}&default=${encodeURIComponent('data:,')}`;
 }
 // Kunci pembanding jepretan mana yg lagi/sudah dipetakan -- dibulatkan
 // ke 5 desimal (~1m) supaya bacaan GPS yg goyang recehan tidak dianggap
