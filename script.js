@@ -11272,6 +11272,323 @@ document.addEventListener('visibilitychange', () => {
 });
 
 /* ==========================================================
+   KOORDINAT KAMERA (#cameraCoordOverlay) -- pintasan baru di kartu
+   Fast Menu Beranda (#fmHomeCoordBtn) & grid "Menu Utama" halaman
+   Fast Menu (#fmGridCoordBtn). Buka/tutup pola SAMA PERSIS dgn
+   openBarcodeOverlay/closeBarcodeOverlay di atas.
+
+   Kamera (getUserMedia) & GPS presisi tinggi (Geolocation
+   watchPosition, enableHighAccuracy:true) diaktifkan BARENGAN lewat
+   satu tombol. Titik GPS terus "dikunci ulang" selama kamera aktif
+   (bukan cuma sekali baca di awal) supaya akurasinya makin presisi
+   dari waktu ke waktu -- lihat CC_GPS_OPTIONS. Alamat didapat dari
+   reverse-geocoding OpenStreetMap Nominatim (gratis, tanpa API key),
+   di-throttle (CC_GEOCODE_MIN_INTERVAL_MS/CC_GEOCODE_MIN_DELTA_M)
+   supaya tidak spam request tiap kali titik GPS bergerak sedikit.
+   Saat foto diambil, frame video + teks info koordinat/alamat/waktu
+   di-"stempel" langsung ke <canvas> (gaya khas app GPS Map Camera)
+   sebelum ditampilkan sbg preview yg bisa diunduh. ---------------- */
+const CC_GPS_OPTIONS = { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 };
+const CC_GEOCODE_MIN_INTERVAL_MS = 12000; // jangan reverse-geocode lebih sering dari ini...
+const CC_GEOCODE_MIN_DELTA_M = 25;        // ...kecuali user/titik GPS sudah pindah lumayan jauh
+
+let ccStream = null;
+let ccWatchId = null;
+let ccActive = false;
+let ccLastFix = null;          // { lat, lng, accuracy, altitude, timestamp }
+let ccLastAddress = '';
+let ccLastGeocodeAt = 0;
+let ccLastGeocodeLat = null;
+let ccLastGeocodeLng = null;
+let ccGeocodeAbort = null;
+
+function ccHaversineMeters(lat1, lng1, lat2, lng2) {
+  const R = 6371000;
+  const toRad = (d) => (d * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+function ccShowError(msg) {
+  const err = document.getElementById('ccError');
+  if (err) { err.textContent = msg; err.hidden = false; }
+}
+function ccHideError() {
+  const err = document.getElementById('ccError');
+  if (err) err.hidden = true;
+}
+function ccFormatCoord(v) {
+  return typeof v === 'number' && isFinite(v) ? v.toFixed(6) + '°' : '–';
+}
+function ccSetGpsStatus(text, state) {
+  // state: 'searching' | 'locked' | 'error'
+  const badge = document.getElementById('ccGpsBadge');
+  const dot = document.getElementById('ccGpsDot');
+  const label = document.getElementById('ccGpsStatus');
+  if (badge) badge.hidden = false;
+  if (label) label.textContent = text;
+  if (dot) dot.classList.toggle('is-locked', state === 'locked');
+  if (dot) dot.classList.toggle('is-error', state === 'error');
+}
+async function ccReverseGeocode(lat, lng) {
+  if (ccGeocodeAbort) { try { ccGeocodeAbort.abort(); } catch (e) {} }
+  ccGeocodeAbort = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+  const addrEl = document.getElementById('ccAddress');
+  try {
+    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`;
+    const res = await fetch(url, {
+      headers: { 'Accept-Language': 'id' },
+      signal: ccGeocodeAbort ? ccGeocodeAbort.signal : undefined,
+    });
+    if (!res.ok) throw new Error('geocode-fail');
+    const data = await res.json();
+    const label = data && (data.display_name || '');
+    ccLastAddress = label || 'Alamat tidak ditemukan';
+    if (addrEl) addrEl.textContent = ccLastAddress;
+  } catch (e) {
+    if (e && e.name === 'AbortError') return; // digantikan request titik GPS yg lebih baru, abaikan
+    ccLastAddress = 'Alamat tidak diketahui (gagal memuat)';
+    if (addrEl) addrEl.textContent = ccLastAddress;
+  }
+}
+function ccOnPosition(pos) {
+  const c = pos.coords;
+  ccLastFix = {
+    lat: c.latitude, lng: c.longitude, accuracy: c.accuracy,
+    altitude: (typeof c.altitude === 'number' && isFinite(c.altitude)) ? c.altitude : null,
+    timestamp: pos.timestamp || Date.now(),
+  };
+  ccHideError();
+  const panel = document.getElementById('ccInfoPanel');
+  if (panel) panel.hidden = false;
+  const latEl = document.getElementById('ccLat');
+  const lngEl = document.getElementById('ccLng');
+  const accEl = document.getElementById('ccAccuracy');
+  const altEl = document.getElementById('ccAlt');
+  const tsEl = document.getElementById('ccTimestamp');
+  if (latEl) latEl.textContent = ccFormatCoord(ccLastFix.lat);
+  if (lngEl) lngEl.textContent = ccFormatCoord(ccLastFix.lng);
+  if (accEl) accEl.textContent = (typeof ccLastFix.accuracy === 'number') ? `± ${Math.round(ccLastFix.accuracy)} m` : '–';
+  if (altEl) altEl.textContent = (ccLastFix.altitude !== null) ? `${Math.round(ccLastFix.altitude)} m dpl` : 'Tidak tersedia';
+  if (tsEl) tsEl.textContent = new Date(ccLastFix.timestamp).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'medium' });
+  // Akurasi <= 30m dianggap "terkunci" cukup baik (ikon GPS jadi hijau);
+  // di atas itu tetap ditampilkan tapi ditandai masih mencari sinyal lebih baik.
+  const locked = typeof ccLastFix.accuracy === 'number' && ccLastFix.accuracy <= 30;
+  ccSetGpsStatus(locked ? `GPS terkunci (± ${Math.round(ccLastFix.accuracy)} m)` : `Menyempurnakan sinyal (± ${Math.round(ccLastFix.accuracy || 0)} m)`, locked ? 'locked' : 'searching');
+  const actionsRow = document.getElementById('ccActionsRow');
+  if (actionsRow) actionsRow.hidden = false;
+
+  const now = Date.now();
+  const movedEnough = ccLastGeocodeLat === null || ccHaversineMeters(ccLastGeocodeLat, ccLastGeocodeLng, ccLastFix.lat, ccLastFix.lng) >= CC_GEOCODE_MIN_DELTA_M;
+  const dueForRefresh = (now - ccLastGeocodeAt) >= CC_GEOCODE_MIN_INTERVAL_MS;
+  if (movedEnough || (ccLastGeocodeAt === 0)) {
+    if (movedEnough && dueForRefresh || ccLastGeocodeAt === 0) {
+      ccLastGeocodeAt = now; ccLastGeocodeLat = ccLastFix.lat; ccLastGeocodeLng = ccLastFix.lng;
+      ccReverseGeocode(ccLastFix.lat, ccLastFix.lng);
+    }
+  }
+}
+function ccOnPositionError(err) {
+  const denied = err && err.code === 1;
+  ccSetGpsStatus(denied ? 'Izin lokasi ditolak' : 'GPS tidak tersedia', 'error');
+  ccShowError(denied
+    ? 'Izin lokasi ditolak. Aktifkan izin lokasi untuk situs ini di pengaturan browser, lalu coba lagi.'
+    : 'Tidak bisa mendapatkan sinyal GPS saat ini. Pastikan GPS perangkat aktif & coba di area terbuka.');
+}
+
+async function ccStartCamera() {
+  ccHideError();
+  const toggleBtn = document.getElementById('ccToggleBtn');
+  const hint = document.getElementById('ccCameraHint');
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    ccShowError('Kamera tidak didukung di perangkat/browser ini.');
+    return;
+  }
+  if (!navigator.geolocation) {
+    ccShowError('GPS/Lokasi tidak didukung di perangkat/browser ini.');
+    return;
+  }
+  if (toggleBtn) toggleBtn.disabled = true;
+  try {
+    ccStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+    const video = document.getElementById('ccVideo');
+    if (video) { video.srcObject = ccStream; video.hidden = false; await video.play().catch(() => {}); }
+    const placeholder = document.getElementById('ccCamPlaceholder');
+    if (placeholder) placeholder.hidden = true;
+    if (hint) hint.hidden = true;
+    ccActive = true;
+    ccSetGpsStatus('Mencari sinyal GPS…', 'searching');
+    ccWatchId = navigator.geolocation.watchPosition(ccOnPosition, ccOnPositionError, CC_GPS_OPTIONS);
+    const toggleRow = document.getElementById('ccToggleRow');
+    if (toggleRow) toggleRow.hidden = true;
+    const actionsRow = document.getElementById('ccActionsRow');
+    if (actionsRow) actionsRow.hidden = false;
+  } catch (e) {
+    ccActive = false;
+    const denied = e && (e.name === 'NotAllowedError' || /permission/i.test(String(e)));
+    ccShowError(denied
+      ? 'Izin kamera ditolak. Aktifkan izin kamera untuk situs ini di pengaturan browser, lalu coba lagi.'
+      : 'Tidak bisa mengakses kamera di perangkat ini.');
+  } finally {
+    if (toggleBtn) toggleBtn.disabled = false;
+  }
+}
+function ccStopCamera() {
+  ccActive = false;
+  if (ccStream) { ccStream.getTracks().forEach(t => t.stop()); ccStream = null; }
+  if (ccWatchId !== null && navigator.geolocation) { navigator.geolocation.clearWatch(ccWatchId); ccWatchId = null; }
+  if (ccGeocodeAbort) { try { ccGeocodeAbort.abort(); } catch (e) {} ccGeocodeAbort = null; }
+  const video = document.getElementById('ccVideo');
+  if (video) { video.pause(); video.srcObject = null; video.hidden = true; }
+  const placeholder = document.getElementById('ccCamPlaceholder');
+  if (placeholder) placeholder.hidden = false;
+  const hint = document.getElementById('ccCameraHint');
+  if (hint) hint.hidden = false;
+  const badge = document.getElementById('ccGpsBadge');
+  if (badge) badge.hidden = true;
+  const panel = document.getElementById('ccInfoPanel');
+  if (panel) panel.hidden = true;
+  const toggleRow = document.getElementById('ccToggleRow');
+  if (toggleRow) toggleRow.hidden = false;
+  const actionsRow = document.getElementById('ccActionsRow');
+  if (actionsRow) actionsRow.hidden = true;
+  const savedRow = document.getElementById('ccSavedRow');
+  if (savedRow) savedRow.hidden = true;
+  const photo = document.getElementById('ccPhotoPreview');
+  if (photo) { photo.hidden = true; photo.removeAttribute('src'); }
+  ccLastFix = null; ccLastAddress = ''; ccLastGeocodeAt = 0; ccLastGeocodeLat = null; ccLastGeocodeLng = null;
+}
+document.getElementById('ccToggleBtn')?.addEventListener('click', () => {
+  if (ccActive) ccStopCamera(); else ccStartCamera();
+});
+
+// Bungkus teks panjang (mis. alamat hasil geocoding) jadi beberapa
+// baris di dalam lebar maksimum tertentu -- dipakai saat menempel
+// stempel info ke gambar hasil capture supaya alamat yg panjang tidak
+// terpotong/meluber keluar kanvas.
+function ccWrapCanvasText(ctx, text, maxWidth) {
+  const words = String(text || '').split(' ');
+  const lines = [];
+  let line = '';
+  for (const w of words) {
+    const test = line ? line + ' ' + w : w;
+    if (ctx.measureText(test).width > maxWidth && line) { lines.push(line); line = w; }
+    else { line = test; }
+  }
+  if (line) lines.push(line);
+  return lines;
+}
+function ccCaptureFoto() {
+  const video = document.getElementById('ccVideo');
+  const canvas = document.getElementById('ccCanvas');
+  const photo = document.getElementById('ccPhotoPreview');
+  if (!video || !canvas || !photo || !video.videoWidth) {
+    ccShowError('Kamera belum siap, tunggu sebentar lalu coba lagi.');
+    return;
+  }
+  const w = video.videoWidth, h = video.videoHeight;
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(video, 0, 0, w, h);
+
+  // Susun teks stempel: alamat (bisa berbaris banyak) + baris
+  // koordinat presisi + waktu, gaya watermark app GPS Map Camera.
+  const pad = Math.max(14, Math.round(w * 0.025));
+  const fsSmall = Math.max(13, Math.round(w * 0.022));
+  const fsAddr = Math.max(15, Math.round(w * 0.026));
+  const lat = ccLastFix ? ccFormatCoord(ccLastFix.lat) : '–';
+  const lng = ccLastFix ? ccFormatCoord(ccLastFix.lng) : '–';
+  const acc = ccLastFix && typeof ccLastFix.accuracy === 'number' ? `± ${Math.round(ccLastFix.accuracy)} m` : '–';
+  const when = new Date(ccLastFix ? ccLastFix.timestamp : Date.now()).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'medium' });
+  const addr = ccLastAddress || 'Alamat tidak diketahui';
+
+  ctx.font = `600 ${fsAddr}px Poppins, sans-serif`;
+  const addrLines = ccWrapCanvasText(ctx, addr, w - pad * 2).slice(0, 3);
+  const coordLine = `${lat}, ${lng}  (akurasi ${acc})`;
+
+  const lineGapAddr = fsAddr * 1.3;
+  const lineGapSmall = fsSmall * 1.5;
+  const blockH = pad + addrLines.length * lineGapAddr + lineGapSmall * 2 + pad * 0.6;
+
+  ctx.fillStyle = 'rgba(0,0,0,0.52)';
+  ctx.fillRect(0, h - blockH, w, blockH);
+
+  let y = h - blockH + pad;
+  ctx.fillStyle = '#ffffff';
+  ctx.textBaseline = 'top';
+  ctx.font = `600 ${fsAddr}px Poppins, sans-serif`;
+  for (const line of addrLines) { ctx.fillText(line, pad, y); y += lineGapAddr; }
+  ctx.font = `500 ${fsSmall}px Poppins, sans-serif`;
+  ctx.fillStyle = 'rgba(255,255,255,0.92)';
+  ctx.fillText(coordLine, pad, y); y += lineGapSmall;
+  ctx.fillText(when, pad, y);
+
+  const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+  photo.src = dataUrl;
+  photo.hidden = false;
+  video.hidden = true;
+  const actionsRow = document.getElementById('ccActionsRow');
+  if (actionsRow) actionsRow.hidden = true;
+  const savedRow = document.getElementById('ccSavedRow');
+  if (savedRow) savedRow.hidden = false;
+  if (navigator.vibrate) { try { navigator.vibrate(50); } catch (e) {} }
+}
+document.getElementById('ccCaptureBtn')?.addEventListener('click', ccCaptureFoto);
+document.getElementById('ccRetakeBtn')?.addEventListener('click', () => {
+  const photo = document.getElementById('ccPhotoPreview');
+  const video = document.getElementById('ccVideo');
+  if (photo) { photo.hidden = true; photo.removeAttribute('src'); }
+  if (video) video.hidden = false;
+  const actionsRow = document.getElementById('ccActionsRow');
+  if (actionsRow) actionsRow.hidden = false;
+  const savedRow = document.getElementById('ccSavedRow');
+  if (savedRow) savedRow.hidden = true;
+});
+document.getElementById('ccDownloadBtn')?.addEventListener('click', () => {
+  const canvas = document.getElementById('ccCanvas');
+  if (!canvas || !canvas.toDataURL) return;
+  const a = document.createElement('a');
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+  a.href = canvas.toDataURL('image/jpeg', 0.92);
+  a.download = `koordinat-kamera-${stamp}.jpg`;
+  document.body.appendChild(a); a.click(); a.remove();
+  showToast('Foto tersimpan ke perangkat');
+});
+document.getElementById('ccCopyBtn')?.addEventListener('click', () => {
+  if (!ccLastFix) return;
+  const text = `${ccLastFix.lat.toFixed(6)}, ${ccLastFix.lng.toFixed(6)}`;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => showToast('Koordinat disalin')).catch(() => showToast('Gagal menyalin', 'err'));
+  }
+});
+document.getElementById('ccMapsBtn')?.addEventListener('click', () => {
+  if (!ccLastFix) { showToast('Tunggu GPS mendapat titik lokasi dulu', 'err'); return; }
+  window.open(`https://www.google.com/maps?q=${ccLastFix.lat},${ccLastFix.lng}`, '_blank', 'noopener');
+});
+
+function openCameraCoordOverlay() {
+  document.getElementById('cameraCoordOverlay')?.classList.add('open');
+  lockBodyScroll();
+}
+function closeCameraCoordOverlay() {
+  document.getElementById('cameraCoordOverlay')?.classList.remove('open');
+  unlockBodyScroll();
+  ccStopCamera();
+}
+document.getElementById('ccBackBtn')?.addEventListener('click', closeCameraCoordOverlay);
+document.getElementById('fmHomeCoordBtn')?.addEventListener('click', openCameraCoordOverlay);
+document.getElementById('fmGridCoordBtn')?.addEventListener('click', () => {
+  closeFastMenuOverlay();
+  openCameraCoordOverlay();
+});
+// Kamera+GPS dimatikan otomatis kalau user pindah tab/app diminimize,
+// sama seperti pola di Scanner Barcode -- hemat baterai & privasi.
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && ccActive) ccStopCamera();
+});
+
+/* ==========================================================
    PENGATURAN > PENGATURAN — "Sumber Dana Utama"
    (#sumberDanaUtamaOverlay). Pola buka/tutup SAMA PERSIS dgn
    openFastMenuOverlay/closeFastMenuOverlay di atas -- halaman ini
