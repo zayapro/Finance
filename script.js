@@ -11524,6 +11524,15 @@ let ccCapturedFix = null;
 let ccEditAddressText = '';
 let ccEditPlaceText = '';
 let ccLastGeocodeAt = 0;
+// ---- Peta mini di hasil jepretan (lihat ccLoadMapForFix/ccBuildStaticMapUrl
+// & ccRenderStampedPhoto) -- ccMapImg menyimpan gambar peta yg SUDAH
+// SELESAI dimuat & SIAP digambar ke stempel, ccMapImgKey menandai
+// jepretan (lat,lng yg dibulatkan) mana yg dipetakan gambar itu supaya
+// peta dari jepretan LAMA tidak "nyangkut" kepakai di jepretan BARU
+// selagi peta yg baru masih dimuat/loading. Toggle on/off-nya ada di
+// ccCameraSettings.showMap (popup Pengaturan Kamera, #ccMapToggleInput).
+let ccMapImg = null;
+let ccMapImgKey = null;
 let ccLastGeocodeLat = null;
 let ccLastGeocodeLng = null;
 let ccGeocodeAbort = null;
@@ -11927,13 +11936,18 @@ const CC_RESOLUTION_PRESETS = [
 function ccLoadCameraSettings() {
   try {
     const raw = localStorage.getItem(CC_CAMERA_SETTINGS_KEY);
-    if (!raw) return { enabled: true, resolution: 'fullhd' };
+    if (!raw) return { enabled: true, resolution: 'fullhd', showMap: true };
     const parsed = JSON.parse(raw);
     return {
       enabled: parsed.enabled === undefined ? true : !!parsed.enabled,
       resolution: CC_RESOLUTION_PRESETS.some(p => p.key === parsed.resolution) ? parsed.resolution : 'fullhd',
+      // Toggle peta mini di pojok hasil jepretan foto (lihat ccRenderStampedPhoto
+      // & ccLoadMapForFix) -- default AKTIF (nyala) spy fiturnya langsung
+      // kerasa begitu update, user tetap bisa matikan kapan saja lewat
+      // popup "Pengaturan Kamera" (toggle #ccMapToggleInput).
+      showMap: parsed.showMap === undefined ? true : !!parsed.showMap,
     };
-  } catch (e) { return { enabled: true, resolution: 'fullhd' }; }
+  } catch (e) { return { enabled: true, resolution: 'fullhd', showMap: true }; }
 }
 function ccSaveCameraSettings(settings) {
   try { localStorage.setItem(CC_CAMERA_SETTINGS_KEY, JSON.stringify(settings)); } catch (e) {}
@@ -11993,6 +12007,11 @@ function ccOpenSettingsSheet() {
   if (toggleInput) toggleInput.checked = ccCameraSettings.enabled;
   const sheet = document.getElementById('ccSettingsSheet');
   if (sheet) sheet.classList.toggle('cc-res-disabled', !ccCameraSettings.enabled);
+  // Toggle "Peta Mini di Foto" -- posisi checkbox disamakan dgn nilai
+  // tersimpan tiap kali sheet dibuka (lihat ccLoadCameraSettings/
+  // ccRenderStampedPhoto).
+  const mapToggleInput = document.getElementById('ccMapToggleInput');
+  if (mapToggleInput) mapToggleInput.checked = ccCameraSettings.showMap;
   ccRenderResolutionList();
   ccMarkResolutionActive(ccSettingsPendingResolution);
   document.getElementById('ccSettingsSheetOverlay')?.classList.add('open');
@@ -12018,13 +12037,27 @@ document.getElementById('ccResolutionList')?.addEventListener('click', (e) => {
 });
 document.getElementById('ccSettingsDoneBtn')?.addEventListener('click', async () => {
   const toggleInput = document.getElementById('ccResToggleInput');
+  const mapToggleInput = document.getElementById('ccMapToggleInput');
+  const prevShowMap = ccCameraSettings.showMap;
   ccCameraSettings = {
     enabled: toggleInput ? toggleInput.checked : false,
     resolution: ccSettingsPendingResolution || 'auto',
+    showMap: mapToggleInput ? mapToggleInput.checked : true,
   };
   ccSaveCameraSettings(ccCameraSettings);
   ccRenderFullBtn();
   ccCloseSettingsSheet();
+  // Kalau lagi preview foto (sudah jepret) & togglenya baru saja diubah,
+  // gambar ulang stempel SEKARANG JUGA supaya peta langsung muncul/hilang
+  // tanpa perlu jepret ulang -- kalau dinyalakan & peta belum pernah
+  // dimuat utk jepretan ini, mulai muat petanya.
+  if (ccCameraSettings.showMap !== prevShowMap && ccCapturedFix) {
+    if (ccCameraSettings.showMap) {
+      ccLoadMapForFix(ccCapturedFix);
+    } else {
+      ccRenderStampedPhoto(ccEditAddressText, ccEditPlaceText);
+    }
+  }
   // Kalau kamera lagi aktif, langsung terapkan resolusi baru saat itu
   // juga (minta stream baru dgn constraint terbaru, gantikan stream
   // lama) -- tanpa perlu keluar-masuk halaman Koordinat Kamera dulu.
@@ -12793,6 +12826,99 @@ function ccWrapCanvasText(ctx, text, maxWidth) {
   if (line) lines.push(line);
   return lines;
 }
+// ---- Peta mini di pojok hasil jepretan (opsional, lihat toggle "Peta
+// Mini di Foto" di popup Pengaturan Kamera) ------------------------------
+// Dipakai Static Maps API dari Geoapify (provider yg SAMA dgn yg sudah
+// dipakai utk reverse-geocode di ccFetchGeoapify, satu API key -- lihat
+// CC_GEOAPIFY_KEY) -- gratis dgn kuota harian, gambarnya berupa PNG siap
+// pakai (didesain provider utk ditempel langsung ke <img>/canvas, jadi
+// aman dari CORS selama dimuat pakai crossOrigin="anonymous" spt di
+// ccLoadMapForFix di bawah).
+const CC_MAP_ZOOM = 16;
+const CC_MAP_PX = 260; // px persegi, sisi kartu peta mini yg diminta dr API (lebih besar dr ukuran tampil final, spy tetap tajam pas di-downscale ke stempel foto)
+function ccBuildStaticMapUrl(lat, lng) {
+  if (!CC_GEOAPIFY_KEY) return null;
+  const marker = `lonlat:${lng},${lat};color:%23FF3B30;size:medium;icon:location-dot;iconsize:small;whitecircle:no`;
+  return `https://api.geoapify.com/v1/staticmap?style=osm-carto&width=${CC_MAP_PX}&height=${CC_MAP_PX}&center=lonlat:${lng},${lat}&zoom=${CC_MAP_ZOOM}&marker=${encodeURIComponent(marker)}&apiKey=${encodeURIComponent(CC_GEOAPIFY_KEY)}`;
+}
+// Kunci pembanding jepretan mana yg lagi/sudah dipetakan -- dibulatkan
+// ke 5 desimal (~1m) supaya bacaan GPS yg goyang recehan tidak dianggap
+// jepretan "baru" & minta ulang peta yg sama percuma.
+function ccMapKeyFor(fix) {
+  if (!fix) return null;
+  return `${fix.lat.toFixed(5)},${fix.lng.toFixed(5)}`;
+}
+// Muat gambar peta utk satu bacaan GPS (fix) yg dibekukan saat jepret --
+// dipanggil "fire and forget" (tidak di-await) dari ccCaptureFoto() persis
+// stlh stempel pertama (tanpa peta) langsung tampil, spy foto TETAP cepat
+// muncul walau internetnya lambat -- begitu peta selesai dimuat, stempel
+// digambar ULANG (ccRenderStampedPhoto lagi) supaya petanya "muncul
+// menyusul" di foto yg sama. Kalau gagal/CORS/limit kuota Geoapify habis,
+// dibiarkan diam2 saja -- foto TETAP tersimpan normal, cuma tanpa peta.
+function ccLoadMapForFix(fix) {
+  if (!ccCameraSettings.showMap || !fix || typeof fix.lat !== 'number' || typeof fix.lng !== 'number') return;
+  const url = ccBuildStaticMapUrl(fix.lat, fix.lng);
+  if (!url) return;
+  const key = ccMapKeyFor(fix);
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = () => {
+    // Kalau user sudah retake/jepret ulang (ccCapturedFix berubah) sebelum
+    // peta ini selesai dimuat, hasilnya dibuang -- tidak dipasang ke
+    // ccMapImg supaya tidak "nyangkut" salah di jepretan yg baru.
+    if (ccMapKeyFor(ccCapturedFix) !== key) return;
+    ccMapImg = img;
+    ccMapImgKey = key;
+    if (ccCameraSettings.showMap) ccRenderStampedPhoto(ccEditAddressText, ccEditPlaceText);
+  };
+  img.onerror = () => { /* diam2 dilewati -- lihat catatan di atas */ };
+  img.src = url;
+}
+// Menggambar peta mini (rounded-rect + border tipis) di pojok kanan-atas
+// canvas foto -- dipanggil dari dalam ccRenderStampedPhoto, HANYA kalau
+// ccMapImg sudah siap & cocok dgn jepretan yg lagi distempel (ccMapImgKey
+// == kunci ccCapturedFix saat itu).
+function ccDrawMapThumbnail(ctx, w, h) {
+  if (!ccCameraSettings.showMap || !ccMapImg || ccMapImgKey !== ccMapKeyFor(ccCapturedFix)) return;
+  const size = Math.max(72, Math.round(w * 0.22));
+  const margin = Math.max(12, Math.round(w * 0.025));
+  const x = w - size - margin;
+  const y = margin;
+  const radius = Math.round(size * 0.14);
+  ctx.save();
+  // Bayangan tipis di belakang kartu peta spy kebaca jelas biarpun latar
+  // fotonya terang/kontras rendah -- gaya kartu "melayang" ala GPS Map
+  // Camera, bukan cuma gambar ditempel polos.
+  ctx.shadowColor = 'rgba(0,0,0,0.45)';
+  ctx.shadowBlur = Math.max(6, Math.round(size * 0.08));
+  ctx.shadowOffsetY = Math.max(2, Math.round(size * 0.03));
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.arcTo(x + size, y, x + size, y + size, radius);
+  ctx.arcTo(x + size, y + size, x, y + size, radius);
+  ctx.arcTo(x, y + size, x, y, radius);
+  ctx.arcTo(x, y, x + size, y, radius);
+  ctx.closePath();
+  ctx.clip();
+  ctx.shadowColor = 'transparent';
+  ctx.drawImage(ccMapImg, x, y, size, size);
+  ctx.restore();
+  // Border putih tipis di keliling kartu peta -- ditarik ULANG di luar
+  // clip (ctx.restore di atas mengembalikan shadow), spy pinggirannya
+  // rapi & senada dgn gaya "kartu" elemen lain di app.
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.arcTo(x + size, y, x + size, y + size, radius);
+  ctx.arcTo(x + size, y + size, x, y + size, radius);
+  ctx.arcTo(x, y + size, x, y, radius);
+  ctx.arcTo(x, y, x + size, y, radius);
+  ctx.closePath();
+  ctx.lineWidth = Math.max(1.5, size * 0.018);
+  ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+  ctx.stroke();
+  ctx.restore();
+}
 // Menggambar ULANG frame foto mentah (ccRawFrameCanvas) + stempel teks
 // alamat/koordinat/waktu ke canvas final yg ditampilkan/diunduh. Dipisah
 // dari ccCaptureFoto() supaya bisa dipanggil BERKALI-KALI dgn addrText/
@@ -12809,6 +12935,12 @@ function ccRenderStampedPhoto(addrText, placeText) {
   canvas.width = w; canvas.height = h;
   const ctx = canvas.getContext('2d');
   ctx.drawImage(ccRawFrameCanvas, 0, 0, w, h);
+
+  // Peta mini (opsional, toggle "Peta Mini di Foto" di Pengaturan Kamera)
+  // digambar di pojok kanan-atas SEBELUM blok teks stempel di bawah --
+  // posisinya sengaja dijauhkan dr blok teks (yg selalu di bawah) supaya
+  // keduanya tidak pernah tumpang-tindih.
+  ccDrawMapThumbnail(ctx, w, h);
 
   // Susun teks stempel: alamat (bisa berbaris banyak) + baris
   // koordinat presisi + baris resolusi/kamera + waktu, gaya watermark
@@ -12958,6 +13090,13 @@ async function ccCaptureFoto() {
   // Bekukan bacaan GPS/waktu persis saat jepret -- lihat catatan di
   // deklarasi ccCapturedFix di atas.
   ccCapturedFix = ccAvgFix || ccLastFix;
+  // Reset peta mini jepretan SEBELUMNYA (kalau ada) -- dimuat lagi dari
+  // awal utk titik GPS jepretan ini (fire-and-forget, lihat
+  // ccLoadMapForFix), foto pertama tampil TANPA peta dulu (cepat), lalu
+  // digambar ulang otomatis begitu peta selesai dimuat.
+  ccMapImg = null;
+  ccMapImgKey = null;
+  ccLoadMapForFix(ccCapturedFix);
 
   // Kilat putih sekilas ala shutter kamera bawaan HP -- murni efek
   // visual, tidak menunda proses stempel/encode di bawah ini.
@@ -13043,6 +13182,7 @@ document.getElementById('ccRetakeBtn')?.addEventListener('click', () => {
   const editPanel = document.getElementById('ccEditPanel');
   if (editPanel) editPanel.hidden = true;
   ccEditAddressText = ''; ccEditPlaceText = ''; ccCapturedFix = null;
+  ccMapImg = null; ccMapImgKey = null;
   // Balik ke mode live video -- tumpuk lagi panel detail GPS/alamat di
   // atas kamera (disembunyikan sementara saat preview foto tadi).
   const infoPanel = document.getElementById('ccInfoPanel');
