@@ -11630,9 +11630,32 @@ function ccCycleColorMode() {
 const CC_FULL_LABEL_MAP = { auto: 'AUTO', hd: 'HD', fullhd: 'FULL', '4k': '4K', '8k': '8K' };
 function ccRenderFullBtn() {
   const label = document.getElementById('ccFullLabel');
-  if (!label) return;
-  label.textContent = ccCameraSettings.enabled ? (CC_FULL_LABEL_MAP[ccCameraSettings.resolution] || 'AUTO') : 'AUTO';
+  const modeLabel = document.getElementById('ccModeResLabel');
+  const text = ccCameraSettings.enabled ? (CC_FULL_LABEL_MAP[ccCameraSettings.resolution] || 'AUTO') : 'AUTO';
+  if (label) label.textContent = text;
+  if (modeLabel) modeLabel.textContent = text;
 }
+// ---- BARIS MODE KAMERA (VIDEO/FOTO/POTRET/megapiksel/SELENGKAPNYA) ----
+// Ala app kamera bawaan HP (#ccModeRow) -- lihat catatan lengkap di CSS
+// ".cc-mode-row". Cuma "Foto" yg SUNGGUH aktif krn kamera web browser
+// (getUserMedia) cuma bisa ambil frame gambar diam, TIDAK ada API standar
+// utk "mode Potret" (bokeh AI 2 lensa) atau rekam video di alur ini --
+// jadi mode lain SENGAJA dibiarkan tampil (biar tampilannya senada app
+// kamera asli, bukan tiba2 ada tombol hilang) tapi tap-nya kasih toast
+// jujur "belum tersedia", TIDAK pura2 pindah mode padahal tidak
+// ngapa2in. Item megapiksel (#ccModeResBtn) BEDA -- itu BUKAN mode
+// dekoratif, tap-nya membuka popup Pengaturan Kamera (resolusi) yg
+// SUDAH ADA, sama persis dgn tombol roda gigi/"FULL" di status bar.
+document.getElementById('ccModeRow')?.addEventListener('click', (e) => {
+  const btn = e.target.closest('.cc-mode-item');
+  if (!btn) return;
+  if (btn.id === 'ccModeResBtn') { ccOpenSettingsSheet(); return; }
+  const mode = btn.dataset.mode;
+  if (mode === 'foto') return; // sudah aktif, tidak ada apa2 yg perlu terjadi
+  const labels = { video: 'Mode Video', potret: 'Mode Potret', more: 'Menu Selengkapnya' };
+  showToast(`${labels[mode] || 'Mode ini'} belum tersedia di kamera web`, 'err');
+  if (navigator.vibrate) { try { navigator.vibrate(15); } catch (e2) {} }
+});
 function ccResetStatusBarState() {
   // Lampu kilat SELALU direset off saat kamera mati/ganti kamera --
   // statusnya terikat ke hardware stream yg sedang aktif, tidak masuk
@@ -12034,6 +12057,16 @@ function ccExtractPlaceName(data, fullAddress) {
   //    lokasi" DI TITIK KOORDINAT ini tidak pernah kosong -- selalu
   //    ada nama yg mewakili posisi tsb, senada app GPS Map Camera yg
   //    selalu punya judul lokasi di atas alamat lengkapnya.
+  // ---- FIX: "addr" TIDAK PERNAH dideklarasikan di scope fungsi ini
+  // (cuma ada di ccExtractExactPOIName, fungsi TERPISAH) -- sebelumnya
+  // baris di bawah ini melempar ReferenceError setiap kali dipanggil,
+  // yg ke-tangkap oleh try/catch pemanggilnya (ccReverseGeocode) &
+  // bikin alamat yg SEBENARNYA sudah berhasil didapat malah tertimpa
+  // jadi "Alamat tidak diketahui (gagal memuat)" + nama tempat kosong,
+  // PADAHAL datanya sendiri valid. Ini penyebab bug tsb, sekarang
+  // "addr" diambil ulang dari "data" di sini spy fungsi ini berdiri
+  // sendiri (tidak bergantung variabel dari fungsi lain). ----
+  const addr = (data && data.address) || {};
   const adminFallback = addr.village || addr.suburb || addr.neighbourhood || addr.hamlet
     || addr.city_district || addr.subdistrict || addr.county || addr.district
     || addr.town || addr.city || addr.municipality;
@@ -12346,6 +12379,8 @@ async function ccStartCamera() {
     if (toggleRow) toggleRow.hidden = true;
     const actionsRow = document.getElementById('ccActionsRow');
     if (actionsRow) actionsRow.hidden = false;
+    const modeRow = document.getElementById('ccModeRow');
+    if (modeRow) modeRow.hidden = false;
   } catch (e) {
     ccActive = false;
     const denied = e && (e.name === 'NotAllowedError' || /permission/i.test(String(e)));
@@ -12384,6 +12419,8 @@ function ccStopCamera() {
   if (toggleRow) toggleRow.hidden = false;
   const actionsRow = document.getElementById('ccActionsRow');
   if (actionsRow) actionsRow.hidden = true;
+  const modeRow = document.getElementById('ccModeRow');
+  if (modeRow) modeRow.hidden = true;
   const savedRow = document.getElementById('ccSavedRow');
   if (savedRow) savedRow.hidden = true;
   const photoMeta = document.getElementById('ccPhotoMetaPanel');
@@ -12676,6 +12713,8 @@ function ccCaptureFoto() {
   if (settingsBtnAfterCapture) settingsBtnAfterCapture.hidden = true;
   const statusBarAfterCapture = document.getElementById('ccStatusBar');
   if (statusBarAfterCapture) statusBarAfterCapture.hidden = true;
+  const modeRowAfterCapture = document.getElementById('ccModeRow');
+  if (modeRowAfterCapture) modeRowAfterCapture.hidden = true;
   const actionsRow = document.getElementById('ccActionsRow');
   if (actionsRow) actionsRow.hidden = true;
   const savedRow = document.getElementById('ccSavedRow');
@@ -12704,6 +12743,8 @@ document.getElementById('ccRetakeBtn')?.addEventListener('click', () => {
   if (settingsBtn) settingsBtn.hidden = false;
   const statusBar = document.getElementById('ccStatusBar');
   if (statusBar) statusBar.hidden = false;
+  const modeRow = document.getElementById('ccModeRow');
+  if (modeRow) modeRow.hidden = false;
   const actionsRow = document.getElementById('ccActionsRow');
   if (actionsRow) actionsRow.hidden = false;
   const savedRow = document.getElementById('ccSavedRow');

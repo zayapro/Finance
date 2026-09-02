@@ -3123,6 +3123,43 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   transition:transform .12s ease,background .15s ease;
 }
 .cc-side-btn:active{transform:scale(0.88);background:rgba(11,18,32,0.78);}
+/* ---- Baris mode kamera (VIDEO/FOTO/POTRET/resolusi/SELENGKAPNYA) ala
+   app kamera bawaan HP -- ditumpuk MENGAMBANG tepat di ATAS baris
+   tombol jepret (.cc-shutter-row), bisa digeser horizontal (overflow-x)
+   krn daftarnya sengaja lebih lebar dari layar (mode terakhir "Selengkapnya"
+   memang terpotong di tepi, PERSIS spt app kamera bawaan HP -- bukan bug
+   layout). Cuma mode "Foto" yg SUNGGUH aktif (kamera web browser cuma
+   bisa ambil foto diam, TIDAK bisa rekam video/mode bokeh AI/ganti
+   megapiksel sensor fisik spt app kamera native) -- mode lain (Video/
+   Potret/Selengkapnya) sengaja tetap ditampilkan biar tampilannya senada
+   app kamera asli, tapi tap-nya cuma kasih toast "belum tersedia" (lihat
+   ccModeRow listener di script.js), TIDAK dibiarkan diam2 tidak
+   ngapa2in spy user tidak bingung knapa tidak ada respon. Item
+   megapiksel (id="ccModeResBtn") BUKAN dekorasi -- tap-nya membuka
+   popup Pengaturan Kamera yg SUDAH ADA (sama persis dgn tombol roda
+   gigi/"FULL" di status bar atas), labelnya (AUTO/HD/FULL/4K/8K)
+   ngikutin resolusi yg lagi aktif, lihat ccRenderFullBtn(). */
+.cc-mode-row{
+  position:absolute;left:0;right:0;z-index:4;
+  bottom:calc(92px + env(safe-area-inset-bottom, 0px));
+  display:flex;align-items:center;gap:22px;
+  padding:0 20px;overflow-x:auto;scrollbar-width:none;
+  -webkit-overflow-scrolling:touch;
+}
+.cc-mode-row::-webkit-scrollbar{display:none;}
+.cc-mode-row[hidden]{display:none;}
+.cc-mode-item{
+  flex-shrink:0;background:none;border:none;padding:4px 1px 8px;
+  font-size:12.5px;font-weight:600;color:rgba(255,255,255,0.68);
+  text-shadow:0 1px 3px rgba(0,0,0,0.5);white-space:nowrap;
+  position:relative;cursor:pointer;
+}
+.cc-mode-item.is-active{color:#FFD166;font-weight:700;}
+.cc-mode-item.is-active::after{
+  content:'';position:absolute;left:0;right:0;bottom:0;height:2px;
+  background:#FFD166;border-radius:2px;
+}
+.cc-mode-item:active{opacity:0.7;}
 .cc-side-btn--accent{color:#FFD166;}
 /* ---- Panel edit alamat manual (muncul setelah jepret, via tombol
    pensil di ccSavedRow) -- kartu gelap mengambang tepat di atas baris
@@ -15109,6 +15146,21 @@ html.dark-mode .bd-row-close{
               <div class="cc-info-item"><span class="cc-info-label">Tipe</span><span class="cc-info-value" id="ccImgType">–</span></div>
               <div class="cc-info-item"><span class="cc-info-label">Ukuran</span><span class="cc-info-value" id="ccImgSize">–</span></div>
             </div>
+          </div>
+
+          <!-- Baris mode kamera (VIDEO/FOTO/POTRET/megapiksel/SELENGKAPNYA)
+               ala app kamera bawaan HP -- mengambang tepat di ATAS baris
+               tombol jepret. Cuma "Foto" yg sungguh aktif, lihat catatan
+               lengkap di CSS ".cc-mode-row" & logic "BARIS MODE KAMERA"
+               di script.js. Disembunyikan/dimunculkan dgn pola sama
+               persis spt #ccActionsRow (show saat live preview, hide
+               saat mode preview foto/kamera nonaktif). -->
+          <div class="cc-mode-row" id="ccModeRow" hidden>
+            <button type="button" class="cc-mode-item" id="ccModeVideoBtn" data-mode="video">VIDEO</button>
+            <button type="button" class="cc-mode-item is-active" id="ccModeFotoBtn" data-mode="foto">FOTO</button>
+            <button type="button" class="cc-mode-item" id="ccModePotretBtn" data-mode="potret">POTRET</button>
+            <button type="button" class="cc-mode-item" id="ccModeResBtn" aria-label="Resolusi kamera, buka pengaturan"><span id="ccModeResLabel">AUTO</span></button>
+            <button type="button" class="cc-mode-item" id="ccModeMoreBtn" data-mode="more">SELENGKAPNYA</button>
           </div>
 
           <!-- Baris tombol jepret ala kamera bawaan HP -- lingkaran
