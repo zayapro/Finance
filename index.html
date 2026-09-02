@@ -1304,6 +1304,30 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
   isolation:isolate;
 }
 .notif-page-body.notif-page-body-rest{margin-top:0;border-radius:0;padding-top:14px;}
+/* ---- Banner sticky halaman "Fast Menu" (#fastMenuOverlay) -- pola
+   SAMA PERSIS dgn .notif-sticky-head/.notif-page-body-cap tepat di
+   atas (popup Notifikasi), cuma diberi nama scoped sendiri krn dipakai
+   di overlay .lap-filter-overlay yang berbeda. Dipilih niru pola INI
+   (bukan .tema-sticky-head yg ikut membungkus sebagian kartu Pratinjau)
+   karena halaman Fast Menu tidak punya kartu preview -- cukup "topi"
+   lengkung kosong spt notifikasi. ---- */
+.fastmenu-sticky-head{
+  position:sticky;top:0;z-index:6;
+  transform:translateZ(0);-webkit-transform:translateZ(0);
+  backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  isolation:isolate;
+}
+.fastmenu-sticky-head .lap-filter-head{position:relative;z-index:1;}
+.fastmenu-page-body-cap{
+  position:relative;z-index:2;
+  background:var(--card);
+  margin:-24px 0 0;height:24px;
+  border-radius:28px 28px 0 0;
+  transform:translateZ(0);-webkit-transform:translateZ(0);
+  backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  isolation:isolate;
+}
+.lap-filter-card.fastmenu-page-body-rest{margin-top:0;border-radius:0;}
 .notif-panel-head-titles{flex:1;min-width:0;text-align:center;}
 .notif-panel-head-titles h3{font-size:clamp(16px,3.6vw,19px);font-weight:500;color:#FFF8F1;letter-spacing:-0.005em;line-height:1.25;font-family:'Poppins',sans-serif;}
 .notif-panel-head-sub{margin:2px 0 0;font-size:12px;color:rgba(255,248,241,0.78);font-weight:600;}
@@ -14468,18 +14492,31 @@ html.dark-mode .bd-row-close{
        dekat listener #fmHomeAddTxBtn dst, overlay ini ditutup dulu baru
        aksinya dijalankan), lalu tombol pil "Atur Fast Menu" nempel di
        bawah lewat .lap-filter-footer (pola sama dgn tombol "Simpan" di
-       popup Filter). ---- -->
+       popup Filter).
+
+       Banner oranye dibuat STICKY di puncak layar niru PERSIS pola
+       .notif-sticky-head/.notif-page-body-cap (popup Notifikasi):
+       .lap-filter-head + "topi" lengkung kecil tanpa isi
+       (.fastmenu-page-body-cap) dibungkus SATU wrapper sticky
+       (.fastmenu-sticky-head), baru kartu putih sisanya
+       (.fastmenu-page-body-rest) scroll normal TERPISAH di bawahnya --
+       sudut lengkung kartu putih SUDAH "dipakai" topi ini, makanya
+       margin negatif & radius-nya dinetralkan di .fastmenu-page-body-rest
+       (lihat CSS-nya dekat .notif-page-body-cap). ---- -->
   <div class="detail-page-overlay lap-filter-overlay" id="fastMenuOverlay">
     <div class="lap-filter-page">
-      <div class="lap-filter-head">
-        <button class="lap-filter-back-btn" id="fastMenuBackBtn" type="button" aria-label="Tutup Fast Menu">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
-        </button>
-        <h2>Fast Menu</h2>
-        <span class="lap-filter-back-btn" style="visibility:hidden" aria-hidden="true"></span>
+      <div class="fastmenu-sticky-head">
+        <div class="lap-filter-head">
+          <button class="lap-filter-back-btn" id="fastMenuBackBtn" type="button" aria-label="Tutup Fast Menu">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <h2>Fast Menu</h2>
+          <span class="lap-filter-back-btn" style="visibility:hidden" aria-hidden="true"></span>
+        </div>
+        <div class="fastmenu-page-body-cap" aria-hidden="true"></div>
       </div>
 
-      <div class="lap-filter-card">
+      <div class="lap-filter-card fastmenu-page-body-rest">
         <div class="fm-grid-head">
           <h3 class="fm-grid-title">Menu Utama</h3>
           <p class="fm-grid-subtitle" id="fastMenuGridSubtitle">Pilih fitur favoritmu untuk akses cepat tanpa perlu bolak-balik ke Beranda.</p>
