@@ -2645,7 +2645,16 @@ tr.fade-up{animation:fadeRow .35s ease both;}
    deteksi (mode upload) -- makanya sengaja dibiarkan tanpa konten
    statis di HTML, semua diisi via JS saat overlay dibuka/dipakai. */
 .bc-card{display:flex;flex-direction:column;gap:16px;}
-.bc-mode-tabs{margin-bottom:2px;}
+.bc-mode-tabs{margin-bottom:2px;width:100%;}
+/* Tab pil khusus halaman Scanner Barcode: dibuat selebar kartu (bukan
+   fit-content spt tab lain) & tiap pil punya ikon + label supaya lebih
+   jelas ketimbang teks polos -- ikon & label disejajarkan tengah lewat
+   flex. */
+.bc-mode-tabs .tab-btn{
+  flex:1;display:flex;align-items:center;justify-content:center;gap:6px;
+}
+.bc-mode-tabs .tab-btn svg{flex-shrink:0;opacity:0.85;}
+.bc-mode-tabs .tab-btn.active svg{opacity:1;}
 .bc-panel{display:none;flex-direction:column;gap:14px;}
 .bc-panel.active{display:flex;}
 
@@ -2656,6 +2665,31 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 }
 .bc-reader-box{width:100%;height:100%;}
 .bc-reader-box video{width:100% !important;height:100% !important;object-fit:cover;}
+/* Ikon kamera besar di tengah kartu hitam -- kelihatan cuma saat
+   kamera BELUM aktif (blm ada <video>), supaya area preview yang
+   gelap tidak kosong melompong sebelum user menekan "Aktifkan
+   Kamera". Disembunyikan (hidden) lewat JS begitu stream kamera
+   berhasil menyala, dan dimunculkan lagi saat kamera dimatikan. */
+.bc-cam-placeholder{
+  position:absolute;inset:0;z-index:1;display:flex;align-items:center;justify-content:center;
+  color:rgba(255,255,255,0.3);pointer-events:none;transition:opacity .18s ease;
+}
+/* Watermark "ZAYAIN QR" bertumpuk diagonal di layar kamera -- gaya
+   umum di app e-wallet (GoPay/OVO/DANA dkk) saat kamera scan QR
+   aktif, cuma dekorasi tipis biar preview tidak polos & ada identitas
+   brand. Disembunyikan saat kamera idle (biar tidak numpuk sama ikon
+   placeholder), baru dimunculkan begitu .bc-cam-frame kena class
+   .is-scanning (lihat bcStartCamera/bcStopCamera di script.js). */
+.bc-cam-watermark{
+  position:absolute;inset:-20%;z-index:1;display:flex;flex-direction:column;
+  align-items:center;justify-content:space-evenly;pointer-events:none;overflow:hidden;
+  transform:rotate(-24deg);opacity:0;transition:opacity .25s ease;
+}
+.bc-cam-frame.is-scanning .bc-cam-watermark{opacity:1;}
+.bc-cam-watermark span{
+  font-family:'Poppins',sans-serif;font-size:14px;font-weight:800;letter-spacing:.18em;
+  color:rgba(255,255,255,0.16);text-transform:uppercase;white-space:nowrap;
+}
 /* Bingkai 4 sudut ala viewfinder scanner -- murni dekoratif (pointer-
    events:none), cuma menegaskan "arahkan barcode ke sini" saat kamera
    aktif; tetap kelihatan juga saat kamera belum aktif (background
@@ -2666,9 +2700,30 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 .bc-scan-corners span:nth-child(2){top:0;right:0;border-left:none;border-bottom:none;border-radius:0 8px 0 0;}
 .bc-scan-corners span:nth-child(3){bottom:0;left:0;border-right:none;border-top:none;border-radius:0 0 0 8px;}
 .bc-scan-corners span:nth-child(4){bottom:0;right:0;border-left:none;border-top:none;border-radius:0 0 8px 0;}
+/* Garis scan yang bergerak naik-turun ala pemindai QR e-wallet --
+   cuma "hidup" (opacity 1 + animasi jalan) saat kamera betul-betul
+   aktif lewat class .is-scanning di .bc-cam-frame, supaya tidak
+   ada garis nganggur bergerak saat kamera masih mati/preview kosong. */
+.bc-scan-line{
+  position:absolute;left:3%;right:3%;top:0;height:2.5px;border-radius:2px;
+  background:linear-gradient(90deg, transparent, #34D399 12%, #A7F3D0 50%, #34D399 88%, transparent);
+  box-shadow:0 0 8px 1px rgba(52,211,153,0.65), 0 0 20px 5px rgba(52,211,153,0.3);
+  opacity:0;
+}
+.bc-cam-frame.is-scanning .bc-scan-line{
+  opacity:1;animation:bcScanMove 1.9s cubic-bezier(.45,0,.55,1) infinite;
+}
+@keyframes bcScanMove{
+  0%{top:0%;}
+  50%{top:calc(100% - 2.5px);}
+  100%{top:0%;}
+}
+@media (prefers-reduced-motion:reduce){
+  .bc-cam-frame.is-scanning .bc-scan-line{animation:none;opacity:0.9;top:50%;}
+}
 .bc-cam-hint{
   position:absolute;left:12px;right:12px;bottom:10px;z-index:2;
-  margin:0;text-align:center;font-size:11px;font-weight:600;color:#fff;
+  margin:0;text-align:center;font-size:11px;font-weight:500;color:#fff;
   background:rgba(11,18,32,0.55);backdrop-filter:blur(3px);
   border-radius:999px;padding:7px 12px;line-height:1.35;
 }
@@ -2690,8 +2745,8 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   justify-content:center;gap:8px;color:var(--ink-faint);text-align:center;padding:20px;
 }
 .bc-upload-drop.has-preview .bc-upload-empty{display:none;}
-.bc-upload-title{font-size:13.5px;font-weight:700;color:var(--ink-soft);}
-.bc-upload-sub{font-size:11.5px;font-weight:500;}
+.bc-upload-title{font-size:13.5px;font-weight:600;color:var(--ink-soft);}
+.bc-upload-sub{font-size:11.5px;font-weight:400;}
 .bc-reader-box--upload{width:100%;height:100%;}
 .bc-reader-box--upload img,.bc-reader-box--upload canvas{
   width:100% !important;height:100% !important;object-fit:contain;
@@ -14262,25 +14317,18 @@ html.dark-mode .bd-row-close{
       <div class="lap-filter-card bc-card">
         <div class="tabs bc-mode-tabs" id="barcodeModeTabs">
           <span class="tab-indicator" aria-hidden="true"></span>
-          <button type="button" class="tab-btn active" data-bcmode="camera">Scan Kamera</button>
-          <button type="button" class="tab-btn" data-bcmode="upload">Upload Gambar</button>
-        </div>
-
-        <!-- Panel: Scan Kamera -->
-        <div class="bc-panel active" data-bc-panel="camera" id="bcPanelCamera">
-          <div class="bc-cam-frame">
-            <div id="bcReaderCamera" class="bc-reader-box"></div>
-            <div class="bc-scan-corners" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
-            <p class="bc-cam-hint" id="bcCameraHint">Tekan tombol di bawah untuk mengaktifkan kamera, lalu arahkan ke barcode/QR code.</p>
-          </div>
-          <button type="button" class="btn btn-primary bc-cam-toggle-btn" id="bcCameraToggleBtn">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z"/><circle cx="12" cy="13" r="4"/></svg>
-            Aktifkan Kamera
+          <button type="button" class="tab-btn active" data-bcmode="upload">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <span>Upload Gambar</span>
+          </button>
+          <button type="button" class="tab-btn" data-bcmode="camera">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z"/><circle cx="12" cy="13" r="4"/></svg>
+            <span>Scan Kamera</span>
           </button>
         </div>
 
         <!-- Panel: Upload Gambar -->
-        <div class="bc-panel" data-bc-panel="upload" id="bcPanelUpload">
+        <div class="bc-panel active" data-bc-panel="upload" id="bcPanelUpload">
           <label class="bc-upload-drop" id="bcUploadDrop" for="bcUploadInput">
             <div id="bcReaderUpload" class="bc-reader-box bc-reader-box--upload" hidden></div>
             <div class="bc-upload-empty" id="bcUploadEmpty">
@@ -14291,6 +14339,30 @@ html.dark-mode .bd-row-close{
           </label>
           <input type="file" accept="image/*" id="bcUploadInput" hidden>
           <button type="button" class="bc-upload-again-btn" id="bcUploadAgainBtn" hidden>Pilih Gambar Lain</button>
+        </div>
+
+        <!-- Panel: Scan Kamera -->
+        <div class="bc-panel" data-bc-panel="camera" id="bcPanelCamera">
+          <div class="bc-cam-frame" id="bcCamFrame">
+            <div id="bcReaderCamera" class="bc-reader-box"></div>
+            <div class="bc-cam-placeholder" id="bcCamPlaceholder" aria-hidden="true">
+              <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z"/><circle cx="12" cy="13" r="4"/></svg>
+            </div>
+            <div class="bc-cam-watermark" aria-hidden="true">
+              <span>ZAYAIN QR</span>
+              <span>ZAYAIN QR</span>
+              <span>ZAYAIN QR</span>
+            </div>
+            <div class="bc-scan-corners" aria-hidden="true">
+              <span></span><span></span><span></span><span></span>
+              <div class="bc-scan-line" aria-hidden="true"></div>
+            </div>
+            <p class="bc-cam-hint" id="bcCameraHint">Tekan tombol di bawah untuk mengaktifkan kamera, lalu arahkan ke barcode/QR code.</p>
+          </div>
+          <button type="button" class="btn btn-primary bc-cam-toggle-btn" id="bcCameraToggleBtn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z"/><circle cx="12" cy="13" r="4"/></svg>
+            Aktifkan Kamera
+          </button>
         </div>
 
         <!-- Hasil scan (dipakai bersama kedua mode) -->

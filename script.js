@@ -11039,7 +11039,7 @@ const BC_FORMATS_SUPPORT = () => (window.Html5QrcodeSupportedFormats ? [
   Html5QrcodeSupportedFormats.UPC_EAN_EXTENSION,
 ] : undefined);
 
-let bcMode = 'camera';
+let bcMode = 'upload';
 let bcLibLoadingPromise = null;
 let bcCamReader = null;      // instance Html5Qrcode terikat #bcReaderCamera
 let bcUploadReader = null;   // instance Html5Qrcode terikat #bcReaderUpload
@@ -11101,12 +11101,16 @@ function bcShowResult(text, formatRaw) {
 function bcStopCamera() {
   const toggleBtn = document.getElementById('bcCameraToggleBtn');
   const hint = document.getElementById('bcCameraHint');
+  const placeholder = document.getElementById('bcCamPlaceholder');
+  const frame = document.getElementById('bcCamFrame');
   bcCamActive = false;
   if (toggleBtn) {
     toggleBtn.classList.remove('is-active');
     toggleBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z"/><circle cx="12" cy="13" r="4"/></svg> Aktifkan Kamera';
   }
   if (hint) hint.hidden = false;
+  if (placeholder) placeholder.hidden = false;
+  if (frame) frame.classList.remove('is-scanning');
   if (bcCamReader) {
     bcCamReader.stop().catch(() => {}).finally(() => { try { bcCamReader.clear(); } catch (e) {} });
   }
@@ -11136,6 +11140,10 @@ async function bcStartCamera() {
     );
     bcCamActive = true;
     if (hint) hint.hidden = true;
+    const placeholder = document.getElementById('bcCamPlaceholder');
+    if (placeholder) placeholder.hidden = true;
+    const frame = document.getElementById('bcCamFrame');
+    if (frame) frame.classList.add('is-scanning');
     if (toggleBtn) {
       toggleBtn.classList.add('is-active');
       toggleBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg> Matikan Kamera';
