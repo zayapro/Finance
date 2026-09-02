@@ -12853,7 +12853,7 @@ const CC_MAP_PX = 260; // px persegi, sisi kartu peta mini yg diminta dr API (le
 function ccBuildStaticMapUrl(lat, lng) {
   if (!CC_GEOAPIFY_KEY) return null;
   const marker = `lonlat:${lng},${lat};color:%23FF3B30;size:medium;icon:location-dot;iconsize:small;whitecircle:no`;
-  return `https://api.geoapify.com/v1/staticmap?style=osm-carto&width=${CC_MAP_PX}&height=${CC_MAP_PX}&center=lonlat:${lng},${lat}&zoom=${CC_MAP_ZOOM}&marker=${encodeURIComponent(marker)}&apiKey=${encodeURIComponent(CC_GEOAPIFY_KEY)}`;
+  return `https://maps.geoapify.com/v1/staticmap?style=osm-carto&width=${CC_MAP_PX}&height=${CC_MAP_PX}&center=lonlat:${lng},${lat}&zoom=${CC_MAP_ZOOM}&marker=${encodeURIComponent(marker)}&apiKey=${encodeURIComponent(CC_GEOAPIFY_KEY)}`;
 }
 // Kunci pembanding jepretan mana yg lagi/sudah dipetakan -- dibulatkan
 // ke 5 desimal (~1m) supaya bacaan GPS yg goyang recehan tidak dianggap
