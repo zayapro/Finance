@@ -11321,6 +11321,50 @@ function ccHideError() {
 function ccFormatCoord(v) {
   return typeof v === 'number' && isFinite(v) ? v.toFixed(6) + '°' : '–';
 }
+// Deteksi tipe perangkat (Mobile/Tablet/Desktop) + OS dari User-Agent
+// browser -- ini deteksi sisi client based on navigator.userAgent,
+// jadi otomatis kebaca APAKAH foto diambil dari HP (mobile) atau dari
+// laptop/PC (desktop) tanpa perlu input manual dari user.
+function ccGetDeviceType() {
+  const ua = navigator.userAgent || '';
+  let os = 'OS tidak dikenali';
+  if (/Android/i.test(ua)) os = 'Android';
+  else if (/iPhone|iPad|iPod/i.test(ua)) os = 'iOS';
+  else if (/Windows/i.test(ua)) os = 'Windows';
+  else if (/Mac OS X/i.test(ua)) os = 'macOS';
+  else if (/Linux/i.test(ua)) os = 'Linux';
+  const shortSide = Math.min(window.innerWidth || 0, window.innerHeight || 0);
+  const isTablet = /iPad|Tablet/i.test(ua) || (/Android/i.test(ua) && !/Mobile/i.test(ua)) || (shortSide >= 600 && /Android|iPhone|iPod/i.test(ua));
+  const isMobile = !isTablet && /Android|iPhone|iPod|Mobile|Windows Phone/i.test(ua);
+  const type = isTablet ? 'Tablet' : (isMobile ? 'Mobile' : 'Desktop');
+  return `${type} • ${os}`;
+}
+// Label kamera fisik yg dipakai (mis. "Kamera belakang, 12MP" kalau
+// browser mengizinkan lihat track.label -- Chrome/Android biasanya
+// kasih nama modul kamera aslinya; kalau label dikosongkan browser
+// krn alasan privasi, fallback ke facingMode ("Depan"/"Belakang").
+function ccGetCameraLabel() {
+  if (!ccStream) return '–';
+  const track = ccStream.getVideoTracks()[0];
+  if (!track) return '–';
+  if (track.label) return track.label;
+  const settings = track.getSettings ? track.getSettings() : {};
+  if (settings.facingMode === 'environment') return 'Kamera Belakang';
+  if (settings.facingMode === 'user') return 'Kamera Depan';
+  return 'Kamera Perangkat';
+}
+// Dipanggil begitu metadata video termuat (video.videoWidth/Height
+// baru VALID setelah event ini, bukan langsung setelah getUserMedia
+// resolve) -- isi field Resolusi & Kamera di panel info.
+function ccUpdateDeviceInfo() {
+  const video = document.getElementById('ccVideo');
+  const resEl = document.getElementById('ccResolution');
+  const camEl = document.getElementById('ccDeviceCam');
+  const typeEl = document.getElementById('ccDeviceType');
+  if (video && resEl) resEl.textContent = video.videoWidth ? `${video.videoWidth} × ${video.videoHeight} px` : '–';
+  if (camEl) camEl.textContent = ccGetCameraLabel();
+  if (typeEl) typeEl.textContent = ccGetDeviceType();
+}
 function ccSetGpsStatus(text, state) {
   // state: 'searching' | 'locked' | 'error'
   const badge = document.getElementById('ccGpsBadge');
@@ -11413,7 +11457,14 @@ async function ccStartCamera() {
   try {
     ccStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
     const video = document.getElementById('ccVideo');
-    if (video) { video.srcObject = ccStream; video.hidden = false; await video.play().catch(() => {}); }
+    if (video) {
+      video.srcObject = ccStream; video.hidden = false;
+      video.addEventListener('loadedmetadata', ccUpdateDeviceInfo, { once: true });
+      await video.play().catch(() => {});
+    }
+    const panel = document.getElementById('ccInfoPanel');
+    if (panel) panel.hidden = false;
+    ccUpdateDeviceInfo();
     const placeholder = document.getElementById('ccCamPlaceholder');
     if (placeholder) placeholder.hidden = true;
     if (hint) hint.hidden = true;
@@ -11455,6 +11506,14 @@ function ccStopCamera() {
   if (actionsRow) actionsRow.hidden = true;
   const savedRow = document.getElementById('ccSavedRow');
   if (savedRow) savedRow.hidden = true;
+  const photoMeta = document.getElementById('ccPhotoMetaPanel');
+  if (photoMeta) photoMeta.hidden = true;
+  const resEl = document.getElementById('ccResolution');
+  if (resEl) resEl.textContent = '–';
+  const camEl = document.getElementById('ccDeviceCam');
+  if (camEl) camEl.textContent = '–';
+  const typeEl = document.getElementById('ccDeviceType');
+  if (typeEl) typeEl.textContent = '–';
   const photo = document.getElementById('ccPhotoPreview');
   if (photo) { photo.hidden = true; photo.removeAttribute('src'); }
   ccLastFix = null; ccLastAddress = ''; ccLastGeocodeAt = 0; ccLastGeocodeLat = null; ccLastGeocodeLng = null;
@@ -11467,6 +11526,19 @@ document.getElementById('ccToggleBtn')?.addEventListener('click', () => {
 // baris di dalam lebar maksimum tertentu -- dipakai saat menempel
 // stempel info ke gambar hasil capture supaya alamat yg panjang tidak
 // terpotong/meluber keluar kanvas.
+// Ukuran file dihitung dari panjang string base64 hasil canvas.toDataURL
+// (base64 encoding menambah ~33% ukuran, jadi dikonversi balik ke
+// perkiraan byte asli) -- cukup akurat utk ditampilkan sbg info "Ukuran
+// File", tanpa perlu bikin Blob terpisah cuma utk baca .size-nya.
+function ccDataUrlSizeLabel(dataUrl) {
+  const base64 = (dataUrl.split(',')[1] || '');
+  const padding = base64.endsWith('==') ? 2 : (base64.endsWith('=') ? 1 : 0);
+  const bytes = Math.max(0, Math.round((base64.length * 3) / 4 - padding));
+  if (bytes < 1024) return `${bytes} B`;
+  const kb = bytes / 1024;
+  if (kb < 1024) return `${kb.toFixed(1)} KB`;
+  return `${(kb / 1024).toFixed(2)} MB`;
+}
 function ccWrapCanvasText(ctx, text, maxWidth) {
   const words = String(text || '').split(' ');
   const lines = [];
@@ -11493,7 +11565,8 @@ function ccCaptureFoto() {
   ctx.drawImage(video, 0, 0, w, h);
 
   // Susun teks stempel: alamat (bisa berbaris banyak) + baris
-  // koordinat presisi + waktu, gaya watermark app GPS Map Camera.
+  // koordinat presisi + baris resolusi/kamera + waktu, gaya watermark
+  // app GPS Map Camera.
   const pad = Math.max(14, Math.round(w * 0.025));
   const fsSmall = Math.max(13, Math.round(w * 0.022));
   const fsAddr = Math.max(15, Math.round(w * 0.026));
@@ -11502,6 +11575,8 @@ function ccCaptureFoto() {
   const acc = ccLastFix && typeof ccLastFix.accuracy === 'number' ? `± ${Math.round(ccLastFix.accuracy)} m` : '–';
   const when = new Date(ccLastFix ? ccLastFix.timestamp : Date.now()).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'medium' });
   const addr = ccLastAddress || 'Alamat tidak diketahui';
+  const camLabel = ccGetCameraLabel();
+  const deviceLine = `${w} × ${h} px  •  ${camLabel}  •  ${ccGetDeviceType()}  •  JPEG`;
 
   ctx.font = `600 ${fsAddr}px Poppins, sans-serif`;
   const addrLines = ccWrapCanvasText(ctx, addr, w - pad * 2).slice(0, 3);
@@ -11509,7 +11584,7 @@ function ccCaptureFoto() {
 
   const lineGapAddr = fsAddr * 1.3;
   const lineGapSmall = fsSmall * 1.5;
-  const blockH = pad + addrLines.length * lineGapAddr + lineGapSmall * 2 + pad * 0.6;
+  const blockH = pad + addrLines.length * lineGapAddr + lineGapSmall * 3 + pad * 0.6;
 
   ctx.fillStyle = 'rgba(0,0,0,0.52)';
   ctx.fillRect(0, h - blockH, w, blockH);
@@ -11522,6 +11597,7 @@ function ccCaptureFoto() {
   ctx.font = `500 ${fsSmall}px Poppins, sans-serif`;
   ctx.fillStyle = 'rgba(255,255,255,0.92)';
   ctx.fillText(coordLine, pad, y); y += lineGapSmall;
+  ctx.fillText(deviceLine, pad, y); y += lineGapSmall;
   ctx.fillText(when, pad, y);
 
   const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
@@ -11532,6 +11608,16 @@ function ccCaptureFoto() {
   if (actionsRow) actionsRow.hidden = true;
   const savedRow = document.getElementById('ccSavedRow');
   if (savedRow) savedRow.hidden = false;
+
+  // Tipe & ukuran file baru bisa dihitung dari hasil JPEG yg sudah
+  // di-encode ini -- isi panel meta foto (§ Tipe Gambar/Ukuran File).
+  const typeEl = document.getElementById('ccImgType');
+  const sizeEl = document.getElementById('ccImgSize');
+  if (typeEl) typeEl.textContent = 'JPEG (image/jpeg)';
+  if (sizeEl) sizeEl.textContent = ccDataUrlSizeLabel(dataUrl);
+  const photoMeta = document.getElementById('ccPhotoMetaPanel');
+  if (photoMeta) photoMeta.hidden = false;
+
   if (navigator.vibrate) { try { navigator.vibrate(50); } catch (e) {} }
 }
 document.getElementById('ccCaptureBtn')?.addEventListener('click', ccCaptureFoto);
@@ -11544,6 +11630,8 @@ document.getElementById('ccRetakeBtn')?.addEventListener('click', () => {
   if (actionsRow) actionsRow.hidden = false;
   const savedRow = document.getElementById('ccSavedRow');
   if (savedRow) savedRow.hidden = true;
+  const photoMeta = document.getElementById('ccPhotoMetaPanel');
+  if (photoMeta) photoMeta.hidden = true;
 });
 document.getElementById('ccDownloadBtn')?.addEventListener('click', () => {
   const canvas = document.getElementById('ccCanvas');

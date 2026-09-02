@@ -14611,9 +14611,22 @@ html.dark-mode .bd-row-close{
             <div class="cc-info-item"><span class="cc-info-label">Bujur (Lng)</span><span class="cc-info-value" id="ccLng">–</span></div>
             <div class="cc-info-item"><span class="cc-info-label">Akurasi</span><span class="cc-info-value" id="ccAccuracy">–</span></div>
             <div class="cc-info-item"><span class="cc-info-label">Ketinggian</span><span class="cc-info-value" id="ccAlt">–</span></div>
+            <div class="cc-info-item"><span class="cc-info-label">Resolusi</span><span class="cc-info-value" id="ccResolution">–</span></div>
+            <div class="cc-info-item"><span class="cc-info-label">Kamera</span><span class="cc-info-value" id="ccDeviceCam">–</span></div>
+            <div class="cc-info-item"><span class="cc-info-label">Tipe Perangkat</span><span class="cc-info-value" id="ccDeviceType">–</span></div>
           </div>
           <div class="cc-info-row cc-info-row--time">
             <span id="ccTimestamp">–</span>
+          </div>
+        </div>
+
+        <!-- Muncul HANYA setelah foto diambil (bukan sejak kamera aktif) --
+             karena tipe & ukuran file baru bisa dihitung dari hasil JPEG
+             yg sudah di-encode lewat canvas, bukan dari stream video. -->
+        <div class="cc-info-panel" id="ccPhotoMetaPanel" hidden>
+          <div class="cc-info-grid">
+            <div class="cc-info-item"><span class="cc-info-label">Tipe Gambar</span><span class="cc-info-value" id="ccImgType">–</span></div>
+            <div class="cc-info-item"><span class="cc-info-label">Ukuran File</span><span class="cc-info-value" id="ccImgSize">–</span></div>
           </div>
         </div>
 
