@@ -3103,16 +3103,25 @@ select#kursFromSelect[hidden],select#kursToSelect[hidden]{display:none;}
 .flow-timer-unit .wcc-label{font-size:8.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-faint);}
 
 .flow-deal-body{display:flex;gap:22px;position:relative;z-index:1;flex-wrap:wrap;}
+/* FIX "kadang tidak 2 kesamping" di HP: sebelumnya kartu tier
+   (.flow-tier-card) punya min-width:198px di sini, dan baru "dibolehkan"
+   menyusut bebas (min-width:0) lewat rule khusus @media(max-width:540px)
+   di bawah. Di lebar 541px–~800px (tablet/mode split-screen/browser yg
+   di-resize pas di rentang itu) rule mobile itu belum aktif, padahal
+   ruang yg tersedia utk 2×198px+gap kadang sudah tak cukup -- akibatnya
+   .flow-deal-tiers (masih overflow-x:auto) jatuh ke mode geser-samping
+   & kartu kedua jadi tersembunyi, bukan tetap berdampingan. Sekarang
+   min-width:0 + overflow-x:visible dipindah jadi aturan DASAR (bukan
+   cuma di breakpoint mobile) supaya 2 kartu selalu dipaksa berbagi
+   lebar 50-50 & tetap berdampingan di LEBAR LAYAR BERAPA PUN, tanpa ada
+   celah lebar yang bikin dia "kadang" gagal. */
 .flow-deal-tiers{
-  flex:1 1 360px;display:flex;gap:12px;overflow-x:auto;
-  scroll-snap-type:x proximity;padding:2px 2px 4px;margin:-2px -2px 0;
-  scrollbar-width:thin;scrollbar-color:rgba(249,115,22,0.35) transparent;
+  flex:1 1 360px;display:flex;gap:12px;overflow-x:visible;
+  padding:2px 2px 4px;margin:-2px -2px 0;
 }
-.flow-deal-tiers::-webkit-scrollbar{height:5px;}
-.flow-deal-tiers::-webkit-scrollbar-thumb{background:rgba(249,115,22,0.35);border-radius:999px;}
 
 .flow-tier-card{
-  flex:1 1 0;min-width:198px;
+  flex:1 1 0;min-width:0;
   /* Sebelumnya var(--paper) — abu-abu kebiruan yang beda dari putih
      kartu Saldo Total & badan kartu ini sendiri, jadi biarpun kartu
      luarnya sudah disatukan (lihat catatan di
@@ -3235,18 +3244,14 @@ select#kursFromSelect[hidden],select#kursToSelect[hidden]{display:none;}
    berubah cuma UKURAN elemen (lihat breakpoint 600/480/380 di bawah),
    bukan strukturnya, supaya tampilannya konsisten dari desktop sampai
    HP kecil sesuai referensi. */
-/* Di bawah ~540px, dua kartu tier (Hari Ini & Bulan Ini) TETAP
-   berdampingan (bukan ditumpuk vertikal) supaya kartu tidak jadi
-   tinggi/panjang ke bawah — sebelumnya kartu ditumpuk penuh selebar
-   layar yang bikin halaman jadi panjang. Sekarang tiap kartu tier
-   mengambil separuh lebar (flex:1 1 0, min-width:0 supaya boleh
-   menyusut), tanpa perlu scroll ke samping karena keduanya sama-sama
-   pas di lebar layar HP. Baris Masuk/Keluar juga ditumpuk vertikal
-   (bukan sejajar) karena di lebar sesempit ini nominal besar
-   (mis. "Rp 125.020.000") tidak muat sebaris dengan chip satunya. */
+/* Di bawah ~540px, gap antar 2 kartu tier dirapatkan sedikit (9px,
+   dari 12px default) & baris Masuk/Keluar ditumpuk vertikal (bukan
+   sejajar) karena di lebar sesempit ini nominal besar (mis.
+   "Rp 125.020.000") tidak muat sebaris dengan chip satunya. Kedua
+   kartu sendiri sudah dijamin selalu berdampingan di lebar berapa pun
+   lewat aturan dasar .flow-deal-tiers/.flow-tier-card di atas. */
 @media (max-width:540px){
-  .flow-deal-tiers{flex-direction:row;overflow-x:visible;gap:9px;}
-  .flow-tier-card{min-width:0;width:auto;flex:1 1 0;}
+  .flow-deal-tiers{gap:9px;}
   .ftc-legend{flex-direction:column;align-items:flex-start;gap:5px;}
   .ftc-chip{white-space:nowrap;}
 }
