@@ -10544,6 +10544,21 @@ select#categoryFilter[hidden]{display:none;}
 }
 .lap-filter-footer--split .btn.lap-filter-save-btn,
 .lap-filter-footer--split .btn.lap-filter-cancel-btn{width:auto;flex:1 1 0;}
+/* ---- Footer pil "Atur Fast Menu"/"Selesai Mengatur" (#fastMenuOverlay)
+   dibuat STICKY & bergaya "kartu popup" yang mengambang di dasar layar --
+   pola sticky-nya SAMA PERSIS dgn .lap-filter-footer--split di atas
+   (position:sticky;bottom:0), tapi ditambah sudut atas membulat +
+   bayangan ke atas supaya benar-benar terasa seperti popup/panel
+   terpisah yang "melayang" di atas konten grid saat digulir, bukan
+   cuma pita polos menyatu dgn kartu putih di atasnya. TETAP sticky di
+   kedua kondisi tombolnya ("Atur Fast Menu" maupun "Selesai Mengatur"
+   selama mode-edit aktif) krn keduanya cuma ganti teks pada elemen
+   #fastMenuAturBtn yang sama, wrapper footernya tidak berubah. ---- */
+.lap-filter-footer--sticky-pop{
+  position:sticky;bottom:0;z-index:5;margin-top:auto;
+  border-radius:22px 22px 0 0;
+  box-shadow:0 -10px 24px -12px rgba(0,0,0,0.24);
+}
 .btn.lap-filter-cancel-btn{
   justify-content:center;padding:15px;border-radius:999px;
   font-size:14.5px;font-family:'Poppins',sans-serif;font-weight:500;letter-spacing:-0.005em;
@@ -14533,7 +14548,7 @@ html.dark-mode .bd-row-close{
         </div>
       </div>
 
-      <div class="lap-filter-footer">
+      <div class="lap-filter-footer lap-filter-footer--sticky-pop">
         <button type="button" class="btn btn-primary lap-filter-save-btn" id="fastMenuAturBtn">Atur Fast Menu</button>
       </div>
     </div>
