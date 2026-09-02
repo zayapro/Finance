@@ -2649,12 +2649,48 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 /* Tab pil khusus halaman Scanner Barcode: dibuat selebar kartu (bukan
    fit-content spt tab lain) & tiap pil punya ikon + label supaya lebih
    jelas ketimbang teks polos -- ikon & label disejajarkan tengah lewat
-   flex. */
+   flex. Ketiga pil (Upload/Kamera/QR Generator) SENGAJA dibikin sama
+   persis strukturnya (1 baris: ikon+label, rata tengah) supaya
+   tinggi & gayanya konsisten -- sebelumnya pil "QR Generator" beda
+   sendiri (ikon di atas, label+badge di bawah jadi 2 baris) yang bikin
+   SEMUA pil ikut melar tinggi (krn flex item .tabs default stretch ke
+   tinggi sibling paling tinggi), jadi keliatan tidak rapi/tidak match
+   dgn pil-pil lain di halaman ini. min-width:0 + ellipsis di span
+   labelnya supaya kalau ruang mepet di layar sempit, teks label
+   terpotong rapi (bukan bikin pil melebar/pecah baris). */
 .bc-mode-tabs .tab-btn{
-  flex:1;display:flex;align-items:center;justify-content:center;gap:6px;
+  flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:6px;
+  white-space:nowrap;
+}
+.bc-mode-tabs .tab-btn > span:not(.tab-btn-icon-wrap){
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;
 }
 .bc-mode-tabs .tab-btn svg{flex-shrink:0;opacity:0.85;}
 .bc-mode-tabs .tab-btn.active svg{opacity:1;}
+/* 3 pil sekarang muat di satu baris (Upload/Kamera/QR Generator) --
+   font & padding dikecilkan dikit spesial di sini supaya tetap rapi
+   1 baris di layar sempit tanpa harus turun ke baris ke-2. */
+.bc-mode-tabs .tab-btn{font-size:12.5px;padding:8px 8px;}
+/* Pil "QR Generator" -- fitur belum dibangun, jadi dibuat non-aktif
+   scr visual (warna pudar + titik penanda kecil di pojok ikon) tapi
+   TETAP bisa diklik supaya nunjukin toast info "belum tersedia"
+   (lihat listener klik #barcodeModeTabs di script.js) -- bukan pil
+   yg beneran <button disabled> supaya user tetap dapat feedback saat
+   coba menekannya, bukan cuma diam tanpa respons. Titik penanda
+   dipakai (bukan badge teks "Segera" spt sebelumnya) khusus supaya
+   pil ini tetap 1 baris sama kayak 2 pil lain -- badge teks bikin
+   kepanjangan & numpuk 2 baris di layar sempit. */
+.bc-mode-tabs .tab-btn--soon{color:var(--ink-faint);cursor:not-allowed;}
+.bc-mode-tabs .tab-btn--soon svg{opacity:0.5;}
+.tab-btn-icon-wrap{position:relative;display:inline-flex;flex-shrink:0;}
+.tab-btn-dot{
+  position:absolute;top:-2px;right:-3px;width:6px;height:6px;border-radius:50%;
+  background:var(--brass,#D97706);border:1.4px solid var(--card);
+}
+@media (max-width:380px){
+  .bc-mode-tabs .tab-btn{font-size:11px;padding:7px 5px;gap:4px;}
+  .bc-mode-tabs .tab-btn svg{width:13px;height:13px;}
+}
 .bc-panel{display:none;flex-direction:column;gap:14px;}
 .bc-panel.active{display:flex;}
 
@@ -2665,30 +2701,64 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 }
 .bc-reader-box{width:100%;height:100%;}
 .bc-reader-box video{width:100% !important;height:100% !important;object-fit:cover;}
-/* Ikon kamera besar di tengah kartu hitam -- kelihatan cuma saat
-   kamera BELUM aktif (blm ada <video>), supaya area preview yang
-   gelap tidak kosong melompong sebelum user menekan "Aktifkan
-   Kamera". Disembunyikan (hidden) lewat JS begitu stream kamera
-   berhasil menyala, dan dimunculkan lagi saat kamera dimatikan. */
+/* Ikon kamera di tengah kartu hitam -- kelihatan cuma saat kamera
+   BELUM aktif (blm ada <video>), supaya area preview yang gelap tidak
+   kosong melompong sebelum user menekan "Aktifkan Kamera". Gaya baru:
+   badge lingkaran kaca (glass) berisi ikon kamera + cincin denyut
+   (pulse ring) di belakangnya -- kesannya lebih "hidup"/mengundang utk
+   diketuk, bukan cuma ikon polos nganggur di tengah layar gelap.
+   Disembunyikan (hidden) lewat JS begitu stream kamera berhasil
+   menyala, dan dimunculkan lagi saat kamera dimatikan. */
 .bc-cam-placeholder{
   position:absolute;inset:0;z-index:1;display:flex;align-items:center;justify-content:center;
-  color:rgba(255,255,255,0.3);pointer-events:none;transition:opacity .18s ease;
+  pointer-events:none;transition:opacity .18s ease;
 }
-/* Watermark "ZAYAIN QR" bertumpuk diagonal di layar kamera -- gaya
-   umum di app e-wallet (GoPay/OVO/DANA dkk) saat kamera scan QR
-   aktif, cuma dekorasi tipis biar preview tidak polos & ada identitas
-   brand. Disembunyikan saat kamera idle (biar tidak numpuk sama ikon
-   placeholder), baru dimunculkan begitu .bc-cam-frame kena class
-   .is-scanning (lihat bcStartCamera/bcStopCamera di script.js). */
+.bc-cam-placeholder-badge{
+  position:relative;width:68px;height:68px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(circle at 32% 28%, rgba(255,255,255,0.16), rgba(255,255,255,0.04) 60%, transparent 78%);
+  border:1.4px solid rgba(255,255,255,0.18);
+  color:rgba(255,255,255,0.6);
+  box-shadow:inset 0 0 12px rgba(255,255,255,0.05);
+}
+.bc-cam-placeholder-ring{
+  position:absolute;width:68px;height:68px;border-radius:50%;
+  border:1.4px solid rgba(255,255,255,0.16);
+  animation:bcCamPulse 2.4s ease-out infinite;
+}
+@keyframes bcCamPulse{
+  0%{transform:scale(1);opacity:0.55;}
+  75%,100%{transform:scale(1.55);opacity:0;}
+}
+@media (prefers-reduced-motion:reduce){
+  .bc-cam-placeholder-ring{animation:none;opacity:0;}
+}
+/* WAJIB: override [hidden] eksplisit -- .bc-cam-placeholder punya
+   display:flex sendiri, jadi kalau tidak ditimpa di sini atribut
+   [hidden] bawaan JS (bcCamPlaceholder.hidden=true saat kamera aktif)
+   TIDAK akan kelihatan hilang (aturan display:flex punya asal/origin
+   yang sama-sama "author" jadi menang lawan default UA-stylesheet
+   [hidden]{display:none}). Pola yang sama dipakai di elemen lain yang
+   toggle hidden lewat JS di seluruh file ini. */
+.bc-cam-placeholder[hidden]{display:none;}
+/* Watermark "ZAYAIN QR" -- cukup SATU pil pudar di bagian bawah kartu
+   kamera (gaya umum watermark brand di app e-wallet: GoPay/OVO/DANA
+   dkk), bukan tulisan diagonal bertumpuk. Disembunyikan saat kamera
+   idle, baru dimunculkan begitu .bc-cam-frame kena class .is-scanning
+   (lihat bcStartCamera/bcStopCamera di script.js). Posisinya SEDIKIT
+   di atas garis bawah kartu (bottom:14px) supaya tidak berhimpitan dgn
+   bingkai viewfinder ".bc-scan-corners" (inset 14%) di atasnya. */
 .bc-cam-watermark{
-  position:absolute;inset:-20%;z-index:1;display:flex;flex-direction:column;
-  align-items:center;justify-content:space-evenly;pointer-events:none;overflow:hidden;
-  transform:rotate(-24deg);opacity:0;transition:opacity .25s ease;
+  position:absolute;left:0;right:0;bottom:14px;z-index:2;
+  display:flex;justify-content:center;pointer-events:none;
+  opacity:0;transition:opacity .25s ease;
 }
 .bc-cam-frame.is-scanning .bc-cam-watermark{opacity:1;}
 .bc-cam-watermark span{
-  font-family:'Poppins',sans-serif;font-size:14px;font-weight:800;letter-spacing:.18em;
-  color:rgba(255,255,255,0.16);text-transform:uppercase;white-space:nowrap;
+  font-family:'Poppins',sans-serif;font-size:9.5px;font-weight:700;letter-spacing:.1em;
+  color:rgba(255,255,255,0.55);text-transform:uppercase;white-space:nowrap;
+  background:rgba(255,255,255,0.1);backdrop-filter:blur(3px);
+  border:1px solid rgba(255,255,255,0.16);border-radius:999px;padding:4px 12px;
 }
 /* Bingkai 4 sudut ala viewfinder scanner -- murni dekoratif (pointer-
    events:none), cuma menegaskan "arahkan barcode ke sini" saat kamera
@@ -2722,14 +2792,14 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   .bc-cam-frame.is-scanning .bc-scan-line{animation:none;opacity:0.9;top:50%;}
 }
 .bc-cam-hint{
-  position:absolute;left:12px;right:12px;bottom:10px;z-index:2;
-  margin:0;text-align:center;font-size:11px;font-weight:500;color:#fff;
+  position:absolute;left:14px;right:14px;bottom:6px;z-index:2;
+  margin:0;text-align:center;font-size:9.5px;font-weight:500;color:#fff;
   background:rgba(11,18,32,0.55);backdrop-filter:blur(3px);
-  border-radius:999px;padding:7px 12px;line-height:1.35;
+  border-radius:999px;padding:6px 11px;line-height:1.35;
 }
 .bc-cam-toggle-btn{
   width:100%;display:flex;align-items:center;justify-content:center;gap:8px;
-  padding:13px;border-radius:999px;font-size:14px;font-weight:700;border:none;
+  padding:13px;border-radius:999px;font-size:14px;font-weight:600;border:none;
 }
 .bc-cam-toggle-btn.is-active{background:var(--wine);box-shadow:0 4px 14px color-mix(in srgb, var(--wine) 30%, transparent);}
 
@@ -2764,9 +2834,28 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 }
 @keyframes bcResultIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
 .bc-result-head{display:flex;align-items:center;justify-content:space-between;gap:8px;}
-.bc-result-label{font-size:12px;font-weight:800;color:#065F46;}
+/* Label "Barcode Terbaca" -- centang teks polos "✓" diganti jadi
+   badge bulat kecil warna hijau (gradasi) berisi ikon check putih,
+   lebih "berbentuk" & konsisten kayak ikon sukses di app-app lain
+   (bukan cuma karakter unicode ✓ yang tipis/ketebalannya beda-beda
+   antar font). Muncul dgn animasi "pop" kecil pas hasil scan tampil. */
+.bc-result-label{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:12px;font-weight:700;color:#065F46;letter-spacing:.01em;
+}
+.bc-result-check{
+  display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;
+  width:17px;height:17px;border-radius:50%;
+  background:linear-gradient(135deg,#34D399,#059669);
+  box-shadow:0 0 0 3px color-mix(in srgb, #10B981 16%, transparent);
+  animation:bcCheckPop .32s cubic-bezier(.34,1.56,.64,1) both;
+}
+@keyframes bcCheckPop{from{transform:scale(0.3);opacity:0;}to{transform:scale(1);opacity:1;}}
+@media (prefers-reduced-motion:reduce){
+  .bc-result-check{animation:none;}
+}
 .bc-result-format{
-  font-size:9.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;
+  font-size:9.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
   color:var(--ink-faint);background:var(--card);border:1px solid var(--line);
   border-radius:999px;padding:3px 9px;white-space:nowrap;
 }
@@ -2776,7 +2865,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 }
 .bc-result-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:2px;}
 .bc-result-btn{
-  font-size:12px;font-weight:700;padding:8px 14px;border-radius:999px;
+  font-size:12px;font-weight:600;padding:8px 14px;border-radius:999px;
   border:1.4px solid var(--line);background:var(--card);color:var(--ink-soft);
   cursor:pointer;transition:all .15s ease;
 }
@@ -14325,7 +14414,15 @@ html.dark-mode .bd-row-close{
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z"/><circle cx="12" cy="13" r="4"/></svg>
             <span>Scan Kamera</span>
           </button>
+          <button type="button" class="tab-btn tab-btn--soon" data-bcmode="qrgen" aria-disabled="true" title="QR Generator belum tersedia">
+            <span class="tab-btn-icon-wrap">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.2"/><rect x="14" y="3" width="7" height="7" rx="1.2"/><rect x="3" y="14" width="7" height="7" rx="1.2"/><path d="M14 14h3v3h-3zM19 14h2v2h-2zM14 19h2v2h-2zM19 19h2v2h-2z"/></svg>
+              <span class="tab-btn-dot" aria-hidden="true"></span>
+            </span>
+            <span>QR Generator</span>
+          </button>
         </div>
+
 
         <!-- Panel: Upload Gambar -->
         <div class="bc-panel active" data-bc-panel="upload" id="bcPanelUpload">
@@ -14346,11 +14443,12 @@ html.dark-mode .bd-row-close{
           <div class="bc-cam-frame" id="bcCamFrame">
             <div id="bcReaderCamera" class="bc-reader-box"></div>
             <div class="bc-cam-placeholder" id="bcCamPlaceholder" aria-hidden="true">
-              <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z"/><circle cx="12" cy="13" r="4"/></svg>
+              <span class="bc-cam-placeholder-ring"></span>
+              <span class="bc-cam-placeholder-badge">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z"/><circle cx="12" cy="13" r="4.2"/></svg>
+              </span>
             </div>
             <div class="bc-cam-watermark" aria-hidden="true">
-              <span>ZAYAIN QR</span>
-              <span>ZAYAIN QR</span>
               <span>ZAYAIN QR</span>
             </div>
             <div class="bc-scan-corners" aria-hidden="true">
@@ -14368,7 +14466,12 @@ html.dark-mode .bd-row-close{
         <!-- Hasil scan (dipakai bersama kedua mode) -->
         <div class="bc-result" id="bcResult" hidden>
           <div class="bc-result-head">
-            <span class="bc-result-label">✓ Barcode Terbaca</span>
+            <span class="bc-result-label">
+              <span class="bc-result-check" aria-hidden="true">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              </span>
+              Barcode Terbaca
+            </span>
             <span class="bc-result-format" id="bcResultFormat"></span>
           </div>
           <div class="bc-result-value" id="bcResultValue"></div>
