@@ -2921,6 +2921,19 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 }
 .cc-gps-dot.is-locked{background:#34D399;box-shadow:0 0 6px 1px rgba(52,211,153,0.6);}
 .cc-gps-dot.is-error{background:#F87171;box-shadow:0 0 6px 1px rgba(248,113,113,0.6);}
+/* Tombol ganti kamera depan/belakang -- pil bulat pojok kanan-atas
+   kartu kamera, senada visual dgn .cc-gps-badge (blur+gelap) tapi di
+   sisi berlawanan spy tidak tumpuk dgn badge status GPS. */
+.cc-switch-cam-btn{
+  position:absolute;top:12px;right:12px;z-index:2;
+  display:flex;align-items:center;justify-content:center;
+  width:34px;height:34px;border-radius:50%;
+  background:rgba(11,18,32,0.6);backdrop-filter:blur(4px);
+  border:1px solid rgba(255,255,255,0.16);color:#fff;
+  cursor:pointer;transition:background .15s ease, transform .15s ease;
+}
+.cc-switch-cam-btn:active{transform:scale(0.9);background:rgba(11,18,32,0.8);}
+.cc-switch-cam-btn[hidden]{display:none;}
 /* Panel info koordinat -- kartu terpisah DI BAWAH kamera (bukan
    ditumpuk transparan di atas video) supaya angka lintang/bujur tetap
    gampang dibaca & bisa disalin/diseleksi kapan saja, tidak tertutup
@@ -2933,6 +2946,12 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 .cc-info-row{display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:var(--ink);}
 .cc-info-row svg{flex-shrink:0;opacity:.7;color:var(--ink-soft);}
 .cc-info-row--time{font-size:11px;font-weight:500;color:var(--ink-faint);padding-top:2px;border-top:1px solid var(--line);}
+/* Nama tempat (POI) -- kalau terdeteksi, ditonjolkan lebih besar &
+   berwarna aksen di ATAS baris alamat (gaya khas app GPS Map Camera
+   yg menyorot nama lokasi dulu baru alamat lengkapnya). */
+.cc-info-row--place{font-size:15px;font-weight:800;color:var(--primary-deep,#C2410C);}
+.cc-info-row--place svg{opacity:.9;color:var(--primary,#F2672B);}
+.cc-info-row--place[hidden]{display:none;}
 .cc-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px;}
 .cc-info-item{display:flex;flex-direction:column;gap:2px;min-width:0;}
 .cc-info-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-faint);}
@@ -2944,6 +2963,40 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 @media (max-width:380px){
   .cc-info-grid{grid-template-columns:1fr;}
 }
+/* ---- FULL-FRAME: kamera Koordinat Kamera mengisi SISA tinggi layar
+   (bukan kotak rasio 1:1 terbatas max-height:340px spt sebelumnya),
+   menyesuaikan otomatis ke tinggi layar perangkat apa pun (HP pendek,
+   HP tinggi, tablet, dst). Semua override di-SCOPE ke
+   "#cameraCoordOverlay ..." spy TIDAK ikut mengubah tampilan Scanner
+   Barcode (#barcodeOverlay) yg berbagi class .bc-cam-frame/.cc-card
+   yg sama. Strukturnya: header biasa di atas (tetap normal, bukan
+   overlay) -> #ccCamFrame flex:1 (isi semua sisa ruang vertikal) ->
+   .cc-bottom-sheet di bawahnya (panel info+tombol, TIDAK menumpuk di
+   atas video, cuma ambil ruang seperlunya & bisa di-scroll sendiri
+   kalau kontennya lebih tinggi drpd sisa layar, mis. HP posisi
+   landscape) supaya kamera tetap selalu kelihatan penuh. ---- */
+#cameraCoordOverlay .lap-filter-page{height:100dvh;overflow:hidden;}
+#cameraCoordOverlay .cc-card{
+  flex:1;min-height:0;display:flex;flex-direction:column;gap:0;
+  padding:0;margin:0;border-radius:0;overflow:hidden;background:#0B1220;
+}
+#cameraCoordOverlay #ccCamFrame{
+  flex:1 1 auto;min-height:180px;width:100%;height:auto;
+  aspect-ratio:auto;max-height:none;border-radius:0;
+}
+#cameraCoordOverlay .cc-bottom-sheet{
+  flex:0 1 auto;width:100%;max-height:52dvh;overflow-y:auto;
+  background:var(--card);display:flex;flex-direction:column;gap:12px;
+  padding:14px 14px calc(14px + env(safe-area-inset-bottom, 0px));
+  border-top-left-radius:20px;border-top-right-radius:20px;
+  box-shadow:0 -6px 18px -8px rgba(0,0,0,0.28);position:relative;z-index:2;
+}
+/* .cc-info-panel/.cc-btn-row punya margin-top bawaan (dipakai di
+   konteks lain di luar bottom-sheet ini) -- di dalam .cc-bottom-sheet
+   spacing-nya sudah diatur lewat "gap" flex parent, jadi margin bawaan
+   itu ditiadakan di sini supaya jaraknya tidak dobel. */
+#cameraCoordOverlay .cc-bottom-sheet .cc-info-panel{margin-top:0;}
+#cameraCoordOverlay .cc-bottom-sheet .cc-btn-row{margin-top:0;}
 
 /* ---- Halaman "Kurs Mata Uang" (#kursOverlay) ----
    Header + kartu konverter dibungkus ".tema-sticky-head"/".tema-preview-
@@ -14564,14 +14617,24 @@ html.dark-mode .bd-row-close{
 
        Alurnya: 1) tombol "Aktifkan Kamera & GPS" minta izin kamera
        (getUserMedia) SEKALIGUS lokasi presisi tinggi (Geolocation
-       watchPosition, enableHighAccuracy:true) barengan; 2) begitu GPS
-       dapat titik koordinat, alamatnya dicari lewat reverse-geocoding
-       OpenStreetMap Nominatim (gratis, tanpa API key) & panel info di
-       bawah kamera terisi (lintang/bujur/akurasi/altitude+alamat+jam);
-       3) tombol "Ambil Foto" men-capture frame video ke <canvas>,
-       menempelkan teks info koordinat+alamat+waktu di pojok bawah
-       gambar (gaya khas app "GPS Map Camera"), lalu menampilkannya
-       sbg preview yg bisa disimpan (unduh) atau diambil ulang.
+       watchPosition, enableHighAccuracy:true) barengan; 2) tiap bacaan
+       GPS baru dirata-ratakan dgn beberapa bacaan sebelumnya (weighted
+       by akurasi, lihat ccUpdateFixBuffer() di script.js) supaya
+       titiknya lebih stabil/presisi drpd satu bacaan mentah; 3) titik
+       hasil rata-rata itu dipakai utk reverse-geocoding OpenStreetMap
+       Nominatim (gratis, tanpa API key, dgn namedetails+extratags) yg
+       mengisi DUA hal: (a) alamat lengkap tersusun rapi dari komponen
+       jalan/kelurahan/kecamatan/kota/provinsi/kode pos (ccBuildFullAddress),
+       dan (b) NAMA TEMPAT (POI) kalau titiknya persis di sebuah lokasi
+       ber-nama spt toko/kantor/tempat ibadah (ccExtractPlaceName) --
+       panel info jg menampilkan label kualitas akurasi (Sangat Presisi/
+       Presisi Tinggi/Baik/Menyempurnakan Sinyal, TIDAK PERNAH klaim
+       "100%" krn GPS konsumer punya batas fisik ±beberapa meter);
+       4) tombol "Ambil Foto" men-capture frame video ke <canvas>,
+       menempelkan nama tempat (kalau ada, ditonjolkan) + alamat lengkap
+       + koordinat+akurasi+waktu di pojok bawah gambar (gaya khas app
+       "GPS Map Camera"), lalu menampilkannya sbg preview yg bisa
+       disimpan (unduh) atau diambil ulang.
        Logic lengkap ada di script.js dekat komentar "KOORDINAT
        KAMERA". ---------------------------------------------------- -->
   <div class="detail-page-overlay lap-filter-overlay" id="cameraCoordOverlay">
@@ -14598,13 +14661,36 @@ html.dark-mode .bd-row-close{
             <span class="cc-gps-dot" id="ccGpsDot"></span>
             <span id="ccGpsStatus">Mencari sinyal GPS…</span>
           </div>
+          <!-- Tombol ganti kamera depan/belakang -- HANYA tampil saat
+               kamera aktif & belum ada foto yg diambil (disembunyikan
+               lagi begitu masuk mode preview foto, lihat ccCaptureFoto/
+               ccRetakeBtn). Ikonnya "flip camera" khas, ditaruh
+               pojok kanan-atas kartu kamera spy gampang dijangkau ibu
+               jari saat pegang HP satu tangan. -->
+          <button type="button" class="cc-switch-cam-btn" id="ccSwitchCamBtn" hidden aria-label="Ganti kamera depan/belakang">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 17.5A2.5 2.5 0 0 1 17.5 20h-11A2.5 2.5 0 0 1 4 17.5v-8A2.5 2.5 0 0 1 6.5 7h2l1.5-2h4L15.5 7h2A2.5 2.5 0 0 1 20 9.5Z"/><path d="M8 3.5 6 6M16 3.5 18 6"/><path d="M9 13a3 3 0 1 0 6 0 3 3 0 0 0-6 0Z"/><path d="M4.5 11 3 9.5M19.5 11 21 9.5"/></svg>
+          </button>
           <p class="bc-cam-hint" id="ccCameraHint">Tekan tombol di bawah untuk mengaktifkan kamera &amp; GPS, lalu arahkan ke lokasi yang ingin diabadikan.</p>
         </div>
 
+        <!-- Panel bawah (scrollable) -- menampung info GPS/alamat &
+             semua tombol aksi, DIPISAH dari #ccCamFrame supaya kamera
+             di atas bisa jadi flex:1 dan otomatis mengisi SISA tinggi
+             layar yg tersedia (full-frame, menyesuaikan tinggi layar
+             tiap perangkat) tanpa terpotong rasio/aspect-ratio tetap
+             spt sebelumnya. Kalau kontennya kebetulan lebih tinggi drpd
+             ruang yg tersisa (mis. HP dlm mode landscape), panel ini
+             sendiri yg di-scroll (overflow-y:auto), BUKAN seluruh
+             halaman, jadi kamera tetap kelihatan penuh. -->
+        <div class="cc-bottom-sheet" id="ccBottomSheet">
         <div class="cc-info-panel" id="ccInfoPanel" hidden>
+          <div class="cc-info-row cc-info-row--place" id="ccPlaceRow" hidden>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h1m4 0h1m-6 4h1m4 0h1m-6 4h1m4 0h1"/></svg>
+            <span id="ccPlaceName">–</span>
+          </div>
           <div class="cc-info-row cc-info-row--address">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-            <span id="ccAddress">Mencari alamat…</span>
+            <span id="ccAddress">Mencari alamat lengkap…</span>
           </div>
           <div class="cc-info-grid">
             <div class="cc-info-item"><span class="cc-info-label">Lintang (Lat)</span><span class="cc-info-value" id="ccLat">–</span></div>
@@ -14655,6 +14741,7 @@ html.dark-mode .bd-row-close{
         </div>
 
         <p class="bc-error" id="ccError" hidden></p>
+        </div>
       </div>
     </div>
   </div>
