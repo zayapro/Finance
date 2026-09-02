@@ -11479,6 +11479,24 @@ const CC_GPS_OPTIONS = { enableHighAccuracy: true, maximumAge: 0, timeout: 20000
 const CC_GEOCODE_MIN_INTERVAL_MS = 12000; // jangan reverse-geocode lebih sering dari ini...
 const CC_GEOCODE_MIN_DELTA_M = 25;        // ...kecuali user/titik GPS sudah pindah lumayan jauh
 
+// ---- API key provider reverse-geocode GRATIS (opsional) --------------
+// Isi salah satu/kedua field di bawah ini kalau punya API key GRATIS
+// dari LocationIQ dan/atau Geoapify (tidak butuh kartu kredit, cukup
+// daftar pakai email). Urutan coba: LocationIQ -> Geoapify -> Nominatim
+// (Nominatim SELALU jadi jaring pengaman terakhir & tidak butuh key).
+// Kalau kedua field dikosongkan (''), langsung pakai Nominatim seperti
+// biasa -- aplikasi tetap jalan normal tanpa key sama sekali.
+//
+// Cara daftar (gratis, tanpa kartu kredit):
+//  1) LocationIQ  : https://www.locationiq.com/  -> Sign Up -> Dashboard
+//     -> "Access Tokens", copy token-nya, tempel ke CC_LOCATIONIQ_KEY.
+//     Kuota gratis: ±5.000 request/hari.
+//  2) Geoapify    : https://www.geoapify.com/    -> Sign Up -> Projects
+//     -> buat project baru, copy "API Key"-nya, tempel ke
+//     CC_GEOAPIFY_KEY. Kuota gratis: ±3.000 request/hari.
+const CC_LOCATIONIQ_KEY = 'pk.2527661eb115258c0d92f3470cc99d16'; // token LocationIQ (Access Token 1)
+const CC_GEOAPIFY_KEY = '378f0fb006d34bedbe39be035c513026'; // API key Geoapify (project zayadev)
+
 let ccStream = null;
 let ccWatchId = null;
 let ccActive = false;
@@ -11842,32 +11860,95 @@ function ccBuildFullAddress(data) {
   const composed = parts.filter(Boolean).join(', ');
   return composed || data.display_name || '';
 }
+// ---- Fetcher per-provider reverse-geocode ------------------------------
+// Ketiganya mengembalikan objek data dgn BENTUK YG SAMA (ala-Nominatim:
+// address{}, name, namedetails, display_name) supaya bisa langsung
+// dipakai oleh ccBuildFullAddress()/ccExtractPlaceName() yg sudah ada,
+// tanpa perlu tulis ulang logic penyusun alamat utk tiap provider.
+// Return null (bukan throw) kalau provider ini memang tidak dikonfigurasi
+// (API key kosong) -- supaya ccReverseGeocode tahu itu "dilewati", BUKAN
+// "gagal", dan tidak salah nyalahin provider tsb kalau ada error nanti.
+async function ccFetchLocationIQ(lat, lng, signal) {
+  if (!CC_LOCATIONIQ_KEY) return null;
+  // LocationIQ 1:1 kompatibel dgn format respons Nominatim (memang
+  // berbasis data OSM yg sama), jadi datanya bisa dipakai APA ADANYA.
+  const url = `https://us1.locationiq.com/v1/reverse?key=${encodeURIComponent(CC_LOCATIONIQ_KEY)}&lat=${lat}&lon=${lng}&format=json&addressdetails=1&namedetails=1&zoom=18&accept-language=id`;
+  const res = await fetch(url, { signal });
+  if (!res.ok) throw new Error('locationiq-fail');
+  return await res.json();
+}
+async function ccFetchGeoapify(lat, lng, signal) {
+  if (!CC_GEOAPIFY_KEY) return null;
+  const url = `https://api.geoapify.com/v1/geocode/reverse?lat=${lat}&lon=${lng}&format=json&lang=id&apiKey=${encodeURIComponent(CC_GEOAPIFY_KEY)}`;
+  const res = await fetch(url, { signal });
+  if (!res.ok) throw new Error('geoapify-fail');
+  const json = await res.json();
+  const r = json && Array.isArray(json.results) ? json.results[0] : null;
+  if (!r) return null;
+  // Bentuk respons Geoapify beda struktur (flat, bukan nested "address")
+  // -- dipetakan manual ke bentuk ala-Nominatim di sini. PENTING: tiap
+  // field asli Geoapify (district, county, quarter, dst.) HANYA dipetakan
+  // ke SATU key alamat -- kalau dipetakan ke lebih dari satu key sekaligus
+  // (bug versi sebelumnya), nama wilayah yg sama bisa muncul DUA KALI
+  // berturut-turut di alamat hasil susunan ccBuildFullAddress().
+  return {
+    name: r.name || '',
+    address: {
+      road: r.street, house_number: r.housenumber,
+      suburb: r.suburb, city_district: r.quarter,
+      county: r.county, district: r.district,
+      city: r.city, state: r.state, postcode: r.postcode, country: r.country,
+    },
+    display_name: r.formatted,
+  };
+}
+async function ccFetchNominatim(lat, lng, signal) {
+  const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1&namedetails=1&extratags=1`;
+  const res = await fetch(url, { headers: { 'Accept-Language': 'id' }, signal });
+  if (!res.ok) throw new Error('nominatim-fail');
+  return await res.json();
+}
+// Urutan coba provider gratis: LocationIQ -> Geoapify -> Nominatim.
+// Nominatim SENGAJA ditaruh PALING TERAKHIR krn satu2nya yg dijamin
+// selalu bisa dipakai tanpa API key -- jadi walau CC_LOCATIONIQ_KEY /
+// CC_GEOAPIFY_KEY masih kosong (belum daftar) atau limit hariannya
+// habis/key salah, alamat & nama tempat tetap dapat dari Nominatim,
+// aplikasi tidak pernah macet total gara2 satu provider bermasalah.
+const CC_GEOCODE_PROVIDERS = [ccFetchLocationIQ, ccFetchGeoapify, ccFetchNominatim];
 async function ccReverseGeocode(lat, lng) {
   if (ccGeocodeAbort) { try { ccGeocodeAbort.abort(); } catch (e) {} }
   ccGeocodeAbort = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+  const signal = ccGeocodeAbort ? ccGeocodeAbort.signal : undefined;
   const addrEl = document.getElementById('ccAddress');
   const placeRow = document.getElementById('ccPlaceRow');
   const placeEl = document.getElementById('ccPlaceName');
+  let data = null;
+  let lastErr = null;
+  for (const fetchProvider of CC_GEOCODE_PROVIDERS) {
+    try {
+      const result = await fetchProvider(lat, lng, signal);
+      if (result) { data = result; break; } // provider ini berhasil, stop di sini
+      // result null = provider dilewati (key belum diisi), lanjut ke provider berikutnya
+    } catch (e) {
+      if (e && e.name === 'AbortError') return; // digantikan request titik GPS yg lebih baru, abaikan semuanya
+      lastErr = e; // provider ini gagal (limit habis/key salah/jaringan) -> coba provider berikutnya
+    }
+  }
   try {
-    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1&namedetails=1&extratags=1`;
-    const res = await fetch(url, {
-      headers: { 'Accept-Language': 'id' },
-      signal: ccGeocodeAbort ? ccGeocodeAbort.signal : undefined,
-    });
-    if (!res.ok) throw new Error('geocode-fail');
-    const data = await res.json();
-    // Susun alamat LEBIH DULU, baru turunkan nama tempat darinya kalau
-    // tidak ada POI/wilayah administratif yg cocok -- supaya nama
-    // tempat & alamat 100% dari titik GPS yg sama & selalu ganti
-    // bareng tiap kali hasil geocode baru ini masuk (lihat poin 4 di
-    // ccExtractPlaceName).
-    ccLastAddress = ccBuildFullAddress(data) || 'Alamat tidak ditemukan';
+    if (!data) throw (lastErr || new Error('semua-provider-gagal'));
+    // Susun alamat LEBIH DULU (versi MENTAH, sebelum teks placeholder
+    // "Alamat tidak ditemukan" ditambahkan) -- baru turunkan nama tempat
+    // dari versi MENTAH itu, supaya kalau alamat benar2 kosong (titik GPS
+    // tanpa data sama sekali dari provider manapun), nama tempat ikut
+    // kosong juga (baris disembunyikan), BUKAN malah menampilkan teks
+    // placeholder "Alamat tidak ditemukan" seolah itu nama lokasi.
+    const builtAddress = ccBuildFullAddress(data);
+    ccLastAddress = builtAddress || 'Alamat tidak ditemukan';
     if (addrEl) addrEl.textContent = ccLastAddress;
-    ccLastPlaceName = ccExtractPlaceName(data, ccLastAddress);
+    ccLastPlaceName = ccExtractPlaceName(data, builtAddress);
     if (placeEl) placeEl.textContent = ccLastPlaceName || '–';
     if (placeRow) placeRow.hidden = !ccLastPlaceName;
   } catch (e) {
-    if (e && e.name === 'AbortError') return; // digantikan request titik GPS yg lebih baru, abaikan
     ccLastAddress = 'Alamat tidak diketahui (gagal memuat)';
     if (addrEl) addrEl.textContent = ccLastAddress;
     ccLastPlaceName = '';
