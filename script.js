@@ -11242,7 +11242,7 @@ document.getElementById('barcodeModeTabs')?.addEventListener('click', (e) => {
   const btn = e.target.closest('.tab-btn');
   if (!btn) return;
   if (btn.classList.contains('tab-btn--soon')) {
-    showToast('QR Generator belum tersedia, segera hadir ya!', 'err');
+    showToast('Google Lens belum tersedia', 'err');
     return;
   }
   switchBarcodeMode(btn.dataset.bcmode);
