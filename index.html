@@ -3020,6 +3020,38 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   position:absolute;top:12px;right:12px;z-index:2;
   display:flex;align-items:center;gap:8px;
 }
+/* ---- Baris status kamera (flash/HDR/filter warna/resolusi FULL) --
+   gaya "status bar" khas app kamera GPS bawaan HP: ikon/teks tipis
+   putih polos langsung di atas video (TANPA pil/latar blur spt badge
+   GPS/tombol lain di atas), diberi drop-shadow tipis biar tetap kebaca
+   di atas video apa pun warnanya. Ditumpuk PERSIS di bawah baris
+   badge GPS/tombol ganti kamera (top:12px + tinggi 34px + jarak) spy
+   tidak tabrakan, disembunyikan/dimunculkan dgn pola sama persis spt
+   .cc-switch-cam-btn (show begitu kamera aktif via ccStartCamera,
+   hide lagi di ccStopCamera -- lihat script.js). ---- */
+.cc-status-bar{
+  position:absolute;top:54px;left:14px;right:14px;z-index:2;
+  display:flex;align-items:center;justify-content:space-between;
+  pointer-events:none;
+}
+.cc-status-bar[hidden]{display:none;}
+.cc-status-btn{
+  display:flex;align-items:center;justify-content:center;gap:3px;
+  background:none;border:none;padding:4px;color:#fff;
+  filter:drop-shadow(0 1px 3px rgba(0,0,0,0.55));
+  cursor:pointer;pointer-events:auto;transition:opacity .15s ease,transform .15s ease;
+  opacity:0.92;
+}
+.cc-status-btn:active{transform:scale(0.88);}
+.cc-status-btn--text{font-size:11px;font-weight:700;letter-spacing:0.3px;}
+.cc-status-btn.is-active{color:#FFD166;opacity:1;}
+.cc-status-btn.cc-status-btn--unsupported{opacity:0.4;}
+.cc-status-btn .cc-status-full-badge{
+  display:flex;align-items:center;justify-content:center;
+  border:1.4px solid rgba(255,255,255,0.9);border-radius:5px;
+  padding:2px 6px;font-size:10px;font-weight:700;letter-spacing:0.3px;
+}
+.cc-status-btn.is-active .cc-status-full-badge{border-color:#FFD166;}
 /* Panel info koordinat -- versi DASAR (dipakai kalau dipanggil di luar
    #ccCamFrame). Di dalam halaman Koordinat Kamera sendiri, panel ini
    DITUMPUK LANGSUNG di atas video/foto lewat override
@@ -3106,6 +3138,11 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   box-shadow:0 8px 24px rgba(0,0,0,0.35);
 }
 .cc-edit-panel[hidden]{display:none;}
+.cc-edit-hint{
+  margin:0 0 2px;font-size:11px;line-height:1.45;
+  color:rgba(255,255,255,0.68);
+}
+.cc-edit-hint strong{color:#FFD166;font-weight:700;}
 .cc-edit-label{
   font-size:10.5px;font-weight:600;text-transform:uppercase;
   letter-spacing:.04em;color:rgba(255,255,255,0.6);margin-top:4px;
@@ -3184,6 +3221,9 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 #cameraCoordOverlay #ccCamFrame .cc-gps-badge,
 #cameraCoordOverlay #ccCamFrame .cc-top-actions{
   top:calc(52px + env(safe-area-inset-top,0px));
+}
+#cameraCoordOverlay #ccCamFrame .cc-status-bar{
+  top:calc(96px + env(safe-area-inset-top,0px));
 }
 /* Panel info koordinat & panel meta foto, DITUMPUK LANGSUNG di atas
    video/foto (bukan lagi kartu putih di bawah) -- lihat catatan di
@@ -15002,6 +15042,27 @@ html.dark-mode .bd-row-close{
               </svg>
             </button>
           </div>
+
+          <!-- Baris status kamera (flash/HDR/filter warna/resolusi) --
+               gaya status bar app kamera GPS bawaan HP, lihat CSS
+               ".cc-status-bar" & logic "STATUS BAR KAMERA" di
+               script.js. Disembunyikan/dimunculkan dgn pola sama
+               persis spt #ccSwitchCamBtn/#ccSettingsBtn (show di
+               ccStartCamera, hide di ccStopCamera & saat masuk mode
+               preview foto). -->
+          <div class="cc-status-bar" id="ccStatusBar" hidden>
+            <button type="button" class="cc-status-btn" id="ccFlashBtn" aria-label="Lampu kilat kamera">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/><line x1="3" y1="3" x2="21" y2="21" stroke-width="2"/></svg>
+            </button>
+            <button type="button" class="cc-status-btn cc-status-btn--text" id="ccHdrBtn" aria-label="HDR">HDR</button>
+            <button type="button" class="cc-status-btn" id="ccFilterBtn" aria-label="Filter warna: Normal">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><circle cx="12" cy="7.2" r="3.9"/><circle cx="6.8" cy="16" r="3.9"/><circle cx="17.2" cy="16" r="3.9"/></svg>
+            </button>
+            <button type="button" class="cc-status-btn cc-status-btn--text" id="ccFullBtn" aria-label="Resolusi kamera, buka pengaturan">
+              <span class="cc-status-full-badge" id="ccFullLabel">AUTO</span>
+            </button>
+          </div>
+
           <p class="bc-cam-hint" id="ccCameraHint">Tekan tombol di bawah untuk mengaktifkan kamera &amp; GPS, lalu arahkan ke lokasi yang ingin diabadikan.</p>
 
           <!-- Kilat putih sekilas saat tombol jepret ditekan (efek
@@ -15074,6 +15135,7 @@ html.dark-mode .bd-row-close{
                patokan, RT/RW) SEBELUM menekan "Simpan Foto" -- lihat
                ccEditApplyBtn/ccRenderStampedPhoto di script.js. -->
           <div class="cc-edit-panel" id="ccEditPanel" hidden>
+            <p class="cc-edit-hint">Nama tempat &amp; alamat sudah otomatis terisi dari GPS. Kolom di bawah cuma untuk <strong>menambahkan/mengoreksi</strong> kalau kurang tepat (mis. nama toko, patokan, RT/RW) -- bukan diketik ulang dari nol.</p>
             <label class="cc-edit-label" for="ccEditPlaceInput">Nama Tempat (opsional)</label>
             <input type="text" id="ccEditPlaceInput" class="cc-edit-input" placeholder="mis. Toko Berkah Jaya" maxlength="60" autocomplete="off">
             <label class="cc-edit-label" for="ccEditAddrInput">Alamat Lengkap</label>

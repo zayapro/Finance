@@ -11529,6 +11529,124 @@ let ccLastGeocodeLng = null;
 let ccGeocodeAbort = null;
 let ccMaxCapableRes = null;    // {width,height} kemampuan maksimum kamera perangkat -- baru terisi SETELAH kamera pernah aktif, lihat ccDetectMaxCapableRes()
 
+// ---- BARIS STATUS BAR KAMERA (flash/HDR/filter warna/label resolusi) --
+// Baris ikon ala app kamera GPS bawaan HP (#ccStatusBar) di bagian atas
+// video. Flash = lampu kilat FISIK (torch) kamera perangkat lewat
+// MediaStreamTrack.applyConstraints({advanced:[{torch}]}) -- BUKAN
+// cuma ikon dekoratif, betulan menyalakan/mematikan senter kamera kalau
+// perangkat/browser mendukung (kebanyakan Chrome Android; Safari/iOS
+// & sebagian besar kamera DEPAN umumnya TIDAK punya lampu kilat sama
+// sekali -- makanya selalu dicek dulu via getCapabilities().torch
+// sebelum tombol dianggap aktif, lihat ccCheckTorchSupport()). HDR &
+// filter warna diterapkan sbg CSS filter betulan ke <video> (preview
+// live) SEKALIGUS "dibakar" permanen ke hasil jepretan (canvas) --
+// bukan cuma efek visual di preview doang. Tombol "FULL" cuma
+// pintasan/label yg terhubung ke popup Pengaturan Kamera (resolusi)
+// yg SUDAH ADA (#ccSettingsSheetOverlay, sama persis dgn tombol roda-
+// gigi #ccSettingsBtn) -- supaya user bisa lihat sekilas resolusi yg
+// lagi aktif (AUTO/HD/FULL/4K/8K) tanpa buka popup dulu, & bisa
+// langsung tap utk ganti.
+let ccTorchOn = false;
+let ccTorchSupported = false;
+let ccHdrOn = false;
+let ccColorMode = 'normal'; // 'normal' | 'vivid' | 'bw' -- di-cycle lewat tombol filter (3 lingkaran)
+const CC_COLOR_FILTERS = {
+  normal: '',
+  vivid: 'saturate(1.4) contrast(1.1)',
+  bw: 'grayscale(1) contrast(1.08)',
+};
+const CC_COLOR_LABELS = { normal: 'Normal', vivid: 'Vivid', bw: 'Hitam Putih' };
+// Gabungan filter HDR + mode warna yg lagi aktif, dipakai bareng2 utk
+// preview <video> (style.filter) & hasil jepretan (ctx.filter di canvas
+// sebelum drawImage, lihat ccCaptureFoto) -- supaya foto yg TERSIMPAN
+// PERSIS sama dgn yg tampil di layar saat jepret, bukan cuma preview.
+function ccComputeFilterCss() {
+  let f = CC_COLOR_FILTERS[ccColorMode] || '';
+  if (ccHdrOn) f += (f ? ' ' : '') + 'contrast(1.14) saturate(1.18) brightness(1.04)';
+  return f.trim();
+}
+function ccApplyPreviewFilter() {
+  const video = document.getElementById('ccVideo');
+  if (video) video.style.filter = ccComputeFilterCss();
+}
+function ccCheckTorchSupport() {
+  ccTorchSupported = false;
+  try {
+    const track = ccStream && ccStream.getVideoTracks && ccStream.getVideoTracks()[0];
+    if (track && typeof track.getCapabilities === 'function') {
+      const caps = track.getCapabilities();
+      ccTorchSupported = !!(caps && caps.torch);
+    }
+  } catch (e) { /* browser tidak mendukung getCapabilities -- anggap tidak ada lampu kilat */ }
+  const btn = document.getElementById('ccFlashBtn');
+  if (btn) btn.classList.toggle('cc-status-btn--unsupported', !ccTorchSupported);
+}
+function ccRenderFlashBtn() {
+  const btn = document.getElementById('ccFlashBtn');
+  if (!btn) return;
+  btn.classList.toggle('is-active', ccTorchOn);
+  btn.setAttribute('aria-label', ccTorchOn ? 'Matikan lampu kilat' : 'Nyalakan lampu kilat');
+  const svg = btn.querySelector('svg');
+  if (svg) svg.querySelector('line')?.setAttribute('opacity', ccTorchOn ? '0' : '1');
+}
+async function ccToggleTorch() {
+  if (!ccActive || !ccStream) return;
+  if (!ccTorchSupported) { showToast('Lampu kilat tidak didukung kamera ini', 'err'); return; }
+  const track = ccStream.getVideoTracks()[0];
+  if (!track) return;
+  const next = !ccTorchOn;
+  try {
+    await track.applyConstraints({ advanced: [{ torch: next }] });
+    ccTorchOn = next;
+    ccRenderFlashBtn();
+    if (navigator.vibrate) { try { navigator.vibrate(15); } catch (e) {} }
+  } catch (e) {
+    showToast('Gagal mengaktifkan lampu kilat', 'err');
+  }
+}
+function ccRenderColorBtns() {
+  const hdrBtn = document.getElementById('ccHdrBtn');
+  if (hdrBtn) hdrBtn.classList.toggle('is-active', ccHdrOn);
+  const filterBtn = document.getElementById('ccFilterBtn');
+  if (filterBtn) {
+    filterBtn.classList.toggle('is-active', ccColorMode !== 'normal');
+    filterBtn.setAttribute('aria-label', 'Filter warna: ' + (CC_COLOR_LABELS[ccColorMode] || 'Normal'));
+  }
+}
+function ccToggleHdr() {
+  ccHdrOn = !ccHdrOn;
+  ccApplyPreviewFilter();
+  ccRenderColorBtns();
+  if (navigator.vibrate) { try { navigator.vibrate(15); } catch (e) {} }
+}
+function ccCycleColorMode() {
+  const order = ['normal', 'vivid', 'bw'];
+  ccColorMode = order[(order.indexOf(ccColorMode) + 1) % order.length];
+  ccApplyPreviewFilter();
+  ccRenderColorBtns();
+  showToast('Filter warna: ' + (CC_COLOR_LABELS[ccColorMode] || 'Normal'));
+  if (navigator.vibrate) { try { navigator.vibrate(15); } catch (e) {} }
+}
+const CC_FULL_LABEL_MAP = { auto: 'AUTO', hd: 'HD', fullhd: 'FULL', '4k': '4K', '8k': '8K' };
+function ccRenderFullBtn() {
+  const label = document.getElementById('ccFullLabel');
+  if (!label) return;
+  label.textContent = ccCameraSettings.enabled ? (CC_FULL_LABEL_MAP[ccCameraSettings.resolution] || 'AUTO') : 'AUTO';
+}
+function ccResetStatusBarState() {
+  // Lampu kilat SELALU direset off saat kamera mati/ganti kamera --
+  // statusnya terikat ke hardware stream yg sedang aktif, tidak masuk
+  // akal "diingat" nyala lintas sesi/kamera lain. HDR & filter warna
+  // sengaja TIDAK direset (preferensi tampilan foto user selama sesi
+  // halaman ini masih dibuka), cukup diterapkan ulang ke stream baru.
+  ccTorchOn = false;
+  ccTorchSupported = false;
+}
+document.getElementById('ccFlashBtn')?.addEventListener('click', ccToggleTorch);
+document.getElementById('ccHdrBtn')?.addEventListener('click', ccToggleHdr);
+document.getElementById('ccFilterBtn')?.addEventListener('click', ccCycleColorMode);
+document.getElementById('ccFullBtn')?.addEventListener('click', () => ccOpenSettingsSheet());
+
 // ---- PENGATURAN KAMERA (toggle resolusi kustom + pilihan HD/Full
 // HD/4K/8K) -- disimpan per-perangkat (localStorage), dibaca setiap
 // kamera akan diaktifkan/di-switch supaya constraint width/height yg
@@ -11644,6 +11762,7 @@ document.getElementById('ccSettingsDoneBtn')?.addEventListener('click', async ()
     resolution: ccSettingsPendingResolution || 'auto',
   };
   ccSaveCameraSettings(ccCameraSettings);
+  ccRenderFullBtn();
   ccCloseSettingsSheet();
   // Kalau kamera lagi aktif, langsung terapkan resolusi baru saat itu
   // juga (minta stream baru dgn constraint terbaru, gantikan stream
@@ -12143,6 +12262,15 @@ async function ccStartCamera() {
     const settingsBtn = document.getElementById('ccSettingsBtn');
     if (settingsBtn) settingsBtn.hidden = false;
     ccActive = true;
+    // Tampilkan baris status (flash/HDR/filter/resolusi) & terapkan
+    // ulang state-nya ke stream yg baru saja dibuka.
+    const statusBar = document.getElementById('ccStatusBar');
+    if (statusBar) statusBar.hidden = false;
+    ccCheckTorchSupport();
+    ccRenderFlashBtn();
+    ccRenderColorBtns();
+    ccRenderFullBtn();
+    ccApplyPreviewFilter();
     ccSetGpsStatus('Mencari sinyal GPS…', 'searching');
     ccWatchId = navigator.geolocation.watchPosition(ccOnPosition, ccOnPositionError, CC_GPS_OPTIONS);
     const toggleRow = document.getElementById('ccToggleRow');
@@ -12172,6 +12300,10 @@ function ccStopCamera() {
   if (switchBtn) switchBtn.hidden = true;
   const settingsBtn = document.getElementById('ccSettingsBtn');
   if (settingsBtn) settingsBtn.hidden = true;
+  const statusBar = document.getElementById('ccStatusBar');
+  if (statusBar) statusBar.hidden = true;
+  ccResetStatusBarState();
+  ccRenderFlashBtn();
   ccMaxCapableRes = null;
   const hint = document.getElementById('ccCameraHint');
   if (hint) hint.hidden = false;
@@ -12240,6 +12372,14 @@ async function ccSwitchCamera() {
     }
     ccDetectMaxCapableRes();
     ccUpdateDeviceInfo();
+    // Kamera baru = stream fisik baru -> lampu kilat pasti ikut mati
+    // (tidak ada API utk "pindahkan" state torch ke stream lain),
+    // makanya dicek & direset ulang di sini. Filter HDR/warna tetap
+    // dipertahankan & langsung diterapkan lagi ke video yg baru.
+    ccTorchOn = false;
+    ccCheckTorchSupport();
+    ccRenderFlashBtn();
+    ccApplyPreviewFilter();
     showToast(newFacing === 'user' ? 'Kamera depan aktif' : 'Kamera belakang aktif');
     if (switchBtn) switchBtn.classList.toggle('is-flipping', newFacing === 'user');
     if (navigator.vibrate) { try { navigator.vibrate(30); } catch (e) {} }
@@ -12256,6 +12396,10 @@ async function ccSwitchCamera() {
         await video.play().catch(() => {});
       }
       ccUpdateDeviceInfo();
+      ccTorchOn = false;
+      ccCheckTorchSupport();
+      ccRenderFlashBtn();
+      ccApplyPreviewFilter();
       showToast('Kamera lainnya tidak tersedia di perangkat ini', 'err');
     } catch (e2) {
       // Kamera lama pun gagal dipulihkan (jarang) -- jangan tinggalkan
@@ -12347,7 +12491,12 @@ function ccRenderStampedPhoto(addrText, placeText) {
   const lineGapPlace = fsPlace * 1.3;
   const lineGapAddr = fsAddr * 1.3;
   const lineGapSmall = fsSmall * 1.5;
-  const blockH = pad + placeLines.length * lineGapPlace + addrLines.length * lineGapAddr + lineGapSmall * 3 + pad * 0.6;
+  // Tinggi blok stempel: nama tempat + titik koordinat (DIKELOMPOKKAN
+  // bareng, langsung di bawah nama tempat -- gaya khas GPS Map Camera
+  // yg selalu menyandingkan nama lokasi dgn titik koordinatnya) lalu
+  // alamat lengkap sbg blok TERPISAH di bawahnya, baru akurasi/device/waktu.
+  const blockH = pad + placeLines.length * lineGapPlace + (placeLines.length ? lineGapSmall : 0)
+    + addrLines.length * lineGapAddr + lineGapSmall * 3 + pad * 0.6;
 
   ctx.fillStyle = 'rgba(0,0,0,0.52)';
   ctx.fillRect(0, h - blockH, w, blockH);
@@ -12355,18 +12504,30 @@ function ccRenderStampedPhoto(addrText, placeText) {
   let y = h - blockH + pad;
   ctx.textBaseline = 'top';
   // Nama tempat (kalau terdeteksi) ditampilkan paling menonjol di atas,
-  // gaya khas app GPS Map Camera yg menyorot nama lokasi dulu baru alamat.
+  // gaya khas app GPS Map Camera yg menyorot nama lokasi dulu baru alamat
+  // -- titik koordinat (lat/lng) DISANDINGKAN langsung di bawahnya
+  // (bukan digabung dgn akurasi/device di bagian bawah stempel) supaya
+  // nama lokasi & koordinatnya selalu terbaca sepasang.
   if (placeLines.length) {
     ctx.font = `700 ${fsPlace}px Poppins, sans-serif`;
     ctx.fillStyle = '#FFD166';
     for (const line of placeLines) { ctx.fillText(line, pad, y); y += lineGapPlace; }
+    ctx.font = `600 ${fsSmall}px Poppins, sans-serif`;
+    ctx.fillStyle = 'rgba(255,209,102,0.92)';
+    ctx.fillText(`${lat}, ${lng}`, pad, y); y += lineGapSmall;
   }
+  // Alamat lengkap -- blok TERPISAH (putih) di bawah nama tempat/koordinat,
+  // selalu ditampilkan apa adanya (hasil deteksi GPS, atau versi yg sudah
+  // dikoreksi/ditambahkan user lewat panel edit pensil).
   ctx.fillStyle = '#ffffff';
   ctx.font = `600 ${fsAddr}px Poppins, sans-serif`;
   for (const line of addrLines) { ctx.fillText(line, pad, y); y += lineGapAddr; }
   ctx.font = `500 ${fsSmall}px Poppins, sans-serif`;
   ctx.fillStyle = 'rgba(255,255,255,0.92)';
-  ctx.fillText(coordLine, pad, y); y += lineGapSmall;
+  // Kalau nama tempat TIDAK terdeteksi, titik koordinat tetap wajib
+  // tampil -- digabung di sini bareng akurasi supaya info lat/lng tidak
+  // pernah hilang dari stempel biarpun tanpa nama lokasi.
+  ctx.fillText(placeLines.length ? `Akurasi ${acc}` : coordLine, pad, y); y += lineGapSmall;
   ctx.fillText(deviceLine, pad, y); y += lineGapSmall;
   ctx.fillText(when, pad, y);
 
@@ -12397,7 +12558,15 @@ function ccCaptureFoto() {
   // sudah berubah/bergerak lagi.
   if (!ccRawFrameCanvas) ccRawFrameCanvas = document.createElement('canvas');
   ccRawFrameCanvas.width = w; ccRawFrameCanvas.height = h;
-  ccRawFrameCanvas.getContext('2d').drawImage(video, 0, 0, w, h);
+  const ccRawCtx = ccRawFrameCanvas.getContext('2d');
+  // Terapkan filter HDR/warna yg lagi aktif (tombol HDR & filter 3
+  // lingkaran di status bar) LANGSUNG ke canvas sebelum digambar --
+  // supaya efeknya "dibakar" permanen ke piksel foto, PERSIS spt yg
+  // terlihat di preview saat tombol jepret ditekan, bukan cuma efek
+  // CSS di layar yg hilang begitu foto disimpan.
+  ccRawCtx.filter = ccComputeFilterCss();
+  ccRawCtx.drawImage(video, 0, 0, w, h);
+  ccRawCtx.filter = 'none';
   // Bekukan bacaan GPS/waktu persis saat jepret -- lihat catatan di
   // deklarasi ccCapturedFix di atas.
   ccCapturedFix = ccAvgFix || ccLastFix;
@@ -12436,6 +12605,8 @@ function ccCaptureFoto() {
   if (switchBtnAfterCapture) switchBtnAfterCapture.hidden = true;
   const settingsBtnAfterCapture = document.getElementById('ccSettingsBtn');
   if (settingsBtnAfterCapture) settingsBtnAfterCapture.hidden = true;
+  const statusBarAfterCapture = document.getElementById('ccStatusBar');
+  if (statusBarAfterCapture) statusBarAfterCapture.hidden = true;
   const actionsRow = document.getElementById('ccActionsRow');
   if (actionsRow) actionsRow.hidden = true;
   const savedRow = document.getElementById('ccSavedRow');
@@ -12462,6 +12633,8 @@ document.getElementById('ccRetakeBtn')?.addEventListener('click', () => {
   if (switchBtn) switchBtn.hidden = false;
   const settingsBtn = document.getElementById('ccSettingsBtn');
   if (settingsBtn) settingsBtn.hidden = false;
+  const statusBar = document.getElementById('ccStatusBar');
+  if (statusBar) statusBar.hidden = false;
   const actionsRow = document.getElementById('ccActionsRow');
   if (actionsRow) actionsRow.hidden = false;
   const savedRow = document.getElementById('ccSavedRow');
