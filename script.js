@@ -17487,7 +17487,7 @@ if (aiSettingsClearBtn) aiSettingsClearBtn.addEventListener('click', () => {
   persistAiSettings(aiSettings);
   renderAiKeyBanner();
   renderAtkKeyBanner();
-  showToast('API key AI dihapus.');
+  showToast('API key ZayaDev dihapus.');
 });
 
 // Tes cepat: kirim 1 permintaan minimal ke Gemini pakai key & model
@@ -17524,7 +17524,7 @@ if (aiSettingsTestBtn) aiSettingsTestBtn.addEventListener('click', async () => {
     }
   } catch (e) {
     aiTestResult.style.color = '#9F1239';
-    aiTestResult.textContent = 'Gagal menghubungi AI: koneksi diblokir (cek internet/ad-blocker/VPN).';
+    aiTestResult.textContent = 'Gagal menghubungi ZayaDev: koneksi diblokir (cek internet/ad-blocker/VPN).';
   } finally {
     aiSettingsTestBtn.disabled = false;
   }
@@ -17771,7 +17771,7 @@ function removeAiTypingIndicator() {
 }
 
 async function callGeminiApi(userText, mode) {
-  const apiKey = (aiSettings.apiKey || AI_DEFAULT_API_KEY || '').trim();
+  const apiKey = (AI_DEFAULT_API_KEY || aiSettings.apiKey || '').trim();
   const model = (aiSettings.model || '').trim() || AI_DEFAULT_MODEL;
   if (!apiKey) throw new Error('NO_API_KEY');
 
@@ -17856,16 +17856,16 @@ async function sendAiMessage() {
   } catch (err) {
     console.error('Gemini API error:', err);
     removeAiTypingIndicator();
-    let msg = 'Gagal menghubungi AI.';
-    if (err.message === 'NO_API_KEY') msg = 'API key AI belum diatur.';
-    else if (err.message === 'FAILED_TO_FETCH') msg = 'Gagal menghubungi AI: koneksi diblokir (cek internet, ad-blocker/VPN, atau buka lewat http(s):// bukan file://).';
-    else if (err.status === 400) msg = `Permintaan ditolak AI (400): ${err.message || 'periksa nama model di Pengaturan.'}`;
-    else if (err.status === 401) msg = `API key AI tidak valid (401): ${err.message || 'periksa kembali key di Pengaturan.'}`;
-    else if (err.status === 403) msg = `API key AI ditolak (403): ${err.message || 'periksa kembali key di Pengaturan, atau pastikan API AI sudah diaktifkan untuk key ini.'}`;
+    let msg = 'Gagal menghubungi ZayaDev.';
+    if (err.message === 'NO_API_KEY') msg = 'API key ZayaDev belum diatur.';
+    else if (err.message === 'FAILED_TO_FETCH') msg = 'Gagal menghubungi ZayaDev: koneksi diblokir (cek internet, ad-blocker/VPN, atau buka lewat http(s):// bukan file://).';
+    else if (err.status === 400) msg = `Permintaan ditolak ZayaDev (400): ${err.message || 'periksa nama model di Pengaturan.'}`;
+    else if (err.status === 401) msg = `API key ZayaDev tidak valid (401): ${err.message || 'periksa kembali key di Pengaturan.'}`;
+    else if (err.status === 403) msg = `API key ZayaDev ditolak (403): ${err.message || 'periksa kembali key di Pengaturan, atau pastikan API ZayaDev sudah diaktifkan untuk key ini.'}`;
     else if (err.status === 404) msg = `Model "${(aiSettings.model || AI_DEFAULT_MODEL)}" tidak ditemukan (404) untuk API key ini. Coba ganti model di Pengaturan, mis. gemini-3.7-flash, gemini-3.6-flash, atau gemini-3.5-flash-lite.`;
-    else if (err.status === 429) msg = 'Kuota/limit AI tercapai. Coba lagi nanti.';
-    else if (err.message === 'EMPTY_RESPONSE') msg = 'AI tidak memberi jawaban (mungkin diblokir filter keamanan). Coba ubah pertanyaan.';
-    else if (err.message) msg = `Gagal menghubungi AI: ${err.message}`;
+    else if (err.status === 429) msg = 'Kuota/limit ZayaDev tercapai. Coba lagi nanti.';
+    else if (err.message === 'EMPTY_RESPONSE') msg = 'ZayaDev tidak memberi jawaban (mungkin diblokir filter keamanan). Coba ubah pertanyaan.';
+    else if (err.message) msg = `Gagal menghubungi ZayaDev: ${err.message}`;
     aiChatHistory[mode].push({ role: 'model', text: msg, ts: Date.now(), isError: true });
     persistAiChatHistory();
     renderAiMessages();
@@ -17968,7 +17968,7 @@ function setAtkCreativeMode(mode) {
   });
   atkChatInput.placeholder = mode === 'image' ? 'Jelaskan gambar yang mau dibuat...' : 'Tulis pertanyaan...';
   atkFootHint.textContent = mode === 'image'
-    ? 'Mode Buat Gambar -- AI akan membuat gambar dari deskripsi teksmu (kuota gratis terbatas).'
+    ? 'Mode Buat Gambar -- ZayaDev akan membuat gambar dari deskripsi teksmu (kuota gratis terbatas).'
     : 'Mode Chat Umum -- bisa lampirkan gambar/video (📎) untuk dianalisis. Membuat video/musik belum didukung di sini.';
 }
 if (atkModeToggle) atkModeToggle.addEventListener('click', (e) => {
@@ -18131,7 +18131,7 @@ function removeAtkTypingIndicator() {
 }
 
 async function callGeminiAtk(userText, mode, attachment) {
-  const apiKey = (aiSettings.apiKey || AI_DEFAULT_API_KEY || '').trim();
+  const apiKey = (AI_DEFAULT_API_KEY || aiSettings.apiKey || '').trim();
   const model = (aiSettings.model || '').trim() || AI_DEFAULT_MODEL;
   if (!apiKey) throw new Error('NO_API_KEY');
 
@@ -18175,7 +18175,7 @@ async function callGeminiAtk(userText, mode, attachment) {
 // image-generation Gemini membalas dalam bentuk part inlineData
 // (base64 PNG/JPEG), bukan teks.
 async function callGeminiImageGen(prompt) {
-  const apiKey = (aiSettings.apiKey || AI_DEFAULT_API_KEY || '').trim();
+  const apiKey = (AI_DEFAULT_API_KEY || aiSettings.apiKey || '').trim();
   const model = (aiSettings.imageModel || '').trim() || AI_DEFAULT_IMAGE_MODEL;
   if (!apiKey) throw new Error('NO_API_KEY');
 
@@ -18253,19 +18253,19 @@ async function sendAtkMessage() {
   } catch (err) {
     console.error('Tool AI error:', err);
     removeAtkTypingIndicator();
-    let msg = 'Gagal menghubungi AI.';
-    if (err.message === 'NO_API_KEY') msg = 'API key AI belum diatur.';
-    else if (err.message === 'FAILED_TO_FETCH') msg = 'Gagal menghubungi AI: koneksi diblokir (cek internet/ad-blocker/VPN).';
-    else if (err.status === 400) msg = `Permintaan ditolak AI (400): ${err.message || 'periksa nama model di Pengaturan.'}`;
-    else if (err.status === 401) msg = `API key AI tidak valid (401): ${err.message || 'periksa kembali key di Pengaturan.'}`;
-    else if (err.status === 403) msg = `API key AI ditolak (403): ${err.message || 'pastikan API AI aktif untuk key ini.'}`;
+    let msg = 'Gagal menghubungi ZayaDev.';
+    if (err.message === 'NO_API_KEY') msg = 'API key ZayaDev belum diatur.';
+    else if (err.message === 'FAILED_TO_FETCH') msg = 'Gagal menghubungi ZayaDev: koneksi diblokir (cek internet/ad-blocker/VPN).';
+    else if (err.status === 400) msg = `Permintaan ditolak ZayaDev (400): ${err.message || 'periksa nama model di Pengaturan.'}`;
+    else if (err.status === 401) msg = `API key ZayaDev tidak valid (401): ${err.message || 'periksa kembali key di Pengaturan.'}`;
+    else if (err.status === 403) msg = `API key ZayaDev ditolak (403): ${err.message || 'pastikan API ZayaDev aktif untuk key ini.'}`;
     else if (err.status === 404) msg = wantsImageGen
       ? `Model gambar "${(aiSettings.imageModel || AI_DEFAULT_IMAGE_MODEL)}" tidak ditemukan (404). Coba ganti "Model Gambar" di Pengaturan.`
       : `Model "${(aiSettings.model || AI_DEFAULT_MODEL)}" tidak ditemukan (404). Coba ganti model di Pengaturan.`;
-    else if (err.status === 429) msg = 'Kuota/limit AI tercapai. Coba lagi nanti.';
-    else if (err.status === 'NO_IMAGE') msg = `AI tidak mengembalikan gambar: ${err.message}`;
-    else if (err.message === 'EMPTY_RESPONSE') msg = 'AI tidak memberi jawaban (mungkin diblokir filter keamanan). Coba ubah pertanyaan.';
-    else if (err.message) msg = `Gagal menghubungi AI: ${err.message}`;
+    else if (err.status === 429) msg = 'Kuota/limit ZayaDev tercapai. Coba lagi nanti.';
+    else if (err.status === 'NO_IMAGE') msg = `ZayaDev tidak mengembalikan gambar: ${err.message}`;
+    else if (err.message === 'EMPTY_RESPONSE') msg = 'ZayaDev tidak memberi jawaban (mungkin diblokir filter keamanan). Coba ubah pertanyaan.';
+    else if (err.message) msg = `Gagal menghubungi ZayaDev: ${err.message}`;
     atkChatHistory[mode].push({ role: 'model', text: msg, ts: Date.now(), isError: true });
     persistAtkChatHistory();
     renderAtkMessages();
