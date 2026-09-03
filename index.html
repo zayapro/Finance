@@ -11663,6 +11663,12 @@ select#categoryFilter[hidden]{display:none;}
    Account (z-index 700) masih terbuka -- tanpa override ini,
    popupnya kebuka tapi ketutup total di belakang halaman itu. */
 #confirmOverlay{z-index:750;}
+/* FIX SAMA PERSIS -- modal "Pengaturan Tanya AI" (#aiSettingsModalOverlay)
+   sekarang juga bisa dibuka lewat tombol gear di halaman "Tool AI"
+   (#atkPanel, REDESIGN jadi halaman penuh class .lap-filter-overlay,
+   z-index 700 -- lihat catatan lengkap di markupnya). Tanpa override
+   ini modalnya kebuka tapi ketutup total di belakang halaman Tool AI. */
+#aiSettingsModalOverlay{z-index:750;}
 
 /* ============ TOAST ============
    REDESIGN: sebelumnya kartu solid gelap (--forest-deep/--wine) dengan
@@ -12644,6 +12650,80 @@ body.is-scrolling *{
 .ai-key-banner svg{color:#B45309;flex-shrink:0;}
 .ai-key-banner span{font-size:11.5px;font-weight:600;color:#92400E;flex:1;}
 .ai-key-banner button{flex-shrink:0;background:#B45309;color:#fff;border:none;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700;}
+
+/* ============================================================
+   REDESIGN TOOL AI — dari panel mengambang (.ai-chat-panel) jadi
+   HALAMAN PENUH bergaya sama dgn sub-halaman lain (.lap-filter-overlay
+   > .lap-filter-page > banner + kartu putih melengkung 28px), niru
+   pola PERSIS #widgetOverlay/#userAccountOverlay/#tentangOverlay dkk
+   (lihat catatan panjang di markup #atkPanel) supaya "senasib" dgn
+   halaman lain: sticky & kartu putih radius. Isi di dalam kartu putih
+   dirombak total (tabs/bubble/composer) memakai gradasi warna khas
+   Tool AI (forest-glow -> violet -> wine) supaya tetap kelihatan
+   sebagai fitur AI yang khas, bukan cuma niru oren polos. ---- */
+#atkPanel.atk-page-overlay{
+  display:flex;flex-direction:column;
+  /* overflow DIPAKSA hidden (menang lewat spesifisitas ID di atas
+     ".detail-page-overlay{overflow-y:auto}") -- beda dgn sub-halaman
+     lain yg SELURUH isinya scroll bareng header, di sini cuma daftar
+     pesan (.atk-chat-body) yg scroll sendiri, spt app chat pada
+     umumnya, supaya header & composer selalu "nempel"/sticky. */
+  overflow:hidden;
+}
+#atkPanel .atk-filter-page{flex:1;min-height:0;}
+#atkPanel .atk-sticky-head{flex:0 0 auto;position:relative;z-index:1;}
+#atkPanel .atk-sticky-head .lap-filter-head{position:relative;z-index:1;}
+#atkPanel .lap-filter-card.atk-cap{flex:0 0 auto;padding-top:28px;padding-bottom:0;box-shadow:none;}
+
+#atkPanel .atk-head{
+  background:linear-gradient(135deg, var(--forest-glow) 0%, var(--violet) 62%, var(--wine) 100%);
+  gap:8px;
+}
+#atkPanel .atk-head-title{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:9px;}
+#atkPanel .atk-head-ic{
+  width:30px;height:30px;border-radius:10px;flex-shrink:0;color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(255,255,255,0.16);border:1px solid rgba(255,255,255,0.26);
+}
+#atkPanel .atk-head-title-text{display:flex;flex-direction:column;align-items:flex-start;min-width:0;}
+#atkPanel .atk-head h2{margin:0;color:#FFF8F1;font-family:'Poppins',sans-serif;font-size:clamp(15px,3.6vw,18px);font-weight:500;letter-spacing:-0.005em;line-height:1.22;text-align:left;}
+#atkPanel .atk-head-sub{display:block;font-size:10.5px;font-weight:600;color:rgba(255,248,241,0.8);margin-top:1px;}
+
+#atkPanel .atk-white-card{
+  flex:1;min-height:0;position:relative;z-index:2;
+  display:flex;flex-direction:column;overflow:hidden;
+  margin:-24px 0 0;border-radius:28px 28px 0 0;padding:0;
+  background:var(--card);
+  box-shadow:0 -10px 24px -20px rgba(15,23,42,.32);
+  transform:translateZ(0);-webkit-transform:translateZ(0);
+  backface-visibility:hidden;-webkit-backface-visibility:hidden;isolation:isolate;
+}
+#atkPanel .atk-tabs{flex-shrink:0;}
+#atkPanel .atk-chat-body{flex:1;min-height:0;padding:16px;}
+#atkPanel .atk-composer{
+  flex:0 0 auto;padding:10px 14px calc(12px + env(safe-area-inset-bottom,0px));
+}
+
+/* ---- Composer & bubble: sedikit dipercantik supaya senada dgn
+   gradasi khas Tool AI, bukan sekadar daur ulang gaya panel lama. ---- */
+#atkPanel .atk-inputbar{
+  border-radius:18px;box-shadow:0 2px 10px -4px rgba(15,23,42,.12);
+  transition:box-shadow .15s ease, border-color .15s ease;
+}
+#atkPanel .atk-inputbar:focus-within{border-color:var(--violet);box-shadow:0 0 0 3px rgba(124,58,237,.14);}
+#atkPanel .ai-chat-send{background:linear-gradient(135deg, var(--forest-glow), var(--violet));}
+#atkPanel .ai-chat-send:hover{filter:brightness(1.08);}
+#atkPanel .ai-msg-row.user .ai-msg-bubble{
+  background:linear-gradient(135deg, var(--forest-glow), var(--violet));
+  box-shadow:0 4px 14px -7px rgba(124,58,237,.55);
+}
+#atkPanel .ai-msg-row.bot .ai-msg-content{
+  background:var(--paper);border:1px solid var(--line);
+  border-radius:16px;border-top-left-radius:4px;padding:12px 14px;
+}
+#atkPanel .ai-msg-ic{box-shadow:0 3px 9px -3px rgba(124,58,237,.55);}
+#atkPanel .ai-chat-empty-ic{background:linear-gradient(135deg, rgba(37,99,235,.16), rgba(124,58,237,.16));}
+#atkPanel .atk-mode-btn.active{background:linear-gradient(135deg, var(--forest-glow), var(--violet));border-color:transparent;}
 
 .ai-settings-modal .form-row{margin-bottom:14px;}
 .ai-settings-modal label{display:block;font-size:12.5px;font-weight:700;color:var(--ink-soft);margin-bottom:6px;}
@@ -19469,77 +19549,101 @@ html.dark-mode .bd-row-close{
   </div>
 </div>
 
-<!-- ===== TOOL AI (asisten aplikasi + chat kreatif, terpisah dari Tanya AI) ===== -->
+<!-- ===== TOOL AI (asisten aplikasi + chat kreatif, terpisah dari Tanya AI) =====
+     REDESIGN (permintaan user): Tool AI dulunya panel mengambang kecil
+     (.ai-chat-panel, muncul di pojok kanan-bawah spt widget chat
+     website). Sekarang diseragamkan jadi HALAMAN PENUH -- kerangka
+     markup SAMA PERSIS dgn sub-halaman lain (.detail-page-overlay
+     .lap-filter-overlay > .lap-filter-page > wrapper sticky
+     [.lap-filter-head + cap kosong] + .lap-filter-card), meluncur dari
+     kanan & menutupi nav bawah spt #widgetOverlay/#userAccountOverlay,
+     supaya header (banner) & kartu putih melengkungnya "sticky"/
+     konsisten dgn halaman-halaman lain di app ini. Bedanya CUMA di
+     bagian isi kartu putihnya: dibuatkan kerangka flex tersendiri
+     (.atk-white-card) supaya kepala tab & composer chat di bagian
+     bawah tetap "menempel" (tidak ikut discroll), cuma daftar pesannya
+     saja yang scroll -- pola yang wajar utk halaman chat, beda dgn
+     halaman daftar/menu biasa yg seluruh isinya scroll bareng header.
+     atkOverlay (dim backdrop) sengaja DIBIARKAN ada tapi tidak lagi
+     dipakai scr visual (halaman penuh ini sudah 100% menutupi layar
+     sendiri) -- dipertahankan supaya openModal()/closeModal() di
+     script.js (lockBodyScroll dkk) tidak perlu diubah sama sekali. ---- -->
 <div class="ai-chat-overlay" id="atkOverlay"></div>
-<div class="ai-chat-panel" id="atkPanel">
-  <div class="ai-chat-head">
-    <div class="ai-chat-head-title">
-      <span class="ai-chat-head-ic">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/></svg>
-      </span>
-      <div>
-        <h3>Tool AI</h3>
-        <p class="ai-chat-head-sub" id="atkHeadSub">Ditenagai Gemini</p>
+<div class="detail-page-overlay lap-filter-overlay atk-page-overlay" id="atkPanel">
+  <div class="lap-filter-page atk-filter-page">
+    <div class="atk-sticky-head" id="atkStickyHead">
+      <div class="lap-filter-head atk-head">
+        <button class="lap-filter-back-btn" id="atkCloseBtn" type="button" title="Tutup" aria-label="Tutup Tool AI">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <div class="atk-head-title">
+          <span class="atk-head-ic">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/></svg>
+          </span>
+          <span class="atk-head-title-text">
+            <h2>Tool AI</h2>
+            <span class="atk-head-sub" id="atkHeadSub">Ditenagai Gemini</span>
+          </span>
+        </div>
+        <button class="lap-filter-back-btn" id="atkSettingsBtn" type="button" title="Pengaturan API Gemini" aria-label="Pengaturan API Gemini">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </button>
+      </div>
+      <div class="lap-filter-card atk-cap" aria-hidden="true"></div>
+    </div>
+
+    <div class="lap-filter-card atk-white-card">
+      <div class="ai-chat-tabs atk-tabs" id="atkTabs">
+        <button type="button" class="ai-chat-tab-btn active" data-atktab="bantuan">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 2-3 4"/><path d="M12 17h.01"/></svg>
+          Bantuan Aplikasi
+        </button>
+        <button type="button" class="ai-chat-tab-btn" data-atktab="kreatif">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/></svg>
+          Chat Umum
+        </button>
+      </div>
+
+      <div class="atk-mode-toggle" id="atkModeToggle" style="display:none;">
+        <button type="button" class="atk-mode-btn active" data-atkmode="chat">Chat / Analisis File</button>
+        <button type="button" class="atk-mode-btn" data-atkmode="image">Buat Gambar</button>
+      </div>
+
+      <div class="ai-key-banner" id="atkKeyBanner" style="display:none;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+        <span>API Key Gemini belum diatur.</span>
+        <button type="button" id="atkKeyBannerBtn">Atur Sekarang</button>
+      </div>
+
+      <div class="ai-chat-body atk-chat-body" id="atkChatBody"></div>
+
+      <div class="ai-chat-foot atk-composer">
+        <div class="atk-attach-preview" id="atkAttachPreviewWrap" style="display:none;">
+          <img id="atkAttachPreviewImg" alt="" style="display:none;">
+          <span class="atk-attach-file-chip" id="atkAttachFileChip" style="display:none;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+            <span id="atkAttachFileName"></span>
+          </span>
+          <button type="button" id="atkAttachRemoveBtn" aria-label="Hapus lampiran">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+        <div class="ai-chat-inputbar atk-inputbar">
+          <button type="button" class="atk-attach-btn" id="atkAttachBtn" title="Lampirkan gambar/video" aria-label="Lampirkan gambar/video">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+          </button>
+          <input type="file" id="atkFileInput" accept="image/*,video/*" style="display:none;">
+          <textarea id="atkChatInput" rows="1" placeholder="Tulis pertanyaan..."></textarea>
+          <button type="button" class="ai-chat-send" id="atkSendBtn" aria-label="Kirim">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+          </button>
+        </div>
+        <p class="ai-chat-foot-hint" id="atkFootHint">Mode Bantuan Aplikasi &mdash; tanya cara pakai fitur &amp; data akunmu sendiri di ZAYAIN.</p>
       </div>
     </div>
-    <div class="ai-chat-head-actions">
-      <button type="button" id="atkSettingsBtn" title="Pengaturan API Gemini" aria-label="Pengaturan API Gemini">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-      </button>
-      <button type="button" id="atkCloseBtn" title="Tutup" aria-label="Tutup">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6 6 18M6 6l12 12"/></svg>
-      </button>
-    </div>
-  </div>
-
-  <div class="ai-chat-tabs" id="atkTabs">
-    <button type="button" class="ai-chat-tab-btn active" data-atktab="bantuan">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 2-3 4"/><path d="M12 17h.01"/></svg>
-      Bantuan Aplikasi
-    </button>
-    <button type="button" class="ai-chat-tab-btn" data-atktab="kreatif">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/></svg>
-      Chat Umum
-    </button>
-  </div>
-
-  <div class="atk-mode-toggle" id="atkModeToggle" style="display:none;">
-    <button type="button" class="atk-mode-btn active" data-atkmode="chat">Chat / Analisis File</button>
-    <button type="button" class="atk-mode-btn" data-atkmode="image">Buat Gambar</button>
-  </div>
-
-  <div class="ai-key-banner" id="atkKeyBanner" style="display:none;">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
-    <span>API Key Gemini belum diatur.</span>
-    <button type="button" id="atkKeyBannerBtn">Atur Sekarang</button>
-  </div>
-
-  <div class="ai-chat-body" id="atkChatBody"></div>
-
-  <div class="ai-chat-foot">
-    <div class="atk-attach-preview" id="atkAttachPreviewWrap" style="display:none;">
-      <img id="atkAttachPreviewImg" alt="" style="display:none;">
-      <span class="atk-attach-file-chip" id="atkAttachFileChip" style="display:none;">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
-        <span id="atkAttachFileName"></span>
-      </span>
-      <button type="button" id="atkAttachRemoveBtn" aria-label="Hapus lampiran">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M18 6 6 18M6 6l12 12"/></svg>
-      </button>
-    </div>
-    <div class="ai-chat-inputbar">
-      <button type="button" class="atk-attach-btn" id="atkAttachBtn" title="Lampirkan gambar/video" aria-label="Lampirkan gambar/video">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
-      </button>
-      <input type="file" id="atkFileInput" accept="image/*,video/*" style="display:none;">
-      <textarea id="atkChatInput" rows="1" placeholder="Tulis pertanyaan..."></textarea>
-      <button type="button" class="ai-chat-send" id="atkSendBtn" aria-label="Kirim">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
-      </button>
-    </div>
-    <p class="ai-chat-foot-hint" id="atkFootHint">Mode Bantuan Aplikasi &mdash; tanya cara pakai fitur &amp; data akunmu sendiri di ZAYAIN.</p>
   </div>
 </div>
+<!-- ===== /TOOL AI ===== -->
 
 <button class="back-to-top" id="backToTopBtn" type="button" title="Kembali ke atas" aria-label="Kembali ke atas">
   <svg class="btt-ring" width="52" height="52" viewBox="0 0 52 52">
