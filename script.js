@@ -11107,6 +11107,8 @@ function videoDlDetectPlatform(url) {
   if (/instagram\.com$/.test(host)) return 'instagram';
   if (/facebook\.com$|fb\.watch$/.test(host)) return 'facebook';
   if (/^(twitter\.com|x\.com)$/.test(host)) return 'twitter';
+  if (/pinterest\.[a-z.]+$/.test(host)) return 'pinterest';
+  if (/rutube\.ru$/.test(host)) return 'rutube';
   if (/threads\.net$/.test(host)) return 'threads-unsupported';
   if (/snackvideo\.com$/.test(host)) return 'snack-unsupported';
   return 'unknown';
@@ -11429,14 +11431,34 @@ function videoDlAlbumHtml(items) {
     </div>`).join('')}</div>`;
 }
 
+// Label platform manusiawi -- dipakai videoDlRenderFetchResult sbg
+// fallback judul (lihat komentar di sana) kalau FastSaverAPI tidak
+// balikin `caption`/`title` sama sekali utk video ini (SERING terjadi
+// khusus Facebook, terutama Reels tanpa keterangan -- API-nya memang
+// tidak selalu punya judul utk dikirim, bukan bug di sisi ZAYAIN).
+const VIDEODL_PLATFORM_LABEL = {
+  facebook: 'Facebook', instagram: 'Instagram', tiktok: 'TikTok', twitter: 'X/Twitter',
+  pinterest: 'Pinterest', rutube: 'RuTube',
+};
+
 // ---- Hasil platform NON-YouTube (/v1/fetch) -- API-nya cuma balas SATU
 // kualitas per link (lihat catatan di komentar CSS .videodl-res-grid),
 // jadi grid-nya cuma berisi 1 kartu "siap" (+ 1 lagi kartu Audio kalau
 // ada `music_url`, khusus TikTok) -- tidak ada state pending krn link-nya
 // sudah didapat SEKALIAN dari 1x panggilan /v1/fetch di atas, tanpa
 // tambahan kredit/API call lagi. ----
-function videoDlRenderFetchResult(data) {
-  const title = data.caption || data.title || 'Video';
+function videoDlRenderFetchResult(data, platform) {
+  // SEBELUM ini fallback-nya cuma teks generik "Video" polos kalau
+  // `caption`/`title` kosong (SERING terjadi utk Facebook, krn banyak
+  // video/Reels FB memang tidak punya keterangan teks utk dikirim balik
+  // API-nya) -- sekarang minimal disebutkan platform + waktu diambil,
+  // spy user tetap bisa bedain hasil satu dgn lainnya kalau berkali-kali
+  // coba link berbeda platform yg sama2 tanpa judul.
+  const platformLabel = VIDEODL_PLATFORM_LABEL[platform];
+  const fallbackTitle = platformLabel
+    ? `Video ${platformLabel} -- ${new Date().toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}`
+    : `Video -- ${new Date().toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}`;
+  const title = data.caption || data.title || fallbackTitle;
   if (data.type === 'album' && Array.isArray(data.items)) {
     videoDlRenderCard({ thumbnailUrl: data.thumbnail_url, title, duration: data.duration, albumHtml: videoDlAlbumHtml(data.items) });
     return;
@@ -11721,7 +11743,7 @@ document.getElementById('videoDlFetchBtn')?.addEventListener('click', async () =
       data = await res.json();
       if (!data.ok) throw new Error(videoDlFriendlyError(data));
       videoDlSetStatus('', false);
-      videoDlRenderFetchResult(data);
+      videoDlRenderFetchResult(data, platform);
     }
   } catch (err) {
     if (err.name === 'AbortError') {
