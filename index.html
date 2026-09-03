@@ -12676,7 +12676,7 @@ body.is-scrolling *{
 #atkPanel .lap-filter-card.atk-cap{flex:0 0 auto;padding-top:28px;padding-bottom:0;box-shadow:none;}
 
 #atkPanel .atk-head{
-  background:linear-gradient(135deg, var(--forest-glow) 0%, var(--violet) 62%, var(--wine) 100%);
+  background:var(--nav-orange);
   gap:8px;
 }
 #atkPanel .atk-head-title{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:9px;}
@@ -12710,20 +12710,20 @@ body.is-scrolling *{
   border-radius:18px;box-shadow:0 2px 10px -4px rgba(15,23,42,.12);
   transition:box-shadow .15s ease, border-color .15s ease;
 }
-#atkPanel .atk-inputbar:focus-within{border-color:var(--violet);box-shadow:0 0 0 3px rgba(124,58,237,.14);}
-#atkPanel .ai-chat-send{background:linear-gradient(135deg, var(--forest-glow), var(--violet));}
+#atkPanel .atk-inputbar:focus-within{border-color:var(--nav-orange);box-shadow:0 0 0 3px color-mix(in srgb, var(--nav-orange) 14%, transparent);}
+#atkPanel .ai-chat-send{background:var(--nav-orange);}
 #atkPanel .ai-chat-send:hover{filter:brightness(1.08);}
 #atkPanel .ai-msg-row.user .ai-msg-bubble{
-  background:linear-gradient(135deg, var(--forest-glow), var(--violet));
-  box-shadow:0 4px 14px -7px rgba(124,58,237,.55);
+  background:var(--nav-orange);
+  box-shadow:0 4px 14px -7px color-mix(in srgb, var(--nav-orange) 55%, transparent);
 }
 #atkPanel .ai-msg-row.bot .ai-msg-content{
   background:var(--paper);border:1px solid var(--line);
   border-radius:16px;border-top-left-radius:4px;padding:12px 14px;
 }
-#atkPanel .ai-msg-ic{box-shadow:0 3px 9px -3px rgba(124,58,237,.55);}
-#atkPanel .ai-chat-empty-ic{background:linear-gradient(135deg, rgba(37,99,235,.16), rgba(124,58,237,.16));}
-#atkPanel .atk-mode-btn.active{background:linear-gradient(135deg, var(--forest-glow), var(--violet));border-color:transparent;}
+#atkPanel .ai-msg-ic{box-shadow:0 3px 9px -3px color-mix(in srgb, var(--nav-orange) 55%, transparent);}
+#atkPanel .ai-chat-empty-ic{background:color-mix(in srgb, var(--nav-orange) 16%, transparent);}
+#atkPanel .atk-mode-btn.active{background:var(--nav-orange);border-color:transparent;}
 
 .ai-settings-modal .form-row{margin-bottom:14px;}
 .ai-settings-modal label{display:block;font-size:12.5px;font-weight:700;color:var(--ink-soft);margin-bottom:6px;}
@@ -19594,13 +19594,13 @@ html.dark-mode .bd-row-close{
 
     <div class="lap-filter-card atk-white-card">
       <div class="ai-chat-tabs atk-tabs" id="atkTabs">
-        <button type="button" class="ai-chat-tab-btn active" data-atktab="bantuan">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 2-3 4"/><path d="M12 17h.01"/></svg>
-          Bantuan Aplikasi
-        </button>
         <button type="button" class="ai-chat-tab-btn" data-atktab="kreatif">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/></svg>
           Chat Umum
+        </button>
+        <button type="button" class="ai-chat-tab-btn active" data-atktab="bantuan">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 2-3 4"/><path d="M12 17h.01"/></svg>
+          Bantuan Aplikasi
         </button>
       </div>
 

@@ -17336,7 +17336,7 @@ function initCloudLogoutButton() {
 ========================================================== */
 const AI_SETTINGS_KEY = 'zayapro_ai_settings';
 const AI_CHAT_HISTORY_KEY = 'zayapro_ai_chat_history';
-const AI_DEFAULT_MODEL = 'gemini-2.5-flash';
+const AI_DEFAULT_MODEL = 'gemini-3.7-flash';
 const AI_DEFAULT_IMAGE_MODEL = 'gemini-3.1-flash-image';
 // PERHATIAN: key ditanam langsung utk kebutuhan sementara (dev/testing).
 // Sebelum di-publish/dipakai publik, PISAHKAN ke Cloudflare Worker
@@ -18192,7 +18192,13 @@ function blobToBase64(blob) {
 }
 async function callGeminiImageGen(prompt) {
   const seed = Math.floor(Math.random() * 1000000000);
-  const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&nologo=true&seed=${seed}`;
+  // enhance=true: prompt asli dilempar ke LLM internal Pollinations dulu
+  // buat diperkaya (detail pencahayaan, komposisi, gaya, dsb) sebelum
+  // digambar -- meningkatkan kualitas hasil model gratis "flux" tanpa
+  // perlu API key/akun. model=flux tetap eksplisit disebut (bukan cuma
+  // andalkan default) supaya jelas & gampang diganti kalau suatu saat
+  // mau coba model lain.
+  const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?model=flux&width=1024&height=1024&nologo=true&enhance=true&seed=${seed}`;
   let res;
   try {
     res = await fetch(url);
