@@ -4468,10 +4468,16 @@ applyWidgetSettings(loadWidgetSettings());
    Berbeda dari PENGATURAN WIDGET di atas (yang menyembunyikan
    kartu-kartu di halaman utama): blok ini mengurus widget ringkas
    ala "widget homescreen HP" yang bisa diaktif/nonaktifkan satu-
-   satu, lengkap dengan pratinjau langsung berisi angka nyata dari
-   transaksi (saldo, pemasukan/pengeluaran, dst). Preferensi
-   tersimpan lewat cloudStorage (sinkron ke akun, sama seperti
-   WIDGET_SETTINGS_KEY) supaya konsisten di semua perangkat. ---- */
+   satu. Preferensi tersimpan lewat cloudStorage (sinkron ke akun,
+   sama seperti WIDGET_SETTINGS_KEY) supaya konsisten di semua
+   perangkat.
+   CATATAN (permintaan user): kartu "Pratinjau Layar Utama" yang
+   sebelumnya ada di halaman ini (bingkai HP + renderHomeWidgetPreview()
+   yang menggambar ulang widget berisi angka nyata dari transaksi)
+   SUDAH DIHAPUS total, baik markup-nya (#hwPhoneWidgets/#hwActiveCount
+   di index.html) maupun fungsi render & pemanggilnya di sini -- yang
+   tersisa cuma logika toggle aktif/nonaktif + simpan preferensinya
+   saja (syncHomeWidgetUI, tanpa render pratinjau lagi). ---- */
 const HOME_WIDGET_KEY = 'alirin_home_widgets_v1';
 const HOME_WIDGET_DEFAULTS = {
   hwSaldoRingkas: true,
@@ -4502,91 +4508,15 @@ function syncHomeWidgetUI(settings) {
     btn.classList.toggle('active', on);
     btn.setAttribute('aria-checked', String(on));
     const row = btn.closest('.ws-row');
-    if (row) row.classList.toggle('is-off', !on);
-  });
-}
-
-// Gambar ulang pratinjau "layar utama HP" (#hwPhoneWidgets) berisi
-// hanya widget yang aktif, memakai data transaksi terkini (calcTotals()
-// & fmtRupiah/fmtRupiahShort sudah didefinisikan di atas file ini).
-function renderHomeWidgetPreview() {
-  const wrap = document.getElementById('hwPhoneWidgets');
-  const countEl = document.getElementById('hwActiveCount');
-  if (!wrap) return;
-
-  const settings = loadHomeWidgetSettings();
-  const t = calcTotals();
-  const tiles = [];
-
-  if (settings.hwSaldoRingkas) {
-    tiles.push(`
-      <div class="hw-tile hw-tile-small">
-        <div class="hw-tile-head"><span class="hw-tile-dot"></span>Saldo Total</div>
-        <div class="hw-tile-value">${fmtRupiahShort(t.saldo)}</div>
-        <div class="hw-tile-sub">${transactions.length} transaksi tercatat</div>
-      </div>
-    `);
-  }
-
-  if (settings.hwBulanIni) {
-    const maxVal = Math.max(t.monthIn, t.monthOut, 1);
-    tiles.push(`
-      <div class="hw-tile hw-tile-medium">
-        <div class="hw-tile-head"><span class="hw-tile-dot"></span>Bulan Ini</div>
-        <div class="hw-tile-bars">
-          <div class="hw-bar-row"><span>Masuk</span><div class="hw-bar-track"><div class="hw-bar-fill in" style="width:${Math.round((t.monthIn / maxVal) * 100)}%"></div></div><b>${fmtRupiahShort(t.monthIn)}</b></div>
-          <div class="hw-bar-row"><span>Keluar</span><div class="hw-bar-track"><div class="hw-bar-fill out" style="width:${Math.round((t.monthOut / maxVal) * 100)}%"></div></div><b>${fmtRupiahShort(t.monthOut)}</b></div>
-        </div>
-      </div>
-    `);
-  }
-
-  if (settings.hwAktivitas7Hari) {
-    const days = [];
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      const key = d.toISOString().slice(0, 10);
-      let net = 0;
-      transactions.forEach((tx) => {
-        if (tx.date === key) net += tx.type === 'masuk' ? (Number(tx.amount) || 0) : -(Number(tx.amount) || 0);
-      });
-      days.push(net);
+    if (row) {
+      row.classList.toggle('is-off', !on);
+      // Label teks status (redesign kartu widget) -- .hw-opt-status
+      // hanya ada di markup kartu baru #hwList, jadi cek dulu spy
+      // tidak error kalau suatu saat markupnya berubah lagi.
+      const statusEl = row.querySelector('.hw-opt-status');
+      if (statusEl) statusEl.textContent = on ? 'Aktif' : 'Nonaktif';
     }
-    const maxAbs = Math.max(...days.map((v) => Math.abs(v)), 1);
-    const barsHtml = days.map((v) => {
-      const h = Math.max(6, Math.round((Math.abs(v) / maxAbs) * 28));
-      return `<div class="hw-spark-bar ${v >= 0 ? 'up' : 'down'}" style="height:${h}px"></div>`;
-    }).join('');
-    tiles.push(`
-      <div class="hw-tile hw-tile-medium">
-        <div class="hw-tile-head"><span class="hw-tile-dot"></span>Aktivitas 7 Hari</div>
-        <div class="hw-spark">${barsHtml}</div>
-        <div class="hw-tile-sub">Naik/turun saldo harian minggu ini</div>
-      </div>
-    `);
-  }
-
-  if (settings.hwKartuBesar) {
-    tiles.push(`
-      <div class="hw-tile hw-tile-large">
-        <div class="hw-tile-head"><span class="hw-tile-dot"></span>Ringkasan Lengkap</div>
-        <div class="hw-tile-value">${fmtRupiahShort(t.saldo)}</div>
-        <div class="hw-tile-grid">
-          <div><span>Masuk Bln Ini</span><b class="up">${fmtRupiahShort(t.monthIn)}</b></div>
-          <div><span>Keluar Bln Ini</span><b class="down">${fmtRupiahShort(t.monthOut)}</b></div>
-        </div>
-      </div>
-    `);
-  }
-
-  wrap.innerHTML = tiles.length ? tiles.join('') : `
-    <div class="hw-phone-empty">
-      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3.5" y="3.5" width="8" height="8" rx="1.6"/><rect x="13.5" y="3.5" width="7" height="5.5" rx="1.6"/><rect x="13.5" y="11.5" width="7" height="9" rx="1.6"/><rect x="3.5" y="13.5" width="8" height="7" rx="1.6"/></svg>
-      <p>Belum ada widget aktif.<br>Aktifkan salah satu di bawah.</p>
-    </div>
-  `;
-  if (countEl) countEl.textContent = `${tiles.length} aktif`;
+  });
 }
 
 document.getElementById('hwList')?.addEventListener('click', (e) => {
@@ -4597,7 +4527,6 @@ document.getElementById('hwList')?.addEventListener('click', (e) => {
   settings[key] = !settings[key];
   saveHomeWidgetSettings(settings);
   syncHomeWidgetUI(settings);
-  renderHomeWidgetPreview();
   showToast(settings[key] ? 'Widget diaktifkan' : 'Widget dinonaktifkan');
 });
 
@@ -4605,13 +4534,11 @@ document.getElementById('hwResetBtn')?.addEventListener('click', () => {
   const settings = { ...HOME_WIDGET_DEFAULTS };
   saveHomeWidgetSettings(settings);
   syncHomeWidgetUI(settings);
-  renderHomeWidgetPreview();
   showToast('Widget dikembalikan ke pengaturan awal');
 });
 
-// Terapkan preferensi & pratinjau begitu halaman dimuat.
+// Terapkan preferensi begitu halaman dimuat.
 syncHomeWidgetUI(loadHomeWidgetSettings());
-renderHomeWidgetPreview();
 
 
 /* ==========================================================
@@ -10528,10 +10455,9 @@ document.getElementById('userAccountForm')?.addEventListener('submit', async (e)
 function openWidgetOverlay() {
   document.getElementById('widgetOverlay')?.classList.add('open');
   lockBodyScroll();
-  // Segarkan saklar on/off + pratinjau layar utama setiap kali halaman
-  // dibuka, supaya angkanya selalu sinkron dgn transaksi terbaru.
+  // Segarkan saklar on/off setiap kali halaman dibuka, supaya
+  // statusnya selalu sinkron dgn preferensi tersimpan.
   syncHomeWidgetUI(loadHomeWidgetSettings());
-  renderHomeWidgetPreview();
 }
 function closeWidgetOverlay() {
   document.getElementById('widgetOverlay')?.classList.remove('open');
