@@ -11492,16 +11492,31 @@ document.getElementById('videoDlResultBox')?.addEventListener('click', async (e)
     progress.stop();
     item.classList.remove('videodl-res-item--loading');
     item.classList.add('videodl-res-item--failed');
-    if (subEl) subEl.textContent = err.name === 'AbortError' ? 'Waktu habis, coba lagi' : 'Gagal, coba lagi';
-    videoDlSetStatus(err.message || 'Gagal mengambil link unduhan.', true);
+    // Pesan ramah dulu (SAMA kayak handler /youtube/info & /v1/fetch di
+    // bawah) -- BUG lama: err.message dari browser ditampilkan apa
+    // adanya ke status atas ("signal is aborted without reason" dkk,
+    // teks default DOMException pas AbortController.abort() dipanggil
+    // TANPA argumen reason), padahal utk AbortError harusnya selalu
+    // diterjemahkan ke kalimat "waktu habis" spt ini.
+    const isTimeout = err.name === 'AbortError';
+    const friendlyMsg = isTimeout
+      ? `Waktu tunggu habis (${usingWorker ? 40 : 25} detik) -- server penyedia link kemungkinan lambat/sibuk utk video ini, coba lagi.`
+      : (err.message || 'Gagal mengambil link unduhan.');
+    if (subEl) subEl.textContent = isTimeout ? 'Waktu habis, coba lagi' : 'Gagal, coba lagi';
+    videoDlSetStatus(friendlyMsg, true);
     // Balikin ikon unduh & teks ukuran file semula setelah beberapa
     // detik, biar kartu tidak "nyangkut" permanen di pesan error & user
-    // bisa coba ulang.
+    // bisa coba ulang -- BUG lama: pesan status di ATAS dibiarkan
+    // "nyangkut" terus meski kartunya sendiri sudah balik normal,
+    // sekarang ikut dibersihkan BARENGAN (kalau msh pesan yg sama ini,
+    // bukan pesan lain yg mungkin sudah menimpanya duluan).
     setTimeout(() => {
       const icEl = item.querySelector('.videodl-res-item-ic');
       if (icEl) icEl.innerHTML = format === 'audio' ? VIDEODL_MUSIC_ICON : VIDEODL_DOWNLOAD_ICON;
       if (subEl && item.classList.contains('videodl-res-item--failed')) subEl.textContent = originalSub;
       item.classList.remove('videodl-res-item--failed');
+      const statusEl = document.getElementById('videoDlStatus');
+      if (statusEl && statusEl.textContent === friendlyMsg) videoDlSetStatus('', false);
     }, 3000);
   } finally {
     clearTimeout(timeoutId);
