@@ -10763,7 +10763,7 @@ document.getElementById('fmGridSayaBtn')?.addEventListener('click', () => {
    disimpan (auto-save), jadi tombol pil cuma berfungsi buka/tutup
    mode-edit -- teksnya berubah jadi "Selesai Mengatur" selama aktif. */
 const FAST_MENU_SETTINGS_KEY = 'alirin_fast_menu_settings_v1';
-const FAST_MENU_ORDER_DEFAULT = ['addtx', 'tagihan', 'laporan', 'dompet', 'pendapatan', 'pengaturan', 'kalkulator', 'kurs', 'scanner', 'camera', 'unduhvideo'];
+const FAST_MENU_ORDER_DEFAULT = ['addtx', 'tagihan', 'laporan', 'dompet', 'pendapatan', 'pengaturan', 'kalkulator', 'kurs', 'scanner', 'camera', 'unduhvideo', 'aitool'];
 let fastMenuEditMode = false;
 
 function loadFastMenuSettings() {
@@ -17257,7 +17257,8 @@ document.addEventListener('keydown', (e) => {
   if (notifDetailSheet.classList.contains('open')) { closeNotifDetail(); return; }
   if (notifPanel.classList.contains('open')) closeNotifPanel();
   if (aiSettingsModal.classList.contains('open')) { closeModal(aiSettingsModal); return; }
-  if (aiChatPanel.classList.contains('open')) closeAiChatPanel();
+  if (aiChatPanel.classList.contains('open')) { closeAiChatPanel(); return; }
+  if (atkPanel.classList.contains('open')) closeAtkPanel();
 });
 
 /* ==========================================================
@@ -17336,19 +17337,21 @@ function initCloudLogoutButton() {
 const AI_SETTINGS_KEY = 'zayapro_ai_settings';
 const AI_CHAT_HISTORY_KEY = 'zayapro_ai_chat_history';
 const AI_DEFAULT_MODEL = 'gemini-3.7-flash';
+const AI_DEFAULT_IMAGE_MODEL = 'gemini-2.5-flash-image-preview';
 
 function loadAiSettings() {
   try {
     const raw = cloudStorage.getItem(AI_SETTINGS_KEY);
     if (raw) return JSON.parse(raw);
   } catch (e) { /* abaikan */ }
-  return { apiKey: '', model: '' };
+  return { apiKey: '', model: '', imageModel: '' };
 }
 function persistAiSettings(data) {
   try { cloudStorage.setItem(AI_SETTINGS_KEY, JSON.stringify(data)); }
   catch (e) { showToast('Gagal menyimpan pengaturan AI.', 'err'); }
 }
 let aiSettings = loadAiSettings();
+const aiImageModelInput = document.getElementById('aiImageModelInput');
 
 function loadAiChatHistory() {
   try {
@@ -17451,26 +17454,35 @@ if (aiKeyBannerBtn) aiKeyBannerBtn.addEventListener('click', openAiSettingsModal
 function openAiSettingsModal() {
   aiApiKeyInput.value = aiSettings.apiKey || '';
   aiModelInput.value = aiSettings.model || '';
+  if (aiImageModelInput) aiImageModelInput.value = aiSettings.imageModel || '';
   if (aiTestResult) { aiTestResult.style.display = 'none'; aiTestResult.textContent = ''; }
   openModal(aiSettingsModal);
+  renderAtkKeyBanner();
 }
 if (aiSettingsBtn) aiSettingsBtn.addEventListener('click', openAiSettingsModal);
 if (aiSettingsCloseBtn) aiSettingsCloseBtn.addEventListener('click', () => closeModal(aiSettingsModal));
 if (aiSettingsModal) aiSettingsModal.addEventListener('click', (e) => { if (e.target === aiSettingsModal) closeModal(aiSettingsModal); });
 if (aiSettingsForm) aiSettingsForm.addEventListener('submit', (e) => {
   e.preventDefault();
-  aiSettings = { apiKey: aiApiKeyInput.value.trim(), model: aiModelInput.value.trim() };
+  aiSettings = {
+    apiKey: aiApiKeyInput.value.trim(),
+    model: aiModelInput.value.trim(),
+    imageModel: aiImageModelInput ? aiImageModelInput.value.trim() : '',
+  };
   persistAiSettings(aiSettings);
   renderAiKeyBanner();
+  renderAtkKeyBanner();
   closeModal(aiSettingsModal);
   showToast('Pengaturan Tanya AI disimpan.');
 });
 if (aiSettingsClearBtn) aiSettingsClearBtn.addEventListener('click', () => {
   aiApiKeyInput.value = '';
   aiModelInput.value = '';
-  aiSettings = { apiKey: '', model: '' };
+  if (aiImageModelInput) aiImageModelInput.value = '';
+  aiSettings = { apiKey: '', model: '', imageModel: '' };
   persistAiSettings(aiSettings);
   renderAiKeyBanner();
+  renderAtkKeyBanner();
   showToast('API key Gemini dihapus.');
 });
 
@@ -17865,6 +17877,504 @@ function initAiChat() {
   switchAiTab('umum');
 }
 
+/* ==========================================================
+   TOOL AI -- fitur BARU & TERPISAH dari "Tanya AI" di atas.
+   Dua mode:
+   1) "bantuan"  -- asisten seputar cara pakai aplikasi ZAYAIN +
+      data akun milik user yang SEDANG LOGIN saja (pakai ulang
+      buildFinancialContextSummary() yang sudah otomatis hanya
+      berisi data lokal user ybs -- tidak ada jalur akses data
+      user lain). Dilarang keras membahas/menunjukkan source code.
+   2) "kreatif"  -- chat umum + bisa lampirkan gambar/video untuk
+      dianalisis Gemini, dan tombol "Buat Gambar" utk image-gen.
+      Video/musik GENERATE tidak didukung (butuh API berbayar
+      terpisah) -- ini dijelaskan apa adanya, bukan dipura-purakan.
+   API key & model chat pakai ulang aiSettings (sama dgn Tanya AI)
+   supaya user tidak perlu isi 2x; model gambar pakai
+   aiSettings.imageModel (field baru di modal Pengaturan yg sama).
+========================================================== */
+const ATK_CHAT_HISTORY_KEY = 'zayapro_atk_chat_history';
+const ATK_MAX_IMAGE_BYTES = 6 * 1024 * 1024;   // 6MB
+const ATK_MAX_VIDEO_BYTES = 15 * 1024 * 1024;  // 15MB (inline base64 ke Gemini)
+
+function loadAtkChatHistory() {
+  try {
+    const raw = cloudStorage.getItem(ATK_CHAT_HISTORY_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) { /* abaikan */ }
+  return { bantuan: [], kreatif: [] };
+}
+function persistAtkChatHistory() {
+  try { cloudStorage.setItem(ATK_CHAT_HISTORY_KEY, JSON.stringify(atkChatHistory)); }
+  catch (e) { /* riwayat chat tidak kritikal, biarkan gagal senyap */ }
+}
+let atkChatHistory = loadAtkChatHistory();
+let atkActiveTab = 'bantuan';
+let atkCreativeMode = 'chat'; // 'chat' (analisis/tanya) | 'image' (buat gambar)
+let atkIsSending = false;
+let atkAttachedFile = null; // {kind:'image'|'video', mimeType, base64, name}
+
+const atkOverlay = document.getElementById('atkOverlay');
+const atkPanel = document.getElementById('atkPanel');
+const atkCloseBtn = document.getElementById('atkCloseBtn');
+const atkTabs = document.getElementById('atkTabs');
+const atkModeToggle = document.getElementById('atkModeToggle');
+const atkKeyBanner = document.getElementById('atkKeyBanner');
+const atkKeyBannerBtn = document.getElementById('atkKeyBannerBtn');
+const atkChatBody = document.getElementById('atkChatBody');
+const atkChatInput = document.getElementById('atkChatInput');
+const atkSendBtn = document.getElementById('atkSendBtn');
+const atkFootHint = document.getElementById('atkFootHint');
+const atkSettingsBtn = document.getElementById('atkSettingsBtn');
+const atkAttachBtn = document.getElementById('atkAttachBtn');
+const atkFileInput = document.getElementById('atkFileInput');
+const atkAttachPreviewWrap = document.getElementById('atkAttachPreviewWrap');
+const atkAttachPreviewImg = document.getElementById('atkAttachPreviewImg');
+const atkAttachFileChip = document.getElementById('atkAttachFileChip');
+const atkAttachFileName = document.getElementById('atkAttachFileName');
+const atkAttachRemoveBtn = document.getElementById('atkAttachRemoveBtn');
+
+function openAtkPanel() {
+  openModal(atkOverlay);
+  atkPanel.classList.add('open');
+  renderAtkKeyBanner();
+  renderAtkMessages();
+  setTimeout(() => atkChatInput && atkChatInput.focus(), 260);
+}
+function closeAtkPanel() {
+  atkPanel.classList.remove('open');
+  closeModal(atkOverlay);
+}
+document.getElementById('fmHomeAiToolBtn')?.addEventListener('click', () => {
+  if (!requireCloudLogin('Masuk untuk menggunakan Tool AI.')) return;
+  openAtkPanel();
+});
+document.getElementById('fmGridAiToolBtn')?.addEventListener('click', () => {
+  closeFastMenuOverlay();
+  if (!requireCloudLogin('Masuk untuk menggunakan Tool AI.')) return;
+  openAtkPanel();
+});
+if (atkCloseBtn) atkCloseBtn.addEventListener('click', closeAtkPanel);
+if (atkOverlay) atkOverlay.addEventListener('click', closeAtkPanel);
+
+function setAtkCreativeMode(mode) {
+  atkCreativeMode = mode;
+  atkModeToggle.querySelectorAll('.atk-mode-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.atkmode === mode);
+  });
+  atkChatInput.placeholder = mode === 'image' ? 'Jelaskan gambar yang mau dibuat...' : 'Tulis pertanyaan...';
+  atkFootHint.textContent = mode === 'image'
+    ? 'Mode Buat Gambar -- Gemini akan membuat gambar dari deskripsi teksmu (kuota gratis terbatas).'
+    : 'Mode Chat Umum -- bisa lampirkan gambar/video (📎) untuk dianalisis. Membuat video/musik belum didukung di sini.';
+}
+if (atkModeToggle) atkModeToggle.addEventListener('click', (e) => {
+  const btn = e.target.closest('.atk-mode-btn');
+  if (!btn) return;
+  setAtkCreativeMode(btn.dataset.atkmode);
+});
+
+function switchAtkTab(tab) {
+  atkActiveTab = tab;
+  atkTabs.querySelectorAll('.ai-chat-tab-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.atktab === tab);
+  });
+  atkModeToggle.style.display = tab === 'kreatif' ? 'flex' : 'none';
+  clearAtkAttachment();
+  if (tab === 'kreatif') {
+    setAtkCreativeMode('chat');
+  } else {
+    atkChatInput.placeholder = 'Tulis pertanyaan...';
+    atkFootHint.textContent = 'Mode Bantuan Aplikasi -- tanya cara pakai fitur & data akunmu sendiri di ZAYAIN.';
+  }
+  renderAtkMessages();
+}
+if (atkTabs) atkTabs.addEventListener('click', (e) => {
+  const btn = e.target.closest('.ai-chat-tab-btn');
+  if (!btn) return;
+  switchAtkTab(btn.dataset.atktab);
+});
+
+function renderAtkKeyBanner() {
+  if (!atkKeyBanner) return;
+  const hasKey = !!(aiSettings.apiKey && aiSettings.apiKey.trim());
+  atkKeyBanner.style.display = hasKey ? 'none' : 'flex';
+}
+if (atkKeyBannerBtn) atkKeyBannerBtn.addEventListener('click', openAiSettingsModal);
+if (atkSettingsBtn) atkSettingsBtn.addEventListener('click', openAiSettingsModal);
+
+/* ---- Lampiran gambar/video (khusus tab Chat Umum, mode "chat") ---- */
+function clearAtkAttachment() {
+  atkAttachedFile = null;
+  if (atkFileInput) atkFileInput.value = '';
+  if (atkAttachPreviewWrap) atkAttachPreviewWrap.style.display = 'none';
+  if (atkAttachPreviewImg) { atkAttachPreviewImg.style.display = 'none'; atkAttachPreviewImg.src = ''; }
+  if (atkAttachFileChip) atkAttachFileChip.style.display = 'none';
+}
+if (atkAttachBtn) atkAttachBtn.addEventListener('click', () => {
+  if (atkActiveTab === 'kreatif' && atkCreativeMode === 'image') {
+    showToast('Ganti dulu ke mode "Chat / Analisis File" untuk melampirkan gambar/video.', 'err');
+    return;
+  }
+  atkFileInput.click();
+});
+if (atkAttachRemoveBtn) atkAttachRemoveBtn.addEventListener('click', clearAtkAttachment);
+if (atkFileInput) atkFileInput.addEventListener('change', () => {
+  const file = atkFileInput.files && atkFileInput.files[0];
+  if (!file) return;
+  const isImage = file.type.startsWith('image/');
+  const isVideo = file.type.startsWith('video/');
+  if (!isImage && !isVideo) {
+    showToast('Hanya file gambar atau video yang didukung.', 'err');
+    atkFileInput.value = '';
+    return;
+  }
+  const limit = isImage ? ATK_MAX_IMAGE_BYTES : ATK_MAX_VIDEO_BYTES;
+  if (file.size > limit) {
+    showToast(`Ukuran file terlalu besar (maks ${Math.round(limit / (1024 * 1024))}MB).`, 'err');
+    atkFileInput.value = '';
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = () => {
+    const base64 = String(reader.result || '').split(',')[1] || '';
+    atkAttachedFile = { kind: isImage ? 'image' : 'video', mimeType: file.type, base64, name: file.name };
+    atkAttachPreviewWrap.style.display = 'flex';
+    if (isImage) {
+      atkAttachPreviewImg.src = reader.result;
+      atkAttachPreviewImg.style.display = 'block';
+      atkAttachFileChip.style.display = 'none';
+    } else {
+      atkAttachPreviewImg.style.display = 'none';
+      atkAttachFileChip.style.display = 'flex';
+      atkAttachFileName.textContent = file.name;
+    }
+  };
+  reader.onerror = () => showToast('Gagal membaca file.', 'err');
+  reader.readAsDataURL(file);
+});
+
+/* ---- Basis pengetahuan FAQ aplikasi utk mode "Bantuan Aplikasi" ----
+   Ditulis manual (bukan hasil scan kode) supaya AI tidak perlu & tidak
+   boleh "melihat" source code untuk menjawab pertanyaan cara pakai. */
+const ATK_APP_FAQ = `
+Fitur-fitur utama aplikasi ZAYAIN dan cara memakainya:
+- Tambah Transaksi: tombol "+" di beranda atau Fast Menu > Tambah Transaksi. Isi jenis (masuk/keluar), nominal, kategori, dompet/sumber, dan tanggal.
+- Dompet: kelola daftar bank/e-wallet & saldo masing-masing lewat Fast Menu > Dompet.
+- Sumber Pendapatan: catat sumber pemasukan rutin lewat Fast Menu > Sumber Pendapatan.
+- Tagihan & Hutang: catat tagihan/hutang beserta jatuh tempo & status lunas/belum lewat Fast Menu > Tagihan & Hutang.
+- Laporan: lihat ringkasan pemasukan/pengeluaran per periode lewat Fast Menu > Laporan.
+- Kalkulator & Kurs Mata Uang: alat bantu hitung cepat & cek kurs, ada di Fast Menu.
+- Scanner Barcode & Koordinat Kamera (Camera+): alat tambahan di Fast Menu untuk pindai barcode dan jepret foto berstempel lokasi GPS.
+- Unduh Video: alat tambahan di Fast Menu untuk mengunduh video dari tautan.
+- Ubah Password / Ubah PIN: buka Pengaturan (ikon profil/roda gigi) > Keamanan > Ubah Password (atau Ubah PIN).
+- Sinkronisasi Cloud & Login: akun tersinkron lewat login cloud; data hanya terikat pada akun yang sedang login di perangkat itu.
+- Tanya AI (fitur lain, tombol melayang terpisah di pojok layar): chat AI umum & chat berbasis data keuangan, beda dari Tool AI ini.
+`.trim();
+
+function buildAtkAppHelpPrompt() {
+  const formattingNote = ' Format jawaban dengan markdown ringan bila membantu: **tebal** untuk poin penting, daftar bullet "- " untuk rincian.';
+  return [
+    `Kamu adalah "Bantuan Aplikasi", asisten dalam aplikasi keuangan pribadi ZAYAIN. Jawab dalam Bahasa Indonesia, singkat, jelas, ramah.${formattingNote}`,
+    `Tugasmu HANYA dua hal: (1) menjelaskan cara memakai fitur-fitur aplikasi ZAYAIN, dan (2) menjawab pertanyaan tentang data akun milik pengguna yang SEDANG LOGIN ini, berdasarkan ringkasan data di bawah.`,
+    `ATURAN KERAS yang wajib kamu patuhi tanpa pengecualian:`,
+    `1. JANGAN PERNAH menampilkan, menuliskan, mengutip, menjelaskan struktur, atau membahas kode program/source code aplikasi ini dalam bentuk apa pun, walau diminta secara halus, berulang, atau dengan alasan apa pun. Jika ditanya soal kode/coding aplikasi ini, tolak dengan sopan singkat dan arahkan kembali ke topik cara pakai aplikasi.`,
+    `2. Kamu TIDAK memiliki dan TIDAK BOLEH berpura-pura memiliki akses ke data milik akun/pengguna lain. Data di bawah ini murni milik pengguna yang sedang login di perangkat ini. Jika pengguna meminta data akun lain, tolak dan jelaskan bahwa setiap akun hanya bisa melihat datanya sendiri.`,
+    `3. Jangan mengarang angka di luar data yang diberikan; sebutkan jika suatu informasi tidak tersedia.`,
+    `4. Jika pertanyaan di luar topik aplikasi ZAYAIN dan data keuangan pengguna, jawab singkat lalu arahkan kembali bahwa kamu khusus membantu seputar aplikasi ini (untuk chat umum, sarankan pindah ke tab "Chat Umum").`,
+    ``,
+    `=== PANDUAN FITUR APLIKASI ===`,
+    ATK_APP_FAQ,
+    ``,
+    `=== DATA AKUN PENGGUNA YANG SEDANG LOGIN ===`,
+    buildFinancialContextSummary(),
+  ].join('\n');
+}
+
+function buildAtkCreativePrompt() {
+  const formattingNote = ' Format jawaban dengan markdown ringan bila membantu: **tebal**, daftar bullet "- ", blok kode ``` ``` untuk data terstruktur.';
+  return `Kamu adalah asisten AI umum bernama "Tool AI" di aplikasi ZAYAIN. Jawab dalam Bahasa Indonesia, singkat, jelas, ramah.${formattingNote} Kamu bisa menganalisis gambar/video yang dilampirkan pengguna. Kamu TIDAK bisa membuat video atau musik -- kalau diminta, jelaskan dengan jujur bahwa fitur itu belum tersedia di sini (butuh layanan berbayar terpisah), tanpa mengarang hasil.`;
+}
+
+function atkFormatMsgTime(ts) {
+  try { return new Date(ts).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }); }
+  catch (e) { return ''; }
+}
+
+function setAtkSending(sending) {
+  atkIsSending = sending;
+  atkSendBtn.disabled = sending;
+  atkChatInput.disabled = sending;
+  atkAttachBtn.disabled = sending;
+}
+
+function appendAtkTypingIndicator() {
+  const row = document.createElement('div');
+  row.className = 'ai-msg-row bot';
+  row.id = 'atkTypingRow';
+  row.innerHTML = `
+    <div class="ai-msg-head">
+      <span class="ai-msg-ic"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/></svg></span>
+      <span class="ai-msg-name">Tool AI</span>
+    </div>
+    <div class="ai-msg-content"><div class="ai-typing"><span></span><span></span><span></span></div></div>
+  `;
+  atkChatBody.appendChild(row);
+  atkChatBody.scrollTop = atkChatBody.scrollHeight;
+}
+function removeAtkTypingIndicator() {
+  const row = document.getElementById('atkTypingRow');
+  if (row) row.remove();
+}
+
+async function callGeminiAtk(userText, mode, attachment) {
+  const apiKey = (aiSettings.apiKey || '').trim();
+  const model = (aiSettings.model || '').trim() || AI_DEFAULT_MODEL;
+  if (!apiKey) throw new Error('NO_API_KEY');
+
+  const systemInstruction = mode === 'bantuan' ? buildAtkAppHelpPrompt() : buildAtkCreativePrompt();
+
+  const historyList = (atkChatHistory[mode] || []).slice(-10);
+  const contents = historyList
+    .filter(m => !m.isError && !m.isImageResult)
+    .map(m => ({ role: m.role === 'user' ? 'user' : 'model', parts: [{ text: m.text }] }));
+
+  const userParts = [];
+  if (userText) userParts.push({ text: userText });
+  if (attachment) userParts.push({ inlineData: { mimeType: attachment.mimeType, data: attachment.base64 } });
+  contents.push({ role: 'user', parts: userParts });
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
+  let res;
+  try {
+    res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+      body: JSON.stringify({ contents, systemInstruction: { parts: [{ text: systemInstruction }] } }),
+    });
+  } catch (networkErr) {
+    throw new Error('FAILED_TO_FETCH');
+  }
+  if (!res.ok) {
+    let detail = '';
+    try { detail = (await res.json()).error?.message || ''; } catch (e) { /* abaikan */ }
+    const err = new Error(detail || `HTTP_${res.status}`);
+    err.status = res.status;
+    throw err;
+  }
+  const data = await res.json();
+  const text = data?.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('') || '';
+  if (!text) throw new Error('EMPTY_RESPONSE');
+  return text.trim();
+}
+
+// Buat gambar dari teks (mode "kreatif" > "Buat Gambar"). Model
+// image-generation Gemini membalas dalam bentuk part inlineData
+// (base64 PNG/JPEG), bukan teks.
+async function callGeminiImageGen(prompt) {
+  const apiKey = (aiSettings.apiKey || '').trim();
+  const model = (aiSettings.imageModel || '').trim() || AI_DEFAULT_IMAGE_MODEL;
+  if (!apiKey) throw new Error('NO_API_KEY');
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
+  let res;
+  try {
+    res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+      body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }] }),
+    });
+  } catch (networkErr) {
+    throw new Error('FAILED_TO_FETCH');
+  }
+  if (!res.ok) {
+    let detail = '';
+    try { detail = (await res.json()).error?.message || ''; } catch (e) { /* abaikan */ }
+    const err = new Error(detail || `HTTP_${res.status}`);
+    err.status = res.status;
+    throw err;
+  }
+  const data = await res.json();
+  const parts = data?.candidates?.[0]?.content?.parts || [];
+  const imgPart = parts.find(p => p.inlineData && p.inlineData.data);
+  if (!imgPart) {
+    const text = parts.map(p => p.text || '').join('').trim();
+    const err = new Error(text || 'Model tidak mengembalikan gambar.');
+    err.status = 'NO_IMAGE';
+    throw err;
+  }
+  return { mimeType: imgPart.inlineData.mimeType || 'image/png', base64: imgPart.inlineData.data };
+}
+
+async function sendAtkMessage() {
+  if (atkIsSending) return;
+  const text = atkChatInput.value.trim();
+  const wantsImageGen = atkActiveTab === 'kreatif' && atkCreativeMode === 'image';
+  if (!text && !(atkAttachedFile && !wantsImageGen)) return;
+
+  if (!(aiSettings.apiKey && aiSettings.apiKey.trim())) {
+    renderAtkKeyBanner();
+    openAiSettingsModal();
+    return;
+  }
+
+  const mode = atkActiveTab;
+  const attachment = (!wantsImageGen && atkAttachedFile) ? atkAttachedFile : null;
+
+  const userMsg = { role: 'user', text: text || (attachment ? `[Melampirkan ${attachment.kind === 'image' ? 'gambar' : 'video'}: ${attachment.name}]` : ''), ts: Date.now() };
+  if (attachment) userMsg.attachmentPreview = attachment.kind === 'image' ? `data:${attachment.mimeType};base64,${attachment.base64}` : null;
+  atkChatHistory[mode].push(userMsg);
+  // Untuk histori tersimpan (localStorage), JANGAN simpan base64
+  // lampiran supaya tidak membengkak/kena limit kuota storage --
+  // cukup simpan catatan teksnya, preview base64 hanya dipakai saat
+  // render langsung di sesi ini (lihat renderAtkMessages).
+  persistAtkChatHistory();
+  renderAtkMessages();
+  atkChatInput.value = '';
+  clearAtkAttachment();
+
+  setAtkSending(true);
+  appendAtkTypingIndicator();
+  try {
+    if (wantsImageGen) {
+      const img = await callGeminiImageGen(text);
+      removeAtkTypingIndicator();
+      atkChatHistory[mode].push({ role: 'model', text: 'Gambar berhasil dibuat.', isImageResult: true, imageDataUrl: `data:${img.mimeType};base64,${img.base64}`, ts: Date.now() });
+    } else {
+      const reply = await callGeminiAtk(text, mode, attachment);
+      removeAtkTypingIndicator();
+      atkChatHistory[mode].push({ role: 'model', text: reply, ts: Date.now() });
+    }
+    persistAtkChatHistory();
+    renderAtkMessages();
+  } catch (err) {
+    console.error('Tool AI error:', err);
+    removeAtkTypingIndicator();
+    let msg = 'Gagal menghubungi Gemini.';
+    if (err.message === 'NO_API_KEY') msg = 'API key Gemini belum diatur.';
+    else if (err.message === 'FAILED_TO_FETCH') msg = 'Gagal menghubungi Gemini: koneksi diblokir (cek internet/ad-blocker/VPN).';
+    else if (err.status === 400) msg = `Permintaan ditolak Gemini (400): ${err.message || 'periksa nama model di Pengaturan.'}`;
+    else if (err.status === 401) msg = `API key Gemini tidak valid (401): ${err.message || 'periksa kembali key di Pengaturan.'}`;
+    else if (err.status === 403) msg = `API key Gemini ditolak (403): ${err.message || 'pastikan API Gemini aktif untuk key ini.'}`;
+    else if (err.status === 404) msg = wantsImageGen
+      ? `Model gambar "${(aiSettings.imageModel || AI_DEFAULT_IMAGE_MODEL)}" tidak ditemukan (404). Coba ganti "Model Gambar" di Pengaturan.`
+      : `Model "${(aiSettings.model || AI_DEFAULT_MODEL)}" tidak ditemukan (404). Coba ganti model di Pengaturan.`;
+    else if (err.status === 429) msg = 'Kuota/limit Gemini API tercapai. Coba lagi nanti.';
+    else if (err.status === 'NO_IMAGE') msg = `Gemini tidak mengembalikan gambar: ${err.message}`;
+    else if (err.message === 'EMPTY_RESPONSE') msg = 'Gemini tidak memberi jawaban (mungkin diblokir filter keamanan). Coba ubah pertanyaan.';
+    else if (err.message) msg = `Gagal menghubungi Gemini: ${err.message}`;
+    atkChatHistory[mode].push({ role: 'model', text: msg, ts: Date.now(), isError: true });
+    persistAtkChatHistory();
+    renderAtkMessages();
+    showToast(msg, 'err');
+  } finally {
+    setAtkSending(false);
+    atkChatInput.focus();
+  }
+}
+if (atkChatInput) {
+  atkChatInput.addEventListener('input', function () {
+    this.style.height = 'auto';
+    this.style.height = Math.min(this.scrollHeight, 90) + 'px';
+  });
+  atkChatInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendAtkMessage(); }
+  });
+}
+if (atkSendBtn) atkSendBtn.addEventListener('click', sendAtkMessage);
+
+function renderAtkMessages() {
+  const list = atkChatHistory[atkActiveTab] || [];
+  atkChatBody.innerHTML = '';
+  if (!list.length) {
+    const empty = document.createElement('div');
+    empty.className = 'ai-chat-empty';
+    empty.innerHTML = `
+      <div class="ai-chat-empty-ic">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/></svg>
+      </div>
+      <p>${atkActiveTab === 'bantuan'
+        ? 'Tanya cara pakai fitur ZAYAIN, atau soal data akunmu sendiri.'
+        : 'Tanya apa saja, lampirkan gambar/video untuk dianalisis, atau buat gambar baru.'}</p>
+      <p class="ai-chat-empty-hint">${atkActiveTab === 'bantuan' ? 'Contoh: "Gimana cara ubah password?"' : 'Contoh: "Buatkan gambar kucing astronot"'}</p>
+    `;
+    atkChatBody.appendChild(empty);
+    return;
+  }
+  list.forEach(msg => atkChatBody.appendChild(buildAtkMsgNode(msg)));
+  atkChatBody.scrollTop = atkChatBody.scrollHeight;
+}
+
+function buildAtkMsgNode(msg) {
+  const isBot = msg.role !== 'user';
+  const showCopy = isBot && !msg.isError && !msg.isImageResult;
+
+  const wrap = document.createElement('div');
+  const row = document.createElement('div');
+  row.className = `ai-msg-row ${isBot ? 'bot' : 'user'}${msg.isError ? ' err' : ''}`;
+
+  if (isBot) {
+    const head = document.createElement('div');
+    head.className = 'ai-msg-head';
+    head.innerHTML = `
+      <span class="ai-msg-ic"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/></svg></span>
+      <span class="ai-msg-name">Tool AI</span>
+    `;
+    const content = document.createElement('div');
+    content.className = 'ai-msg-content';
+    if (msg.isImageResult && msg.imageDataUrl) {
+      const img = document.createElement('img');
+      img.src = msg.imageDataUrl;
+      img.className = 'atk-result-img';
+      img.alt = 'Gambar hasil AI';
+      content.appendChild(img);
+      const dlWrap = document.createElement('a');
+      dlWrap.href = msg.imageDataUrl;
+      dlWrap.download = 'gambar-ai.png';
+      dlWrap.className = 'atk-img-download';
+      dlWrap.textContent = 'Unduh gambar';
+      content.appendChild(dlWrap);
+    } else if (showCopy) {
+      content.innerHTML = renderAiMarkdown(msg.text);
+    } else {
+      content.textContent = msg.text;
+    }
+    row.appendChild(head);
+    row.appendChild(content);
+  } else {
+    const bubble = document.createElement('div');
+    bubble.className = 'ai-msg-bubble';
+    if (msg.attachmentPreview) {
+      const img = document.createElement('img');
+      img.src = msg.attachmentPreview;
+      img.className = 'atk-user-attach-img';
+      bubble.appendChild(img);
+    }
+    const textSpan = document.createElement('div');
+    textSpan.textContent = msg.text;
+    bubble.appendChild(textSpan);
+    row.appendChild(bubble);
+  }
+  wrap.appendChild(row);
+
+  if (showCopy) {
+    const actions = document.createElement('div');
+    actions.className = 'ai-msg-actions';
+    const copyBtn = document.createElement('button');
+    copyBtn.type = 'button';
+    copyBtn.className = 'ai-copy-btn';
+    copyBtn.innerHTML = aiCopyBtnDefaultHtml();
+    copyBtn.addEventListener('click', () => copyAiMessageText(msg.text, copyBtn));
+    actions.appendChild(copyBtn);
+    wrap.appendChild(actions);
+  }
+  return wrap;
+}
+
+function initAtkTool() {
+  renderAtkKeyBanner();
+  switchAtkTab('bantuan');
+}
+
 // ============================================================
 // FIX KEDIPAN BANNER STICKY SAAT SCROLL (khusus HP)
 // Banner (header hijau-navy di atas) punya beberapa animasi CSS yang
@@ -18140,6 +18650,7 @@ function init() {
   deviceMgmtStartHeartbeat();
   initFooter();
   initAiChat();
+  initAtkTool();
   initBannerScrollFreeze();
   initMiniTopbar();
   // Posisikan kotak indikator pil tab (Semua/Mingguan/dst) ke tombol
