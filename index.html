@@ -14627,34 +14627,112 @@ html.dark-mode .bd-row-close{
   <!-- ===== HALAMAN "LEADERBOARD" KHUSUS PENGATURAN (#settingsLeaderboardOverlay) =====
        Halaman baru di Pengaturan > Pengaturan, dibuka dari baris
        "Leaderboard" (#settingsLeaderboardOpenBtn) tepat di bawah baris
-       "Widget". Struktur & pola SAMA PERSIS dgn #widgetOverlay/
-       #updateVersionOverlay di atas (.detail-page-overlay.lap-filter-
-       overlay > .lap-filter-page > .lap-filter-head + .lap-filter-card
-       + .empty-state).
+       "Widget".
 
-       PENTING: ini BUKAN halaman Leaderboard yg sudah ada & berfungsi
-       penuh di app ini (#leaderboardOverlay, dibuka dari footer) --
-       app sudah punya itu duluan (peringkat pemasukan/pengeluaran
-       harian & bulanan). Ini halaman TERPISAH khusus menu Pengaturan,
-       id-nya sengaja diberi prefix "settingsLeaderboard..." supaya
-       tidak bentrok, sesuai konfirmasi pengguna.
+       PENTING: ini duplikat TAMPILAN & FUNGSI dari halaman Leaderboard
+       yg sudah ada & berfungsi penuh di app ini (#leaderboardOverlay,
+       dibuka dari footer, lihat markupnya di bagian "HALAMAN
+       LEADERBOARD" di bawah file ini) -- markupnya SENGAJA disalin
+       apa adanya (kelas .detail-page-overlay.lb-page-overlay dkk,
+       BUKAN pola .lap-filter-overlay spt halaman kosong lain) supaya
+       tampilan hero Pemasukan-vs-Pengeluaran, toggle Harian/Bulanan,
+       & dua kolom Top Pemasukan/Pengeluaran-nya PERSIS SAMA.
 
-       SENGAJA DIKOSONGKAN dulu, sama seperti halaman kosong lain --
-       tinggal diisi nanti tanpa perlu ubah kerangka halaman ini. ---- -->
-  <div class="detail-page-overlay lap-filter-overlay" id="settingsLeaderboardOverlay">
-    <div class="lap-filter-page">
-      <div class="lap-filter-head">
-        <button class="lap-filter-back-btn" id="settingsLeaderboardBackBtn" type="button" aria-label="Tutup Leaderboard">
+       SEMUA id di dalam halaman ini diberi prefix "sLb" (bukan "lb")
+       -- mis. #lbHeroInValue -> #sLbHeroInValue -- supaya tidak
+       bentrok dgn #leaderboardOverlay yg sudah ada; render logic-nya
+       (renderLeaderboard dkk di script.js) sudah digeneralisasi
+       menerima parameter namespace id ('lb' vs 'sLb') supaya SATU
+       logic yg sama dipakai ulang persis, datanya selalu sinkron. ---- -->
+  <div class="detail-page-overlay lb-page-overlay" id="settingsLeaderboardOverlay">
+    <div class="detail-page lb-page">
+      <div class="detail-page-head">
+        <button class="detail-back-btn" id="settingsLeaderboardBackBtn" type="button" aria-label="Tutup Leaderboard">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
         </button>
-        <h2>Leaderboard</h2>
-        <span class="lap-filter-back-btn" style="visibility:hidden" aria-hidden="true"></span>
+        <div class="detail-page-titles lb-page-titles">
+          <h2><span class="lb-title-ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4Z"/><path d="M7 5H4a1 1 0 0 0-1 1v1a4 4 0 0 0 4 4M17 5h3a1 1 0 0 1 1 1v1a4 4 0 0 1-4 4"/></svg></span>Leaderboard</h2>
+          <span class="detail-page-sub">Peringkat kategori uang masuk &amp; keluar terbesar</span>
+        </div>
+        <div class="lb-period-toggle" id="sLbPeriodToggle">
+          <span class="lb-toggle-indicator" id="sLbToggleIndicator"></span>
+          <button type="button" class="active" data-lbperiod="daily">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 8v4l3 2"/></svg>
+            Harian
+          </button>
+          <button type="button" data-lbperiod="monthly">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="16" rx="2.6"/><path d="M3.5 9.5h17M8 3v3M16 3v3"/></svg>
+            Bulanan
+          </button>
+        </div>
       </div>
 
-      <div class="lap-filter-card">
-        <div class="empty-state" style="padding:30px 16px;">
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4Z"/><path d="M7 5H4a1 1 0 0 0-1 1v1a4 4 0 0 0 4 4M17 5h3a1 1 0 0 1 1 1v1a4 4 0 0 1-4 4"/></svg>
-          <p>Halaman Leaderboard belum diisi. Konten akan segera hadir di sini.</p>
+      <div class="lb-hero" id="sLbHero">
+        <span class="lb-hero-orb o1"></span>
+        <span class="lb-hero-orb o2"></span>
+        <div class="lb-hero-stat in">
+          <span class="lb-hero-ic-wrap in" id="sLbHeroIcIn">
+            <span class="lb-hero-crown">👑</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+          </span>
+          <span class="lb-hero-stat-text">
+            <span class="lb-hero-label">Total Pemasukan</span>
+            <span class="lb-hero-value mono" id="sLbHeroInValue">Rp0</span>
+          </span>
+        </div>
+        <div class="lb-hero-vs">
+          <span class="lb-hero-pk-badge"><span class="lb-hero-pk-dot"></span>PK Berlangsung</span>
+          <div class="lb-hero-bar-wrap">
+            <div class="lb-hero-bar-track">
+              <div class="lb-hero-bar-fill in" id="sLbHeroBarIn"></div>
+              <div class="lb-hero-bar-fill out" id="sLbHeroBarOut"></div>
+            </div>
+            <div class="lb-hero-spark" id="sLbHeroSpark">
+              <span class="lb-hero-spark-ring"></span>
+              <span class="lb-hero-spark-ring r2"></span>
+              <span class="lb-hero-spark-core">⚡</span>
+              <span class="lb-hero-spark-particle"></span>
+              <span class="lb-hero-spark-particle"></span>
+              <span class="lb-hero-spark-particle"></span>
+              <span class="lb-hero-spark-particle"></span>
+            </div>
+          </div>
+          <span class="lb-hero-net" id="sLbHeroNet">Selisih Rp0</span>
+        </div>
+        <div class="lb-hero-stat out">
+          <span class="lb-hero-ic-wrap out" id="sLbHeroIcOut">
+            <span class="lb-hero-crown">👑</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+          </span>
+          <span class="lb-hero-stat-text">
+            <span class="lb-hero-label">Total Pengeluaran</span>
+            <span class="lb-hero-value mono" id="sLbHeroOutValue">Rp0</span>
+          </span>
+        </div>
+      </div>
+
+      <div class="lb-stack">
+        <div class="lb-col in">
+          <div class="lb-col-head in">
+            <span class="lb-col-head-pattern"></span>
+            <span class="lb-col-ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 5v14M5 12l7 7 7-7"/></svg></span>
+            <div class="lb-col-head-text">
+              <h3>Top Pemasukan</h3>
+              <span class="lb-col-sub" id="sLbInSub">Hari ini</span>
+            </div>
+          </div>
+          <div class="lb-list" id="sLbListIn"></div>
+        </div>
+        <div class="lb-col out">
+          <div class="lb-col-head out">
+            <span class="lb-col-head-pattern"></span>
+            <span class="lb-col-ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 19V5M5 12l7-7 7 7"/></svg></span>
+            <div class="lb-col-head-text">
+              <h3>Top Pengeluaran</h3>
+              <span class="lb-col-sub" id="sLbOutSub">Hari ini</span>
+            </div>
+          </div>
+          <div class="lb-list" id="sLbListOut"></div>
         </div>
       </div>
     </div>

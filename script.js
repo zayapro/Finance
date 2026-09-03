@@ -4214,11 +4214,18 @@ function renderLeaderboardList(elId, rows, isIn) {
   });
 }
 
-function renderLeaderboardHero(data) {
+// Semua fungsi di bawah menerima parameter `ns` (namespace/prefix id, mis.
+// 'lb' utk halaman Leaderboard dari footer, atau 'sLb' utk halaman
+// Leaderboard duplikat di menu Pengaturan) -- supaya SATU set logic ini
+// bisa dipakai ulang utk render ke DUA markup halaman yg id-nya beda
+// prefix, tanpa duplikasi kode maupun saling menimpa data satu sama
+// lain. Kedua halaman tetap berbagi `leaderboardPeriod` yg SAMA (state
+// Harian/Bulanan disinkronkan di manapun terakhir diganti).
+function renderLeaderboardHero(ns, data) {
   const totalIn = data.masuk.reduce((s, r) => s + r.amount, 0);
   const totalOut = data.keluar.reduce((s, r) => s + r.amount, 0);
-  const inEl = document.getElementById('lbHeroInValue');
-  const outEl = document.getElementById('lbHeroOutValue');
+  const inEl = document.getElementById(`${ns}HeroInValue`);
+  const outEl = document.getElementById(`${ns}HeroOutValue`);
   animateIntEl(inEl, totalIn, fmtRupiah, 750);
   animateIntEl(outEl, totalOut, fmtRupiah, 750);
 
@@ -4229,9 +4236,9 @@ function renderLeaderboardHero(data) {
   const pctIn = total > 0 ? Math.round((totalIn / total) * 100) : 50;
   const pctOut = 100 - pctIn;
 
-  const barIn = document.getElementById('lbHeroBarIn');
-  const barOut = document.getElementById('lbHeroBarOut');
-  const spark = document.getElementById('lbHeroSpark');
+  const barIn = document.getElementById(`${ns}HeroBarIn`);
+  const barOut = document.getElementById(`${ns}HeroBarOut`);
+  const spark = document.getElementById(`${ns}HeroSpark`);
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
       barIn.style.width = pctIn + '%';
@@ -4241,8 +4248,8 @@ function renderLeaderboardHero(data) {
   });
 
   // Sisi yang unggul dapat mahkota + glow berdenyut, seperti host yang sedang menang di PK live.
-  const icIn = document.getElementById('lbHeroIcIn');
-  const icOut = document.getElementById('lbHeroIcOut');
+  const icIn = document.getElementById(`${ns}HeroIcIn`);
+  const icOut = document.getElementById(`${ns}HeroIcOut`);
   const leadIn = total > 0 && totalIn >= totalOut;
   const leadOut = total > 0 && totalOut > totalIn;
   icIn?.classList.toggle('lead', leadIn);
@@ -4257,29 +4264,29 @@ function renderLeaderboardHero(data) {
   }
 
   const net = totalIn - totalOut;
-  const netEl = document.getElementById('lbHeroNet');
+  const netEl = document.getElementById(`${ns}HeroNet`);
   netEl.textContent = (net >= 0 ? 'Surplus ' : 'Defisit ') + fmtRupiah(Math.abs(net));
   netEl.classList.toggle('pos', net >= 0);
   netEl.classList.toggle('neg', net < 0);
 }
 
-function renderLeaderboard() {
+function renderLeaderboard(ns) {
   const periodLabel = leaderboardPeriod === 'daily' ? 'Hari ini' : thisMonthLabel();
-  document.getElementById('lbInSub').textContent = periodLabel;
-  document.getElementById('lbOutSub').textContent = periodLabel;
-  document.querySelectorAll('#lbPeriodToggle button').forEach(b => b.classList.toggle('active', b.dataset.lbperiod === leaderboardPeriod));
-  updateLbToggleIndicator();
+  document.getElementById(`${ns}InSub`).textContent = periodLabel;
+  document.getElementById(`${ns}OutSub`).textContent = periodLabel;
+  document.querySelectorAll(`#${ns}PeriodToggle button`).forEach(b => b.classList.toggle('active', b.dataset.lbperiod === leaderboardPeriod));
+  updateLbToggleIndicator(ns);
 
   const data = getLeaderboardData(leaderboardPeriod);
-  renderLeaderboardHero(data);
-  renderLeaderboardList('lbListIn', data.masuk, true);
-  renderLeaderboardList('lbListOut', data.keluar, false);
+  renderLeaderboardHero(ns, data);
+  renderLeaderboardList(`${ns}ListIn`, data.masuk, true);
+  renderLeaderboardList(`${ns}ListOut`, data.keluar, false);
 }
 
 // Posisikan pil indikator toggle Harian/Bulanan agar meluncur mengikuti tombol aktif.
-function updateLbToggleIndicator() {
-  const toggle = document.getElementById('lbPeriodToggle');
-  const indicator = document.getElementById('lbToggleIndicator');
+function updateLbToggleIndicator(ns) {
+  const toggle = document.getElementById(`${ns}PeriodToggle`);
+  const indicator = document.getElementById(`${ns}ToggleIndicator`);
   const activeBtn = toggle?.querySelector('button.active');
   if (!toggle || !indicator || !activeBtn) return;
   indicator.style.width = activeBtn.offsetWidth + 'px';
@@ -4287,15 +4294,15 @@ function updateLbToggleIndicator() {
 }
 
 // Ganti periode dengan transisi fade halus (list keluar sebentar lalu masuk lagi berisi data baru).
-function switchLeaderboardPeriod(period) {
+function switchLeaderboardPeriod(ns, period) {
   if (period === leaderboardPeriod) return;
   leaderboardPeriod = period;
-  const listIn = document.getElementById('lbListIn');
-  const listOut = document.getElementById('lbListOut');
+  const listIn = document.getElementById(`${ns}ListIn`);
+  const listOut = document.getElementById(`${ns}ListOut`);
   listIn.classList.add('lb-fade-out');
   listOut.classList.add('lb-fade-out');
   setTimeout(() => {
-    renderLeaderboard();
+    renderLeaderboard(ns);
     listIn.classList.remove('lb-fade-out');
     listOut.classList.remove('lb-fade-out');
   }, 160);
@@ -4306,7 +4313,7 @@ function openLeaderboardPage() {
   document.getElementById('leaderboardOverlay').classList.add('open');
   lockBodyScroll();
   window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
-  renderLeaderboard();
+  renderLeaderboard('lb');
 }
 
 function closeLeaderboardPage() {
@@ -4318,10 +4325,11 @@ document.getElementById('lbBackBtn').addEventListener('click', closeLeaderboardP
 document.getElementById('lbPeriodToggle').addEventListener('click', (e) => {
   const btn = e.target.closest('[data-lbperiod]');
   if (!btn) return;
-  switchLeaderboardPeriod(btn.dataset.lbperiod);
+  switchLeaderboardPeriod('lb', btn.dataset.lbperiod);
 });
 window.addEventListener('resize', () => {
-  if (document.getElementById('leaderboardOverlay').classList.contains('open')) updateLbToggleIndicator();
+  if (document.getElementById('leaderboardOverlay').classList.contains('open')) updateLbToggleIndicator('lb');
+  if (document.getElementById('settingsLeaderboardOverlay')?.classList.contains('open')) updateLbToggleIndicator('sLb');
 });
 
 
@@ -10405,18 +10413,27 @@ document.getElementById('updateVersionBackBtn')?.addEventListener('click', close
 /* ==========================================================
    PENGATURAN > PENGATURAN — "Leaderboard" khusus menu Pengaturan
    (#settingsLeaderboardOverlay). Pola buka/tutup SAMA PERSIS dgn
-   openUpdateVersionOverlay/closeUpdateVersionOverlay di atas --
-   halaman ini SENGAJA masih kosong (placeholder "empty-state"),
-   tinggal diisi kontennya nanti.
+   openUpdateVersionOverlay/closeUpdateVersionOverlay di atas.
 
-   CATATAN: sengaja diberi nama fungsi/id BERBEDA (prefix
-   "SettingsLeaderboard...") dari openLeaderboardPage/closeLeaderboardPage
-   & #leaderboardOverlay yg SUDAH ADA & berfungsi penuh (dibuka dari
-   footer) di tempat lain di file ini -- supaya kedua halaman "Leaderboard"
-   ini tetap berdiri sendiri-sendiri, tidak saling menimpa. ---- */
+   Halaman ini kini berisi konten Leaderboard YG SAMA PERSIS (hero
+   Pemasukan vs Pengeluaran + Top Pemasukan/Pengeluaran, toggle
+   Harian/Bulanan) dgn #leaderboardOverlay yg dibuka dari footer --
+   render logic-nya (renderLeaderboard dkk, lihat definisinya di atas)
+   SUDAH digeneralisasi menerima parameter `ns` (namespace id) supaya
+   satu logic dipakai ulang persis apa adanya di sini, tanpa duplikasi
+   kode. Markup halamannya sendiri (lihat index.html
+   #settingsLeaderboardOverlay) sengaja DIBUAT DUPLIKAT dari markup
+   #leaderboardOverlay tapi SEMUA id-nya diberi prefix "sLb" (bukan
+   "lb") -- persis pola prefix "settingsLeaderboard..." yg sudah
+   dipakai utk id overlay & tombolnya -- supaya kedua halaman
+   "Leaderboard" ini tetap berdiri sendiri-sendiri (elemen DOM
+   terpisah, tidak saling menimpa), walau datanya sama & selalu
+   sinkron (leaderboardPeriod dibagi bareng). ---- */
 function openSettingsLeaderboardOverlay() {
   document.getElementById('settingsLeaderboardOverlay')?.classList.add('open');
   lockBodyScroll();
+  window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
+  renderLeaderboard('sLb');
 }
 function closeSettingsLeaderboardOverlay() {
   document.getElementById('settingsLeaderboardOverlay')?.classList.remove('open');
@@ -10424,6 +10441,11 @@ function closeSettingsLeaderboardOverlay() {
 }
 document.getElementById('settingsLeaderboardOpenBtn')?.addEventListener('click', openSettingsLeaderboardOverlay);
 document.getElementById('settingsLeaderboardBackBtn')?.addEventListener('click', closeSettingsLeaderboardOverlay);
+document.getElementById('sLbPeriodToggle')?.addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-lbperiod]');
+  if (!btn) return;
+  switchLeaderboardPeriod('sLb', btn.dataset.lbperiod);
+});
 
 /* ==========================================================
    PENGATURAN > PENGATURAN — "Fast Menu" (#fastMenuOverlay). Pola
