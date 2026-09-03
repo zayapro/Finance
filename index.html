@@ -347,6 +347,19 @@ try {
 <meta name="description" id="appMetaDescription" content="Kelola uang masuk dan keluar, catat transaksi, tagihan, dan hutang dengan mudah bersama ZAYAIN.">
 <meta name="keywords" id="appMetaKeywords" content="">
 <meta name="robots" content="index, follow">
+<!-- ---- Satu-satunya sumber "nomor versi" & "nomor build" aplikasi --
+     dibaca oleh script.js (APP_VERSION_NUMBER/APP_BUILD_ID) utk
+     ditampilkan di halaman Pengaturan > Tentang & Pengaturan > Update
+     Version, SEKALIGUS dipakai fitur "Cek Update" di halaman Update
+     Version utk mendeteksi kalau file index.html ini sudah diganti
+     versi lebih baru di server (lihat checkForAppUpdate() di
+     script.js: fungsi itu menarik ulang file ini dari server & baca
+     ulang isi "content" meta app-build di bawah, lalu dibandingkan
+     dengan nilai yang sedang dipakai halaman yang berjalan sekarang).
+     Cukup naikkan KEDUA nilai di bawah ini tiap kali merilis versi
+     baru -- tidak perlu ubah angka di tempat lain. ---- -->
+<meta name="app-version" content="1.0.0">
+<meta name="app-build" content="20260830.1">
 <!-- Warna default sengaja disamakan dgn --banner-orange default (lihat
      GLOBAL_THEME_PRESETS di script.js, preset "orange" = #FA8B1E) supaya
      TIDAK ada sepersekian detik "belang" (address bar biru/navy tua vs
@@ -10475,6 +10488,64 @@ html.zp-app-loading .page-body > .lap-panel{display:none;}
 .device-mgmt-terms-body{margin-top:-6px;}
 .device-mgmt-terms-body[hidden]{display:none;}
 /* ================================================================ */
+/* ============================================================
+   HALAMAN "UPDATE VERSION" (#updateVersionOverlay) -- Pengaturan >
+   Informasi. Kartu "Versi Saat Ini" reuse .device-mgmt-card apa
+   adanya (kartu putih beradius + overlay spinner .device-mgmt-card-
+   loading yg sama persis dgn Manajemen Device), & tiap baris
+   Changelog reuse .bantuan-faq-item/.bantuan-faq-q/.bantuan-faq-a apa
+   adanya (kartu accordion yg sama persis dgn FAQ Pusat Bantuan) --
+   supaya satu bahasa visual & interaksi dgn halaman lain. Aturan di
+   bawah ini cuma menambah bagian yang belum ada di kartu2 itu: kepala
+   kartu versi (ikon+label+angka+badge status), catatan waktu cek
+   terakhir, kotak pesan hasil cek, tombol Cek Update (+ animasi ikon
+   berputar selama proses), tombol Muat Ulang, & override tinggi
+   maksimum jawaban accordion changelog (poin2 changelog bisa lebih
+   panjang dari satu jawaban FAQ biasa, jadi max-height bawaan 220px
+   dinaikkan KHUSUS di dalam daftar ini lewat selector ber-ID supaya
+   pasti menang tanpa mengubah bawaan FAQ Pusat Bantuan/Manajemen
+   Device). Logikanya ada di renderUpdateVersionPage()/
+   checkForAppUpdate()/renderUpdateVersionChangelog() di script.js. ---- */
+.update-version-page-card.lap-filter-card--rest{padding-top:14px;display:flex;flex-direction:column;gap:16px;}
+#updateVersionCurrentCard{position:relative;display:flex;flex-direction:column;gap:10px;}
+.uv-current-head{display:flex;align-items:center;gap:12px;}
+.uv-current-ic{
+  width:44px;height:44px;border-radius:12px;flex-shrink:0;
+  background:var(--primary-soft);color:var(--primary-deep);
+  display:flex;align-items:center;justify-content:center;
+}
+.uv-current-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px;}
+.uv-current-info .uv-current-label{font-size:11.5px;font-weight:600;color:var(--ink-soft);}
+.uv-current-info strong{
+  font-family:'Poppins',sans-serif;font-weight:700;letter-spacing:-0.005em;font-size:17px;color:var(--ink);
+}
+.uv-status-badge{
+  flex-shrink:0;font-size:10.5px;font-weight:600;color:var(--ink-faint);background:var(--paper);
+  border-radius:999px;padding:4px 10px;line-height:1.4;white-space:nowrap;
+}
+.uv-status-badge.is-latest{color:var(--brass);background:color-mix(in srgb, var(--brass) 12%, white);}
+.uv-status-badge.is-outdated{color:var(--primary-deep);background:var(--primary-soft);}
+.uv-status-badge.is-error{color:var(--wine);background:color-mix(in srgb, var(--wine) 10%, white);}
+.uv-current-note{margin:0;font-size:12px;color:var(--ink-faint);}
+.uv-check-msg{font-size:12.5px;line-height:1.55;border-radius:11px;padding:10px 12px;}
+.uv-check-msg[hidden]{display:none;}
+.uv-check-msg.is-latest{color:var(--brass);background:color-mix(in srgb, var(--brass) 10%, white);}
+.uv-check-msg.is-outdated{color:var(--primary-deep);background:var(--primary-soft);}
+.uv-check-msg.is-error{color:var(--wine);background:color-mix(in srgb, var(--wine) 8%, white);}
+.uv-check-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;}
+.uv-check-btn svg{flex-shrink:0;}
+.uv-check-btn.is-checking svg{animation:deviceMgmtSpin .7s linear infinite;}
+.uv-check-btn:disabled{opacity:.7;cursor:default;}
+.uv-reload-btn{width:100%;}
+.uv-reload-btn[hidden]{display:none;}
+.uv-changelog-head{display:flex;align-items:center;justify-content:space-between;}
+.uv-changelog-item .bantuan-faq-q{align-items:flex-start;}
+.uv-changelog-item .bantuan-faq-q-title{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.uv-changelog-date{font-size:11px;font-weight:500;color:var(--ink-faint);display:block;margin-top:2px;}
+#updateVersionChangelogList .bantuan-faq-item.open .bantuan-faq-a{max-height:640px;}
+.uv-changelog-list-inner{margin:0;padding-left:17px;display:flex;flex-direction:column;gap:6px;}
+.uv-changelog-list-inner li{font-size:12.5px;line-height:1.55;color:var(--ink-soft);}
+/* ================================================================ */
 /* ---- Kotak "Pilih Bulan" / "Pilih Tanggal": muncul menempel tepat di
    bawah baris radio terkait begitu radio itu dipilih (bukan dipisah ke
    popup kalender sendiri) -- memakai <input type="month">/"date"> bawaan
@@ -14774,30 +14845,80 @@ html.dark-mode .bd-row-close{
   <!-- ===== HALAMAN "UPDATE VERSION" (#updateVersionOverlay) =====
        Halaman baru di Pengaturan > Informasi, dibuka dari baris
        "Update Version" (#updateVersionOpenBtn) tepat di bawah baris
-       "Tentang". Struktur & pola SAMA PERSIS dgn #widgetOverlay/
-       #userAccountOverlay di atas (.detail-page-overlay.lap-filter-
-       overlay > .lap-filter-page > .lap-filter-head + .lap-filter-card
-       + .empty-state).
+       "Tentang". Header oranye dibuat sticky, pola SAMA PERSIS dgn
+       #tentangPrivasiOverlay/#manajemenDeviceOverlay (.tentang-doc-
+       sticky-head [header + cap] + .lap-filter-card.lap-filter-card--
+       rest [isi sesungguhnya]) supaya konsisten dgn halaman penuh lain
+       di app ini.
 
-       SENGAJA DIKOSONGKAN dulu sesuai permintaan, sama seperti halaman
-       kosong lain -- tinggal diisi nanti (mis. info versi terbaru/
-       changelog/tombol cek update) tanpa perlu ubah kerangka halaman
-       ini. ---- -->
+       Isinya 2 kartu:
+       1) "Versi Saat Ini" -- reuse gaya .device-mgmt-card (kartu putih
+          + overlay loading berputar saat proses cek berjalan, lihat
+          #updateVersionCurrentCard/#updateVersionCheckLoading), berisi
+          nomor versi terpasang, badge status, catatan waktu cek
+          terakhir, tombol "Cek Update Sekarang", & tombol "Muat Ulang
+          Sekarang" yang cuma tampil kalau ketemu versi lebih baru.
+          Semua ANGKA di kartu ini (versi, badge, waktu cek, pesan
+          hasil) diisi DINAMIS oleh renderUpdateVersionPage()/
+          checkForAppUpdate() di script.js -- markup di bawah cuma
+          kerangka + nilai default awal.
+       2) "Riwayat Pembaruan (Changelog)" -- daftar accordion per versi,
+          reuse .bantuan-faq-item apa adanya (pola sama dgn FAQ Pusat
+          Bantuan/Manajemen Device), datanya dari UPDATE_CHANGELOG_DATA
+          di script.js & digambar ulang oleh renderUpdateVersionChangelog().
+          Markup daftarnya SENGAJA kosong (<div id="updateVersionChangelogList">)
+          krn seluruh isinya dirender lewat JS. ---- -->
   <div class="detail-page-overlay lap-filter-overlay" id="updateVersionOverlay">
     <div class="lap-filter-page">
-      <div class="lap-filter-head">
-        <button class="lap-filter-back-btn" id="updateVersionBackBtn" type="button" aria-label="Tutup Update Version">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
-        </button>
-        <h2>Update Version</h2>
-        <span class="lap-filter-back-btn" style="visibility:hidden" aria-hidden="true"></span>
+      <div class="tentang-doc-sticky-head" id="updateVersionStickyHead">
+        <div class="lap-filter-head">
+          <button class="lap-filter-back-btn" id="updateVersionBackBtn" type="button" aria-label="Tutup Update Version">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <h2>Update Version</h2>
+          <span class="lap-filter-back-btn" style="visibility:hidden" aria-hidden="true"></span>
+        </div>
+        <div class="lap-filter-card tentang-doc-cap" aria-hidden="true"></div>
       </div>
 
-      <div class="lap-filter-card">
-        <div class="empty-state" style="padding:30px 16px;">
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3v10.5M12 13.5 8.5 10M12 13.5 15.5 10"/><path d="M4.5 15.5v2.8a1.7 1.7 0 0 0 1.7 1.7h11.6a1.7 1.7 0 0 0 1.7-1.7v-2.8"/></svg>
-          <p>Halaman Update Version belum diisi. Konten akan segera hadir di sini.</p>
+      <div class="lap-filter-card lap-filter-card--rest update-version-page-card">
+
+        <!-- Kartu 1: Versi Saat Ini + Cek Update -->
+        <div class="device-mgmt-card update-version-current-card" id="updateVersionCurrentCard">
+          <div class="device-mgmt-card-loading" id="updateVersionCheckLoading" aria-hidden="true">
+            <span class="device-mgmt-spinner"></span>
+          </div>
+
+          <div class="uv-current-head">
+            <span class="uv-current-ic">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v10.5M12 13.5 8.5 10M12 13.5 15.5 10"/><path d="M4.5 15.5v2.8a1.7 1.7 0 0 0 1.7 1.7h11.6a1.7 1.7 0 0 0 1.7-1.7v-2.8"/></svg>
+            </span>
+            <div class="uv-current-info">
+              <span class="uv-current-label">Versi Terpasang</span>
+              <strong id="updateVersionCurrentText">v1.0.0</strong>
+            </div>
+            <span class="uv-status-badge" id="updateVersionStatusBadge">Belum Diperiksa</span>
+          </div>
+
+          <p class="uv-current-note" id="updateVersionLastCheckText">Belum pernah diperiksa di perangkat ini.</p>
+
+          <div class="uv-check-msg" id="updateVersionCheckMsg" hidden></div>
+
+          <button type="button" class="btn btn-primary uv-check-btn" id="updateVersionCheckBtn">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3"/><path d="M18 4v4h-4M6 20v-4h4"/></svg>
+            Cek Update Sekarang
+          </button>
+          <button type="button" class="btn btn-ghost uv-reload-btn" id="updateVersionReloadBtn" hidden>Muat Ulang Sekarang</button>
         </div>
+
+        <!-- Kartu 2: Changelog -->
+        <div class="uv-changelog-head">
+          <span class="settings-section-label" style="margin:0;">Riwayat Pembaruan (Changelog)</span>
+        </div>
+        <div class="bantuan-faq-list" id="updateVersionChangelogList" style="margin-top:0;">
+          <p class="bantuan-empty">Memuat riwayat pembaruan…</p>
+        </div>
+
       </div>
     </div>
   </div>
@@ -16730,7 +16851,7 @@ html.dark-mode .bd-row-close{
           </div>
         </div>
 
-        <p class="settings-version">Versi Aplikasi <strong>1.0.0</strong></p>
+        <p class="settings-version">Versi Aplikasi <strong id="settingsPageVersionText">1.0.0</strong></p>
       </div>
     </div>
   </div>

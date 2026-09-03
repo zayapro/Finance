@@ -10542,12 +10542,197 @@ document.getElementById('widgetBackBtn')?.addEventListener('click', closeWidgetO
 
 /* ==========================================================
    PENGATURAN > INFORMASI — "Update Version" (#updateVersionOverlay).
-   Pola buka/tutup SAMA PERSIS dgn openWidgetOverlay/closeWidgetOverlay
-   di atas -- halaman ini SENGAJA masih kosong (placeholder
-   "empty-state"), tinggal diisi kontennya nanti. ---- */
+   Pola buka/tutup dasarnya SAMA dgn openWidgetOverlay/
+   closeWidgetOverlay di atas, TAPI halaman ini sekarang diisi penuh:
+   kartu "Versi Saat Ini" + tombol "Cek Update Sekarang", & kartu
+   "Riwayat Pembaruan (Changelog)".
+
+   Cara kerja "Cek Update": ZAYAIN adalah app statis (murni HTML/JS,
+   TANPA server API versi/backend pembaruan sendiri -- data pengguna
+   pun cuma tersimpan di localStorage/Supabase kv_store, lihat catatan
+   di cloud-sync.js), jadi tidak ada "server rilis" khusus yang bisa
+   ditanya "versi terbaru berapa". Cara paling JUJUR yang tetap
+   berfungsi tanpa backend tambahan: tarik ULANG file index.html yang
+   SEDANG live di server tempat app ini di-hosting (fetch dgn
+   cache:'no-store' + query pemecah cache, supaya tidak kena cache
+   browser/CDN lama), lalu baca nomor build dari <meta name="app-build">
+   di file hasil tarikan itu & bandingkan dgn nomor build yang sedang
+   dipakai halaman yang SEDANG berjalan sekarang (APP_BUILD_ID, dibaca
+   dari meta tag yang sama di <head> saat halaman ini pertama dimuat).
+   Beda -> berarti sudah ada index.html lebih baru ter-deploy di
+   server -> tampilkan tombol "Muat Ulang Sekarang". Sama -> sudah
+   versi terbaru. Kalau fetch gagal (offline/server tidak terjangkau),
+   tampil status error apa adanya, BUKAN diklaim "terbaru" secara
+   asal. Hasil & waktu cek terakhir disimpan ke localStorage LANGSUNG
+   (BUKAN lewat cloudStorage) -- ini murni cache tampilan per
+   perangkat, sama seperti pola 'zayapro_this_device_id' di
+   cloud-sync.js, SENGAJA tidak perlu ikut disinkron ke akun cloud. ---- */
+
+const UPDATE_VERSION_LAST_CHECK_KEY = 'zayapro_update_last_check_v1';
+
+// Satu-satunya sumber "versi berjalan" & "nomor build" -- dibaca dari
+// meta tag <head> (lihat index.html) supaya file itu tetap jadi
+// satu-satunya tempat yang perlu diubah tiap merilis versi baru,
+// bukan angka yang di-hardcode dobel di sini.
+const APP_VERSION_NUMBER = document.querySelector('meta[name="app-version"]')?.content || '1.0.0';
+const APP_BUILD_ID = document.querySelector('meta[name="app-build"]')?.content || '';
+
+// Riwayat perubahan aplikasi utk kartu Changelog -- urutan PALING
+// BARU di paling atas array. Entri paling atas otomatis ditandai
+// badge "Terbaru" & dibuka duluan oleh renderUpdateVersionChangelog()
+// di bawah. Tinggal tambah entri baru di paling atas tiap kali rilis
+// versi baru (& naikkan meta app-version/app-build di index.html),
+// tidak perlu ubah apa pun di markup HTML/CSS.
+const UPDATE_CHANGELOG_DATA = [
+  {
+    version: '1.0.0',
+    date: '30 Agustus 2026',
+    notes: [
+      'Rilis pertama ZAYAIN: catat uang masuk & uang keluar lengkap dengan kategori, keterangan, dan foto bukti/struk.',
+      'Halaman Laporan berisi ringkasan, grafik, dan filter per bulan maupun rentang tanggal custom.',
+      'Halaman Dompet serta Tagihan & Hutang untuk memantau sumber dana dan kewajiban yang perlu dibayar.',
+      'Sinkronisasi cloud opsional (masuk/daftar akun) lengkap dengan Manajemen Device, Kunci PIN, dan Login Biometrik.',
+      'Pelengkap: Fast Menu, Widget layar utama, pilihan Tema tampilan, dan Leaderboard.'
+    ]
+  }
+];
+
+function formatUpdateCheckTime(ts) {
+  try {
+    return new Date(ts).toLocaleString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) + ' WIB';
+  } catch (e) { return ''; }
+}
+
+// Disimpan LANGSUNG ke localStorage (bukan cloudStorage) -- lihat
+// catatan panjang di atas kenapa ini murni cache per perangkat.
+function readUpdateLastCheck() {
+  try {
+    const raw = localStorage.getItem(UPDATE_VERSION_LAST_CHECK_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) { return null; }
+}
+function writeUpdateLastCheck(data) {
+  try { localStorage.setItem(UPDATE_VERSION_LAST_CHECK_KEY, JSON.stringify(data)); } catch (e) { /* localStorage penuh/diblokir — abaikan */ }
+}
+
+// state: 'idle' | 'latest' | 'outdated' | 'error'
+function renderUpdateVersionStatus(state, message) {
+  const badge = document.getElementById('updateVersionStatusBadge');
+  const msgBox = document.getElementById('updateVersionCheckMsg');
+  const reloadBtn = document.getElementById('updateVersionReloadBtn');
+  const stateClass = state === 'latest' ? ' is-latest' : state === 'outdated' ? ' is-outdated' : state === 'error' ? ' is-error' : '';
+  if (badge) {
+    badge.className = 'uv-status-badge' + stateClass;
+    badge.textContent = state === 'latest' ? 'Versi Terbaru' : state === 'outdated' ? 'Update Tersedia' : state === 'error' ? 'Gagal Diperiksa' : 'Belum Diperiksa';
+  }
+  if (msgBox) {
+    if (message) {
+      msgBox.hidden = false;
+      msgBox.className = 'uv-check-msg' + stateClass;
+      msgBox.textContent = message;
+    } else {
+      msgBox.hidden = true;
+    }
+  }
+  if (reloadBtn) reloadBtn.hidden = state !== 'outdated';
+}
+
+function renderUpdateVersionLastCheckLabel() {
+  const el = document.getElementById('updateVersionLastCheckText');
+  const saved = readUpdateLastCheck();
+  if (!saved || !saved.checkedAt) {
+    if (el) el.textContent = 'Belum pernah diperiksa di perangkat ini.';
+    renderUpdateVersionStatus('idle', '');
+    return;
+  }
+  if (el) el.textContent = 'Terakhir diperiksa: ' + formatUpdateCheckTime(saved.checkedAt);
+  renderUpdateVersionStatus(saved.state, saved.message || '');
+}
+
+async function checkForAppUpdate() {
+  const card = document.getElementById('updateVersionCurrentCard');
+  const btn = document.getElementById('updateVersionCheckBtn');
+  if (!btn || btn.disabled) return;
+  btn.disabled = true;
+  btn.classList.add('is-checking');
+  card?.classList.add('is-refreshing');
+  let state, message;
+  try {
+    const bustUrl = location.pathname + location.search + (location.search ? '&' : '?') + '_uvcheck=' + Date.now();
+    const res = await fetch(bustUrl, { cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const html = await res.text();
+    const match = html.match(/<meta\s+name=["']app-build["']\s+content=["']([^"']*)["']/i);
+    const remoteBuild = match ? match[1] : '';
+    if (!remoteBuild) {
+      state = 'error';
+      message = 'Gagal membaca info versi dari server. Coba lagi beberapa saat lagi.';
+    } else if (remoteBuild !== APP_BUILD_ID) {
+      state = 'outdated';
+      message = 'Ada pembaruan baru tersedia di server. Muat ulang untuk memakai versi terbaru.';
+    } else {
+      state = 'latest';
+      message = 'Kamu sudah memakai versi terbaru ZAYAIN.';
+    }
+  } catch (e) {
+    state = 'error';
+    message = 'Gagal memeriksa pembaruan. Periksa koneksi internet kamu, lalu coba lagi.';
+  }
+  writeUpdateLastCheck({ checkedAt: Date.now(), state, message });
+  renderUpdateVersionLastCheckLabel();
+  btn.disabled = false;
+  btn.classList.remove('is-checking');
+  card?.classList.remove('is-refreshing');
+}
+
+function renderUpdateVersionChangelog() {
+  const list = document.getElementById('updateVersionChangelogList');
+  if (!list) return;
+  if (!UPDATE_CHANGELOG_DATA.length) {
+    list.innerHTML = '<p class="bantuan-empty">Belum ada riwayat pembaruan.</p>';
+    return;
+  }
+  list.innerHTML = UPDATE_CHANGELOG_DATA.map((entry, i) => `
+    <div class="bantuan-faq-item uv-changelog-item${i === 0 ? ' open' : ''}">
+      <button type="button" class="bantuan-faq-q">
+        <span class="bantuan-faq-q-title uv-changelog-item-title">
+          <span>Versi ${escapeHtml(entry.version)}</span>
+          ${i === 0 ? '<span class="device-mgmt-badge">Terbaru</span>' : ''}
+          <span class="uv-changelog-date">${escapeHtml(entry.date)}</span>
+        </span>
+        <svg class="bantuan-faq-caret" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+      <div class="bantuan-faq-a">
+        <ul class="uv-changelog-list-inner">
+          ${entry.notes.map((n) => `<li>${escapeHtml(n)}</li>`).join('')}
+        </ul>
+      </div>
+    </div>
+  `).join('');
+  list.querySelectorAll('.uv-changelog-item .bantuan-faq-q').forEach((q) => {
+    q.addEventListener('click', () => q.closest('.uv-changelog-item').classList.toggle('open'));
+  });
+}
+
+// Menyamakan label nomor versi statis di halaman lain (Tentang &
+// baris paling bawah Pengaturan) dgn APP_VERSION_NUMBER di atas,
+// supaya satu-satunya sumber angka versi tetap meta tag di index.html.
+['tentangVersionText', 'settingsPageVersionText'].forEach((id) => {
+  const el = document.getElementById(id);
+  if (el) el.textContent = APP_VERSION_NUMBER;
+});
+
+function renderUpdateVersionPage() {
+  const verEl = document.getElementById('updateVersionCurrentText');
+  if (verEl) verEl.textContent = 'v' + APP_VERSION_NUMBER;
+  renderUpdateVersionLastCheckLabel();
+  renderUpdateVersionChangelog();
+}
+
 function openUpdateVersionOverlay() {
   document.getElementById('updateVersionOverlay')?.classList.add('open');
   lockBodyScroll();
+  renderUpdateVersionPage();
 }
 function closeUpdateVersionOverlay() {
   document.getElementById('updateVersionOverlay')?.classList.remove('open');
@@ -10555,6 +10740,8 @@ function closeUpdateVersionOverlay() {
 }
 document.getElementById('updateVersionOpenBtn')?.addEventListener('click', openUpdateVersionOverlay);
 document.getElementById('updateVersionBackBtn')?.addEventListener('click', closeUpdateVersionOverlay);
+document.getElementById('updateVersionCheckBtn')?.addEventListener('click', checkForAppUpdate);
+document.getElementById('updateVersionReloadBtn')?.addEventListener('click', () => location.reload());
 
 /* ==========================================================
    PENGATURAN > PENGATURAN — "Leaderboard" khusus menu Pengaturan
