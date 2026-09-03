@@ -3554,6 +3554,49 @@ html.dark-mode .videodl-card{
 }
 html.dark-mode .videodl-platform-chip.videodl-active{background:var(--card);}
 
+/* ---- Tombol info "(!)" di header #videoDlOverlay (dulu icon gir
+   Pengaturan API) + balon kredit tool (#videoDlInfoPopover) -- muncul
+   TEPAT di bawah icon-nya sendiri (bukan modal/overlay terpisah),
+   nempel rata kanan supaya tidak kepotong tepi layar krn posisinya di
+   pojok kanan atas. Warna balon SENGAJA ungu (senada palet baru
+   .videodl-card) di atas latar oranye header, biar kelihatan sbg
+   "aksen" tool ini, bukan ikut oranye tema utama app. ---- */
+.videodl-info-wrap{position:relative;flex-shrink:0;}
+.videodl-info-btn{position:relative;z-index:1;}
+.videodl-info-btn[aria-expanded="true"]{background:rgba(255,255,255,0.32);}
+.videodl-info-popover{
+  position:absolute;top:calc(100% + 12px);right:0;z-index:5;
+  min-width:200px;max-width:min(78vw,260px);
+  background:linear-gradient(135deg,#6C63FF,#4338CA);color:#fff;
+  font-size:12.5px;font-weight:600;line-height:1.45;text-align:left;
+  padding:12px 14px;border-radius:14px;
+  box-shadow:0 10px 28px rgba(38,32,110,0.35);
+  opacity:0;visibility:hidden;transform:translateY(-6px) scale(0.96);transform-origin:top right;
+  transition:opacity .16s ease,transform .16s ease,visibility .16s;
+  pointer-events:none;
+}
+.videodl-info-popover strong{font-weight:800;}
+.videodl-info-popover.videodl-show{
+  opacity:1;visibility:visible;transform:translateY(0) scale(1);pointer-events:auto;
+}
+.videodl-info-popover-arrow{
+  position:absolute;top:-5px;right:14px;width:10px;height:10px;
+  background:#5B4FE0;transform:rotate(45deg);border-radius:2px;
+}
+/* ---- FIX z-index: ".lap-filter-head" (z-index:1) & ".videodl-page-body-cap"
+   (z-index:2, "topi" putih lengkung penghubung ke kartu) SAMA-SAMA anak
+   langsung ".videodl-sticky-head" -- tanpa fix ini, balon info yg
+   notabene DI DALAM .lap-filter-head ikut "terkunci" di bawah topi
+   putih itu (kepotong keliatan spt ketiban kartu) begitu tingginya
+   melewati batas header krn cap sengaja dikasih z-index lebih tinggi
+   drpd head. Solusinya: begitu balon lagi kebuka (.videodl-show),
+   NAIKKAN sementara z-index .lap-filter-head di atas cap (pakai
+   :has(), tanpa perlu JS tambahan) -- balik normal lagi otomatis pas
+   balon ditutup, jadi tidak mengganggu urutan lapis asli pas balon
+   tertutup (yg memang sengaja begitu utk cegah bug render lengkung
+   Safari/WebKit, lihat komentar ".videodl-page-body-cap" di atas). ---- */
+.videodl-sticky-head:has(.videodl-info-popover.videodl-show) .lap-filter-head{z-index:3;}
+
 /* ---- Kartu hasil (#videoDlResultBox) -- thumbnail + judul/durasi +
    tombol unduh, gaya kartu putih beradius sama dgn kartu lain di app
    ini (reuse pola .lap-filter-section). ---- */
@@ -3561,9 +3604,27 @@ html.dark-mode .videodl-platform-chip.videodl-active{background:var(--card);}
   background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow-sm);
   overflow:hidden;
 }
+.videodl-result-thumb-wrap{position:relative;}
 .videodl-result-thumb{
   width:100%;aspect-ratio:16/10;object-fit:cover;display:block;background:#00000010;
 }
+/* Tombol unduh thumbnail -- bulat, ngambang di pojok kanan-bawah gambar
+   sampul, background gelap tembus pandang spy kontras di thumbnail
+   apapun (terang/gelap). Diunduh lewat fetch->blob (BUKAN cuma <a
+   download> polos) krn kebanyakan host thumbnail (ytimg dll) itu
+   cross-origin & atribut download suka diabaikan browser buat kasus
+   itu; kalau fetch-nya keblokir CORS, fallback buka tab baru spy user
+   msh bisa simpan manual (lihat videoDlDownloadThumbnail di script.js).*/
+.videodl-thumb-dl-btn{
+  position:absolute;right:9px;bottom:9px;width:32px;height:32px;border-radius:999px;
+  display:flex;align-items:center;justify-content:center;border:none;cursor:pointer;
+  background:rgba(0,0,0,.55);color:#fff;backdrop-filter:blur(2px);
+  transition:transform .15s ease, background .15s ease;
+}
+.videodl-thumb-dl-btn:hover{background:rgba(0,0,0,.72);}
+.videodl-thumb-dl-btn:active{transform:scale(.88);}
+.videodl-thumb-dl-btn--loading{pointer-events:none;}
+.videodl-thumb-dl-btn--loading svg{animation:videodlResSpin .8s linear infinite;}
 .videodl-result-body{padding:12px 14px;display:flex;flex-direction:column;gap:8px;}
 .videodl-result-title{font-size:13.5px;font-weight:700;color:var(--ink);line-height:1.4;}
 .videodl-result-meta{font-size:11.5px;color:var(--ink-faint);}
@@ -3607,12 +3668,23 @@ html.dark-mode .videodl-platform-chip.videodl-active{background:var(--card);}
 .videodl-res-item--ready .videodl-res-item-ic{color:var(--primary-deep, var(--primary));}
 .videodl-res-item--ready .videodl-res-item-sub{color:var(--primary-deep, var(--primary));}
 /* Kartu lagi diproses (abis diklik, nunggu balasan /youtube/download)
-   -- ikon unduh diganti spinner (rotate 360deg loop niru pola
-   @keyframes avatarDashSpin yg sudah ada), tombol dinonaktifkan lewat
-   pointer-events biar tidak bisa diklik dobel. */
+   -- ikon unduh diganti RING PROGRES (lingkaran yg keisi bertahap
+   sesuai % simulasi dari videoDlStartFakeProgress, GANTI dari sekadar
+   rotate spinner polos spt sebelumnya), tombol dinonaktifkan lewat
+   pointer-events biar tidak bisa diklik dobel. Angka % berjalan jg
+   ditampilin di teks sub kartu (lihat videoDlStartFakeProgress). */
 .videodl-res-item--loading{opacity:0.75;pointer-events:none;}
-.videodl-res-item--loading .videodl-res-item-ic{animation:videodlResSpin .8s linear infinite;}
+.videodl-res-item--loading .videodl-res-item-ic{display:flex;}
+.videodl-progress-ring{transform-origin:center;animation:videodlRingBreathe 1.4s ease-in-out infinite;}
+.videodl-progress-ring-bar{transition:stroke-dashoffset .18s linear;}
+@keyframes videodlRingBreathe{0%,100%{opacity:1;}50%{opacity:.6;}}
 @keyframes videodlResSpin{to{transform:rotate(360deg);}}
+/* Bounce halus dipakai pas kartu "pending" baru sukses berubah jadi
+   "siap unduh", ATAU pas user nge-tap kartu yg SUDAH siap (<a href
+   download>) -- dipicu JS nambah class ini (+reflow biar bisa diulang
+   tiap klik), berhenti sendiri krn bukan infinite loop. */
+.videodl-res-item--pulse{animation:videodlItemPulse .38s cubic-bezier(.34,1.56,.64,1);}
+@keyframes videodlItemPulse{0%{transform:scale(1);}45%{transform:scale(.9);}100%{transform:scale(1);}}
 /* Kartu gagal (klik resolusi tapi /youtube/download-nya error) -- balik
    ke style netral spt semula tapi teks sub-nya SEMENTARA diganti pesan
    singkat warna merah oleh JS (videoDlResolveYoutubeFormat), baru balik
@@ -15402,7 +15474,12 @@ html.dark-mode .bd-row-close{
        Threads & Snack Video SENGAJA tidak ada di data-platform karena
        API yg dipakai belum mendukung 2 platform itu (lihat catatan di
        script.js) -- kalau linknya dari situ, pesan error yg jelas akan
-       muncul, bukan pura-pura berhasil. ---- -->
+       muncul, bukan pura-pura berhasil. X/Twitter SUDAH didukung API
+       yg sama (endpoint generik /v1/fetch, sama spt TikTok/Instagram/
+       Facebook) -- makanya cukup ditambah 1 chip "X / Twitter" +
+       deteksi host di videoDlDetectPlatform, TANPA butuh cabang kode
+       baru di alur fetch/render (lihat videoDlDetectPlatform &
+       videoDlRenderFetchResult di script.js). ---- -->
   <div class="detail-page-overlay lap-filter-overlay" id="videoDlOverlay">
     <div class="lap-filter-page">
       <div class="videodl-sticky-head">
@@ -15411,9 +15488,26 @@ html.dark-mode .bd-row-close{
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
           </button>
           <h2>Unduh Video</h2>
-          <button type="button" class="lap-filter-back-btn" id="videoDlSettingsBtn" aria-label="Pengaturan API Unduh Video">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-          </button>
+          <!-- ---- Icon "gir" (Pengaturan API) DIGANTI icon info "(!)" ----
+               Sebelumnya tombol ini membuka modal Pengaturan API key
+               (#videoDlSettingsModalOverlay) -- permintaan user sekarang
+               menggantinya jadi tombol info yg, saat diklik, menampilkan
+               balon kecil ("popover") berisi kredit tool di dekat icon-nya
+               sendiri, bukan membuka modal apa pun lagi. Modal Pengaturan
+               API lama & JS-nya SENGAJA dibiarkan utuh di file (tidak
+               dihapus) supaya gampang dipasang lagi via tombol lain kalau
+               suatu saat dibutuhkan -- cuma pemicunya (listener klik
+               #videoDlSettingsBtn lama) otomatis tidak lagi nyambung krn
+               ID tombolnya sudah berubah jadi videoDlInfoBtn. ---- -->
+          <div class="videodl-info-wrap">
+            <button type="button" class="lap-filter-back-btn videodl-info-btn" id="videoDlInfoBtn" aria-label="Info tentang tool ini" aria-expanded="false">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="7.5" x2="12" y2="12.5"/><line x1="12" y1="16.2" x2="12.01" y2="16.2"/></svg>
+            </button>
+            <div class="videodl-info-popover" id="videoDlInfoPopover" role="tooltip">
+              <span class="videodl-info-popover-arrow" aria-hidden="true"></span>
+              Tool ini dikembangkan oleh <strong>zayadev</strong>
+            </div>
+          </div>
         </div>
         <div class="videodl-page-body-cap" aria-hidden="true"></div>
       </div>
@@ -15432,6 +15526,7 @@ html.dark-mode .bd-row-close{
             <span class="videodl-platform-chip" data-platform="tiktok">TikTok</span>
             <span class="videodl-platform-chip" data-platform="instagram">Instagram</span>
             <span class="videodl-platform-chip" data-platform="facebook">Facebook</span>
+            <span class="videodl-platform-chip" data-platform="twitter">X/Twitter</span>
           </div>
 
           <div class="videodl-hero-panel">

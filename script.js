@@ -11064,6 +11064,37 @@ document.getElementById('videoDlSettingsClearBtn')?.addEventListener('click', ()
   showToast('Pengaturan Unduh Video dihapus.');
 });
 
+/* ---- Balon info "Tool ini dikembangkan oleh zayadev" (#videoDlInfoPopover)
+   -- dipicu tombol "(!)" (#videoDlInfoBtn) yg gantiin icon gir lama.
+   Klik tombol utk buka/tutup, klik di luar balon (atau tombol Kembali/
+   Esc) ikut menutup -- pola sederhana toggle class, TANPA openModal/
+   closeModal krn ini cuma balon kecil nempel di header, bukan overlay
+   modal penuh spt punya #videoDlSettingsModalOverlay di atas. ---- */
+(function initVideoDlInfoPopover() {
+  const btn = document.getElementById('videoDlInfoBtn');
+  const popover = document.getElementById('videoDlInfoPopover');
+  if (!btn || !popover) return;
+  const closeInfoPopover = () => {
+    popover.classList.remove('videodl-show');
+    btn.setAttribute('aria-expanded', 'false');
+  };
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const willShow = !popover.classList.contains('videodl-show');
+    popover.classList.toggle('videodl-show', willShow);
+    btn.setAttribute('aria-expanded', String(willShow));
+  });
+  document.addEventListener('click', (e) => {
+    if (!popover.classList.contains('videodl-show')) return;
+    if (e.target === btn || btn.contains(e.target) || popover.contains(e.target)) return;
+    closeInfoPopover();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeInfoPopover();
+  });
+  document.getElementById('videoDlBackBtn')?.addEventListener('click', closeInfoPopover);
+})();
+
 /* ---- Deteksi platform dari URL -- dipakai utk menyorot chip info
    (#videoDlPlatformRow) & menolak lebih awal link dari platform yg
    belum didukung (Threads, Snack Video), drpd baru gagal di respons
@@ -11075,6 +11106,7 @@ function videoDlDetectPlatform(url) {
   if (/tiktok\.com$/.test(host)) return 'tiktok';
   if (/instagram\.com$/.test(host)) return 'instagram';
   if (/facebook\.com$|fb\.watch$/.test(host)) return 'facebook';
+  if (/^(twitter\.com|x\.com)$/.test(host)) return 'twitter';
   if (/threads\.net$/.test(host)) return 'threads-unsupported';
   if (/snackvideo\.com$/.test(host)) return 'snack-unsupported';
   return 'unknown';
@@ -11169,6 +11201,85 @@ function videoDlFormatBytes(bytes) {
 const VIDEODL_DOWNLOAD_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
 const VIDEODL_MUSIC_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>';
 
+// ---- Ring progres (GANTI animasi ikon lama yg cuma rotate polos) --
+// lingkaran track abu2 tipis + 1 lingkaran "bar" yg stroke-dashoffset-
+// nya digeser sesuai % biar kelihatan keisi bertahap. Dipakai di kartu
+// resolusi YouTube pas nunggu balasan /youtube/download (lihat
+// videoDlStartFakeProgress persis di bawah ini). ----
+const VIDEODL_RING_R = 9;
+const VIDEODL_RING_CIRCUMFERENCE = 2 * Math.PI * VIDEODL_RING_R;
+function videoDlProgressRingSvg() {
+  return `<svg class="videodl-progress-ring" width="16" height="16" viewBox="0 0 24 24" fill="none">
+    <circle class="videodl-progress-ring-track" cx="12" cy="12" r="${VIDEODL_RING_R}" stroke="currentColor" stroke-width="3" opacity="0.22"/>
+    <circle class="videodl-progress-ring-bar" cx="12" cy="12" r="${VIDEODL_RING_R}" stroke="currentColor" stroke-width="3" stroke-linecap="round"
+      stroke-dasharray="${VIDEODL_RING_CIRCUMFERENCE}" stroke-dashoffset="${VIDEODL_RING_CIRCUMFERENCE}" transform="rotate(-90 12 12)"/>
+  </svg>`;
+}
+
+// Ganti ikon kartu jadi ring progres + jalanin simulasi angka 0 -> ~92%
+// selagi nunggu (API /youtube/download cuma balas SEKALI di akhir,
+// TIDAK ada event progres asli dari servernya utk request JSON kecil
+// spt ini -- jadi persen di sini simulasi, makin dekat 92% makin
+// pelan biar kerasa natural, & sengaja TIDAK pernah nyampe 100% duluan
+// sblm respons beneran datang). Return {finish,stop} buat dipanggil
+// pas hasil akhirnya udah tau (sukses/gagal) di pemanggil.
+function videoDlStartFakeProgress(item, subEl) {
+  const icEl = item.querySelector('.videodl-res-item-ic');
+  if (icEl) icEl.innerHTML = videoDlProgressRingSvg();
+  const bar = icEl?.querySelector('.videodl-progress-ring-bar');
+  let pct = 0;
+  const paint = (p) => {
+    pct = p;
+    if (bar) bar.style.strokeDashoffset = String(VIDEODL_RING_CIRCUMFERENCE * (1 - p / 100));
+    if (subEl) subEl.textContent = `Memproses... ${Math.round(p)}%`;
+  };
+  paint(2);
+  const timer = setInterval(() => {
+    paint(Math.min(pct + (92 - pct) * 0.08 + 0.3, 92));
+  }, 200);
+  return {
+    finish() { clearInterval(timer); paint(100); },
+    stop() { clearInterval(timer); },
+  };
+}
+
+// Nama file aman dari judul video/konten (buat nama file thumbnail yg
+// diunduh) -- huruf kecil semua, spasi/simbol jadi "-", dipotong biar
+// tidak kepanjangan.
+function videoDlSlugFilename(title) {
+  return (title || 'thumbnail').toString().trim().toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60) || 'thumbnail';
+}
+
+// Unduh gambar thumbnail lewat fetch->blob (bukan cuma <a download>
+// polos) krn kebanyakan host thumbnail (i.ytimg.com dll) itu
+// cross-origin, & atribut `download` browser sering diabaikan utk
+// resource cross-origin spt itu (jadinya cuma kebuka di tab, bukan
+// keunduh). Kalau fetch-nya keblokir CORS, fallback buka tab baru spy
+// user msh bisa simpan manual lewat "Simpan gambar sebagai...".
+async function videoDlDownloadThumbnail(url, filenameBase) {
+  try {
+    const res = await fetch(url, { mode: 'cors' });
+    if (!res.ok) throw new Error('fetch thumbnail gagal');
+    const blob = await res.blob();
+    let ext = 'jpg';
+    if (blob.type && blob.type.includes('/')) ext = blob.type.split('/')[1].replace('jpeg', 'jpg');
+    const objUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = objUrl;
+    a.download = `${filenameBase || 'thumbnail'}.${ext}`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(objUrl), 4000);
+    return true;
+  } catch (err) {
+    console.warn('[UnduhVideo] Gagal unduh thumbnail via fetch, fallback buka tab baru:', err);
+    window.open(url, '_blank', 'noopener');
+    return false;
+  }
+}
+
 // Satu kartu di grid (.videodl-res-grid) -- 2 bentuk:
 //  - "siap" (state.ready=true): sudah punya link, langsung <a href
 //    download> yg bisa diklik user kapan saja.
@@ -11197,7 +11308,13 @@ function videoDlResItemHtml({ format, label, sub, downloadUrl, icon }) {
 function videoDlRenderCard({ thumbnailUrl, title, duration, resItemsHtml, albumHtml }) {
   const box = document.getElementById('videoDlResultBox');
   if (!box) return;
-  const thumb = thumbnailUrl ? `<img class="videodl-result-thumb" src="${thumbnailUrl}" alt="">` : '';
+  const thumb = thumbnailUrl ? `
+      <div class="videodl-result-thumb-wrap">
+        <img class="videodl-result-thumb" src="${thumbnailUrl}" alt="">
+        <button type="button" class="videodl-thumb-dl-btn" data-thumb-url="${thumbnailUrl}" data-thumb-name="${videoDlSlugFilename(title)}-thumbnail" title="Unduh thumbnail" aria-label="Unduh thumbnail">
+          ${VIDEODL_DOWNLOAD_ICON}
+        </button>
+      </div>` : '';
   const durTxt = videoDlFormatDuration(duration);
   box.innerHTML = `
     <div class="videodl-result-card">
@@ -11278,16 +11395,45 @@ function videoDlRenderYoutubeInfo(info) {
   });
 }
 
-// ---- Klik salah satu kartu "pending" (khusus YouTube) -- 1 listener
-// delegasi di #videoDlResultBox (bukan per-kartu, krn kartu-kartunya
-// baru ada setelah innerHTML diisi di videoDlRenderYoutubeInfo di atas)
-// -- baru DI SINILAH /youtube/download beneran dipanggil (kredit
-// 15/25 kepotong), dgn `format` PERSIS sesuai kartu yg diklik (bukan
-// nebak2 kandidat spt kode lama). Worker (cloudflare-worker.js) sudah
-// disesuaikan supaya meneruskan `format` ini apa adanya ke FastSaverAPI
-// (baru fallback ke RapidAPI kalau format PERSIS ini gagal), lihat
-// catatan lengkap di sana. ---- */
+// ---- 1 listener delegasi di #videoDlResultBox yg nanganin 3 jenis
+// klik di dalam kartu hasil (kartu-kartunya baru ada setelah innerHTML
+// diisi videoDlRenderCard, jadi HARUS delegasi bukan per-elemen):
+//   1) tombol unduh thumbnail (.videodl-thumb-dl-btn)
+//   2) kartu resolusi yg SUDAH siap (.videodl-res-item--ready, <a>) --
+//      cuma dikasih animasi bounce sesaat sbg feedback klik, request
+//      unduhnya sendiri jalan alami lewat atribut `download` browser.
+//   3) kartu resolusi yg MASIH pending (khusus YouTube, data-pending)
+//      -- DI SINILAH /youtube/download beneran dipanggil (kredit
+//      15/25 kepotong), dgn `format` PERSIS sesuai kartu yg diklik.
+//      Worker (cloudflare-worker.js) sudah disesuaikan supaya
+//      meneruskan `format` ini apa adanya ke FastSaverAPI (baru
+//      fallback ke RapidAPI kalau format PERSIS ini gagal). ---- */
 document.getElementById('videoDlResultBox')?.addEventListener('click', async (e) => {
+  // ---- (1) Tombol unduh thumbnail ----
+  const thumbBtn = e.target.closest('.videodl-thumb-dl-btn');
+  if (thumbBtn) {
+    if (thumbBtn.classList.contains('videodl-thumb-dl-btn--loading')) return;
+    const thumbUrl = thumbBtn.dataset.thumbUrl;
+    if (!thumbUrl) return;
+    thumbBtn.classList.add('videodl-thumb-dl-btn--loading');
+    const ok = await videoDlDownloadThumbnail(thumbUrl, thumbBtn.dataset.thumbName);
+    thumbBtn.classList.remove('videodl-thumb-dl-btn--loading');
+    if (!ok) videoDlSetStatus('Thumbnail tidak bisa diunduh langsung (dibuka di tab baru, simpan manual dari sana).', true);
+    return;
+  }
+
+  // ---- (2) Kartu yg sudah siap -- cuma kasih feedback bounce sesaat,
+  // tidak preventDefault sama sekali biar unduhan lewat href/download
+  // bawaan browser tetap jalan seperti biasa. ----
+  const readyItem = e.target.closest('.videodl-res-item--ready');
+  if (readyItem) {
+    readyItem.classList.remove('videodl-res-item--pulse');
+    void readyItem.offsetWidth; // reflow paksa biar animasi bisa diulang tiap klik
+    readyItem.classList.add('videodl-res-item--pulse');
+    return;
+  }
+
+  // ---- (3) Kartu pending (khusus YouTube) ----
   const item = e.target.closest('.videodl-res-item[data-pending="1"]');
   if (!item) return;
   const url = (videoDlUrlInput?.value || '').trim();
@@ -11302,7 +11448,9 @@ document.getElementById('videoDlResultBox')?.addEventListener('click', async (e)
 
   item.classList.add('videodl-res-item--loading');
   item.classList.remove('videodl-res-item--failed');
-  if (subEl) subEl.textContent = 'Memproses...';
+  // Ganti ikon jadi ring progres + mulai simulasi angka % berjalan di
+  // teks sub (GANTI dari sekadar teks statis "Memproses..." lama).
+  const progress = videoDlStartFakeProgress(item, subEl);
 
   // Batas waktu lebih longgar lewat Worker (40 detik) krn di sana bisa
   // nyoba >1 provider (FastSaverAPI -> fallback RapidAPI) sblm menyerah.
@@ -11321,10 +11469,13 @@ document.getElementById('videoDlResultBox')?.addEventListener('click', async (e)
     const data = await res.json();
     if (!data.ok) throw new Error(videoDlFriendlyError(data));
 
-    // Sukses -> ganti kartu <button> ini jadi <a href download> "siap",
-    // niru gaya .videodl-res-item--ready yg sama dgn platform lain.
+    // Ring dipaksa penuh (100%) dulu spy user sempat lihat progresnya
+    // "selesai", baru abis itu kartu <button> ini diganti jadi <a href
+    // download> "siap", niru gaya .videodl-res-item--ready platform lain.
+    progress.finish();
+    await new Promise((r) => setTimeout(r, 260));
     const ready = document.createElement('a');
-    ready.className = 'videodl-res-item videodl-res-item--ready';
+    ready.className = 'videodl-res-item videodl-res-item--ready videodl-res-item--pulse';
     ready.href = data.download_url;
     ready.download = '';
     ready.target = '_blank';
@@ -11338,13 +11489,17 @@ document.getElementById('videoDlResultBox')?.addEventListener('click', async (e)
     // status singkat spy user langsung klik, bukan disimpan lama2.
     videoDlSetStatus('Link siap -- ketuk kartu hijau utk mulai unduh (link ini kedaluwarsa ±10 menit).', false);
   } catch (err) {
+    progress.stop();
     item.classList.remove('videodl-res-item--loading');
     item.classList.add('videodl-res-item--failed');
     if (subEl) subEl.textContent = err.name === 'AbortError' ? 'Waktu habis, coba lagi' : 'Gagal, coba lagi';
     videoDlSetStatus(err.message || 'Gagal mengambil link unduhan.', true);
-    // Balikin teks ukuran file semula setelah beberapa detik, biar kartu
-    // tidak "nyangkut" permanen di pesan error & user bisa coba ulang.
+    // Balikin ikon unduh & teks ukuran file semula setelah beberapa
+    // detik, biar kartu tidak "nyangkut" permanen di pesan error & user
+    // bisa coba ulang.
     setTimeout(() => {
+      const icEl = item.querySelector('.videodl-res-item-ic');
+      if (icEl) icEl.innerHTML = format === 'audio' ? VIDEODL_MUSIC_ICON : VIDEODL_DOWNLOAD_ICON;
       if (subEl && item.classList.contains('videodl-res-item--failed')) subEl.textContent = originalSub;
       item.classList.remove('videodl-res-item--failed');
     }, 3000);
