@@ -11264,6 +11264,20 @@ function videoDlSafeFilename(name) {
     .replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120) || 'video';
 }
 
+// Alihkan URL file/thumbnail (CDN fastsaver.io dkk) lewat endpoint
+// /v1/proxy-download di Worker (cloudflare-worker.js) -- Worker itulah yg
+// betul2 fetch ke fastsaver.io/CDN lain (server-to-server, TIDAK lewat
+// browser user), lalu stream balik ke sini. Efeknya: link asli sumbernya
+// (mis. api.fastsaver.io/v1/tunnel?id=...) TIDAK PERNAH muncul di tab
+// Network/address bar browser user -- yg kelihatan cuma domain Worker
+// sendiri. Kalau field "URL Cloudflare Worker" di Pengaturan dikosongkan
+// user, fallback ke url asli apa adanya (perilaku lama).
+function videoDlProxiedUrl(url) {
+  const workerUrl = videoDlSettings.workerUrl;
+  if (!workerUrl) return url;
+  return `${workerUrl}/v1/proxy-download?url=${encodeURIComponent(url)}`;
+}
+
 // Unduh gambar thumbnail lewat fetch->blob (bukan cuma <a download>
 // polos) krn kebanyakan host thumbnail (i.ytimg.com dll) itu
 // cross-origin, & atribut `download` browser sering diabaikan utk
@@ -11272,7 +11286,7 @@ function videoDlSafeFilename(name) {
 // user msh bisa simpan manual lewat "Simpan gambar sebagai...".
 async function videoDlDownloadThumbnail(url, filenameBase) {
   try {
-    const res = await fetch(url, { mode: 'cors' });
+    const res = await fetch(videoDlProxiedUrl(url), { mode: 'cors' });
     if (!res.ok) throw new Error('fetch thumbnail gagal');
     const blob = await res.blob();
     let ext = 'jpg';
@@ -11288,7 +11302,10 @@ async function videoDlDownloadThumbnail(url, filenameBase) {
     return true;
   } catch (err) {
     console.warn('[UnduhVideo] Gagal unduh thumbnail via fetch, fallback buka tab baru:', err);
-    window.open(url, '_blank', 'noopener');
+    // Fallback ini jg pakai videoDlProxiedUrl (BUKAN url asli) -- kalau
+    // sampai jatuh ke sini pun, tab baru yg kebuka tetap domain Worker,
+    // bukan fastsaver.io langsung.
+    window.open(videoDlProxiedUrl(url), '_blank', 'noopener');
     return false;
   }
 }
@@ -11306,7 +11323,7 @@ async function videoDlDownloadThumbnail(url, filenameBase) {
 // jg ikut lama, tapi itu jg akan terjadi sama saja walau lewat tab baru.
 async function videoDlDownloadFile(url, filenameBase, ext) {
   try {
-    const res = await fetch(url, { mode: 'cors' });
+    const res = await fetch(videoDlProxiedUrl(url), { mode: 'cors' });
     if (!res.ok) throw new Error('fetch file gagal, status ' + res.status);
     const blob = await res.blob();
     let realExt = ext;
@@ -11327,7 +11344,8 @@ async function videoDlDownloadFile(url, filenameBase, ext) {
     return true;
   } catch (err) {
     console.warn('[UnduhVideo] Gagal unduh file via fetch, fallback buka tab baru:', err);
-    window.open(url, '_blank', 'noopener');
+    // Sama spt fallback thumbnail di atas -- pakai videoDlProxiedUrl.
+    window.open(videoDlProxiedUrl(url), '_blank', 'noopener');
     return false;
   }
 }
@@ -11341,7 +11359,18 @@ async function videoDlDownloadFile(url, filenameBase, ext) {
 function videoDlResItemHtml({ format, label, sub, downloadUrl, icon }) {
   const ic = icon || VIDEODL_DOWNLOAD_ICON;
   if (downloadUrl) {
-    return `<a class="videodl-res-item videodl-res-item--ready" href="${downloadUrl}" download target="_blank" rel="noopener">
+    // href dibuat lewat videoDlProxiedUrl (bukan downloadUrl mentah dari
+    // fastsaver.io) supaya bahkan kalau klik-nya "lolos" dari listener JS
+    // (mis. user shift/middle-klik, atau lihat status bar pas hover),
+    // yg kelihatan tetap domain Worker sendiri -- bukan link fastsaver.io
+    // aslinya. Klik NORMAL tetap ditangani listener #videoDlResultBox
+    // (e.preventDefault + videoDlDownloadFile via fetch->blob), href ini
+    // cuma jaring pengaman.
+    // data-raw-url nyimpen url ASLI (belum diproksi) -- dipakai listener
+    // klik #videoDlResultBox yg manggil videoDlDownloadFile(url,...), krn
+    // fungsi itu SUDAH memproksi sendiri lewat videoDlProxiedUrl (baca
+    // href yg sudah diproksi lagi di sini bakal double-proxy/rusak).
+    return `<a class="videodl-res-item videodl-res-item--ready" href="${videoDlProxiedUrl(downloadUrl)}" data-raw-url="${escapeAttr(downloadUrl)}" download target="_blank" rel="noopener">
       <span class="videodl-res-item-ic">${ic}</span>
       <span class="videodl-res-item-label">${label}</span>
       <span class="videodl-res-item-sub">${sub || ''}</span>
@@ -11394,7 +11423,7 @@ function videoDlAlbumHtml(items) {
   return `<div class="videodl-album-grid">${items.map((it, i) => `
     <div class="videodl-album-item">
       <img src="${it.thumbnail_url || it.download_url}" alt="">
-      <a href="${it.download_url}" download target="_blank" rel="noopener" aria-label="Unduh gambar ${i + 1}">
+      <a href="${videoDlProxiedUrl(it.download_url)}" data-raw-url="${escapeAttr(it.download_url)}" class="videodl-album-dl" download target="_blank" rel="noopener" aria-label="Unduh gambar ${i + 1}">
         ${VIDEODL_DOWNLOAD_ICON}
       </a>
     </div>`).join('')}</div>`;
@@ -11494,7 +11523,12 @@ document.getElementById('videoDlResultBox')?.addEventListener('click', async (e)
     readyItem.classList.remove('videodl-res-item--pulse');
     void readyItem.offsetWidth; // reflow paksa biar animasi bisa diulang tiap klik
     readyItem.classList.add('videodl-res-item--pulse', 'videodl-res-item--loading');
-    const url = readyItem.getAttribute('href');
+    // Ambil url ASLI dari data-raw-url (BUKAN href, yg sudah diproksi lewat
+    // videoDlProxiedUrl di videoDlResItemHtml) -- videoDlDownloadFile di
+    // bawah yg akan memproksinya, jadi kalau baca href di sini malah
+    // double-proxy. Fallback ke href kalau data-raw-url entah kenapa
+    // kosong (mis. kartu lama sblm update ini).
+    const url = readyItem.dataset.rawUrl || readyItem.getAttribute('href');
     const label = readyItem.querySelector('.videodl-res-item-label')?.textContent || 'file';
     const isAudio = /audio/i.test(label);
     const box = document.getElementById('videoDlResultBox');
@@ -11510,6 +11544,22 @@ document.getElementById('videoDlResultBox')?.addEventListener('click', async (e)
     const ok = url ? await videoDlDownloadFile(url, filenameBase, isAudio ? 'mp3' : undefined) : false;
     readyItem.classList.remove('videodl-res-item--loading');
     if (!ok) videoDlSetStatus('File tidak bisa diunduh langsung (dibuka di tab baru, simpan manual dari sana).', true);
+    return;
+  }
+
+  // ---- (2b) Item gambar di grid album (carousel IG/Pinterest dst) --
+  // pola SAMA PERSIS dgn poin (2) di atas (preventDefault + fetch->blob
+  // via videoDlDownloadFile), cuma beda kelas krn album TIDAK ikut
+  // restrukturisasi grid resolusi (lihat komentar videoDlAlbumHtml). ----
+  const albumItem = e.target.closest('.videodl-album-dl');
+  if (albumItem) {
+    e.preventDefault();
+    if (albumItem.classList.contains('videodl-res-item--loading')) return;
+    albumItem.classList.add('videodl-res-item--loading');
+    const url = albumItem.dataset.rawUrl || albumItem.getAttribute('href');
+    const ok = url ? await videoDlDownloadFile(url, videoDlSafeFilename('gambar (by.zayadev)'), 'jpg') : false;
+    albumItem.classList.remove('videodl-res-item--loading');
+    if (!ok) videoDlSetStatus('Gambar tidak bisa diunduh langsung (dibuka di tab baru, simpan manual dari sana).', true);
     return;
   }
 
@@ -11556,7 +11606,13 @@ document.getElementById('videoDlResultBox')?.addEventListener('click', async (e)
     await new Promise((r) => setTimeout(r, 260));
     const ready = document.createElement('a');
     ready.className = 'videodl-res-item videodl-res-item--ready videodl-res-item--pulse';
-    ready.href = data.download_url;
+    // href diproksi (lihat videoDlProxiedUrl) + data-raw-url simpan link
+    // asli -- pola SAMA PERSIS dgn videoDlResItemHtml di atas, supaya link
+    // tunnel FastSaverAPI (mis. api.fastsaver.io/v1/tunnel?id=...) TIDAK
+    // ketauan user lewat href/status bar, & listener klik #videoDlResultBox
+    // (poin 2 di atas) baca data-raw-url ini utk videoDlDownloadFile.
+    ready.href = videoDlProxiedUrl(data.download_url);
+    ready.dataset.rawUrl = data.download_url;
     ready.download = '';
     ready.target = '_blank';
     ready.rel = 'noopener';

@@ -63,6 +63,35 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Headers': 'Content-Type',
 };
 
+// ---- Daftar domain CDN yg BOLEH diambilkan lewat /v1/proxy-download di
+// bawah -- supaya worker publik ini TIDAK jadi "open proxy" bebas (asal
+// terima url APA SAJA dari browser manapun & meneruskannya balik dgn CORS
+// terbuka). HANYA domain yg memang dikembalikan sbg `download_url` oleh
+// FastSaverAPI (biasanya subdomain api.fastsaver.io sendiri, lihat contoh
+// "/v1/tunnel?id=...") atau fallback RapidAPI YouTube (googlevideo.com)
+// yg diizinkan. Kalau ada platform lain yg ternyata CDN-nya beda &
+// unduhannya gagal (lihat detail error di respons), tambahkan domainnya
+// ke daftar ini. ----
+const ALLOWED_PROXY_HOST_SUFFIXES = [
+  'fastsaver.io',
+  'googlevideo.com',   // RapidAPI YouTube fallback
+  'fbcdn.net',          // Facebook/Instagram
+  'cdninstagram.com',
+  'tiktokcdn.com',
+  'tiktokcdn-us.com',
+  'twimg.com',          // X/Twitter
+  'pinimg.com',         // Pinterest
+  'rutube.ru',
+];
+
+function isAllowedProxyUrl(rawUrl) {
+  let u;
+  try { u = new URL(rawUrl); } catch (e) { return false; }
+  if (u.protocol !== 'https:') return false;
+  const host = u.hostname.toLowerCase();
+  return ALLOWED_PROXY_HOST_SUFFIXES.some((suf) => host === suf || host.endsWith('.' + suf));
+}
+
 function jsonResponse(obj, status = 200) {
   return new Response(JSON.stringify(obj), {
     status,
@@ -226,6 +255,44 @@ export default {
     }
 
     const incoming = new URL(request.url);
+
+    // ---- Proxy unduh file sungguhan (video/audio/thumbnail) -- INI YG
+    // BIKIN link asli (mis. api.fastsaver.io/v1/tunnel?id=...) TIDAK
+    // PERNAH terlihat browser user sama sekali: frontend (lihat
+    // videoDlDownloadFile/videoDlDownloadThumbnail di script.js) fetch ke
+    // Worker INI (bukan lagi langsung ke fastsaver.io), Worker inilah yg
+    // ambil file byte-nya server-to-server lalu di-stream balik ke
+    // browser. Karena request ke fastsaver.io terjadi di sisi Worker
+    // (Cloudflare), URL aslinya TIDAK PERNAH muncul di tab Network/address
+    // bar browser user -- beda dgn sebelumnya yg pakai <a href download
+    // target="_blank"> polos ke link fastsaver.io langsung (diabaikan
+    // atribut `download`-nya krn cross-origin, jadi malah NAVIGASI &
+    // ketauan link aslinya). ----
+    if (incoming.pathname === '/v1/proxy-download' && request.method === 'GET') {
+      const target = incoming.searchParams.get('url');
+      if (!target || !isAllowedProxyUrl(target)) {
+        return jsonResponse({ ok: false, detail: 'URL sumber unduhan kosong/tidak diizinkan.' }, 400);
+      }
+      try {
+        const upstreamRes = await fetch(target, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+        if (!upstreamRes.ok || !upstreamRes.body) {
+          return jsonResponse({ ok: false, detail: 'Sumber unduhan gagal diambil (status ' + upstreamRes.status + ').' }, 502);
+        }
+        const headers = new Headers(CORS_HEADERS);
+        const ct = upstreamRes.headers.get('Content-Type');
+        const cl = upstreamRes.headers.get('Content-Length');
+        if (ct) headers.set('Content-Type', ct);
+        if (cl) headers.set('Content-Length', cl);
+        // "attachment" tanpa filename -- nama file sungguhan sudah
+        // diatur sendiri di sisi frontend lewat atribut `a.download`
+        // (lihat videoDlDownloadFile), header ini cuma jaga-jaga kalau
+        // browser sempat menampilkan filename dari respons ini.
+        headers.set('Content-Disposition', 'attachment');
+        return new Response(upstreamRes.body, { status: 200, headers });
+      } catch (err) {
+        return jsonResponse({ ok: false, detail: 'Worker gagal mengambil file: ' + err.message }, 502);
+      }
+    }
 
     // ---- Endpoint khusus YouTube: FastSaverAPI dulu, fallback RapidAPI ----
     if (incoming.pathname === '/v1/youtube/download' && request.method === 'POST') {

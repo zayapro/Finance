@@ -1368,7 +1368,17 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
    kotak header ikut naik -- radius topi putih jadi tidak pernah
    ketutup lagi. Lihat juga penghapusan aturan :has() di bawah
    (".videodl-page-body-cap") yg dulu jadi biang keroknya. */
-.videodl-sticky-head .lap-filter-head{position:relative;}
+.videodl-sticky-head .lap-filter-head{position:relative;z-index:auto;}
+/* z-index:auto WAJIB ditulis eksplisit di sini (bukan cuma hilangkan
+   deklarasinya) -- aturan global ".lap-filter-head{z-index:1;}" di atas
+   (dipakai halaman lain jg) tetap berlaku kalau tidak di-override eksplisit,
+   krn selector lebih spesifik cuma menang per-PROPERTY yg memang dituliskan
+   ulang, bukan "reset" property lain yg tidak disebut. Tanpa baris ini,
+   .lap-filter-head diam2 tetap z-index:1 (bikin stacking context sendiri),
+   jadi balon info (.videodl-info-popover, z-index:5) yg ada di DALAMNYA
+   ikut terkunci max level 1 -- ketutup "topi" putih .videodl-page-body-cap
+   (z-index:2) yg notabene levelnya lebih tinggi. Bug: "balon info kepotong
+   topi putih pas tombol (!) diklik". */
 .videodl-page-body-cap{
   position:relative;z-index:2;
   background:var(--card);
