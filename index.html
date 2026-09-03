@@ -10847,10 +10847,51 @@ select#categoryFilter[hidden]{display:none;}
 .ws-reset-row{display:flex;justify-content:flex-end;margin-top:14px;}
 
 /* ============ HALAMAN WIDGET (HOME SCREEN) ============
-   Kartu pratinjau + label ukuran dipakai khusus di halaman "Widget"
-   (#widgetOverlay). Daftar on/off-nya sendiri memakai ulang
-   .ws-group-label/.ws-list/.ws-row/.ws-switch/.ws-note/.ws-reset-row
-   di atas supaya seragam dengan "Pengaturan Widget". */
+   Header banner oren (position:sticky) + badan kartu putih radius
+   yang "menumpang" ke atas ke dalam banner -- dipakai khusus di
+   halaman "Widget" (#widgetOverlay), niru pola persis
+   .bd-page-banner/.bd-sticky-head/.bd-page-body yang sudah ada di
+   halaman "Tagihan & Hutang" supaya senada dgn halaman lain di app.
+   Daftar on/off-nya sendiri memakai ulang .ws-group-label/.ws-list/
+   .ws-row/.ws-switch/.ws-note/.ws-reset-row yang sudah ada. */
+/* ---- Fix "banner bocor saat discroll" (overscroll iOS), pola SAMA
+   PERSIS dgn #bdAllOverlay: gradasi latar oren->putih dipasang di ID
+   overlay-nya sendiri (bukan cuma di banner) supaya area kosong yang
+   sempat kelihatan saat overscroll tetap senada, bukan warna
+   var(--paper) polos. Angka 130/175 disesuaikan dgn tinggi banner
+   versi baris (tombol kembali + judul + subjudul), lebih pendek dari
+   punya #bdAllOverlay (yang bannernya masih menyatu dgn kartu
+   ringkasan+tab). */
+#widgetOverlay{
+  background:linear-gradient(180deg,
+    var(--banner-orange) 0px,
+    var(--banner-orange) 130px,
+    #FFFFFF 175px,
+    #FFFFFF 100%);
+}
+html.dark-mode #widgetOverlay{background:var(--paper);}
+.wpg-banner-row{
+  display:flex;align-items:center;gap:12px;
+  /* Fluid, sama formula clamp dgn .bd-page-banner-simple supaya
+     tinggi banner tetap senada di semua ukuran layar. */
+  padding:calc(clamp(14px,4vw,18px) + env(safe-area-inset-top,0px)) clamp(16px,3vw,20px) clamp(30px,7vw,44px);
+}
+.wpg-back-btn{
+  flex-shrink:0;width:36px;height:36px;border-radius:13px;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(255,255,255,0.16);border:1px solid rgba(255,255,255,0.22);
+  color:#fff;transition:background .15s ease, transform .12s ease;
+  touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+}
+.wpg-back-btn:hover{background:rgba(255,255,255,0.26);}
+.wpg-back-btn:active{transform:scale(0.94);}
+.wpg-banner-titles{flex:1;min-width:0;}
+.wpg-banner-titles .bd-page-banner-title{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.wpg-banner-sub{
+  display:block;color:rgba(255,248,241,0.8);font-size:12px;font-weight:600;margin-top:3px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.wpg-page-body{padding-top:22px;}
 .hw-size-chip{
   display:inline-flex;align-items:center;font-size:10px;font-weight:800;padding:2px 7px;margin-left:7px;
   border-radius:999px;background:rgba(37,99,235,0.1);color:var(--forest-glow);text-transform:uppercase;letter-spacing:.03em;
@@ -14632,28 +14673,39 @@ html.dark-mode .bd-row-close{
   <!-- ===== HALAMAN "WIDGET" (#widgetOverlay) =====
        Halaman di Pengaturan > Pengaturan, dibuka dari baris "Widget"
        (#widgetOpenBtn) tepat di bawah baris "Manajemen Device".
-       Struktur header memakai pola .detail-page-overlay >
-       .detail-page > .detail-page-head (SAMA PERSIS dgn
-       #widgetSettingsOverlay/"Pengaturan Widget") supaya konsisten
-       dgn halaman-halaman lain, lalu badan halaman memakai ulang
-       kelas .ws-group-label/.ws-list/.ws-row/.ws-switch/.ws-note/
-       .ws-reset-row dari "Pengaturan Widget" untuk pola on/off yang
-       sama persis -- ditambah kelas baru berprefiks "hw-" (Home
-       Widget) khusus untuk pratinjau widget layar utama HP. Lihat
-       CSS "HALAMAN WIDGET (HOME SCREEN)" & blok JS
-       "WIDGET LAYAR UTAMA" di script.js untuk logikanya. ---- -->
+
+       REDESIGN (permintaan user): sebelumnya header halaman ini pakai
+       .detail-page-head polos (putih, tanpa banner) -- sekarang
+       diganti banner oren MENEMPEL (position:sticky) persis pola
+       .bd-page-banner/.bd-sticky-head yang sudah dipakai di halaman
+       "Tagihan & Hutang" (#bdAllOverlay), lalu badan halaman jadi
+       SATU kartu putih besar bersudut lengkung yang "menumpang" ke
+       atas ke dalam banner (class .bd-page-body, margin negatif +
+       border-radius 28px persis seperti Laporan/Dompet/Pengaturan).
+       Bedanya dari #bdAllOverlay: banner di sini butuh tombol kembali
+       (halaman ini dibuka sebagai sub-halaman, bukan tab utama) --
+       jadi dipakai varian baru ".wpg-banner-row" (bukan
+       ".bd-page-banner-simple" yang cuma judul di tengah tanpa
+       tombol) berisi tombol bulat kaca (gaya sama dgn .notif-btn di
+       banner Beranda) + judul & subjudul rata kiri. Lihat CSS
+       "HALAMAN WIDGET (HOME SCREEN)" utk detail .wpg-*.
+
+       Isi kontennya (kartu pratinjau + daftar on/off) TIDAK berubah,
+       cuma kartu putih pembungkusnya yang mengikuti pola banner. ---- -->
   <div class="detail-page-overlay" id="widgetOverlay">
-    <div class="detail-page">
-      <div class="detail-page-head">
-        <button class="detail-back-btn" id="widgetBackBtn" type="button" aria-label="Kembali ke beranda">
+    <div class="bd-sticky-head">
+      <div class="bd-page-banner wpg-banner-row">
+        <button class="wpg-back-btn" id="widgetBackBtn" type="button" aria-label="Kembali ke beranda">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
         </button>
-        <div class="detail-page-titles">
-          <h2>Widget</h2>
-          <span class="detail-page-sub">Aktifkan widget ringkas ZAYAIN dan tampilkan di layar utama HP kamu</span>
+        <div class="wpg-banner-titles">
+          <h2 class="bd-page-banner-title">Widget</h2>
+          <span class="wpg-banner-sub">Aktifkan widget ringkas ZAYAIN untuk layar utama HP kamu</span>
         </div>
       </div>
+    </div>
 
+    <div class="detail-page bd-page-body wpg-page-body">
       <!-- Pratinjau langsung: menampilkan widget mana saja yang
            sedang aktif, lengkap dengan angka nyata dari transaksi
            (bukan angka dummy) supaya terasa "hidup" persis seperti
