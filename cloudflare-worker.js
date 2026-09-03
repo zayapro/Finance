@@ -2,13 +2,22 @@
  * ZAYAIN — Proxy Unduh Video (Cloudflare Worker)
  * ------------------------------------------------
  * Fungsi worker ini:
- *   1. TikTok/Instagram/Facebook/dst (GET /v1/fetch?url=...) DAN
- *      YouTube (GET /v1/youtube/info?url=...) -- proxy polos ke
- *      api.fastsaver.io lewat catch-all generik di bawah, tambah header
- *      CORS. /youtube/info inilah yg dipanggil frontend duluan (2
- *      kredit) utk nampilin grid pilihan resolusi (lihat
- *      videoDlRenderYoutubeInfo di script.js) SEBELUM user pilih & baru
- *      benar2 mengunduh.
+ *   1. TikTok/Instagram/Facebook/dst (GET /v1/fetch?url=...) -- proxy
+ *      polos ke api.fastsaver.io lewat catch-all generik di bawah,
+ *      tambah header CORS.
+ *      YouTube (GET /v1/youtube/info?url=...) -- SEKARANG endpoint
+ *      khusus (bukan lagi catch-all polos): tetap panggil FastSaverAPI
+ *      dulu (wajib), TAPI daftar `formats`-nya dilengkapi otomatis dgn
+ *      resolusi video+audio gabungan TAMBAHAN dari RapidAPI kalau ada &
+ *      belum ada di daftar FastSaverAPI (lihat tryRapidApiYoutubeFormats
+ *      + mergeYoutubeFormats). CATATAN: resolusi setinggi 1080p/4K yg
+ *      kelihatan di player YouTube sendiri TETAP tidak akan pernah
+ *      muncul di sini selama providernya tidak melakukan merge
+ *      video-only+audio-only server-side (butuh ffmpeg, di luar
+ *      kemampuan Worker) -- lihat komentar di tryRapidApiYoutubeFormats.
+ *      /youtube/info inilah yg dipanggil frontend duluan (2 kredit) utk
+ *      nampilin grid pilihan resolusi (lihat videoDlRenderYoutubeInfo di
+ *      script.js) SEBELUM user pilih & baru benar2 mengunduh.
  *   2. YouTube unduh sungguhan (POST /v1/youtube/download, `format`
  *      PERSIS sesuai kartu resolusi yg diklik user, mis. "720p"/"audio")
  *      -- coba FastSaverAPI dulu dgn format itu apa adanya (SEKALI, tidak
@@ -246,6 +255,81 @@ async function tryRapidApiYoutube(url, format, env) {
   }
 }
 
+// ---- Daftar resolusi TAMBAHAN dari RapidAPI, KHUSUS dipakai utk
+// MELENGKAPI daftar `formats` yg ditampilkan di grid /v1/youtube/info --
+// BUKAN sumber link unduhan (link sungguhan tetap belakangan lewat
+// /v1/youtube/download spt biasa, resolusi apa pun yg diklik user
+// -- termasuk yg ditambahkan fungsi ini -- tetap lewat alur
+// primary(FastSaverAPI)->fallback(RapidAPI) yg SAMA spt sebelumnya).
+//
+// SENGAJA cuma ambil entri video+audio GABUNGAN (hasAudio && hasVideo).
+// YouTube sendiri cuma nyediain file gabungan-jadi-1 (progressive) itu
+// sampai res tertentu (biasanya <=720p) -- resolusi lebih tinggi
+// (1080p/1440p/2160p spt di player YouTube) di sumbernya SELALU
+// video-only + audio-only terpisah, digabung baru pas diputar (adaptive
+// streaming/MSE). Worker Cloudflare INI TIDAK bisa gabungin dua stream
+// itu jadi 1 file (butuh ffmpeg, di luar kemampuan Worker) -- kalau
+// entri video-only ini ikut ditambahkan ke daftar, tombolnya nanti kalau
+// diklik user cuma hasilin video TANPA suara. Jadi resolusi setinggi
+// itu MEMANG tidak akan pernah muncul di grid selama providernya
+// (FastSaverAPI/RapidAPI) tidak melakukan merge server-side sendiri.
+async function tryRapidApiYoutubeFormats(url, env) {
+  if (!env.RAPIDAPI_KEY) return [];
+  const videoId = extractYoutubeId(url);
+  if (!videoId) return [];
+  try {
+    const qs = new URLSearchParams({ videoId, urlAccess: 'normal', videos: 'true', audios: 'true' });
+    const res = await fetchWithTimeout(`https://${RAPIDAPI_HOST}/v2/video/details?${qs.toString()}`, {
+      headers: { 'X-RapidAPI-Key': env.RAPIDAPI_KEY, 'X-RapidAPI-Host': RAPIDAPI_HOST },
+    });
+    const raw = await res.json();
+    const videos = Array.isArray(raw.videos) ? raw.videos : (Array.isArray(raw.videos?.items) ? raw.videos.items : []);
+    const combined = videos.filter((v) => v && v.url && v.hasAudio && v.hasVideo);
+    const seen = new Set();
+    const out = [];
+    for (const v of combined) {
+      const rawLabel = v.qualityLabel || v.quality || '';
+      const m = String(rawLabel).match(/\d+/);
+      if (!m) continue;
+      const resNum = parseInt(m[0], 10);
+      if (seen.has(resNum)) continue;
+      seen.add(resNum);
+      const size = v.contentLength != null ? parseInt(v.contentLength, 10) : (v.filesize || undefined);
+      out.push({ format: `${resNum}p`, filesize: Number.isNaN(size) ? undefined : size, _res: resNum });
+    }
+    return out;
+  } catch (err) {
+    // Diam2 saja (return kosong) kalau RapidAPI gagal/timeout di sini --
+    // ini cuma PELENGKAP, daftar dari FastSaverAPI tetap harus tampil
+    // normal walau bagian tambahan ini gagal.
+    return [];
+  }
+}
+
+// ---- Gabungkan `formats` dari respons FastSaverAPI (primary) dgn
+// tambahan resolusi dari RapidAPI (extra) -- resolusi yg ANGKANYA sudah
+// ada di primary TIDAK diduplikasi, sisanya disisipkan & diurutkan
+// besar->kecil spy tampilannya rapi (1080p di atas, 144p di bawah). ----
+function mergeYoutubeFormats(primaryFormats, extra) {
+  const existing = Array.isArray(primaryFormats) ? primaryFormats.slice() : [];
+  const existingRes = new Set(
+    existing
+      .map((f) => parseInt(String(f.format || '').match(/\d+/)?.[0], 10))
+      .filter((n) => !Number.isNaN(n))
+  );
+  for (const item of extra) {
+    if (existingRes.has(item._res)) continue;
+    existingRes.add(item._res);
+    existing.push({ format: item.format, filesize: item.filesize });
+  }
+  existing.sort((a, b) => {
+    const ra = parseInt(String(a.format || '').match(/\d+/)?.[0], 10) || 0;
+    const rb = parseInt(String(b.format || '').match(/\d+/)?.[0], 10) || 0;
+    return rb - ra;
+  });
+  return existing;
+}
+
 export default {
   async fetch(request, env) {
     // Preflight CORS (browser selalu kirim OPTIONS dulu utk request
@@ -292,6 +376,54 @@ export default {
       } catch (err) {
         return jsonResponse({ ok: false, detail: 'Worker gagal mengambil file: ' + err.message }, 502);
       }
+    }
+
+    // ---- Info YouTube (dipanggil frontend LEBIH DULU, 2 kredit, utk
+    // nampilin grid pilihan resolusi SEBELUM user benar2 unduh -- lihat
+    // videoDlFetchYoutubeInfo di script.js). SEBELUM ini cuma proxy polos
+    // ke FastSaverAPI (jatuh ke catch-all generik di paling bawah), jadi
+    // daftar resolusinya PERSIS apa adanya dari FastSaverAPI -- kalau
+    // videonya di FastSaverAPI cuma kebaca sampai 480p, itu doang yg
+    // muncul, walau di YouTube aslinya ada sampai 4K (lihat komentar
+    // panjang di tryRapidApiYoutubeFormats soal kenapa 4K/1080p+ MEMANG
+    // svulit/nggak bisa ditawarkan tanpa merge ffmpeg server-side).
+    // SEKARANG: tetap panggil FastSaverAPI dulu (primary, wajib -- kalau
+    // ini gagal, seluruh endpoint tetap gagal spt sebelumnya), TAPI
+    // hasilnya di-"lengkapi" dgn resolusi gabungan (video+audio) TAMBAHAN
+    // dari RapidAPI kalau ada & belum ada di daftar FastSaverAPI. Kalau
+    // RAPIDAPI_KEY belum diisi atau videonya memang tidak py resolusi
+    // gabungan lebih tinggi di RapidAPI, hasilnya SAMA PERSIS spt
+    // sebelumnya (tidak ada perubahan perilaku).
+    if (incoming.pathname === '/v1/youtube/info' && request.method === 'GET') {
+      if (!env.FASTSAVER_API_KEY) {
+        return jsonResponse({ ok: false, detail: 'FASTSAVER_API_KEY belum diatur di Worker Settings > Variables and Secrets.' }, 500);
+      }
+      const videoUrl = incoming.searchParams.get('url');
+      let primary;
+      try {
+        const res = await fetchWithTimeout(`${FASTSAVER_UPSTREAM}/v1/youtube/info?${incoming.searchParams.toString()}`, {
+          headers: { 'X-Api-Key': env.FASTSAVER_API_KEY },
+        });
+        primary = await res.json();
+      } catch (err) {
+        const timedOut = err.name === 'AbortError';
+        return jsonResponse({ ok: false, detail: timedOut ? 'FastSaverAPI tidak merespons dlm 15 detik (timeout).' : 'Worker gagal menghubungi FastSaverAPI: ' + err.message }, 502);
+      }
+
+      // Kalau FastSaverAPI sendiri sudah gagal (video privat/dihapus/dst),
+      // langsung balikin apa adanya -- tidak ada gunanya coba lengkapi
+      // resolusi dari RapidAPI utk video yg infonya saja gagal diambil.
+      if (!primary || primary.ok === false) {
+        return jsonResponse(primary || { ok: false, detail: 'FastSaverAPI tidak mengembalikan respons.' }, primary ? 502 : 502);
+      }
+
+      if (videoUrl) {
+        const extra = await tryRapidApiYoutubeFormats(videoUrl, env);
+        if (extra.length) {
+          primary.formats = mergeYoutubeFormats(primary.formats, extra);
+        }
+      }
+      return jsonResponse(primary);
     }
 
     // ---- Endpoint khusus YouTube: FastSaverAPI dulu, fallback RapidAPI ----
