@@ -17360,14 +17360,14 @@ const AI_GROQ_DEFAULT_MODEL = 'llama-3.3-70b-versatile';
 function loadAiSettings() {
   try {
     const raw = cloudStorage.getItem(AI_SETTINGS_KEY);
-    if (raw) return Object.assign({ apiKey: '', model: '', imageModel: '', pollinationsKey: '', provider: 'gemini', claudeApiKey: '', claudeModel: '', groqApiKey: '', groqModel: '', workerUrl: '' }, JSON.parse(raw));
+    if (raw) return Object.assign({ apiKey: '', model: '', imageModel: '', pollinationsKey: '', provider: 'groq', claudeApiKey: '', claudeModel: '', groqApiKey: '', groqModel: '', workerUrl: '' }, JSON.parse(raw));
   } catch (e) { /* abaikan */ }
-  return { apiKey: '', model: '', imageModel: '', pollinationsKey: '', provider: 'gemini', claudeApiKey: '', claudeModel: '', groqApiKey: '', groqModel: '', workerUrl: '' };
+  return { apiKey: '', model: '', imageModel: '', pollinationsKey: '', provider: 'groq', claudeApiKey: '', claudeModel: '', groqApiKey: '', groqModel: '', workerUrl: '' };
 }
 function getAiProvider() {
-  if (aiSettings.provider === 'claude') return 'claude';
-  if (aiSettings.provider === 'groq') return 'groq';
-  return 'gemini';
+  // Gemini & Claude sementara dimatikan (lihat pengaturan) -- paksa Groq
+  // walau ada setting lama tersimpan di browser dari sebelum ini diaktifkan.
+  return 'groq';
 }
 // Cek apakah key SUDAH ADA utk provider yg sedang aktif (Gemini punya
 // AI_DEFAULT_API_KEY bawaan jadi selalu true kecuali user pakai
@@ -18222,7 +18222,7 @@ function persistAtkChatHistory() {
   catch (e) { /* riwayat chat tidak kritikal, biarkan gagal senyap */ }
 }
 let atkChatHistory = loadAtkChatHistory();
-let atkActiveTab = 'bantuan';
+let atkActiveTab = 'kreatif';
 let atkCreativeMode = 'chat'; // 'chat' (analisis/tanya) | 'image' (buat gambar)
 let atkIsSending = false;
 let atkAttachedFile = null; // {kind:'image'|'video', mimeType, base64, name}
@@ -18300,6 +18300,10 @@ function switchAtkView(view) {
 if (atkTabs) atkTabs.addEventListener('click', (e) => {
   const btn = e.target.closest('.ai-chat-tab-btn');
   if (!btn) return;
+  if (btn.classList.contains('atk-tab-disabled')) {
+    showToast('Fitur Gambar belum tersedia saat ini.');
+    return;
+  }
   switchAtkView(btn.dataset.atkview);
 });
 
@@ -18768,6 +18772,7 @@ function buildAtkMsgNode(msg) {
     head.innerHTML = `
       <span class="ai-msg-ic"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/></svg></span>
       <span class="ai-msg-name">Tool AI</span>
+      ${msg.ts ? `<span class="ai-msg-time">${atkFormatMsgTime(msg.ts)}</span>` : ''}
     `;
     const content = document.createElement('div');
     content.className = 'ai-msg-content';
@@ -18806,6 +18811,14 @@ function buildAtkMsgNode(msg) {
   }
   wrap.appendChild(row);
 
+  if (!isBot && msg.ts) {
+    const timeEl = document.createElement('div');
+    timeEl.className = 'ai-msg-time';
+    timeEl.style.textAlign = 'right';
+    timeEl.textContent = atkFormatMsgTime(msg.ts);
+    wrap.appendChild(timeEl);
+  }
+
   if (showCopy) {
     const actions = document.createElement('div');
     actions.className = 'ai-msg-actions';
@@ -18822,7 +18835,7 @@ function buildAtkMsgNode(msg) {
 
 function initAtkTool() {
   renderAtkKeyBanner();
-  switchAtkView('bantuan');
+  switchAtkView('chat');
 }
 
 // ============================================================

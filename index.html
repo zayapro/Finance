@@ -12576,6 +12576,8 @@ body.is-scrolling *{
 .ai-msg-head{display:flex;align-items:center;gap:7px;}
 .ai-msg-ic{width:22px;height:22px;border-radius:7px;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#fff;background:linear-gradient(145deg, var(--forest-glow), var(--violet));}
 .ai-msg-name{font-size:11.5px;font-weight:800;color:var(--ink);letter-spacing:0.01em;}
+.ai-msg-time{font-size:10.5px;font-weight:600;color:var(--ink-faint);}
+.ai-msg-row.user .ai-msg-time{font-size:10px;font-weight:600;color:var(--ink-faint);margin-top:2px;margin-right:2px;}
 .ai-msg-content{width:100%;font-size:13.5px;line-height:1.65;color:var(--ink);word-break:break-word;}
 
 /* ---- Balasan berisi error: tampil sebagai kartu peringatan, bukan teks polos ---- */
@@ -19518,17 +19520,17 @@ html.dark-mode .bd-row-close{
       <div class="form-row">
         <label>Penyedia AI</label>
         <div class="ai-provider-toggle" style="display:flex;gap:8px;">
-          <label style="display:flex;align-items:center;gap:6px;font-weight:400;">
-            <input type="radio" name="aiProvider" id="aiProviderGemini" value="gemini" checked> Google Gemini
+          <label style="display:flex;align-items:center;gap:6px;font-weight:400;opacity:.45;">
+            <input type="radio" name="aiProvider" id="aiProviderGemini" value="gemini" disabled> Google Gemini
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-weight:400;opacity:.45;">
+            <input type="radio" name="aiProvider" id="aiProviderClaude" value="claude" disabled> Anthropic Claude
           </label>
           <label style="display:flex;align-items:center;gap:6px;font-weight:400;">
-            <input type="radio" name="aiProvider" id="aiProviderClaude" value="claude"> Anthropic Claude
-          </label>
-          <label style="display:flex;align-items:center;gap:6px;font-weight:400;">
-            <input type="radio" name="aiProvider" id="aiProviderGroq" value="groq"> Groq (gratis)
+            <input type="radio" name="aiProvider" id="aiProviderGroq" value="groq" checked> Groq (gratis)
           </label>
         </div>
-        <p class="ai-settings-hint">Pilih penyedia AI yang mau dipakai. Masing-masing punya API key & nama model sendiri (tidak saling terhubung).</p>
+        <p class="ai-settings-hint">Sementara hanya Groq yang aktif sebagai default (Gemini & Claude dimatikan dulu). Masing-masing punya API key & nama model sendiri (tidak saling terhubung).</p>
       </div>
       <div class="form-row">
         <label for="aiApiKeyInput" id="aiApiKeyLabel">API Key ZayaDev</label>
@@ -19615,17 +19617,18 @@ html.dark-mode .bd-row-close{
 
     <div class="lap-filter-card atk-white-card">
       <div class="ai-chat-tabs atk-tabs" id="atkTabs">
-        <button type="button" class="ai-chat-tab-btn active" data-atkview="bantuan">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 2-3 4"/><path d="M12 17h.01"/></svg>
-          Bantuan
-        </button>
-        <button type="button" class="ai-chat-tab-btn" data-atkview="chat">
+        <button type="button" class="ai-chat-tab-btn active" data-atkview="chat">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/></svg>
           Chat
         </button>
-        <button type="button" class="ai-chat-tab-btn" data-atkview="gambar">
+        <button type="button" class="ai-chat-tab-btn" data-atkview="bantuan">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 2-3 4"/><path d="M12 17h.01"/></svg>
+          Bantuan
+        </button>
+        <button type="button" class="ai-chat-tab-btn atk-tab-disabled" data-atkview="gambar" aria-disabled="true" title="Belum tersedia" style="opacity:.45;">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="m21 15-4.5-4.5a2 2 0 0 0-2.8 0L4 20"/></svg>
           Gambar
+          <span style="font-size:9px;font-weight:600;margin-left:3px;padding:1px 5px;border-radius:99px;background:rgba(0,0,0,.08);">Segera</span>
         </button>
       </div>
 
