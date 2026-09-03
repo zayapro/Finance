@@ -10976,11 +10976,21 @@ document.getElementById('fmGridKalkulatorBtn')?.addEventListener('click', () => 
    linknya dari situ, ditolak lebih awal dgn pesan jelas (lihat
    videoDlDetectPlatform) drpd dikirim ke API & gagal membingungkan. --*/
 const VIDEODL_SETTINGS_KEY = 'zayapro_videodl_settings';
+// API key TIDAK ditulis polos di source (di-encode base64) supaya tidak
+// langsung kelihatan sekilas mata/ctrl+F sederhana kalau user buka
+// "View Page Source" -- CATATAN JUJUR: ini cuma penyamaran ringan, BUKAN
+// keamanan sungguhan. Base64 gampang di-decode siapapun yg cukup niat
+// (tinggal paste ke devtools: atob(...)), dan key tetap ikut terkirim
+// polos di header tiap request (bisa dilihat lewat tab Network). Kalau
+// nanti ZAYAIN dipakai banyak orang, cara aman satu-satunya adalah lewat
+// server/proxy sendiri (Cloudflare Worker dll) yg menyimpan key di sisi
+// server, bukan menaruhnya di kode yg dikirim ke browser.
+const VIDEODL_DEFAULT_API_KEY = atob('ZnNfc2tfNW8xZDhpOXI3dzdiOHQ4ZTR2NGozZDZoM2szYw==');
 function loadVideoDlSettings() {
   try {
     const raw = JSON.parse(cloudStorage.getItem(VIDEODL_SETTINGS_KEY) || '{}');
-    return { apiKey: raw.apiKey || '' };
-  } catch (e) { return { apiKey: '' }; }
+    return { apiKey: raw.apiKey || VIDEODL_DEFAULT_API_KEY };
+  } catch (e) { return { apiKey: VIDEODL_DEFAULT_API_KEY }; }
 }
 function persistVideoDlSettings(data) {
   try { cloudStorage.setItem(VIDEODL_SETTINGS_KEY, JSON.stringify(data)); }
@@ -11012,7 +11022,12 @@ const videoDlApiKeyToggle = document.getElementById('videoDlApiKeyToggle');
 bindPasswordEyeToggle(videoDlApiKeyInput, videoDlApiKeyToggle);
 
 function openVideoDlSettingsModal() {
-  if (videoDlApiKeyInput) videoDlApiKeyInput.value = videoDlSettings.apiKey || '';
+  // Sengaja TIDAK diisi otomatis dgn VIDEODL_DEFAULT_API_KEY -- field
+  // kosong berarti "pakai key bawaan aplikasi"; field terisi berarti
+  // user sudah pernah simpan key sendiri. Kalau default itu ikut
+  // ditaruh di sini, dia jadi kelihatan lagi tiap modal ini dibuka.
+  const savedRaw = (() => { try { return JSON.parse(cloudStorage.getItem(VIDEODL_SETTINGS_KEY) || '{}'); } catch (e) { return {}; } })();
+  if (videoDlApiKeyInput) videoDlApiKeyInput.value = savedRaw.apiKey || '';
   openModal(videoDlSettingsModal);
 }
 document.getElementById('videoDlSettingsBtn')?.addEventListener('click', openVideoDlSettingsModal);
