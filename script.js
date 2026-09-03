@@ -17336,12 +17336,12 @@ function initCloudLogoutButton() {
 ========================================================== */
 const AI_SETTINGS_KEY = 'zayapro_ai_settings';
 const AI_CHAT_HISTORY_KEY = 'zayapro_ai_chat_history';
-const AI_DEFAULT_MODEL = 'gemini-3.7-flash';
+const AI_DEFAULT_MODEL = 'gemini-flash-latest';
 const AI_DEFAULT_IMAGE_MODEL = 'gemini-2.5-flash-image-preview';
 // PERHATIAN: key ditanam langsung utk kebutuhan sementara (dev/testing).
 // Sebelum di-publish/dipakai publik, PISAHKAN ke Cloudflare Worker
 // (proxy) supaya key tidak terlihat lewat View Source / DevTools.
-const AI_DEFAULT_API_KEY = atob('QVEuQWI4Uk42Smh4R2wyWGpWZW1FWENFOGV5c1hJY2tTdC1GdnoyaWtHdHZMQTN1c0QtNVE=');
+const AI_DEFAULT_API_KEY = atob('QVEuQWI4Uk42S1ZLc0RsUS1oZWVVRHhZTnF4SE83aEhwQ3lRTGptRmwxOW9FSjNFQWQxVXc=');
 
 function loadAiSettings() {
   try {
@@ -17487,7 +17487,7 @@ if (aiSettingsClearBtn) aiSettingsClearBtn.addEventListener('click', () => {
   persistAiSettings(aiSettings);
   renderAiKeyBanner();
   renderAtkKeyBanner();
-  showToast('API key Gemini dihapus.');
+  showToast('API key AI dihapus.');
 });
 
 // Tes cepat: kirim 1 permintaan minimal ke Gemini pakai key & model
@@ -17524,7 +17524,7 @@ if (aiSettingsTestBtn) aiSettingsTestBtn.addEventListener('click', async () => {
     }
   } catch (e) {
     aiTestResult.style.color = '#9F1239';
-    aiTestResult.textContent = 'Gagal menghubungi Gemini: koneksi diblokir (cek internet/ad-blocker/VPN).';
+    aiTestResult.textContent = 'Gagal menghubungi AI: koneksi diblokir (cek internet/ad-blocker/VPN).';
   } finally {
     aiSettingsTestBtn.disabled = false;
   }
@@ -17856,16 +17856,16 @@ async function sendAiMessage() {
   } catch (err) {
     console.error('Gemini API error:', err);
     removeAiTypingIndicator();
-    let msg = 'Gagal menghubungi Gemini.';
-    if (err.message === 'NO_API_KEY') msg = 'API key Gemini belum diatur.';
-    else if (err.message === 'FAILED_TO_FETCH') msg = 'Gagal menghubungi Gemini: koneksi diblokir (cek internet, ad-blocker/VPN, atau buka lewat http(s):// bukan file://).';
-    else if (err.status === 400) msg = `Permintaan ditolak Gemini (400): ${err.message || 'periksa nama model di Pengaturan.'}`;
-    else if (err.status === 401) msg = `API key Gemini tidak valid (401): ${err.message || 'periksa kembali key di Pengaturan.'}`;
-    else if (err.status === 403) msg = `API key Gemini ditolak (403): ${err.message || 'periksa kembali key di Pengaturan, atau pastikan API Gemini sudah diaktifkan untuk key ini.'}`;
+    let msg = 'Gagal menghubungi AI.';
+    if (err.message === 'NO_API_KEY') msg = 'API key AI belum diatur.';
+    else if (err.message === 'FAILED_TO_FETCH') msg = 'Gagal menghubungi AI: koneksi diblokir (cek internet, ad-blocker/VPN, atau buka lewat http(s):// bukan file://).';
+    else if (err.status === 400) msg = `Permintaan ditolak AI (400): ${err.message || 'periksa nama model di Pengaturan.'}`;
+    else if (err.status === 401) msg = `API key AI tidak valid (401): ${err.message || 'periksa kembali key di Pengaturan.'}`;
+    else if (err.status === 403) msg = `API key AI ditolak (403): ${err.message || 'periksa kembali key di Pengaturan, atau pastikan API AI sudah diaktifkan untuk key ini.'}`;
     else if (err.status === 404) msg = `Model "${(aiSettings.model || AI_DEFAULT_MODEL)}" tidak ditemukan (404) untuk API key ini. Coba ganti model di Pengaturan, mis. gemini-3.7-flash, gemini-3.6-flash, atau gemini-3.5-flash-lite.`;
-    else if (err.status === 429) msg = 'Kuota/limit Gemini API tercapai. Coba lagi nanti.';
-    else if (err.message === 'EMPTY_RESPONSE') msg = 'Gemini tidak memberi jawaban (mungkin diblokir filter keamanan). Coba ubah pertanyaan.';
-    else if (err.message) msg = `Gagal menghubungi Gemini: ${err.message}`;
+    else if (err.status === 429) msg = 'Kuota/limit AI tercapai. Coba lagi nanti.';
+    else if (err.message === 'EMPTY_RESPONSE') msg = 'AI tidak memberi jawaban (mungkin diblokir filter keamanan). Coba ubah pertanyaan.';
+    else if (err.message) msg = `Gagal menghubungi AI: ${err.message}`;
     aiChatHistory[mode].push({ role: 'model', text: msg, ts: Date.now(), isError: true });
     persistAiChatHistory();
     renderAiMessages();
@@ -17968,7 +17968,7 @@ function setAtkCreativeMode(mode) {
   });
   atkChatInput.placeholder = mode === 'image' ? 'Jelaskan gambar yang mau dibuat...' : 'Tulis pertanyaan...';
   atkFootHint.textContent = mode === 'image'
-    ? 'Mode Buat Gambar -- Gemini akan membuat gambar dari deskripsi teksmu (kuota gratis terbatas).'
+    ? 'Mode Buat Gambar -- AI akan membuat gambar dari deskripsi teksmu (kuota gratis terbatas).'
     : 'Mode Chat Umum -- bisa lampirkan gambar/video (📎) untuk dianalisis. Membuat video/musik belum didukung di sini.';
 }
 if (atkModeToggle) atkModeToggle.addEventListener('click', (e) => {
@@ -18253,19 +18253,19 @@ async function sendAtkMessage() {
   } catch (err) {
     console.error('Tool AI error:', err);
     removeAtkTypingIndicator();
-    let msg = 'Gagal menghubungi Gemini.';
-    if (err.message === 'NO_API_KEY') msg = 'API key Gemini belum diatur.';
-    else if (err.message === 'FAILED_TO_FETCH') msg = 'Gagal menghubungi Gemini: koneksi diblokir (cek internet/ad-blocker/VPN).';
-    else if (err.status === 400) msg = `Permintaan ditolak Gemini (400): ${err.message || 'periksa nama model di Pengaturan.'}`;
-    else if (err.status === 401) msg = `API key Gemini tidak valid (401): ${err.message || 'periksa kembali key di Pengaturan.'}`;
-    else if (err.status === 403) msg = `API key Gemini ditolak (403): ${err.message || 'pastikan API Gemini aktif untuk key ini.'}`;
+    let msg = 'Gagal menghubungi AI.';
+    if (err.message === 'NO_API_KEY') msg = 'API key AI belum diatur.';
+    else if (err.message === 'FAILED_TO_FETCH') msg = 'Gagal menghubungi AI: koneksi diblokir (cek internet/ad-blocker/VPN).';
+    else if (err.status === 400) msg = `Permintaan ditolak AI (400): ${err.message || 'periksa nama model di Pengaturan.'}`;
+    else if (err.status === 401) msg = `API key AI tidak valid (401): ${err.message || 'periksa kembali key di Pengaturan.'}`;
+    else if (err.status === 403) msg = `API key AI ditolak (403): ${err.message || 'pastikan API AI aktif untuk key ini.'}`;
     else if (err.status === 404) msg = wantsImageGen
       ? `Model gambar "${(aiSettings.imageModel || AI_DEFAULT_IMAGE_MODEL)}" tidak ditemukan (404). Coba ganti "Model Gambar" di Pengaturan.`
       : `Model "${(aiSettings.model || AI_DEFAULT_MODEL)}" tidak ditemukan (404). Coba ganti model di Pengaturan.`;
-    else if (err.status === 429) msg = 'Kuota/limit Gemini API tercapai. Coba lagi nanti.';
-    else if (err.status === 'NO_IMAGE') msg = `Gemini tidak mengembalikan gambar: ${err.message}`;
-    else if (err.message === 'EMPTY_RESPONSE') msg = 'Gemini tidak memberi jawaban (mungkin diblokir filter keamanan). Coba ubah pertanyaan.';
-    else if (err.message) msg = `Gagal menghubungi Gemini: ${err.message}`;
+    else if (err.status === 429) msg = 'Kuota/limit AI tercapai. Coba lagi nanti.';
+    else if (err.status === 'NO_IMAGE') msg = `AI tidak mengembalikan gambar: ${err.message}`;
+    else if (err.message === 'EMPTY_RESPONSE') msg = 'AI tidak memberi jawaban (mungkin diblokir filter keamanan). Coba ubah pertanyaan.';
+    else if (err.message) msg = `Gagal menghubungi AI: ${err.message}`;
     atkChatHistory[mode].push({ role: 'model', text: msg, ts: Date.now(), isError: true });
     persistAtkChatHistory();
     renderAtkMessages();
