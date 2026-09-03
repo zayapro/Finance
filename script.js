@@ -17338,6 +17338,10 @@ const AI_SETTINGS_KEY = 'zayapro_ai_settings';
 const AI_CHAT_HISTORY_KEY = 'zayapro_ai_chat_history';
 const AI_DEFAULT_MODEL = 'gemini-3.7-flash';
 const AI_DEFAULT_IMAGE_MODEL = 'gemini-2.5-flash-image-preview';
+// PERHATIAN: key ditanam langsung utk kebutuhan sementara (dev/testing).
+// Sebelum di-publish/dipakai publik, PISAHKAN ke Cloudflare Worker
+// (proxy) supaya key tidak terlihat lewat View Source / DevTools.
+const AI_DEFAULT_API_KEY = atob('QVEuQWI4Uk42Smh4R2wyWGpWZW1FWENFOGV5c1hJY2tTdC1GdnoyaWtHdHZMQTN1c0QtNVE=');
 
 function loadAiSettings() {
   try {
@@ -17446,7 +17450,7 @@ if (aiChatTabs) aiChatTabs.addEventListener('click', (e) => {
 });
 
 function renderAiKeyBanner() {
-  const hasKey = !!(aiSettings.apiKey && aiSettings.apiKey.trim());
+  const hasKey = !!((aiSettings.apiKey && aiSettings.apiKey.trim()) || AI_DEFAULT_API_KEY);
   aiKeyBanner.style.display = hasKey ? 'none' : 'flex';
 }
 if (aiKeyBannerBtn) aiKeyBannerBtn.addEventListener('click', openAiSettingsModal);
@@ -17767,7 +17771,7 @@ function removeAiTypingIndicator() {
 }
 
 async function callGeminiApi(userText, mode) {
-  const apiKey = (aiSettings.apiKey || '').trim();
+  const apiKey = (aiSettings.apiKey || AI_DEFAULT_API_KEY || '').trim();
   const model = (aiSettings.model || '').trim() || AI_DEFAULT_MODEL;
   if (!apiKey) throw new Error('NO_API_KEY');
 
@@ -17996,7 +18000,7 @@ if (atkTabs) atkTabs.addEventListener('click', (e) => {
 
 function renderAtkKeyBanner() {
   if (!atkKeyBanner) return;
-  const hasKey = !!(aiSettings.apiKey && aiSettings.apiKey.trim());
+  const hasKey = !!((aiSettings.apiKey && aiSettings.apiKey.trim()) || AI_DEFAULT_API_KEY);
   atkKeyBanner.style.display = hasKey ? 'none' : 'flex';
 }
 if (atkKeyBannerBtn) atkKeyBannerBtn.addEventListener('click', openAiSettingsModal);
@@ -18127,7 +18131,7 @@ function removeAtkTypingIndicator() {
 }
 
 async function callGeminiAtk(userText, mode, attachment) {
-  const apiKey = (aiSettings.apiKey || '').trim();
+  const apiKey = (aiSettings.apiKey || AI_DEFAULT_API_KEY || '').trim();
   const model = (aiSettings.model || '').trim() || AI_DEFAULT_MODEL;
   if (!apiKey) throw new Error('NO_API_KEY');
 
@@ -18171,7 +18175,7 @@ async function callGeminiAtk(userText, mode, attachment) {
 // image-generation Gemini membalas dalam bentuk part inlineData
 // (base64 PNG/JPEG), bukan teks.
 async function callGeminiImageGen(prompt) {
-  const apiKey = (aiSettings.apiKey || '').trim();
+  const apiKey = (aiSettings.apiKey || AI_DEFAULT_API_KEY || '').trim();
   const model = (aiSettings.imageModel || '').trim() || AI_DEFAULT_IMAGE_MODEL;
   if (!apiKey) throw new Error('NO_API_KEY');
 
