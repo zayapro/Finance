@@ -4214,18 +4214,11 @@ function renderLeaderboardList(elId, rows, isIn) {
   });
 }
 
-// Semua fungsi di bawah menerima parameter `ns` (namespace/prefix id, mis.
-// 'lb' utk halaman Leaderboard dari footer, atau 'sLb' utk halaman
-// Leaderboard duplikat di menu Pengaturan) -- supaya SATU set logic ini
-// bisa dipakai ulang utk render ke DUA markup halaman yg id-nya beda
-// prefix, tanpa duplikasi kode maupun saling menimpa data satu sama
-// lain. Kedua halaman tetap berbagi `leaderboardPeriod` yg SAMA (state
-// Harian/Bulanan disinkronkan di manapun terakhir diganti).
-function renderLeaderboardHero(ns, data) {
+function renderLeaderboardHero(data) {
   const totalIn = data.masuk.reduce((s, r) => s + r.amount, 0);
   const totalOut = data.keluar.reduce((s, r) => s + r.amount, 0);
-  const inEl = document.getElementById(`${ns}HeroInValue`);
-  const outEl = document.getElementById(`${ns}HeroOutValue`);
+  const inEl = document.getElementById('lbHeroInValue');
+  const outEl = document.getElementById('lbHeroOutValue');
   animateIntEl(inEl, totalIn, fmtRupiah, 750);
   animateIntEl(outEl, totalOut, fmtRupiah, 750);
 
@@ -4236,9 +4229,9 @@ function renderLeaderboardHero(ns, data) {
   const pctIn = total > 0 ? Math.round((totalIn / total) * 100) : 50;
   const pctOut = 100 - pctIn;
 
-  const barIn = document.getElementById(`${ns}HeroBarIn`);
-  const barOut = document.getElementById(`${ns}HeroBarOut`);
-  const spark = document.getElementById(`${ns}HeroSpark`);
+  const barIn = document.getElementById('lbHeroBarIn');
+  const barOut = document.getElementById('lbHeroBarOut');
+  const spark = document.getElementById('lbHeroSpark');
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
       barIn.style.width = pctIn + '%';
@@ -4248,8 +4241,8 @@ function renderLeaderboardHero(ns, data) {
   });
 
   // Sisi yang unggul dapat mahkota + glow berdenyut, seperti host yang sedang menang di PK live.
-  const icIn = document.getElementById(`${ns}HeroIcIn`);
-  const icOut = document.getElementById(`${ns}HeroIcOut`);
+  const icIn = document.getElementById('lbHeroIcIn');
+  const icOut = document.getElementById('lbHeroIcOut');
   const leadIn = total > 0 && totalIn >= totalOut;
   const leadOut = total > 0 && totalOut > totalIn;
   icIn?.classList.toggle('lead', leadIn);
@@ -4264,29 +4257,29 @@ function renderLeaderboardHero(ns, data) {
   }
 
   const net = totalIn - totalOut;
-  const netEl = document.getElementById(`${ns}HeroNet`);
+  const netEl = document.getElementById('lbHeroNet');
   netEl.textContent = (net >= 0 ? 'Surplus ' : 'Defisit ') + fmtRupiah(Math.abs(net));
   netEl.classList.toggle('pos', net >= 0);
   netEl.classList.toggle('neg', net < 0);
 }
 
-function renderLeaderboard(ns) {
+function renderLeaderboard() {
   const periodLabel = leaderboardPeriod === 'daily' ? 'Hari ini' : thisMonthLabel();
-  document.getElementById(`${ns}InSub`).textContent = periodLabel;
-  document.getElementById(`${ns}OutSub`).textContent = periodLabel;
-  document.querySelectorAll(`#${ns}PeriodToggle button`).forEach(b => b.classList.toggle('active', b.dataset.lbperiod === leaderboardPeriod));
-  updateLbToggleIndicator(ns);
+  document.getElementById('lbInSub').textContent = periodLabel;
+  document.getElementById('lbOutSub').textContent = periodLabel;
+  document.querySelectorAll('#lbPeriodToggle button').forEach(b => b.classList.toggle('active', b.dataset.lbperiod === leaderboardPeriod));
+  updateLbToggleIndicator();
 
   const data = getLeaderboardData(leaderboardPeriod);
-  renderLeaderboardHero(ns, data);
-  renderLeaderboardList(`${ns}ListIn`, data.masuk, true);
-  renderLeaderboardList(`${ns}ListOut`, data.keluar, false);
+  renderLeaderboardHero(data);
+  renderLeaderboardList('lbListIn', data.masuk, true);
+  renderLeaderboardList('lbListOut', data.keluar, false);
 }
 
 // Posisikan pil indikator toggle Harian/Bulanan agar meluncur mengikuti tombol aktif.
-function updateLbToggleIndicator(ns) {
-  const toggle = document.getElementById(`${ns}PeriodToggle`);
-  const indicator = document.getElementById(`${ns}ToggleIndicator`);
+function updateLbToggleIndicator() {
+  const toggle = document.getElementById('lbPeriodToggle');
+  const indicator = document.getElementById('lbToggleIndicator');
   const activeBtn = toggle?.querySelector('button.active');
   if (!toggle || !indicator || !activeBtn) return;
   indicator.style.width = activeBtn.offsetWidth + 'px';
@@ -4294,15 +4287,15 @@ function updateLbToggleIndicator(ns) {
 }
 
 // Ganti periode dengan transisi fade halus (list keluar sebentar lalu masuk lagi berisi data baru).
-function switchLeaderboardPeriod(ns, period) {
+function switchLeaderboardPeriod(period) {
   if (period === leaderboardPeriod) return;
   leaderboardPeriod = period;
-  const listIn = document.getElementById(`${ns}ListIn`);
-  const listOut = document.getElementById(`${ns}ListOut`);
+  const listIn = document.getElementById('lbListIn');
+  const listOut = document.getElementById('lbListOut');
   listIn.classList.add('lb-fade-out');
   listOut.classList.add('lb-fade-out');
   setTimeout(() => {
-    renderLeaderboard(ns);
+    renderLeaderboard();
     listIn.classList.remove('lb-fade-out');
     listOut.classList.remove('lb-fade-out');
   }, 160);
@@ -4313,7 +4306,7 @@ function openLeaderboardPage() {
   document.getElementById('leaderboardOverlay').classList.add('open');
   lockBodyScroll();
   window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
-  renderLeaderboard('lb');
+  renderLeaderboard();
 }
 
 function closeLeaderboardPage() {
@@ -4325,11 +4318,10 @@ document.getElementById('lbBackBtn').addEventListener('click', closeLeaderboardP
 document.getElementById('lbPeriodToggle').addEventListener('click', (e) => {
   const btn = e.target.closest('[data-lbperiod]');
   if (!btn) return;
-  switchLeaderboardPeriod('lb', btn.dataset.lbperiod);
+  switchLeaderboardPeriod(btn.dataset.lbperiod);
 });
 window.addEventListener('resize', () => {
-  if (document.getElementById('leaderboardOverlay').classList.contains('open')) updateLbToggleIndicator('lb');
-  if (document.getElementById('settingsLeaderboardOverlay')?.classList.contains('open')) updateLbToggleIndicator('sLb');
+  if (document.getElementById('leaderboardOverlay').classList.contains('open')) updateLbToggleIndicator();
 });
 
 
@@ -4470,6 +4462,156 @@ document.getElementById('wsResetBtn').addEventListener('click', () => {
 
 // Terapkan preferensi tersimpan begitu halaman dimuat.
 applyWidgetSettings(loadWidgetSettings());
+
+/* ==========================================================
+   HALAMAN "WIDGET" (#widgetOverlay) -- WIDGET LAYAR UTAMA
+   Berbeda dari PENGATURAN WIDGET di atas (yang menyembunyikan
+   kartu-kartu di halaman utama): blok ini mengurus widget ringkas
+   ala "widget homescreen HP" yang bisa diaktif/nonaktifkan satu-
+   satu, lengkap dengan pratinjau langsung berisi angka nyata dari
+   transaksi (saldo, pemasukan/pengeluaran, dst). Preferensi
+   tersimpan lewat cloudStorage (sinkron ke akun, sama seperti
+   WIDGET_SETTINGS_KEY) supaya konsisten di semua perangkat. ---- */
+const HOME_WIDGET_KEY = 'alirin_home_widgets_v1';
+const HOME_WIDGET_DEFAULTS = {
+  hwSaldoRingkas: true,
+  hwBulanIni: true,
+  hwAktivitas7Hari: false,
+  hwKartuBesar: false,
+};
+
+function loadHomeWidgetSettings() {
+  try {
+    const raw = JSON.parse(cloudStorage.getItem(HOME_WIDGET_KEY) || '{}');
+    return { ...HOME_WIDGET_DEFAULTS, ...raw };
+  } catch {
+    return { ...HOME_WIDGET_DEFAULTS };
+  }
+}
+function saveHomeWidgetSettings(settings) {
+  cloudStorage.setItem(HOME_WIDGET_KEY, JSON.stringify(settings));
+}
+
+// Sinkronkan tampilan tombol saklar (.ws-switch) di daftar #hwList
+// dengan preferensi tersimpan -- pola SAMA PERSIS dgn
+// syncWidgetSettingsUI() di atas, hanya scoped ke [data-hw-toggle].
+function syncHomeWidgetUI(settings) {
+  document.querySelectorAll('#hwList .ws-switch[data-hw-toggle]').forEach((btn) => {
+    const key = btn.dataset.hwToggle;
+    const on = !!settings[key];
+    btn.classList.toggle('active', on);
+    btn.setAttribute('aria-checked', String(on));
+    const row = btn.closest('.ws-row');
+    if (row) row.classList.toggle('is-off', !on);
+  });
+}
+
+// Gambar ulang pratinjau "layar utama HP" (#hwPhoneWidgets) berisi
+// hanya widget yang aktif, memakai data transaksi terkini (calcTotals()
+// & fmtRupiah/fmtRupiahShort sudah didefinisikan di atas file ini).
+function renderHomeWidgetPreview() {
+  const wrap = document.getElementById('hwPhoneWidgets');
+  const countEl = document.getElementById('hwActiveCount');
+  if (!wrap) return;
+
+  const settings = loadHomeWidgetSettings();
+  const t = calcTotals();
+  const tiles = [];
+
+  if (settings.hwSaldoRingkas) {
+    tiles.push(`
+      <div class="hw-tile hw-tile-small">
+        <div class="hw-tile-head"><span class="hw-tile-dot"></span>Saldo Total</div>
+        <div class="hw-tile-value">${fmtRupiahShort(t.saldo)}</div>
+        <div class="hw-tile-sub">${transactions.length} transaksi tercatat</div>
+      </div>
+    `);
+  }
+
+  if (settings.hwBulanIni) {
+    const maxVal = Math.max(t.monthIn, t.monthOut, 1);
+    tiles.push(`
+      <div class="hw-tile hw-tile-medium">
+        <div class="hw-tile-head"><span class="hw-tile-dot"></span>Bulan Ini</div>
+        <div class="hw-tile-bars">
+          <div class="hw-bar-row"><span>Masuk</span><div class="hw-bar-track"><div class="hw-bar-fill in" style="width:${Math.round((t.monthIn / maxVal) * 100)}%"></div></div><b>${fmtRupiahShort(t.monthIn)}</b></div>
+          <div class="hw-bar-row"><span>Keluar</span><div class="hw-bar-track"><div class="hw-bar-fill out" style="width:${Math.round((t.monthOut / maxVal) * 100)}%"></div></div><b>${fmtRupiahShort(t.monthOut)}</b></div>
+        </div>
+      </div>
+    `);
+  }
+
+  if (settings.hwAktivitas7Hari) {
+    const days = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().slice(0, 10);
+      let net = 0;
+      transactions.forEach((tx) => {
+        if (tx.date === key) net += tx.type === 'masuk' ? (Number(tx.amount) || 0) : -(Number(tx.amount) || 0);
+      });
+      days.push(net);
+    }
+    const maxAbs = Math.max(...days.map((v) => Math.abs(v)), 1);
+    const barsHtml = days.map((v) => {
+      const h = Math.max(6, Math.round((Math.abs(v) / maxAbs) * 28));
+      return `<div class="hw-spark-bar ${v >= 0 ? 'up' : 'down'}" style="height:${h}px"></div>`;
+    }).join('');
+    tiles.push(`
+      <div class="hw-tile hw-tile-medium">
+        <div class="hw-tile-head"><span class="hw-tile-dot"></span>Aktivitas 7 Hari</div>
+        <div class="hw-spark">${barsHtml}</div>
+        <div class="hw-tile-sub">Naik/turun saldo harian minggu ini</div>
+      </div>
+    `);
+  }
+
+  if (settings.hwKartuBesar) {
+    tiles.push(`
+      <div class="hw-tile hw-tile-large">
+        <div class="hw-tile-head"><span class="hw-tile-dot"></span>Ringkasan Lengkap</div>
+        <div class="hw-tile-value">${fmtRupiahShort(t.saldo)}</div>
+        <div class="hw-tile-grid">
+          <div><span>Masuk Bln Ini</span><b class="up">${fmtRupiahShort(t.monthIn)}</b></div>
+          <div><span>Keluar Bln Ini</span><b class="down">${fmtRupiahShort(t.monthOut)}</b></div>
+        </div>
+      </div>
+    `);
+  }
+
+  wrap.innerHTML = tiles.length ? tiles.join('') : `
+    <div class="hw-phone-empty">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3.5" y="3.5" width="8" height="8" rx="1.6"/><rect x="13.5" y="3.5" width="7" height="5.5" rx="1.6"/><rect x="13.5" y="11.5" width="7" height="9" rx="1.6"/><rect x="3.5" y="13.5" width="8" height="7" rx="1.6"/></svg>
+      <p>Belum ada widget aktif.<br>Aktifkan salah satu di bawah.</p>
+    </div>
+  `;
+  if (countEl) countEl.textContent = `${tiles.length} aktif`;
+}
+
+document.getElementById('hwList')?.addEventListener('click', (e) => {
+  const btn = e.target.closest('.ws-switch[data-hw-toggle]');
+  if (!btn) return;
+  const key = btn.dataset.hwToggle;
+  const settings = loadHomeWidgetSettings();
+  settings[key] = !settings[key];
+  saveHomeWidgetSettings(settings);
+  syncHomeWidgetUI(settings);
+  renderHomeWidgetPreview();
+  showToast(settings[key] ? 'Widget diaktifkan' : 'Widget dinonaktifkan');
+});
+
+document.getElementById('hwResetBtn')?.addEventListener('click', () => {
+  const settings = { ...HOME_WIDGET_DEFAULTS };
+  saveHomeWidgetSettings(settings);
+  syncHomeWidgetUI(settings);
+  renderHomeWidgetPreview();
+  showToast('Widget dikembalikan ke pengaturan awal');
+});
+
+// Terapkan preferensi & pratinjau begitu halaman dimuat.
+syncHomeWidgetUI(loadHomeWidgetSettings());
+renderHomeWidgetPreview();
 
 
 /* ==========================================================
@@ -10386,6 +10528,10 @@ document.getElementById('userAccountForm')?.addEventListener('submit', async (e)
 function openWidgetOverlay() {
   document.getElementById('widgetOverlay')?.classList.add('open');
   lockBodyScroll();
+  // Segarkan saklar on/off + pratinjau layar utama setiap kali halaman
+  // dibuka, supaya angkanya selalu sinkron dgn transaksi terbaru.
+  syncHomeWidgetUI(loadHomeWidgetSettings());
+  renderHomeWidgetPreview();
 }
 function closeWidgetOverlay() {
   document.getElementById('widgetOverlay')?.classList.remove('open');
@@ -10413,27 +10559,18 @@ document.getElementById('updateVersionBackBtn')?.addEventListener('click', close
 /* ==========================================================
    PENGATURAN > PENGATURAN — "Leaderboard" khusus menu Pengaturan
    (#settingsLeaderboardOverlay). Pola buka/tutup SAMA PERSIS dgn
-   openUpdateVersionOverlay/closeUpdateVersionOverlay di atas.
+   openUpdateVersionOverlay/closeUpdateVersionOverlay di atas --
+   halaman ini SENGAJA masih kosong (placeholder "empty-state"),
+   tinggal diisi kontennya nanti.
 
-   Halaman ini kini berisi konten Leaderboard YG SAMA PERSIS (hero
-   Pemasukan vs Pengeluaran + Top Pemasukan/Pengeluaran, toggle
-   Harian/Bulanan) dgn #leaderboardOverlay yg dibuka dari footer --
-   render logic-nya (renderLeaderboard dkk, lihat definisinya di atas)
-   SUDAH digeneralisasi menerima parameter `ns` (namespace id) supaya
-   satu logic dipakai ulang persis apa adanya di sini, tanpa duplikasi
-   kode. Markup halamannya sendiri (lihat index.html
-   #settingsLeaderboardOverlay) sengaja DIBUAT DUPLIKAT dari markup
-   #leaderboardOverlay tapi SEMUA id-nya diberi prefix "sLb" (bukan
-   "lb") -- persis pola prefix "settingsLeaderboard..." yg sudah
-   dipakai utk id overlay & tombolnya -- supaya kedua halaman
-   "Leaderboard" ini tetap berdiri sendiri-sendiri (elemen DOM
-   terpisah, tidak saling menimpa), walau datanya sama & selalu
-   sinkron (leaderboardPeriod dibagi bareng). ---- */
+   CATATAN: sengaja diberi nama fungsi/id BERBEDA (prefix
+   "SettingsLeaderboard...") dari openLeaderboardPage/closeLeaderboardPage
+   & #leaderboardOverlay yg SUDAH ADA & berfungsi penuh (dibuka dari
+   footer) di tempat lain di file ini -- supaya kedua halaman "Leaderboard"
+   ini tetap berdiri sendiri-sendiri, tidak saling menimpa. ---- */
 function openSettingsLeaderboardOverlay() {
   document.getElementById('settingsLeaderboardOverlay')?.classList.add('open');
   lockBodyScroll();
-  window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
-  renderLeaderboard('sLb');
 }
 function closeSettingsLeaderboardOverlay() {
   document.getElementById('settingsLeaderboardOverlay')?.classList.remove('open');
@@ -10441,11 +10578,6 @@ function closeSettingsLeaderboardOverlay() {
 }
 document.getElementById('settingsLeaderboardOpenBtn')?.addEventListener('click', openSettingsLeaderboardOverlay);
 document.getElementById('settingsLeaderboardBackBtn')?.addEventListener('click', closeSettingsLeaderboardOverlay);
-document.getElementById('sLbPeriodToggle')?.addEventListener('click', (e) => {
-  const btn = e.target.closest('[data-lbperiod]');
-  if (!btn) return;
-  switchLeaderboardPeriod('sLb', btn.dataset.lbperiod);
-});
 
 /* ==========================================================
    PENGATURAN > PENGATURAN — "Fast Menu" (#fastMenuOverlay). Pola
