@@ -3452,10 +3452,18 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   background:#FFF1E8;color:var(--forest-glow, #F2672B);border-color:var(--forest-glow, #F2672B);
 }
 .videodl-input-row{display:flex;gap:8px;}
-.videodl-input-row input{
-  flex:1;min-width:0;padding:12px 14px;border-radius:14px;border:1px solid var(--line);
+.videodl-input-wrap{position:relative;flex:1;min-width:0;}
+.videodl-input-wrap input{
+  width:100%;min-width:0;padding:12px 34px 12px 14px;border-radius:14px;border:1px solid var(--line);
   font-size:14px;background:var(--card);color:var(--ink);
 }
+.videodl-clear-btn{
+  display:none;position:absolute;right:6px;top:50%;transform:translateY(-50%);
+  width:24px;height:24px;border-radius:999px;border:none;background:var(--card-2, #F8F5F2);
+  color:var(--ink-faint);align-items:center;justify-content:center;padding:0;cursor:pointer;
+  line-height:0;
+}
+.videodl-clear-btn.videodl-show{display:flex;}
 .videodl-paste-btn{flex-shrink:0;padding:0 16px;}
 .videodl-fetch-btn{width:100%;}
 .videodl-status{
@@ -15276,7 +15284,12 @@ html.dark-mode .bd-row-close{
         </div>
 
         <div class="videodl-input-row">
-          <input type="url" id="videoDlUrlInput" placeholder="Tempel link video di sini..." autocomplete="off" inputmode="url">
+          <div class="videodl-input-wrap">
+            <input type="url" id="videoDlUrlInput" placeholder="Tempel link video di sini..." autocomplete="off" inputmode="url">
+            <button type="button" class="videodl-clear-btn" id="videoDlClearBtn" aria-label="Hapus link">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>
+            </button>
+          </div>
           <button type="button" class="btn btn-ghost videodl-paste-btn" id="videoDlPasteBtn">Tempel</button>
         </div>
         <button type="button" class="btn btn-primary videodl-fetch-btn" id="videoDlFetchBtn">Ambil Video</button>
@@ -15313,6 +15326,11 @@ html.dark-mode .bd-row-close{
             </button>
           </div>
           <p class="ai-settings-hint">Kosongkan untuk pakai key bawaan aplikasi. Kalau mau pakai key sendiri, dapatkan gratis (1.000 kredit) di <a href="https://api.fastsaver.io/auth" target="_blank" rel="noopener">api.fastsaver.io</a>. Key custom disimpan hanya di browser ini (localStorage), tidak dikirim ke server ZAYAIN.</p>
+        </div>
+        <div class="form-row">
+          <label for="videoDlWorkerUrlInput">URL Cloudflare Worker (opsional)</label>
+          <input type="url" id="videoDlWorkerUrlInput" placeholder="https://nama-worker-anda.workers.dev" autocomplete="off">
+          <p class="ai-settings-hint">Kalau diisi, semua permintaan Unduh Video dialihkan lewat Worker ini (mengatasi error "Failed to fetch"/CORS, & API key tidak lagi ikut terkirim dari browser). Lihat file <span class="mono">cloudflare-worker.js</span> yang disertakan untuk kode & cara deploy-nya (gratis).</p>
         </div>
         <div class="modal-actions">
           <button type="button" class="btn btn-ghost" id="videoDlSettingsClearBtn">Hapus Key</button>

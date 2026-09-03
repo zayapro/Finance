@@ -10979,18 +10979,29 @@ const VIDEODL_SETTINGS_KEY = 'zayapro_videodl_settings';
 // API key TIDAK ditulis polos di source (di-encode base64) supaya tidak
 // langsung kelihatan sekilas mata/ctrl+F sederhana kalau user buka
 // "View Page Source" -- CATATAN JUJUR: ini cuma penyamaran ringan, BUKAN
-// keamanan sungguhan. Base64 gampang di-decode siapapun yg cukup niat
-// (tinggal paste ke devtools: atob(...)), dan key tetap ikut terkirim
-// polos di header tiap request (bisa dilihat lewat tab Network). Kalau
-// nanti ZAYAIN dipakai banyak orang, cara aman satu-satunya adalah lewat
-// server/proxy sendiri (Cloudflare Worker dll) yg menyimpan key di sisi
-// server, bukan menaruhnya di kode yg dikirim ke browser.
+// keamanan sungguhan (lihat komentar VIDEODL_WORKER_URL di bawah utk
+// cara yg benar-benar aman). Base64 gampang di-decode siapapun yg cukup
+// niat, dan key tetap ikut terkirim polos di header tiap request kalau
+// TIDAK lewat Worker proxy (bisa dilihat lewat tab Network).
 const VIDEODL_DEFAULT_API_KEY = atob('ZnNfc2tfNW8xZDhpOXI3dzdiOHQ4ZTR2NGozZDZoM2szYw==');
+// URL Cloudflare Worker default -- ditanam langsung di sini supaya
+// pengguna tidak perlu buka modal Pengaturan & paste manual. Kalau user
+// mengisi field "URL Cloudflare Worker" sendiri di modal, nilai
+// simpanannya (localStorage) akan menimpa default ini.
+const VIDEODL_DEFAULT_WORKER_URL = 'https://icy-salad-51c6.zayapro.workers.dev';
+// Kalau diisi (lewat modal Pengaturan), semua request Unduh Video
+// dialihkan lewat Cloudflare Worker ini alih-alih langsung ke
+// api.fastsaver.io. Worker-nya yg pegang & mengirim API key (disimpan
+// sbg secret di sisi Cloudflare, TIDAK PERNAH dikirim ke browser sama
+// sekali), sekaligus worker itu yg menambahkan header CORS supaya
+// fetch dari browser tidak lagi kena "Failed to fetch"/CORS-blocked.
+// Lihat file cloudflare-worker.js yg disertakan utk kode & cara
+// deploy-nya (gratis, tanpa VPS, cukup akun Cloudflare).
 function loadVideoDlSettings() {
   try {
     const raw = JSON.parse(cloudStorage.getItem(VIDEODL_SETTINGS_KEY) || '{}');
-    return { apiKey: raw.apiKey || VIDEODL_DEFAULT_API_KEY };
-  } catch (e) { return { apiKey: VIDEODL_DEFAULT_API_KEY }; }
+    return { apiKey: raw.apiKey || VIDEODL_DEFAULT_API_KEY, workerUrl: raw.workerUrl || VIDEODL_DEFAULT_WORKER_URL };
+  } catch (e) { return { apiKey: VIDEODL_DEFAULT_API_KEY, workerUrl: VIDEODL_DEFAULT_WORKER_URL }; }
 }
 function persistVideoDlSettings(data) {
   try { cloudStorage.setItem(VIDEODL_SETTINGS_KEY, JSON.stringify(data)); }
@@ -11019,6 +11030,7 @@ const videoDlSettingsModal = document.getElementById('videoDlSettingsModalOverla
 const videoDlSettingsForm = document.getElementById('videoDlSettingsForm');
 const videoDlApiKeyInput = document.getElementById('videoDlApiKeyInput');
 const videoDlApiKeyToggle = document.getElementById('videoDlApiKeyToggle');
+const videoDlWorkerUrlInput = document.getElementById('videoDlWorkerUrlInput');
 bindPasswordEyeToggle(videoDlApiKeyInput, videoDlApiKeyToggle);
 
 function openVideoDlSettingsModal() {
@@ -11028,6 +11040,7 @@ function openVideoDlSettingsModal() {
   // ditaruh di sini, dia jadi kelihatan lagi tiap modal ini dibuka.
   const savedRaw = (() => { try { return JSON.parse(cloudStorage.getItem(VIDEODL_SETTINGS_KEY) || '{}'); } catch (e) { return {}; } })();
   if (videoDlApiKeyInput) videoDlApiKeyInput.value = savedRaw.apiKey || '';
+  if (videoDlWorkerUrlInput) videoDlWorkerUrlInput.value = savedRaw.workerUrl || '';
   openModal(videoDlSettingsModal);
 }
 document.getElementById('videoDlSettingsBtn')?.addEventListener('click', openVideoDlSettingsModal);
@@ -11035,16 +11048,20 @@ document.getElementById('videoDlSettingsCloseBtn')?.addEventListener('click', ()
 videoDlSettingsModal?.addEventListener('click', (e) => { if (e.target === videoDlSettingsModal) closeModal(videoDlSettingsModal); });
 videoDlSettingsForm?.addEventListener('submit', (e) => {
   e.preventDefault();
-  videoDlSettings = { apiKey: (videoDlApiKeyInput.value || '').trim() };
+  videoDlSettings = {
+    apiKey: (videoDlApiKeyInput.value || '').trim(),
+    workerUrl: (videoDlWorkerUrlInput?.value || '').trim().replace(/\/+$/, ''),
+  };
   persistVideoDlSettings(videoDlSettings);
   closeModal(videoDlSettingsModal);
   showToast('Pengaturan Unduh Video disimpan.');
 });
 document.getElementById('videoDlSettingsClearBtn')?.addEventListener('click', () => {
   if (videoDlApiKeyInput) videoDlApiKeyInput.value = '';
-  videoDlSettings = { apiKey: '' };
+  if (videoDlWorkerUrlInput) videoDlWorkerUrlInput.value = '';
+  videoDlSettings = { apiKey: '', workerUrl: '' };
   persistVideoDlSettings(videoDlSettings);
-  showToast('API key Unduh Video dihapus.');
+  showToast('Pengaturan Unduh Video dihapus.');
 });
 
 /* ---- Deteksi platform dari URL -- dipakai utk menyorot chip info
@@ -11065,11 +11082,15 @@ function videoDlDetectPlatform(url) {
 
 const videoDlUrlInput = document.getElementById('videoDlUrlInput');
 const videoDlPlatformRow = document.getElementById('videoDlPlatformRow');
+const videoDlClearBtn = document.getElementById('videoDlClearBtn');
 videoDlUrlInput?.addEventListener('input', () => {
   const detected = videoDlDetectPlatform((videoDlUrlInput.value || '').trim());
   videoDlPlatformRow?.querySelectorAll('.videodl-platform-chip').forEach((chip) => {
     chip.classList.toggle('videodl-active', chip.dataset.platform === detected);
   });
+  // Tombol "X" cuma nongol kalau field-nya ada isinya, biar tidak
+  // ganggu placeholder pas kosong.
+  videoDlClearBtn?.classList.toggle('videodl-show', !!videoDlUrlInput.value.trim());
 });
 
 document.getElementById('videoDlPasteBtn')?.addEventListener('click', async () => {
@@ -11082,6 +11103,19 @@ document.getElementById('videoDlPasteBtn')?.addEventListener('click', async () =
   } catch (e) {
     showToast('Tidak bisa akses clipboard, tempel manual saja.', 'err');
   }
+});
+
+videoDlClearBtn?.addEventListener('click', () => {
+  if (!videoDlUrlInput) return;
+  videoDlUrlInput.value = '';
+  videoDlUrlInput.dispatchEvent(new Event('input'));
+  videoDlUrlInput.focus();
+  // Sekalian sembunyikan hasil/status sebelumnya (kalau ada), biar
+  // bersih pas mau tempel/ganti link baru.
+  const resultBox = document.getElementById('videoDlResultBox');
+  if (resultBox) { resultBox.style.display = 'none'; resultBox.innerHTML = ''; }
+  const statusEl = document.getElementById('videoDlStatus');
+  if (statusEl) { statusEl.style.display = 'none'; statusEl.textContent = ''; }
 });
 
 function videoDlSetStatus(msg, isErr) {
@@ -11146,7 +11180,8 @@ document.getElementById('videoDlFetchBtn')?.addEventListener('click', async () =
   const resultBox = document.getElementById('videoDlResultBox');
   if (resultBox) { resultBox.style.display = 'none'; resultBox.innerHTML = ''; }
   if (!url) { videoDlSetStatus('Tempel link video dulu.', true); return; }
-  if (!videoDlSettings.apiKey) {
+  const usingWorker = !!videoDlSettings.workerUrl;
+  if (!usingWorker && !videoDlSettings.apiKey) {
     videoDlSetStatus('Atur API key dulu lewat ikon gerigi di pojok kanan atas.', true);
     return;
   }
@@ -11157,21 +11192,32 @@ document.getElementById('videoDlFetchBtn')?.addEventListener('click', async () =
   }
   if (!platform) { videoDlSetStatus('Link tidak valid.', true); return; }
 
+  // Lewat Worker (kalau sudah di-deploy & diisi di Pengaturan) -> header
+  // 'X-Api-Key' TIDAK dikirim dari browser sama sekali, Worker yg
+  // menambahkannya di sisi server pakai secret miliknya sendiri. Kalau
+  // Worker belum diisi, fallback ke panggilan langsung spt sebelumnya
+  // (bisa kena "Failed to fetch" kalau api.fastsaver.io tidak izinkan
+  // CORS dari browser).
+  const apiBase = usingWorker ? videoDlSettings.workerUrl : 'https://api.fastsaver.io';
+
   const fetchBtn = document.getElementById('videoDlFetchBtn');
   fetchBtn.disabled = true;
   videoDlSetStatus('Mengambil video...', false);
   try {
     let res, data;
     if (platform === 'youtube') {
-      res = await fetch('https://api.fastsaver.io/v1/youtube/download', {
+      res = await fetch(`${apiBase}/v1/youtube/download`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Api-Key': videoDlSettings.apiKey },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(usingWorker ? {} : { 'X-Api-Key': videoDlSettings.apiKey }),
+        },
         body: JSON.stringify({ url, format: '1080p' }),
       });
     } else {
       const qs = new URLSearchParams({ url });
-      res = await fetch(`https://api.fastsaver.io/v1/fetch?${qs.toString()}`, {
-        headers: { 'X-Api-Key': videoDlSettings.apiKey },
+      res = await fetch(`${apiBase}/v1/fetch?${qs.toString()}`, {
+        headers: usingWorker ? {} : { 'X-Api-Key': videoDlSettings.apiKey },
       });
     }
     data = await res.json();
