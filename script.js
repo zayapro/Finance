@@ -17832,7 +17832,7 @@ async function sendAiMessage() {
   const text = aiChatInput.value.trim();
   if (!text) return;
 
-  if (!(aiSettings.apiKey && aiSettings.apiKey.trim())) {
+  if (!(AI_DEFAULT_API_KEY || (aiSettings.apiKey && aiSettings.apiKey.trim()))) {
     renderAiKeyBanner();
     openAiSettingsModal();
     return;
@@ -18172,41 +18172,48 @@ async function callGeminiAtk(userText, mode, attachment) {
 }
 
 // Buat gambar dari teks (mode "kreatif" > "Buat Gambar"). Model
-// image-generation Gemini membalas dalam bentuk part inlineData
-// (base64 PNG/JPEG), bukan teks.
+// Generator gambar: pakai Pollinations.ai (gratis, tanpa API key,
+// tanpa kuota harian resmi -- fallback dari model gambar Gemini yang
+// kuota gratisnya 0/sangat ketat). Endpoint ini balas file gambar
+// mentah (bukan JSON), jadi hasilnya dikonversi ke base64 di sini
+// supaya bentuk return-nya tetap sama seperti sebelumnya
+// ({ mimeType, base64 }) dan tidak perlu ubah kode pemanggilnya.
+function blobToBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const result = String(reader.result || '');
+      const idx = result.indexOf(',');
+      resolve(idx >= 0 ? result.slice(idx + 1) : '');
+    };
+    reader.onerror = () => reject(new Error('READ_FAILED'));
+    reader.readAsDataURL(blob);
+  });
+}
 async function callGeminiImageGen(prompt) {
-  const apiKey = (AI_DEFAULT_API_KEY || aiSettings.apiKey || '').trim();
-  const model = (aiSettings.imageModel || '').trim() || AI_DEFAULT_IMAGE_MODEL;
-  if (!apiKey) throw new Error('NO_API_KEY');
-
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
+  const seed = Math.floor(Math.random() * 1000000000);
+  const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&nologo=true&seed=${seed}`;
   let res;
   try {
-    res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
-      body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }] }),
-    });
+    res = await fetch(url);
   } catch (networkErr) {
     throw new Error('FAILED_TO_FETCH');
   }
   if (!res.ok) {
-    let detail = '';
-    try { detail = (await res.json()).error?.message || ''; } catch (e) { /* abaikan */ }
-    const err = new Error(detail || `HTTP_${res.status}`);
+    const err = new Error(`HTTP_${res.status}`);
     err.status = res.status;
     throw err;
   }
-  const data = await res.json();
-  const parts = data?.candidates?.[0]?.content?.parts || [];
-  const imgPart = parts.find(p => p.inlineData && p.inlineData.data);
-  if (!imgPart) {
-    const text = parts.map(p => p.text || '').join('').trim();
-    const err = new Error(text || 'Model tidak mengembalikan gambar.');
+  const blob = await res.blob();
+  const mimeType = blob.type || 'image/jpeg';
+  let base64 = '';
+  try { base64 = await blobToBase64(blob); } catch (e) { /* abaikan, ditangani di bawah */ }
+  if (!base64) {
+    const err = new Error('Gagal membaca hasil gambar dari server.');
     err.status = 'NO_IMAGE';
     throw err;
   }
-  return { mimeType: imgPart.inlineData.mimeType || 'image/png', base64: imgPart.inlineData.data };
+  return { mimeType, base64 };
 }
 
 async function sendAtkMessage() {
@@ -18215,7 +18222,7 @@ async function sendAtkMessage() {
   const wantsImageGen = atkActiveTab === 'kreatif' && atkCreativeMode === 'image';
   if (!text && !(atkAttachedFile && !wantsImageGen)) return;
 
-  if (!(aiSettings.apiKey && aiSettings.apiKey.trim())) {
+  if (!(AI_DEFAULT_API_KEY || (aiSettings.apiKey && aiSettings.apiKey.trim()))) {
     renderAtkKeyBanner();
     openAiSettingsModal();
     return;
@@ -18260,9 +18267,11 @@ async function sendAtkMessage() {
     else if (err.status === 401) msg = `API key ZayaDev tidak valid (401): ${err.message || 'periksa kembali key di Pengaturan.'}`;
     else if (err.status === 403) msg = `API key ZayaDev ditolak (403): ${err.message || 'pastikan API ZayaDev aktif untuk key ini.'}`;
     else if (err.status === 404) msg = wantsImageGen
-      ? `Model gambar "${(aiSettings.imageModel || AI_DEFAULT_IMAGE_MODEL)}" tidak ditemukan (404). Coba ganti "Model Gambar" di Pengaturan.`
+      ? 'Server pembuat gambar sedang bermasalah (404). Coba lagi sebentar lagi.'
       : `Model "${(aiSettings.model || AI_DEFAULT_MODEL)}" tidak ditemukan (404). Coba ganti model di Pengaturan.`;
-    else if (err.status === 429) msg = 'Kuota/limit ZayaDev tercapai. Coba lagi nanti.';
+    else if (err.status === 429) msg = wantsImageGen
+      ? 'Server pembuat gambar sedang sibuk. Coba lagi sebentar lagi.'
+      : 'Kuota/limit ZayaDev tercapai. Coba lagi nanti.';
     else if (err.status === 'NO_IMAGE') msg = `ZayaDev tidak mengembalikan gambar: ${err.message}`;
     else if (err.message === 'EMPTY_RESPONSE') msg = 'ZayaDev tidak memberi jawaban (mungkin diblokir filter keamanan). Coba ubah pertanyaan.';
     else if (err.message) msg = `Gagal menghubungi ZayaDev: ${err.message}`;
