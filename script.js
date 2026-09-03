@@ -17353,25 +17353,31 @@ const AI_DEFAULT_API_KEY = atob('QVEuQWI4Uk42S1ZLc0RsUS1oZWVVRHhZTnF4SE83aEhwQ3l
 // publik/produksi, sebaiknya proxy lewat cloudflare-worker.js.
 const AI_CLAUDE_DEFAULT_MODEL = 'claude-sonnet-5';
 const AI_CLAUDE_API_VERSION = '2023-06-01';
+// Groq: API gratis (console.groq.com), model open-source (Llama dkk),
+// endpoint kompatibel format OpenAI Chat Completions.
+const AI_GROQ_DEFAULT_MODEL = 'llama-3.3-70b-versatile';
 
 function loadAiSettings() {
   try {
     const raw = cloudStorage.getItem(AI_SETTINGS_KEY);
-    if (raw) return Object.assign({ apiKey: '', model: '', imageModel: '', pollinationsKey: '', provider: 'gemini', claudeApiKey: '', claudeModel: '', workerUrl: '' }, JSON.parse(raw));
+    if (raw) return Object.assign({ apiKey: '', model: '', imageModel: '', pollinationsKey: '', provider: 'gemini', claudeApiKey: '', claudeModel: '', groqApiKey: '', groqModel: '', workerUrl: '' }, JSON.parse(raw));
   } catch (e) { /* abaikan */ }
-  return { apiKey: '', model: '', imageModel: '', pollinationsKey: '', provider: 'gemini', claudeApiKey: '', claudeModel: '', workerUrl: '' };
+  return { apiKey: '', model: '', imageModel: '', pollinationsKey: '', provider: 'gemini', claudeApiKey: '', claudeModel: '', groqApiKey: '', groqModel: '', workerUrl: '' };
 }
 function getAiProvider() {
-  return aiSettings.provider === 'claude' ? 'claude' : 'gemini';
+  if (aiSettings.provider === 'claude') return 'claude';
+  if (aiSettings.provider === 'groq') return 'groq';
+  return 'gemini';
 }
 // Cek apakah key SUDAH ADA utk provider yg sedang aktif (Gemini punya
-// AI_DEFAULT_API_KEY bawaan jadi selalu true kecuali user pakai Claude;
-// Claude WAJIB diisi manual, tidak ada default).
+// AI_DEFAULT_API_KEY bawaan jadi selalu true kecuali user pakai
+// Claude/Groq; keduanya WAJIB diisi manual, tidak ada default).
 function aiHasActiveKey() {
   if ((aiSettings.workerUrl || '').trim()) return true; // mode Worker -- key dipegang server, bukan browser
-  return getAiProvider() === 'claude'
-    ? !!(aiSettings.claudeApiKey && aiSettings.claudeApiKey.trim())
-    : !!(AI_DEFAULT_API_KEY || (aiSettings.apiKey && aiSettings.apiKey.trim()));
+  const provider = getAiProvider();
+  if (provider === 'claude') return !!(aiSettings.claudeApiKey && aiSettings.claudeApiKey.trim());
+  if (provider === 'groq') return !!(aiSettings.groqApiKey && aiSettings.groqApiKey.trim());
+  return !!(AI_DEFAULT_API_KEY || (aiSettings.apiKey && aiSettings.apiKey.trim()));
 }
 function persistAiSettings(data) {
   try { cloudStorage.setItem(AI_SETTINGS_KEY, JSON.stringify(data)); }
@@ -17417,6 +17423,7 @@ const aiApiKeyInput = document.getElementById('aiApiKeyInput');
 const aiModelInput = document.getElementById('aiModelInput');
 const aiProviderGeminiRadio = document.getElementById('aiProviderGemini');
 const aiProviderClaudeRadio = document.getElementById('aiProviderClaude');
+const aiProviderGroqRadio = document.getElementById('aiProviderGroq');
 const aiApiKeyLabel = document.getElementById('aiApiKeyLabel');
 const aiApiKeyHint = document.getElementById('aiApiKeyHint');
 const aiModelLabel = document.getElementById('aiModelLabel');
@@ -17491,7 +17498,9 @@ if (aiKeyBannerBtn) aiKeyBannerBtn.addEventListener('click', openAiSettingsModal
 // terpisah (aiSettings.apiKey/model utk Gemini, claudeApiKey/claudeModel
 // utk Claude) walau usernya gonta-ganti provider.
 function getSelectedAiProviderInForm() {
-  return (aiProviderClaudeRadio && aiProviderClaudeRadio.checked) ? 'claude' : 'gemini';
+  if (aiProviderClaudeRadio && aiProviderClaudeRadio.checked) return 'claude';
+  if (aiProviderGroqRadio && aiProviderGroqRadio.checked) return 'groq';
+  return 'gemini';
 }
 function updateAiSettingsFormForProvider() {
   const provider = getSelectedAiProviderInForm();
@@ -17504,6 +17513,15 @@ function updateAiSettingsFormForProvider() {
     if (aiModelLabel) aiModelLabel.textContent = 'Model Claude';
     if (aiApiKeyHint) aiApiKeyHint.innerHTML = 'Dapatkan API key di <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a>. Key disimpan hanya di browser ini (localStorage), tidak dikirim ke server manapun selain Anthropic. Panggilan dikirim langsung dari browser -- utk penggunaan publik, sebaiknya proxy lewat Worker supaya key tidak terlihat di DevTools.';
     if (aiModelHint) aiModelHint.innerHTML = `Kosongkan untuk pakai default (<span class="mono">${AI_CLAUDE_DEFAULT_MODEL}</span>). Model lain yang bisa dicoba: <span class="mono">claude-opus-5</span> (lebih pintar, lebih mahal), <span class="mono">claude-haiku-4-5-20251001</span> (lebih cepat/murah).`;
+  } else if (provider === 'groq') {
+    aiApiKeyInput.value = aiSettings.groqApiKey || '';
+    aiApiKeyInput.placeholder = 'gsk_...';
+    aiModelInput.value = aiSettings.groqModel || '';
+    aiModelInput.placeholder = AI_GROQ_DEFAULT_MODEL;
+    if (aiApiKeyLabel) aiApiKeyLabel.textContent = 'API Key Groq';
+    if (aiModelLabel) aiModelLabel.textContent = 'Model Groq';
+    if (aiApiKeyHint) aiApiKeyHint.innerHTML = 'Dapatkan API key gratis di <a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com</a> (tanpa kartu kredit). Key disimpan hanya di browser ini (localStorage), tidak dikirim ke server manapun selain Groq. Panggilan dikirim langsung dari browser -- utk penggunaan publik, sebaiknya proxy lewat Worker supaya key tidak terlihat di DevTools.';
+    if (aiModelHint) aiModelHint.innerHTML = `Kosongkan untuk pakai default (<span class="mono">${AI_GROQ_DEFAULT_MODEL}</span>). Model lain yang bisa dicoba: <span class="mono">llama-3.1-8b-instant</span> (lebih cepat), <span class="mono">openai/gpt-oss-120b</span>. Lihat daftar lengkap di console.groq.com.`;
   } else {
     aiApiKeyInput.value = aiSettings.apiKey || '';
     aiApiKeyInput.placeholder = 'Tempel API key di sini';
@@ -17518,10 +17536,12 @@ function updateAiSettingsFormForProvider() {
 }
 if (aiProviderGeminiRadio) aiProviderGeminiRadio.addEventListener('change', updateAiSettingsFormForProvider);
 if (aiProviderClaudeRadio) aiProviderClaudeRadio.addEventListener('change', updateAiSettingsFormForProvider);
+if (aiProviderGroqRadio) aiProviderGroqRadio.addEventListener('change', updateAiSettingsFormForProvider);
 
 function openAiSettingsModal() {
   if (aiProviderGeminiRadio) aiProviderGeminiRadio.checked = getAiProvider() === 'gemini';
   if (aiProviderClaudeRadio) aiProviderClaudeRadio.checked = getAiProvider() === 'claude';
+  if (aiProviderGroqRadio) aiProviderGroqRadio.checked = getAiProvider() === 'groq';
   if (aiImageModelInput) aiImageModelInput.value = aiSettings.imageModel || '';
   if (aiPollinationsKeyInput) aiPollinationsKeyInput.value = aiSettings.pollinationsKey || '';
   if (aiWorkerUrlInput) aiWorkerUrlInput.value = aiSettings.workerUrl || '';
@@ -17540,6 +17560,8 @@ if (aiSettingsForm) aiSettingsForm.addEventListener('submit', (e) => {
     model: aiSettings.model || '',
     claudeApiKey: aiSettings.claudeApiKey || '',
     claudeModel: aiSettings.claudeModel || '',
+    groqApiKey: aiSettings.groqApiKey || '',
+    groqModel: aiSettings.groqModel || '',
     provider,
     imageModel: aiImageModelInput ? aiImageModelInput.value.trim() : '',
     pollinationsKey: aiPollinationsKeyInput ? aiPollinationsKeyInput.value.trim() : '',
@@ -17548,6 +17570,9 @@ if (aiSettingsForm) aiSettingsForm.addEventListener('submit', (e) => {
   if (provider === 'claude') {
     next.claudeApiKey = aiApiKeyInput.value.trim();
     next.claudeModel = aiModelInput.value.trim();
+  } else if (provider === 'groq') {
+    next.groqApiKey = aiApiKeyInput.value.trim();
+    next.groqModel = aiModelInput.value.trim();
   } else {
     next.apiKey = aiApiKeyInput.value.trim();
     next.model = aiModelInput.value.trim();
@@ -17567,13 +17592,15 @@ if (aiSettingsClearBtn) aiSettingsClearBtn.addEventListener('click', () => {
   if (aiPollinationsKeyInput) aiPollinationsKeyInput.value = '';
   if (provider === 'claude') {
     aiSettings = Object.assign({}, aiSettings, { claudeApiKey: '', claudeModel: '', imageModel: '', pollinationsKey: '' });
+  } else if (provider === 'groq') {
+    aiSettings = Object.assign({}, aiSettings, { groqApiKey: '', groqModel: '', imageModel: '', pollinationsKey: '' });
   } else {
     aiSettings = Object.assign({}, aiSettings, { apiKey: '', model: '', imageModel: '', pollinationsKey: '' });
   }
   persistAiSettings(aiSettings);
   renderAiKeyBanner();
   renderAtkKeyBanner();
-  showToast(provider === 'claude' ? 'API key Claude dihapus.' : 'API key ZayaDev dihapus.');
+  showToast(provider === 'claude' ? 'API key Claude dihapus.' : (provider === 'groq' ? 'API key Groq dihapus.' : 'API key ZayaDev dihapus.'));
 });
 
 // Tes cepat: kirim 1 permintaan minimal ke Gemini pakai key & model
@@ -17583,7 +17610,7 @@ if (aiSettingsClearBtn) aiSettingsClearBtn.addEventListener('click', () => {
 if (aiSettingsTestBtn) aiSettingsTestBtn.addEventListener('click', async () => {
   const provider = getSelectedAiProviderInForm();
   const testKey = (aiApiKeyInput.value || '').trim();
-  const testModel = (aiModelInput.value || '').trim() || (provider === 'claude' ? AI_CLAUDE_DEFAULT_MODEL : AI_DEFAULT_MODEL);
+  const testModel = (aiModelInput.value || '').trim() || (provider === 'claude' ? AI_CLAUDE_DEFAULT_MODEL : (provider === 'groq' ? AI_GROQ_DEFAULT_MODEL : AI_DEFAULT_MODEL));
   const testWorkerUrl = (aiWorkerUrlInput ? aiWorkerUrlInput.value : '').trim().replace(/\/+$/, '');
   if (!testWorkerUrl && !testKey) {
     aiTestResult.style.display = 'block';
@@ -17601,6 +17628,8 @@ if (aiSettingsTestBtn) aiSettingsTestBtn.addEventListener('click', async () => {
       // Mode Worker: tes lewat proxy (key ada di server, tidak dikirim dari sini).
       const payload = provider === 'claude'
         ? { provider: 'claude', model: testModel, messages: [{ role: 'user', content: 'ping' }], max_tokens: 8 }
+        : provider === 'groq'
+        ? { provider: 'groq', model: testModel, messages: [{ role: 'user', content: 'ping' }], max_tokens: 8 }
         : { provider: 'gemini', model: testModel, contents: [{ role: 'user', parts: [{ text: 'ping' }] }] };
       res = await fetch(`${testWorkerUrl}/v1/ai/chat`, {
         method: 'POST',
@@ -17615,6 +17644,15 @@ if (aiSettingsTestBtn) aiSettingsTestBtn.addEventListener('click', async () => {
           'x-api-key': testKey,
           'anthropic-version': AI_CLAUDE_API_VERSION,
           'anthropic-dangerous-direct-browser-access': 'true',
+        },
+        body: JSON.stringify({ model: testModel, max_tokens: 16, messages: [{ role: 'user', content: 'ping' }] }),
+      });
+    } else if (provider === 'groq') {
+      res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${testKey}`,
         },
         body: JSON.stringify({ model: testModel, max_tokens: 16, messages: [{ role: 'user', content: 'ping' }] }),
       });
@@ -18038,6 +18076,63 @@ async function callClaudeApi(userText, mode) {
   return text.trim();
 }
 
+// Sama seperti callGeminiApi()/callClaudeApi() di atas tapi lewat Groq
+// (endpoint kompatibel format OpenAI Chat Completions). Groq tidak
+// menerima system prompt terpisah spt Claude -- diselipkan sbg pesan
+// pertama berperan "system" di array messages.
+async function callGroqApi(userText, mode) {
+  const model = (aiSettings.groqModel || '').trim() || AI_GROQ_DEFAULT_MODEL;
+
+  const formattingNote = ' Format jawaban dengan markdown ringan bila membantu keterbacaan: **tebal** untuk poin penting, daftar bullet "- " untuk rincian/list, dan blok kode ``` ``` khusus untuk data terstruktur (misalnya tabel angka rapi).';
+  const systemInstruction = mode === 'data'
+    ? `Kamu adalah asisten keuangan pribadi di aplikasi ZAYAIN. Jawab dalam Bahasa Indonesia, singkat, jelas, dan ramah.${formattingNote} Gunakan data keuangan pengguna berikut sebagai konteks untuk menjawab. Jangan mengarang angka di luar data ini, dan sebutkan jika suatu informasi tidak tersedia di data.\n\n=== DATA KEUANGAN PENGGUNA ===\n${buildFinancialContextSummary()}`
+    : `Kamu adalah asisten AI umum di aplikasi ZAYAIN. Jawab dalam Bahasa Indonesia, singkat, jelas, dan ramah.${formattingNote}`;
+
+  const historyList = (aiChatHistory[mode] || []).slice(-10);
+  const messages = historyList
+    .filter(m => !m.isError)
+    .map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.text }));
+  messages.push({ role: 'user', content: userText });
+
+  // Mode Worker: key dipegang server, browser cuma kirim isi obrolan.
+  if ((aiSettings.workerUrl || '').trim()) {
+    return await callAiWorkerProxy({ provider: 'groq', model, system: systemInstruction, messages, max_tokens: 2048 });
+  }
+
+  const apiKey = (aiSettings.groqApiKey || '').trim();
+  if (!apiKey) throw new Error('NO_API_KEY');
+
+  let res;
+  try {
+    res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        max_tokens: 2048,
+        messages: [{ role: 'system', content: systemInstruction }, ...messages],
+      }),
+    });
+  } catch (networkErr) {
+    throw new Error('FAILED_TO_FETCH');
+  }
+
+  if (!res.ok) {
+    let detail = '';
+    try { detail = (await res.json()).error?.message || ''; } catch (e) { /* abaikan */ }
+    const err = new Error(detail || `HTTP_${res.status}`);
+    err.status = res.status;
+    throw err;
+  }
+  const data = await res.json();
+  const text = data?.choices?.[0]?.message?.content || '';
+  if (!text) throw new Error('EMPTY_RESPONSE');
+  return text.trim();
+}
+
 async function sendAiMessage() {
   if (aiIsSending) return;
   const text = aiChatInput.value.trim();
@@ -18050,7 +18145,7 @@ async function sendAiMessage() {
   }
 
   const provider = getAiProvider();
-  const providerLabel = provider === 'claude' ? 'Claude' : 'ZayaDev';
+  const providerLabel = provider === 'claude' ? 'Claude' : (provider === 'groq' ? 'Groq' : 'ZayaDev');
   const mode = aiActiveTab;
   aiChatHistory[mode].push({ role: 'user', text, ts: Date.now() });
   persistAiChatHistory();
@@ -18061,7 +18156,7 @@ async function sendAiMessage() {
   setAiSending(true);
   appendAiTypingIndicator();
   try {
-    const reply = provider === 'claude' ? await callClaudeApi(text, mode) : await callGeminiApi(text, mode);
+    const reply = provider === 'claude' ? await callClaudeApi(text, mode) : (provider === 'groq' ? await callGroqApi(text, mode) : await callGeminiApi(text, mode));
     removeAiTypingIndicator();
     aiChatHistory[mode].push({ role: 'model', text: reply, ts: Date.now() });
     persistAiChatHistory();
@@ -18069,7 +18164,7 @@ async function sendAiMessage() {
   } catch (err) {
     console.error(`${providerLabel} API error:`, err);
     removeAiTypingIndicator();
-    const activeModel = provider === 'claude' ? (aiSettings.claudeModel || AI_CLAUDE_DEFAULT_MODEL) : (aiSettings.model || AI_DEFAULT_MODEL);
+    const activeModel = provider === 'claude' ? (aiSettings.claudeModel || AI_CLAUDE_DEFAULT_MODEL) : (provider === 'groq' ? (aiSettings.groqModel || AI_GROQ_DEFAULT_MODEL) : (aiSettings.model || AI_DEFAULT_MODEL));
     let msg = `Gagal menghubungi ${providerLabel}.`;
     if (err.message === 'NO_API_KEY') msg = `API key ${providerLabel} belum diatur.`;
     else if (err.message === 'FAILED_TO_FETCH') msg = `Gagal menghubungi ${providerLabel}: koneksi diblokir (cek internet, ad-blocker/VPN, atau buka lewat http(s):// bukan file://).`;
@@ -18386,6 +18481,56 @@ async function callGeminiAtk(userText, mode, attachment) {
   return text.trim();
 }
 
+// Versi Groq dari callGeminiAtk() di atas. CATATAN: model teks Groq
+// tidak menerima lampiran gambar/video -- kalau ada attachment, lempar
+// error khusus 'GROQ_NO_ATTACHMENT' yg ditangani di sendAtkMessage()
+// dgn pesan yg jelas ke user (suruh pindah ke Gemini/Claude utk
+// analisis gambar/video).
+async function callGroqAtk(userText, mode, attachment) {
+  if (attachment) throw new Error('GROQ_NO_ATTACHMENT');
+  const model = (aiSettings.groqModel || '').trim() || AI_GROQ_DEFAULT_MODEL;
+
+  const systemInstruction = mode === 'bantuan' ? buildAtkAppHelpPrompt() : buildAtkCreativePrompt();
+
+  const historyList = (atkChatHistory[mode] || []).slice(-10);
+  const messages = historyList
+    .filter(m => !m.isError && !m.isImageResult)
+    .map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.text }));
+  messages.push({ role: 'user', content: userText });
+
+  if ((aiSettings.workerUrl || '').trim()) {
+    return await callAiWorkerProxy({ provider: 'groq', model, system: systemInstruction, messages, max_tokens: 2048 });
+  }
+
+  const apiKey = (aiSettings.groqApiKey || '').trim();
+  if (!apiKey) throw new Error('NO_API_KEY');
+
+  let res;
+  try {
+    res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({ model, max_tokens: 2048, messages: [{ role: 'system', content: systemInstruction }, ...messages] }),
+    });
+  } catch (networkErr) {
+    throw new Error('FAILED_TO_FETCH');
+  }
+  if (!res.ok) {
+    let detail = '';
+    try { detail = (await res.json()).error?.message || ''; } catch (e) { /* abaikan */ }
+    const err = new Error(detail || `HTTP_${res.status}`);
+    err.status = res.status;
+    throw err;
+  }
+  const data = await res.json();
+  const text = data?.choices?.[0]?.message?.content || '';
+  if (!text) throw new Error('EMPTY_RESPONSE');
+  return text.trim();
+}
+
 // Versi Claude dari callGeminiAtk() di atas. CATATAN: Claude bisa
 // menerima gambar (base64) tapi TIDAK menerima video sbg lampiran
 // inline spt Gemini -- kalau attachment berupa video, lempar error
@@ -18510,7 +18655,7 @@ async function sendAtkMessage() {
   }
 
   const provider = getAiProvider();
-  const providerLabel = provider === 'claude' ? 'Claude' : 'ZayaDev';
+  const providerLabel = provider === 'claude' ? 'Claude' : (provider === 'groq' ? 'Groq' : 'ZayaDev');
   const mode = atkActiveTab;
   const attachment = (!wantsImageGen && atkAttachedFile) ? atkAttachedFile : null;
 
@@ -18534,7 +18679,7 @@ async function sendAtkMessage() {
       removeAtkTypingIndicator();
       atkChatHistory[mode].push({ role: 'model', text: 'Gambar berhasil dibuat.', isImageResult: true, imageDataUrl: `data:${img.mimeType};base64,${img.base64}`, ts: Date.now() });
     } else {
-      const reply = provider === 'claude' ? await callClaudeAtk(text, mode, attachment) : await callGeminiAtk(text, mode, attachment);
+      const reply = provider === 'claude' ? await callClaudeAtk(text, mode, attachment) : (provider === 'groq' ? await callGroqAtk(text, mode, attachment) : await callGeminiAtk(text, mode, attachment));
       removeAtkTypingIndicator();
       atkChatHistory[mode].push({ role: 'model', text: reply, ts: Date.now() });
     }
@@ -18543,10 +18688,11 @@ async function sendAtkMessage() {
   } catch (err) {
     console.error('Tool AI error:', err);
     removeAtkTypingIndicator();
-    const activeModel = provider === 'claude' ? (aiSettings.claudeModel || AI_CLAUDE_DEFAULT_MODEL) : (aiSettings.model || AI_DEFAULT_MODEL);
+    const activeModel = provider === 'claude' ? (aiSettings.claudeModel || AI_CLAUDE_DEFAULT_MODEL) : (provider === 'groq' ? (aiSettings.groqModel || AI_GROQ_DEFAULT_MODEL) : (aiSettings.model || AI_DEFAULT_MODEL));
     let msg = `Gagal menghubungi ${providerLabel}.`;
     if (err.message === 'NO_API_KEY') msg = `API key ${providerLabel} belum diatur.`;
     else if (err.message === 'CLAUDE_NO_VIDEO') msg = 'Claude belum mendukung analisis lampiran video di sini. Pindah ke provider Gemini di Pengaturan untuk fitur ini, atau lampirkan gambar saja.';
+    else if (err.message === 'GROQ_NO_ATTACHMENT') msg = 'Groq belum mendukung analisis lampiran gambar/video di sini. Pindah ke provider Gemini atau Claude di Pengaturan untuk fitur ini, atau kirim tanpa lampiran.';
     else if (err.message === 'FAILED_TO_FETCH') msg = `Gagal menghubungi ${providerLabel}: koneksi diblokir (cek internet/ad-blocker/VPN).`;
     else if (err.status === 400) msg = `Permintaan ditolak ${providerLabel} (400): ${err.message || 'periksa nama model di Pengaturan.'}`;
     else if (err.status === 401) msg = `API key ${providerLabel} tidak valid (401): ${err.message || 'periksa kembali key di Pengaturan.'}`;

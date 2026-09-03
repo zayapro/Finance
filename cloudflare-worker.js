@@ -66,6 +66,13 @@
  *      yg sama spt langkah 7 -> Simpan. Field API Key di form yg sama
  *      boleh dikosongkan kalau sudah pakai mode Worker ini (key-nya
  *      dibaca worker dari Secret, bukan dari browser).
+ *   9. OPSIONAL -- provider "Groq" (gratis, model open-source spt Llama,
+ *      cepat) sbg alternatif Gemini/Claude: di Worker yg SAMA, tambah
+ *      Secret lagi -> Name: GROQ_API_KEY, Value: (API key dari
+ *      console.groq.com/keys, daftar gratis tanpa kartu kredit) -> Save
+ *      and Deploy. Lalu di ZAYAIN: Tanya AI > ikon gerigi > pilih
+ *      provider "Groq" > field "URL Cloudflare Worker" diisi URL worker
+ *      yg sama spt langkah 7 -> Simpan.
  *
  * Free tier Cloudflare Workers: 100.000 request/hari. Free tier
  * RapidAPI "YouTube Media Downloader": cek sendiri kuotanya di halaman
@@ -488,7 +495,37 @@ export default {
       try { body = JSON.parse(await request.text()); } catch (e) {
         return jsonResponse({ ok: false, detail: 'Body request tidak valid (harus JSON).' }, 400);
       }
-      const provider = body && body.provider === 'claude' ? 'claude' : 'gemini';
+      const provider = body && (body.provider === 'claude' || body.provider === 'groq') ? body.provider : 'gemini';
+
+      if (provider === 'groq') {
+        if (!env.GROQ_API_KEY) {
+          return jsonResponse({ ok: false, detail: 'GROQ_API_KEY belum diatur di Worker Settings > Variables and Secrets.' }, 500);
+        }
+        if (!body.messages) return jsonResponse({ ok: false, detail: 'Field "messages" wajib diisi.' }, 400);
+        try {
+          const res = await fetchWithTimeout('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${env.GROQ_API_KEY}`,
+            },
+            body: JSON.stringify({
+              model: body.model || 'llama-3.3-70b-versatile',
+              max_tokens: body.max_tokens || 2048,
+              messages: body.system
+                ? [{ role: 'system', content: body.system }, ...body.messages]
+                : body.messages,
+            }),
+          }, 30000);
+          const data = await res.json();
+          if (!res.ok) return jsonResponse({ ok: false, detail: data.error?.message || `HTTP ${res.status}` }, res.status);
+          const text = data?.choices?.[0]?.message?.content || '';
+          return jsonResponse({ ok: true, text });
+        } catch (err) {
+          const timedOut = err.name === 'AbortError';
+          return jsonResponse({ ok: false, detail: timedOut ? 'Groq tidak merespons dlm 30 detik (timeout).' : 'Worker gagal menghubungi Groq: ' + err.message }, 502);
+        }
+      }
 
       if (provider === 'claude') {
         if (!env.CLAUDE_API_KEY) {
