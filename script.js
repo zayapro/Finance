@@ -11135,45 +11135,223 @@ function videoDlFormatDuration(sec) {
   return `${m}:${String(r).padStart(2, '0')}`;
 }
 
-/* ---- Render hasil ke #videoDlResultBox -- 3 bentuk (SAMA dgn 3 `type`
-   yg dibalas API): video (1 tombol unduh), image (1 gambar + 1 tombol
-   unduh), album (grid gambar, tiap gambar tombol unduhnya sendiri).
-   `music_url` (khusus TikTok) ditambahkan sbg tombol "Unduh Musik"
-   terpisah kalau ada, di ketiga bentuk itu. ---- */
-function videoDlRenderResult(data) {
+// Kamus terjemahan kode error yg dibalas FastSaverAPI (field `detail`) ke
+// pesan Bahasa Indonesia yg lebih jelas -- dipakai di 3 tempat (info
+// YouTube, download YouTube per-format, & /v1/fetch platform lain), jadi
+// diangkat ke scope modul (bukan lokal di 1 handler spt sebelumnya).
+// Kalau kodenya belum ada di kamus ini, tampilkan kode aslinya apa adanya
+// (bukan disembunyikan), sekaligus dicatat lengkap ke console (F12) buat
+// keperluan debug.
+const VIDEODL_ERROR_MESSAGES = {
+  'download.failed': 'FastSaverAPI gagal memproses video ini. Kemungkinan: video privat/dihapus/dibatasi wilayah, kuota/kredit API di akun FastSaverAPI sudah habis, atau resolusi ini tidak tersedia utk video ini.',
+  'invalid.url': 'Link video tidak valid atau tidak dikenali FastSaverAPI.',
+  'quota.exceeded': 'Kuota/kredit API FastSaverAPI kamu sudah habis. Cek dashboard di api.fastsaver.io/auth.',
+  'unauthorized': 'API key ditolak FastSaverAPI (mungkin salah/kadaluarsa). Cek lagi FASTSAVER_API_KEY di Worker Settings.',
+};
+function videoDlFriendlyError(data) {
+  console.error('[UnduhVideo] Respons gagal dari FastSaverAPI:', data);
+  const code = data.detail || data.error || data.message || '';
+  const friendly = VIDEODL_ERROR_MESSAGES[code];
+  return friendly ? `${friendly} (kode: ${code})`
+    : (code ? `Gagal: ${code}` : 'Link tidak bisa diproses (mungkin privat/dihapus/terkunci wilayah).');
+}
+
+// Ukuran file (bytes, dari field `filesize` /youtube/info) -> teks ringkas
+// "45.2 MB" dst, dibulatkan 1 desimal, satuan naik otomatis tiap x1024.
+function videoDlFormatBytes(bytes) {
+  if (!bytes || !Number.isFinite(bytes)) return '';
+  const units = ['B', 'KB', 'MB', 'GB'];
+  let n = bytes, i = 0;
+  while (n >= 1024 && i < units.length - 1) { n /= 1024; i++; }
+  return `${n.toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
+}
+
+const VIDEODL_DOWNLOAD_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
+const VIDEODL_MUSIC_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>';
+
+// Satu kartu di grid (.videodl-res-grid) -- 2 bentuk:
+//  - "siap" (state.ready=true): sudah punya link, langsung <a href
+//    download> yg bisa diklik user kapan saja.
+//  - "pending" (khusus YouTube, resolusi blm diambil): <button
+//    data-format> yg baru minta link sungguhan pas diklik (lihat
+//    videoDlResolveYoutubeFormat).
+function videoDlResItemHtml({ format, label, sub, downloadUrl, icon }) {
+  const ic = icon || VIDEODL_DOWNLOAD_ICON;
+  if (downloadUrl) {
+    return `<a class="videodl-res-item videodl-res-item--ready" href="${downloadUrl}" download target="_blank" rel="noopener">
+      <span class="videodl-res-item-ic">${ic}</span>
+      <span class="videodl-res-item-label">${label}</span>
+      <span class="videodl-res-item-sub">${sub || ''}</span>
+    </a>`;
+  }
+  return `<button type="button" class="videodl-res-item" data-pending="1" data-format="${format}">
+    <span class="videodl-res-item-ic">${ic}</span>
+    <span class="videodl-res-item-label">${label}</span>
+    <span class="videodl-res-item-sub">${sub || ''}</span>
+  </button>`;
+}
+
+// Bungkus kartu (thumbnail + judul + durasi) + grid resolusi jadi 1
+// #videoDlResultBox -- dipakai baik utk hasil YouTube (/youtube/info)
+// maupun platform lain (/v1/fetch), supaya bentuknya SAMA PERSIS.
+function videoDlRenderCard({ thumbnailUrl, title, duration, resItemsHtml, albumHtml }) {
   const box = document.getElementById('videoDlResultBox');
   if (!box) return;
-  const thumb = data.thumbnail_url ? `<img class="videodl-result-thumb" src="${data.thumbnail_url}" alt="">` : '';
-  const title = data.caption || data.title || 'Video';
-  const durTxt = videoDlFormatDuration(data.duration);
-  let actionsHtml = '';
-  let albumHtml = '';
-  if (data.type === 'album' && Array.isArray(data.items)) {
-    albumHtml = `<div class="videodl-album-grid">${data.items.map((it, i) => `
-      <div class="videodl-album-item">
-        <img src="${it.thumbnail_url || it.download_url}" alt="">
-        <a href="${it.download_url}" download target="_blank" rel="noopener" aria-label="Unduh gambar ${i + 1}">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        </a>
-      </div>`).join('')}</div>`;
-  } else if (data.download_url) {
-    actionsHtml += `<a class="btn btn-primary" href="${data.download_url}" download target="_blank" rel="noopener">Unduh ${data.type === 'image' ? 'Gambar' : 'Video'}</a>`;
-  }
-  if (data.music_url) {
-    actionsHtml += `<a class="btn btn-ghost" href="${data.music_url}" download target="_blank" rel="noopener">Unduh Musik</a>`;
-  }
+  const thumb = thumbnailUrl ? `<img class="videodl-result-thumb" src="${thumbnailUrl}" alt="">` : '';
+  const durTxt = videoDlFormatDuration(duration);
   box.innerHTML = `
     <div class="videodl-result-card">
       ${thumb}
       <div class="videodl-result-body">
-        <div class="videodl-result-title">${title}</div>
+        <div class="videodl-result-title">${title || 'Video'}</div>
         ${durTxt ? `<div class="videodl-result-meta">Durasi: ${durTxt}</div>` : ''}
-        ${actionsHtml ? `<div class="videodl-result-actions">${actionsHtml}</div>` : ''}
+        ${resItemsHtml ? `<div class="videodl-res-grid">${resItemsHtml}</div>` : ''}
       </div>
-      ${albumHtml}
+      ${albumHtml || ''}
     </div>`;
   box.style.display = 'block';
 }
+
+// ---- Bentuk "album" (grid gambar, dibalas beberapa platform kayak
+// IG/Pinterest utk carousel/idea pin) -- TIDAK ikut restrukturisasi grid
+// resolusi di atas (beda konsep: banyak ITEM, bukan banyak KUALITAS dari
+// 1 video/gambar yg sama), jadi tetap format lama apa adanya. ----
+function videoDlAlbumHtml(items) {
+  return `<div class="videodl-album-grid">${items.map((it, i) => `
+    <div class="videodl-album-item">
+      <img src="${it.thumbnail_url || it.download_url}" alt="">
+      <a href="${it.download_url}" download target="_blank" rel="noopener" aria-label="Unduh gambar ${i + 1}">
+        ${VIDEODL_DOWNLOAD_ICON}
+      </a>
+    </div>`).join('')}</div>`;
+}
+
+// ---- Hasil platform NON-YouTube (/v1/fetch) -- API-nya cuma balas SATU
+// kualitas per link (lihat catatan di komentar CSS .videodl-res-grid),
+// jadi grid-nya cuma berisi 1 kartu "siap" (+ 1 lagi kartu Audio kalau
+// ada `music_url`, khusus TikTok) -- tidak ada state pending krn link-nya
+// sudah didapat SEKALIAN dari 1x panggilan /v1/fetch di atas, tanpa
+// tambahan kredit/API call lagi. ----
+function videoDlRenderFetchResult(data) {
+  const title = data.caption || data.title || 'Video';
+  if (data.type === 'album' && Array.isArray(data.items)) {
+    videoDlRenderCard({ thumbnailUrl: data.thumbnail_url, title, duration: data.duration, albumHtml: videoDlAlbumHtml(data.items) });
+    return;
+  }
+  let resItemsHtml = '';
+  if (data.download_url) {
+    resItemsHtml += videoDlResItemHtml({
+      label: data.type === 'image' ? 'Gambar' : 'Video',
+      sub: 'Kualitas sumber',
+      downloadUrl: data.download_url,
+    });
+  }
+  if (data.music_url) {
+    resItemsHtml += videoDlResItemHtml({ label: 'Audio', sub: 'MP3', downloadUrl: data.music_url, icon: VIDEODL_MUSIC_ICON });
+  }
+  videoDlRenderCard({ thumbnailUrl: data.thumbnail_url, title, duration: data.duration, resItemsHtml });
+}
+
+// ---- Hasil /youtube/info -- SEMUA `formats` (144p..2160p, apa adanya
+// sesuai video ini, TIDAK semua video punya semua resolusi) dirender sbg
+// kartu "pending" dulu (BELUM potong kredit download 15/25, cuma kredit
+// info 2 yg sudah kepotong di videoDlFetchYoutubeInfo). Ditambah 1 kartu
+// "Audio (MP3)" manual di akhir -- endpoint /youtube/download menerima
+// format:"audio" utk SEMUA video (tidak muncul di `formats`, yg isinya
+// cuma varian video), jadi ditambahkan sendiri di sini spy pilihan audio
+// tetap ada. ---- */
+function videoDlRenderYoutubeInfo(info) {
+  const formats = Array.isArray(info.formats) ? info.formats : [];
+  let resItemsHtml = formats.map((f) => videoDlResItemHtml({
+    format: f.format,
+    label: (f.format || '').toUpperCase(),
+    sub: videoDlFormatBytes(f.filesize) || 'Ketuk utk ambil',
+  })).join('');
+  resItemsHtml += videoDlResItemHtml({
+    format: 'audio', label: 'Audio', sub: 'MP3', icon: VIDEODL_MUSIC_ICON,
+  });
+  videoDlRenderCard({
+    thumbnailUrl: info.thumbnail || info.thumbnails?.max || info.thumbnails?.low,
+    title: info.title,
+    duration: info.duration,
+    resItemsHtml,
+  });
+}
+
+// ---- Klik salah satu kartu "pending" (khusus YouTube) -- 1 listener
+// delegasi di #videoDlResultBox (bukan per-kartu, krn kartu-kartunya
+// baru ada setelah innerHTML diisi di videoDlRenderYoutubeInfo di atas)
+// -- baru DI SINILAH /youtube/download beneran dipanggil (kredit
+// 15/25 kepotong), dgn `format` PERSIS sesuai kartu yg diklik (bukan
+// nebak2 kandidat spt kode lama). Worker (cloudflare-worker.js) sudah
+// disesuaikan supaya meneruskan `format` ini apa adanya ke FastSaverAPI
+// (baru fallback ke RapidAPI kalau format PERSIS ini gagal), lihat
+// catatan lengkap di sana. ---- */
+document.getElementById('videoDlResultBox')?.addEventListener('click', async (e) => {
+  const item = e.target.closest('.videodl-res-item[data-pending="1"]');
+  if (!item) return;
+  const url = (videoDlUrlInput?.value || '').trim();
+  const format = item.dataset.format;
+  if (!url || !format) return;
+
+  const usingWorker = !!videoDlSettings.workerUrl;
+  const apiBase = usingWorker ? videoDlSettings.workerUrl : 'https://api.fastsaver.io';
+  const labelEl = item.querySelector('.videodl-res-item-label');
+  const subEl = item.querySelector('.videodl-res-item-sub');
+  const originalSub = subEl ? subEl.textContent : '';
+
+  item.classList.add('videodl-res-item--loading');
+  item.classList.remove('videodl-res-item--failed');
+  if (subEl) subEl.textContent = 'Memproses...';
+
+  // Batas waktu lebih longgar lewat Worker (40 detik) krn di sana bisa
+  // nyoba >1 provider (FastSaverAPI -> fallback RapidAPI) sblm menyerah.
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), usingWorker ? 40000 : 25000);
+  try {
+    const res = await fetch(`${apiBase}/v1/youtube/download`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(usingWorker ? {} : { 'X-Api-Key': videoDlSettings.apiKey }),
+      },
+      body: JSON.stringify({ url, format }),
+      signal: controller.signal,
+    });
+    const data = await res.json();
+    if (!data.ok) throw new Error(videoDlFriendlyError(data));
+
+    // Sukses -> ganti kartu <button> ini jadi <a href download> "siap",
+    // niru gaya .videodl-res-item--ready yg sama dgn platform lain.
+    const ready = document.createElement('a');
+    ready.className = 'videodl-res-item videodl-res-item--ready';
+    ready.href = data.download_url;
+    ready.download = '';
+    ready.target = '_blank';
+    ready.rel = 'noopener';
+    ready.innerHTML = `
+      <span class="videodl-res-item-ic">${format === 'audio' ? VIDEODL_MUSIC_ICON : VIDEODL_DOWNLOAD_ICON}</span>
+      <span class="videodl-res-item-label">${labelEl ? labelEl.textContent : format}</span>
+      <span class="videodl-res-item-sub">Ketuk utk unduh</span>`;
+    item.replaceWith(ready);
+    // Link tunnel FastSaverAPI cuma hidup ~10 menit -- kasih tau lewat
+    // status singkat spy user langsung klik, bukan disimpan lama2.
+    videoDlSetStatus('Link siap -- ketuk kartu hijau utk mulai unduh (link ini kedaluwarsa ±10 menit).', false);
+  } catch (err) {
+    item.classList.remove('videodl-res-item--loading');
+    item.classList.add('videodl-res-item--failed');
+    if (subEl) subEl.textContent = err.name === 'AbortError' ? 'Waktu habis, coba lagi' : 'Gagal, coba lagi';
+    videoDlSetStatus(err.message || 'Gagal mengambil link unduhan.', true);
+    // Balikin teks ukuran file semula setelah beberapa detik, biar kartu
+    // tidak "nyangkut" permanen di pesan error & user bisa coba ulang.
+    setTimeout(() => {
+      if (subEl && item.classList.contains('videodl-res-item--failed')) subEl.textContent = originalSub;
+      item.classList.remove('videodl-res-item--failed');
+    }, 3000);
+  } finally {
+    clearTimeout(timeoutId);
+  }
+});
 
 document.getElementById('videoDlFetchBtn')?.addEventListener('click', async () => {
   const url = (videoDlUrlInput?.value || '').trim();
@@ -11200,97 +11378,45 @@ document.getElementById('videoDlFetchBtn')?.addEventListener('click', async () =
   // CORS dari browser).
   const apiBase = usingWorker ? videoDlSettings.workerUrl : 'https://api.fastsaver.io';
 
-  // Kamus terjemahan kode error yg dibalas FastSaverAPI (field `detail`)
-  // ke pesan Bahasa Indonesia yg lebih jelas -- kalau kodenya belum ada
-  // di kamus ini, tampilkan kode aslinya apa adanya supaya tetap
-  // kelihatan (bukan disembunyikan), sekaligus dicatat lengkap ke
-  // console (F12) buat keperluan debug.
-  const VIDEODL_ERROR_MESSAGES = {
-    'download.failed': 'FastSaverAPI gagal memproses video ini. Kemungkinan: video privat/dihapus/dibatasi wilayah, kuota/kredit API di akun FastSaverAPI sudah habis, atau format 1080p tidak tersedia utk video ini.',
-    'invalid.url': 'Link video tidak valid atau tidak dikenali FastSaverAPI.',
-    'quota.exceeded': 'Kuota/kredit API FastSaverAPI kamu sudah habis. Cek dashboard di api.fastsaver.io/auth.',
-    'unauthorized': 'API key ditolak FastSaverAPI (mungkin salah/kadaluarsa). Cek lagi FASTSAVER_API_KEY di Worker Settings.',
-  };
-
   const fetchBtn = document.getElementById('videoDlFetchBtn');
   fetchBtn.disabled = true;
-  videoDlSetStatus('Mengambil video...', false);
-  // Batas waktu 25 detik per percobaan -- server FastSaverAPI kadang
-  // lambat memproses video panjang, tapi kalau lebih dari itu mending
-  // kasih tau user drpd biarkan tombol "loading" tanpa batas.
-  async function videoDlFetchOnce(body, signal) {
-    const res = await fetch(`${apiBase}/v1/youtube/download`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(usingWorker ? {} : { 'X-Api-Key': videoDlSettings.apiKey }),
-      },
-      body: JSON.stringify(body),
-      signal,
-    });
-    return res.json();
-  }
+  videoDlSetStatus(platform === 'youtube' ? 'Mengambil daftar resolusi...' : 'Mengambil video...', false);
+  // Batas waktu 25 detik -- server FastSaverAPI kadang lambat memproses
+  // video panjang, tapi kalau lebih dari itu mending kasih tau user
+  // drpd biarkan tombol "loading" tanpa batas.
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 25000);
 
   try {
     let data;
     if (platform === 'youtube') {
-      if (usingWorker) {
-        // Worker sudah urus semua percobaan format & fallback RapidAPI
-        // secara internal (lihat cloudflare-worker.js) -- cukup 1
-        // request dari sini, tidak perlu diulang-ulang di frontend.
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 40000); // sedikit lebih lama krn worker bisa nyoba >1 provider
-        try {
-          data = await videoDlFetchOnce({ url, format: '1080p' }, controller.signal);
-        } finally {
-          clearTimeout(timeoutId);
-        }
-      } else {
-        // Tanpa Worker (panggil FastSaverAPI langsung dari browser) --
-        // tidak ada fallback RapidAPI di sini, jadi tetap dicoba
-        // beberapa kandidat format spt sebelumnya.
-        const formatCandidates = ['1080p', '1080', '720p', '720', 'best'];
-        for (let i = 0; i < formatCandidates.length; i++) {
-          const fmt = formatCandidates[i];
-          if (i > 0) videoDlSetStatus(`Mencoba format "${fmt}"...`, false);
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 25000);
-          try {
-            data = await videoDlFetchOnce({ url, format: fmt }, controller.signal);
-          } finally {
-            clearTimeout(timeoutId);
-          }
-          if (data.ok) { console.info(`[UnduhVideo] Format "${fmt}" berhasil.`); break; }
-          console.warn(`[UnduhVideo] Format "${fmt}" gagal:`, data);
-        }
-      }
+      // BUKAN langsung /youtube/download lagi spt kode lama (yg nebak2
+      // format 1080p/720p/dst) -- sekarang /youtube/info dulu (2 kredit,
+      // jauh lebih murah drpd 15-25 kredit /youtube/download) supaya
+      // grid resolusi bisa nampilin PERSIS format apa saja yg beneran
+      // tersedia utk video ini (+ ukuran filenya). Baru begitu user
+      // KLIK salah satu kartu, /youtube/download yg sungguhan
+      // dipanggil (lihat listener klik #videoDlResultBox di atas).
+      const qs = new URLSearchParams({ url });
+      const res = await fetch(`${apiBase}/v1/youtube/info?${qs.toString()}`, {
+        headers: usingWorker ? {} : { 'X-Api-Key': videoDlSettings.apiKey },
+        signal: controller.signal,
+      });
+      data = await res.json();
+      if (!data.ok) throw new Error(videoDlFriendlyError(data));
+      videoDlSetStatus('', false);
+      videoDlRenderYoutubeInfo(data);
     } else {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 25000);
       const qs = new URLSearchParams({ url });
       const res = await fetch(`${apiBase}/v1/fetch?${qs.toString()}`, {
         headers: usingWorker ? {} : { 'X-Api-Key': videoDlSettings.apiKey },
         signal: controller.signal,
       });
-      clearTimeout(timeoutId);
       data = await res.json();
+      if (!data.ok) throw new Error(videoDlFriendlyError(data));
+      videoDlSetStatus('', false);
+      videoDlRenderFetchResult(data);
     }
-
-    if (!data.ok) {
-      // Log respons lengkap ke console -- kalau kode errornya belum ada
-      // di kamus VIDEODL_ERROR_MESSAGES di atas, buka DevTools > Console
-      // utk lihat field lain yg mungkin dibalas FastSaverAPI (mis. sisa
-      // kredit, kode error lebih spesifik, dst).
-      console.error('[UnduhVideo] Respons gagal dari FastSaverAPI:', data);
-      const code = data.detail || data.error || data.message || '';
-      const friendly = VIDEODL_ERROR_MESSAGES[code];
-      throw new Error(
-        friendly ? `${friendly} (kode: ${code})`
-          : (code ? `Gagal: ${code}` : 'Link tidak bisa diproses (mungkin privat/dihapus/terkunci wilayah).')
-      );
-    }
-    videoDlSetStatus('', false);
-    videoDlRenderResult(data);
   } catch (err) {
     if (err.name === 'AbortError') {
       videoDlSetStatus('Waktu tunggu habis (25 detik). Server FastSaverAPI kemungkinan lambat/sibuk -- coba lagi.', true);
@@ -11298,6 +11424,7 @@ document.getElementById('videoDlFetchBtn')?.addEventListener('click', async () =
       videoDlSetStatus(err.message || 'Gagal mengambil video. Cek koneksi & API key.', true);
     }
   } finally {
+    clearTimeout(timeoutId);
     fetchBtn.disabled = false;
   }
 });

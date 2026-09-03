@@ -1341,6 +1341,31 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
   isolation:isolate;
 }
 .lap-filter-card.fastmenu-page-body-rest{margin-top:0;border-radius:0;}
+/* ---- Banner sticky halaman "Unduh Video" (#videoDlOverlay) -- pola
+   SAMA PERSIS dgn .fastmenu-sticky-head/.fastmenu-page-body-cap tepat
+   di atas (halaman Fast Menu): banner + "topi" lengkung kosong
+   dibungkus SATU wrapper sticky, baru kartu putih sisanya
+   (.videodl-page-body-rest) scroll normal TERPISAH di bawahnya --
+   dipilih niru pola ini (bukan .tema-sticky-head) krn halaman Unduh
+   Video tidak punya kartu preview yg perlu ikut sticky, cukup "topi"
+   lengkung kosong spt Fast Menu/Notifikasi. ---- */
+.videodl-sticky-head{
+  position:sticky;top:0;z-index:6;
+  transform:translateZ(0);-webkit-transform:translateZ(0);
+  backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  isolation:isolate;
+}
+.videodl-sticky-head .lap-filter-head{position:relative;z-index:1;}
+.videodl-page-body-cap{
+  position:relative;z-index:2;
+  background:var(--card);
+  margin:-24px 0 0;height:24px;
+  border-radius:28px 28px 0 0;
+  transform:translateZ(0);-webkit-transform:translateZ(0);
+  backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  isolation:isolate;
+}
+.lap-filter-card.videodl-page-body-rest{margin-top:0;border-radius:0;}
 .notif-panel-head-titles{flex:1;min-width:0;text-align:center;}
 .notif-panel-head-titles h3{font-size:clamp(16px,3.6vw,19px);font-weight:500;color:#FFF8F1;letter-spacing:-0.005em;line-height:1.25;font-family:'Poppins',sans-serif;}
 .notif-panel-head-sub{margin:2px 0 0;font-size:12px;color:rgba(255,248,241,0.78);font-weight:600;}
@@ -3436,47 +3461,105 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 }
 
 /* ---- Halaman "Unduh Video" (#videoDlOverlay) ----
-   Tema oranye khas ZAYAIN, daur ulang class .lap-filter-* &
-   .ai-settings-hint yg sudah ada (dipakai jg di modal Pengaturan Tanya
-   AI) supaya konsisten. Chip platform (#videoDlPlatformRow) sekadar
-   info visual (tanpa klik), warna abu netral -- deteksi platform
-   sesungguhnya otomatis dari URL yg ditempel (lihat script.js). */
-.videodl-card{display:flex;flex-direction:column;gap:14px;}
-.videodl-platform-row{display:flex;flex-wrap:wrap;gap:8px;}
+   REDESAIN (permintaan user, niru gaya referensi "Tiktok Downloader"
+   ala website downloader populer): tab platform di atas + panel ungu
+   membulat berisi judul besar + subjudul + kolom link & tombol yg
+   "menyatu" jadi satu kapsul, gantiin tampilan lama (chip abu2 lepas +
+   input & tombol Ambil Video/Tempel terpisah 2 baris). Header oranye +
+   kartu putih (.lap-filter-head/.lap-filter-card) tetap dipertahankan
+   krn itu "cangkang" navigasi standar semua halaman detail app ini --
+   yg diubah cuma ISI kartunya. Semua ID lama (videoDlPlatformRow,
+   videoDlUrlInput, videoDlPasteBtn, videoDlClearBtn, videoDlFetchBtn)
+   dipertahankan persis, jadi listener di script.js (deteksi platform
+   otomatis dari URL, tombol tempel/hapus/ambil) tetap jalan tanpa
+   sentuh JS sama sekali -- lihat komentar di HTML-nya (~baris 15367).
+   Warna ungu/indigo SENGAJA baru (--videodl-accent dkk, di-scope lokal
+   ke .videodl-card saja) krn gaya referensinya memang ungu, tanpa
+   mengubah warna oranye tema utama app di halaman lain. Mendukung dark
+   mode (lihat override "html.dark-mode .videodl-card" di bawah) &
+   responsif -- di layar sempit (<=380px) kapsul link+tombol pecah jadi
+   2 baris bertumpuk supaya teks tombol tidak sesak. ---- */
+.videodl-card{
+  --videodl-accent:#6C63FF;--videodl-accent-deep:#4338CA;
+  --videodl-panel-bg:#ECEAFB;--videodl-tab-inactive:#6B7280;
+  display:flex;flex-direction:column;gap:14px;
+}
+.videodl-hero{border-radius:20px;overflow:hidden;background:var(--videodl-panel-bg);box-shadow:var(--shadow-sm);}
+.videodl-platform-row{display:flex;gap:2px;padding:8px 8px 0;}
 .videodl-platform-chip{
-  font-size:11.5px;font-weight:700;padding:5px 12px;border-radius:999px;
-  background:var(--card-2, #F8F5F2);color:var(--ink-faint);border:1px solid var(--line);
-  transition:background .15s ease,color .15s ease,border-color .15s ease;
+  flex:1;min-width:0;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  font-size:clamp(10.5px,3vw,12.5px);font-weight:600;color:var(--videodl-tab-inactive);
+  padding:10px 4px;border-radius:12px 12px 0 0;background:transparent;
+  transition:background .18s ease,color .18s ease;
 }
 .videodl-platform-chip.videodl-active{
-  background:#FFF1E8;color:var(--forest-glow, #F2672B);border-color:var(--forest-glow, #F2672B);
+  background:var(--card);color:var(--videodl-accent-deep);font-weight:800;
 }
-.videodl-input-row{display:flex;gap:8px;}
-.videodl-input-wrap{position:relative;flex:1;min-width:0;}
+.videodl-hero-panel{padding:22px 18px 24px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;}
+.videodl-hero-title{
+  margin:0;font-family:'Poppins',sans-serif;font-weight:800;letter-spacing:-0.01em;
+  font-size:clamp(19px,5.6vw,24px);line-height:1.25;
+  background:linear-gradient(135deg,var(--videodl-accent),var(--videodl-accent-deep));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.videodl-hero-subtitle{margin:0 0 10px;font-size:12.5px;font-weight:600;color:var(--ink-faint);max-width:36ch;}
+.videodl-input-row{
+  width:100%;display:flex;align-items:stretch;
+  background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;
+  box-shadow:0 1px 3px rgba(15,23,42,0.05);
+}
+.videodl-input-wrap{position:relative;flex:1;min-width:0;display:flex;align-items:center;}
 .videodl-input-wrap input{
-  width:100%;min-width:0;padding:12px 34px 12px 14px;border-radius:14px;border:1px solid var(--line);
-  font-size:14px;background:var(--card);color:var(--ink);
+  width:100%;min-width:0;border:none;background:transparent;
+  padding:14px 40px 14px 16px;font-size:13.5px;color:var(--ink);
 }
+.videodl-input-wrap input:focus{outline:none;}
+.videodl-paste-btn{
+  position:absolute;right:6px;top:50%;transform:translateY(-50%);
+  width:28px;height:28px;border-radius:8px;border:none;background:transparent;
+  color:var(--videodl-tab-inactive);display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer;
+  transition:background .15s ease,color .15s ease;
+}
+.videodl-paste-btn:hover{background:color-mix(in srgb, var(--videodl-accent) 12%, transparent);color:var(--videodl-accent-deep);}
 .videodl-clear-btn{
   display:none;position:absolute;right:6px;top:50%;transform:translateY(-50%);
-  width:24px;height:24px;border-radius:999px;border:none;background:var(--card-2, #F8F5F2);
+  width:24px;height:24px;border-radius:999px;border:none;background:var(--card-2, #F1F1F6);
   color:var(--ink-faint);align-items:center;justify-content:center;padding:0;cursor:pointer;
   line-height:0;
 }
 .videodl-clear-btn.videodl-show{display:flex;}
-.videodl-paste-btn{flex-shrink:0;padding:0 16px;}
-.videodl-fetch-btn{width:100%;}
+.videodl-input-wrap:has(.videodl-clear-btn.videodl-show) .videodl-paste-btn{display:none;}
+.videodl-fetch-btn{
+  flex-shrink:0;border:none;cursor:pointer;padding:0 22px;white-space:nowrap;
+  font-family:'Poppins',sans-serif;font-weight:700;font-size:clamp(12.5px,3.4vw,13.5px);color:#fff;
+  background:linear-gradient(135deg,var(--videodl-accent),var(--videodl-accent-deep));
+  transition:filter .15s ease,transform .1s ease;
+}
+.videodl-fetch-btn:hover{filter:brightness(1.07);}
+.videodl-fetch-btn:active{transform:scale(0.98);}
+.videodl-fetch-btn:disabled{opacity:0.6;cursor:not-allowed;}
+@media (max-width:380px){
+  .videodl-input-row{flex-direction:column;background:transparent;border:none;box-shadow:none;gap:10px;border-radius:0;}
+  .videodl-input-wrap{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:0 1px 3px rgba(15,23,42,0.05);}
+  .videodl-fetch-btn{border-radius:14px;padding:13px 0;width:100%;}
+}
 .videodl-status{
   font-size:12.5px;font-weight:600;color:var(--ink-faint);text-align:center;margin:0;
 }
 .videodl-status.videodl-status-err{color:#DC2626;}
 .videodl-legal-hint{text-align:center;margin-top:2px;}
+html.dark-mode .videodl-card{
+  --videodl-panel-bg:color-mix(in srgb, var(--videodl-accent) 18%, var(--card));
+  --videodl-tab-inactive:#9AA0B4;
+}
+html.dark-mode .videodl-platform-chip.videodl-active{background:var(--card);}
 
 /* ---- Kartu hasil (#videoDlResultBox) -- thumbnail + judul/durasi +
    tombol unduh, gaya kartu putih beradius sama dgn kartu lain di app
    ini (reuse pola .lap-filter-section). ---- */
 .videodl-result-card{
-  border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--card);
+  background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow-sm);
+  overflow:hidden;
 }
 .videodl-result-thumb{
   width:100%;aspect-ratio:16/10;object-fit:cover;display:block;background:#00000010;
@@ -3484,8 +3567,60 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 .videodl-result-body{padding:12px 14px;display:flex;flex-direction:column;gap:8px;}
 .videodl-result-title{font-size:13.5px;font-weight:700;color:var(--ink);line-height:1.4;}
 .videodl-result-meta{font-size:11.5px;color:var(--ink-faint);}
-.videodl-result-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:2px;}
-.videodl-result-actions a.btn{text-decoration:none;text-align:center;flex:1;min-width:130px;}
+/* ---- Grid pilihan resolusi/kualitas (.videodl-res-grid) -- GANTI dari
+   deretan tombol "Unduh Video/Gambar" tunggal (.videodl-result-actions
+   lama) jadi grid kartu rapi (3 kolom, 2 di layar sempit), tiap kartu
+   1 pilihan kualitas. Dipakai utk SEMUA platform (bukan cuma YouTube)
+   spy gayanya seragam -- bedanya cuma isinya:
+   - YouTube: kartu MULAI dari state "belum diambil" (<button>, abu2,
+     data-pending="1", cuma nampilin format+ukuran file dari
+     /youtube/info) -> begitu diklik, baru MINTA link unduh sungguhan
+     ke /youtube/download (baru di sinilah kredit 15/25 API kepotong,
+     lihat videoDlResolveYoutubeFormat) -> lalu kartu berubah jadi
+     <a href download> (state "siap", aksen hijau var(--primary)).
+   - Platform lain (via /v1/fetch, cuma 1 kualitas dari sono-nya, TIDAK
+     ada endpoint utk "lihat pilihan dulu"): kartu LANGSUNG jadi <a>
+     siap unduh, tanpa state pending -- grid-nya cuma berisi 1 (atau 2
+     kalau ada music_url spt TikTok) kartu siap pakai. */
+.videodl-res-grid{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:2px;
+}
+.videodl-res-item{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  padding:11px 4px 9px;border-radius:12px;border:1px solid var(--line);background:var(--card-2, #F8F5F2);
+  text-decoration:none;cursor:pointer;font:inherit;color:inherit;
+  transition:border-color .15s ease, background .15s ease, transform .1s ease;
+  -webkit-tap-highlight-color:transparent;
+}
+.videodl-res-item:active{transform:scale(0.96);}
+.videodl-res-item-ic{color:var(--ink-faint);}
+.videodl-res-item-label{font-size:12.5px;font-weight:800;color:var(--ink);letter-spacing:0.01em;}
+.videodl-res-item-sub{font-size:10px;font-weight:600;color:var(--ink-faint);}
+/* Kartu "siap unduh" (sudah ada link asli, dari platform 1-kualitas ATAU
+   YouTube yg resolusinya sudah diklik & berhasil diambil) -- aksen hijau
+   var(--primary), SAMA dgn warna tombol "Ambil Video"/.btn-primary, jadi
+   kelihatan beda dari kartu "belum diambil" yg masih abu2 netral. */
+.videodl-res-item--ready{
+  border-color:color-mix(in srgb, var(--primary) 45%, var(--line));
+  background:color-mix(in srgb, var(--primary) 10%, var(--card));
+}
+.videodl-res-item--ready .videodl-res-item-ic{color:var(--primary-deep, var(--primary));}
+.videodl-res-item--ready .videodl-res-item-sub{color:var(--primary-deep, var(--primary));}
+/* Kartu lagi diproses (abis diklik, nunggu balasan /youtube/download)
+   -- ikon unduh diganti spinner (rotate 360deg loop niru pola
+   @keyframes avatarDashSpin yg sudah ada), tombol dinonaktifkan lewat
+   pointer-events biar tidak bisa diklik dobel. */
+.videodl-res-item--loading{opacity:0.75;pointer-events:none;}
+.videodl-res-item--loading .videodl-res-item-ic{animation:videodlResSpin .8s linear infinite;}
+@keyframes videodlResSpin{to{transform:rotate(360deg);}}
+/* Kartu gagal (klik resolusi tapi /youtube/download-nya error) -- balik
+   ke style netral spt semula tapi teks sub-nya SEMENTARA diganti pesan
+   singkat warna merah oleh JS (videoDlResolveYoutubeFormat), baru balik
+   normal lagi begitu user klik ulang. */
+.videodl-res-item--failed .videodl-res-item-sub{color:#DC2626;}
+@media (max-width:359px){
+  .videodl-res-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+}
 .videodl-album-grid{
   display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:0 14px 12px;
 }
@@ -15253,9 +15388,16 @@ html.dark-mode .bd-row-close{
        klik "Ambil Video" -> script.js memanggil API pihak-ketiga
        (FastSaverAPI, lihat komentar "UNDUH VIDEO" di script.js) pakai
        API key yg disimpan di localStorage (modal #videoDlSettingsModalOverlay,
-       tombol gerigi di header) -> hasil (thumbnail, judul, tombol
-       Unduh Video/Audio, atau daftar gambar utk post album) dirender
-       di #videoDlResultBox.
+       tombol gerigi di header) -> hasil (thumbnail, judul, grid pilihan
+       resolusi/kualitas ".videodl-res-grid", atau daftar gambar utk post
+       album) dirender di #videoDlResultBox. Khusus YouTube, grid
+       resolusinya dua tahap: /youtube/info dulu (murah, nampilin daftar
+       resolusi yg BENERAN tersedia + ukuran filenya) -> baru begitu user
+       klik salah satu kartu, /youtube/download yg sungguhan dipanggil
+       (lihat videoDlRenderYoutubeInfo & listener klik #videoDlResultBox
+       di script.js). Platform lain cuma dapat 1 kualitas dari API-nya,
+       jadi grid-nya langsung berisi 1 kartu siap unduh tanpa tahap
+       tambahan.
 
        Threads & Snack Video SENGAJA tidak ada di data-platform karena
        API yg dipakai belum mendukung 2 platform itu (lihat catatan di
@@ -15263,36 +15405,53 @@ html.dark-mode .bd-row-close{
        muncul, bukan pura-pura berhasil. ---- -->
   <div class="detail-page-overlay lap-filter-overlay" id="videoDlOverlay">
     <div class="lap-filter-page">
-      <div class="lap-filter-head">
-        <button class="lap-filter-back-btn" id="videoDlBackBtn" type="button" aria-label="Tutup Unduh Video">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
-        </button>
-        <h2>Unduh Video</h2>
-        <button type="button" class="lap-filter-back-btn" id="videoDlSettingsBtn" aria-label="Pengaturan API Unduh Video">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-        </button>
+      <div class="videodl-sticky-head">
+        <div class="lap-filter-head">
+          <button class="lap-filter-back-btn" id="videoDlBackBtn" type="button" aria-label="Tutup Unduh Video">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <h2>Unduh Video</h2>
+          <button type="button" class="lap-filter-back-btn" id="videoDlSettingsBtn" aria-label="Pengaturan API Unduh Video">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          </button>
+        </div>
+        <div class="videodl-page-body-cap" aria-hidden="true"></div>
       </div>
 
-      <div class="lap-filter-card videodl-card">
-        <p class="fm-grid-subtitle">Tempel link video, lalu ambil linknya untuk diunduh.</p>
-
-        <div class="videodl-platform-row" id="videoDlPlatformRow">
-          <span class="videodl-platform-chip" data-platform="youtube">YouTube</span>
-          <span class="videodl-platform-chip" data-platform="tiktok">TikTok</span>
-          <span class="videodl-platform-chip" data-platform="instagram">Instagram</span>
-          <span class="videodl-platform-chip" data-platform="facebook">Facebook</span>
-        </div>
-
-        <div class="videodl-input-row">
-          <div class="videodl-input-wrap">
-            <input type="url" id="videoDlUrlInput" placeholder="Tempel link video di sini..." autocomplete="off" inputmode="url">
-            <button type="button" class="videodl-clear-btn" id="videoDlClearBtn" aria-label="Hapus link">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>
-            </button>
+      <div class="lap-filter-card videodl-card videodl-page-body-rest">
+        <!-- ---- "Hero" ala referensi desain (tab platform + panel ungu
+             dgn judul besar + subjudul + kolom link+tombol menyatu) --
+             struktur & ID lama (videoDlPlatformRow, videoDlUrlInput,
+             videoDlPasteBtn, videoDlClearBtn, videoDlFetchBtn) SENGAJA
+             dipertahankan semua supaya listener di script.js tetap
+             nyambung tanpa diubah, cuma markup dibungkus ulang +
+             restyle total lewat CSS .videodl-hero* di bawah. ---- -->
+        <div class="videodl-hero">
+          <div class="videodl-platform-row" id="videoDlPlatformRow">
+            <span class="videodl-platform-chip" data-platform="youtube">YouTube</span>
+            <span class="videodl-platform-chip" data-platform="tiktok">TikTok</span>
+            <span class="videodl-platform-chip" data-platform="instagram">Instagram</span>
+            <span class="videodl-platform-chip" data-platform="facebook">Facebook</span>
           </div>
-          <button type="button" class="btn btn-ghost videodl-paste-btn" id="videoDlPasteBtn">Tempel</button>
+
+          <div class="videodl-hero-panel">
+            <h3 class="videodl-hero-title">Video Downloader</h3>
+            <p class="videodl-hero-subtitle">Tempel link, ambil videonya tanpa watermark — gratis</p>
+
+            <div class="videodl-input-row">
+              <div class="videodl-input-wrap">
+                <input type="url" id="videoDlUrlInput" placeholder="Tempel link video di sini..." autocomplete="off" inputmode="url">
+                <button type="button" class="videodl-paste-btn" id="videoDlPasteBtn" aria-label="Tempel dari clipboard">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>
+                </button>
+                <button type="button" class="videodl-clear-btn" id="videoDlClearBtn" aria-label="Hapus link">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>
+                </button>
+              </div>
+              <button type="button" class="videodl-fetch-btn" id="videoDlFetchBtn">Ambil Video</button>
+            </div>
+          </div>
         </div>
-        <button type="button" class="btn btn-primary videodl-fetch-btn" id="videoDlFetchBtn">Ambil Video</button>
 
         <p class="videodl-status" id="videoDlStatus" style="display:none;"></p>
 
