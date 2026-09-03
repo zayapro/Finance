@@ -70,6 +70,25 @@ function jsonResponse(obj, status = 200) {
   });
 }
 
+// Bungkus fetch dgn batas waktu sendiri (AbortController) -- SEBELUM ini
+// tryFastSaverYoutube/tryRapidApiYoutube fetch() polos TANPA batas waktu
+// sama sekali, jadi kalau salah satu provider lambat/macet, worker bisa
+// nunggu TANPA HENTI sebelum sempat coba fallback-nya (itulah "lama
+// padahal videonya kecil" yg dilaporkan user -- bukan soal ukuran file,
+// tapi provider pertama yg lambat merespons). 15 detik dipilih supaya
+// FastSaverAPI + RapidAPI (dicoba berurutan, bukan paralel) masih total
+// di bawah batas waktu 40 detik yg ditunggu frontend (lihat timeoutId di
+// script.js, listener #videoDlFetchBtn/kartu pending YouTube).
+async function fetchWithTimeout(url, options, ms = 15000) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), ms);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 // Ambil videoId YouTube dari berbagai bentuk URL (watch?v=, youtu.be/,
 // /shorts/, dst).
 function extractYoutubeId(url) {
@@ -95,14 +114,18 @@ async function tryFastSaverYoutube(url, format, env) {
   // generik di bawah -- lihat fetch()), jadi menebak2 di sini cuma
   // buang2 kredit kalau formatnya memang tidak tersedia.
   try {
-    const res = await fetch(`${FASTSAVER_UPSTREAM}/v1/youtube/download`, {
+    const res = await fetchWithTimeout(`${FASTSAVER_UPSTREAM}/v1/youtube/download`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Api-Key': env.FASTSAVER_API_KEY },
       body: JSON.stringify({ url, format }),
     });
     return await res.json();
   } catch (err) {
-    return { ok: false, detail: 'FastSaverAPI error: ' + err.message };
+    // AbortError (timeout 15 detik) juga masuk sini -- pesannya dibedakan
+    // sedikit supaya kelihatan di log Worker kalau penyebabnya timeout,
+    // bukan error lain (mis. API key salah/kuota habis).
+    const timedOut = err.name === 'AbortError';
+    return { ok: false, detail: timedOut ? 'FastSaverAPI tidak merespons dlm 15 detik (timeout).' : 'FastSaverAPI error: ' + err.message };
   }
 }
 
@@ -120,7 +143,7 @@ async function tryRapidApiYoutube(url, format, env) {
 
   try {
     const qs = new URLSearchParams({ videoId, urlAccess: 'normal', videos: 'true', audios: 'true' });
-    const res = await fetch(`https://${RAPIDAPI_HOST}/v2/video/details?${qs.toString()}`, {
+    const res = await fetchWithTimeout(`https://${RAPIDAPI_HOST}/v2/video/details?${qs.toString()}`, {
       headers: {
         'X-RapidAPI-Key': env.RAPIDAPI_KEY,
         'X-RapidAPI-Host': RAPIDAPI_HOST,
@@ -189,7 +212,8 @@ async function tryRapidApiYoutube(url, format, env) {
       _source: 'rapidapi-fallback',
     };
   } catch (err) {
-    return { ok: false, detail: 'RapidAPI error: ' + err.message };
+    const timedOut = err.name === 'AbortError';
+    return { ok: false, detail: timedOut ? 'RapidAPI tidak merespons dlm 15 detik (timeout).' : 'RapidAPI error: ' + err.message };
   }
 }
 

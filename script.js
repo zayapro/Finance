@@ -11251,6 +11251,19 @@ function videoDlSlugFilename(title) {
     .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60) || 'thumbnail';
 }
 
+// Nama file video/audio hasil unduhan -- BEDA dari videoDlSlugFilename
+// di atas (khusus thumbnail): di sini judul asli TETAP dipertahankan apa
+// adanya (spasi, huruf besar/kecil, dst, TIDAK diratakan jadi "-" semua)
+// spy nama filenya kebaca jelas persis judul videonya, cuma karakter yg
+// memang TIDAK BOLEH dipakai di nama file Windows/Mac/Android
+// (\/:*?"<>|) yg dibuang/diganti spasi. Dipanggil dgn judul + embel2
+// " (by.zayadev)" sesuai permintaan user -- lihat listener klik
+// #videoDlResultBox, kartu ".videodl-res-item--ready".
+function videoDlSafeFilename(name) {
+  return (name || 'video').toString().trim()
+    .replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120) || 'video';
+}
+
 // Unduh gambar thumbnail lewat fetch->blob (bukan cuma <a download>
 // polos) krn kebanyakan host thumbnail (i.ytimg.com dll) itu
 // cross-origin, & atribut `download` browser sering diabaikan utk
@@ -11275,6 +11288,45 @@ async function videoDlDownloadThumbnail(url, filenameBase) {
     return true;
   } catch (err) {
     console.warn('[UnduhVideo] Gagal unduh thumbnail via fetch, fallback buka tab baru:', err);
+    window.open(url, '_blank', 'noopener');
+    return false;
+  }
+}
+
+// ---- Unduh video/audio kartu "siap" (.videodl-res-item--ready) LANGSUNG
+// via fetch->blob, PERSIS pola videoDlDownloadThumbnail di atas --
+// SEBELUM ini kartu ini cuma <a href download target="_blank">, yg
+// TIDAK benar2 mengunduh krn attribute `download` diabaikan browser utk
+// link CROSS-ORIGIN (CDN video/FastSaverAPI beda origin dari ZAYAIN) --
+// browser cuma NAVIGASI ke tab baru (itulah komplain user "malah dikasih
+// tab baru"). Video/audio bisa jauh lebih besar drpd thumbnail (bisa
+// ratusan MB, lihat label ukuran di kartu 1440p/2160p), jadi TIDAK ada
+// batas waktu (AbortController) di sini spy file besar tetap bisa
+// selesai diunduh -- resikonya field kalau CDN memang lambat, unduhan
+// jg ikut lama, tapi itu jg akan terjadi sama saja walau lewat tab baru.
+async function videoDlDownloadFile(url, filenameBase, ext) {
+  try {
+    const res = await fetch(url, { mode: 'cors' });
+    if (!res.ok) throw new Error('fetch file gagal, status ' + res.status);
+    const blob = await res.blob();
+    let realExt = ext;
+    if (!realExt && blob.type && blob.type.includes('/')) realExt = blob.type.split('/')[1].replace('mpeg', 'mp3');
+    if (!realExt) realExt = 'mp4';
+    const objUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = objUrl;
+    a.download = `${filenameBase || 'video'}.${realExt}`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    // Delay revoke lebih lama drpd thumbnail (4 detik) krn file video
+    // besar butuh waktu lebih lama sblm browser benar2 selesai "menulis"
+    // dari blob URL ke disk -- revoke kepagian bisa bikin unduhan gagal
+    // di tengah jalan pada file besar/koneksi lambat.
+    setTimeout(() => URL.revokeObjectURL(objUrl), 60000);
+    return true;
+  } catch (err) {
+    console.warn('[UnduhVideo] Gagal unduh file via fetch, fallback buka tab baru:', err);
     window.open(url, '_blank', 'noopener');
     return false;
   }
@@ -11308,6 +11360,11 @@ function videoDlResItemHtml({ format, label, sub, downloadUrl, icon }) {
 function videoDlRenderCard({ thumbnailUrl, title, duration, resItemsHtml, albumHtml }) {
   const box = document.getElementById('videoDlResultBox');
   if (!box) return;
+  // Judul video disimpan di dataset box supaya bisa dipakai bikin nama
+  // file saat kartu resolusi "siap" diunduh (lihat videoDlDownloadFile
+  // & listener klik #videoDlResultBox di bawah) -- tanpa ini nama file
+  // hasil unduhan cuma angka acak dari URL CDN-nya.
+  box.dataset.videoTitle = title || '';
   const thumb = thumbnailUrl ? `
       <div class="videodl-result-thumb-wrap">
         <img class="videodl-result-thumb" src="${thumbnailUrl}" alt="">
@@ -11400,8 +11457,9 @@ function videoDlRenderYoutubeInfo(info) {
 // diisi videoDlRenderCard, jadi HARUS delegasi bukan per-elemen):
 //   1) tombol unduh thumbnail (.videodl-thumb-dl-btn)
 //   2) kartu resolusi yg SUDAH siap (.videodl-res-item--ready, <a>) --
-//      cuma dikasih animasi bounce sesaat sbg feedback klik, request
-//      unduhnya sendiri jalan alami lewat atribut `download` browser.
+//      diunduh manual via videoDlDownloadFile (fetch->blob), BUKAN lagi
+//      lewat attribute `download` bawaan browser (diabaikan utk link
+//      cross-origin, dulu malah cuma buka tab baru).
 //   3) kartu resolusi yg MASIH pending (khusus YouTube, data-pending)
 //      -- DI SINILAH /youtube/download beneran dipanggil (kredit
 //      15/25 kepotong), dgn `format` PERSIS sesuai kartu yg diklik.
@@ -11422,14 +11480,36 @@ document.getElementById('videoDlResultBox')?.addEventListener('click', async (e)
     return;
   }
 
-  // ---- (2) Kartu yg sudah siap -- cuma kasih feedback bounce sesaat,
-  // tidak preventDefault sama sekali biar unduhan lewat href/download
-  // bawaan browser tetap jalan seperti biasa. ----
+  // ---- (2) Kartu yg sudah siap -- SEBELUM ini tidak preventDefault sama
+  // sekali (unduhan lewat href/download bawaan browser), tapi itu bikin
+  // video/audio kartu ini malah NAVIGASI ke tab baru krn attribute
+  // `download` diabaikan browser utk link cross-origin. Sekarang
+  // preventDefault + unduh manual via videoDlDownloadFile (fetch->blob,
+  // sama pola dgn thumbnail), fallback tab baru CUMA kalau memang
+  // keblokir CORS. ----
   const readyItem = e.target.closest('.videodl-res-item--ready');
   if (readyItem) {
+    e.preventDefault();
+    if (readyItem.classList.contains('videodl-res-item--loading')) return;
     readyItem.classList.remove('videodl-res-item--pulse');
     void readyItem.offsetWidth; // reflow paksa biar animasi bisa diulang tiap klik
-    readyItem.classList.add('videodl-res-item--pulse');
+    readyItem.classList.add('videodl-res-item--pulse', 'videodl-res-item--loading');
+    const url = readyItem.getAttribute('href');
+    const label = readyItem.querySelector('.videodl-res-item-label')?.textContent || 'file';
+    const isAudio = /audio/i.test(label);
+    const box = document.getElementById('videoDlResultBox');
+    // Nama file ikut JUDUL video apa adanya (bukan slug huruf kecil
+    // spt thumbnail) + embel2 "(by.zayadev)" sesuai permintaan user --
+    // resolusi (mis. "720P") SENGAJA tidak ikut ditambahkan lagi spy
+    // formatnya PERSIS "Judul Video (by.zayadev).mp4"; kalau user unduh
+    // beberapa resolusi dari video yg sama, browser otomatis nambahin
+    // "(1)"/"(2)" dst di nama filenya sendiri (perilaku bawaan browser,
+    // bukan sesuatu yg perlu diatur manual di sini).
+    const rawTitle = box?.dataset.videoTitle;
+    const filenameBase = videoDlSafeFilename(`${rawTitle || 'Video'} (by.zayadev)`);
+    const ok = url ? await videoDlDownloadFile(url, filenameBase, isAudio ? 'mp3' : undefined) : false;
+    readyItem.classList.remove('videodl-res-item--loading');
+    if (!ok) videoDlSetStatus('File tidak bisa diunduh langsung (dibuka di tab baru, simpan manual dari sana).', true);
     return;
   }
 
