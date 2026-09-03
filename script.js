@@ -12871,7 +12871,19 @@ function ccBuildStaticMapUrl(lat, lng) {
   if (!CC_GEOAPIFY_KEY) return null;
   const marker = `lonlat:${lng},${lat};color:%23FF3B30;size:medium;icon:location-dot;iconsize:small;whitecircle:no`;
   const geoapifyUrl = `https://maps.geoapify.com/v1/staticmap?style=osm-carto&width=${CC_MAP_PX}&height=${CC_MAP_PX}&center=lonlat:${lng},${lat}&zoom=${CC_MAP_ZOOM}&marker=${encodeURIComponent(marker)}&apiKey=${encodeURIComponent(CC_GEOAPIFY_KEY)}`;
-  return `https://wsrv.nl/?url=${encodeURIComponent(geoapifyUrl)}&default=${encodeURIComponent('data:,')}`;
+  // FIX (peta mini tidak muncul walau kartu "Memuat peta..." selesai/hilang):
+  // sebelumnya ada parameter `&default=data:,` di sini, dimaksudkan sbg
+  // fallback kalau request ke Geoapify gagal. Masalahnya, parameter
+  // `default` di wsrv.nl HARUS berupa URL yg bisa di-fetch ulang (spt
+  // format `url` di atas), BUKAN data URI kosong -- wsrv tetap membalas
+  // 200 OK dgn gambar nyaris kosong/1px drpd error asli. Akibatnya
+  // img.onload di ccLoadMapForFix tetap dianggap SUKSES (bukan
+  // img.onerror), kartu "Memuat peta..." pun dilepas seolah peta sudah
+  // siap, padahal ccMapImg isinya cuma gambar kosong tak kasat mata --
+  // makanya peta terlihat "hilang begitu saja" persis setelah loading
+  // selesai. Dihapus supaya kegagalan asli (key invalid/kuota
+  // habis/jaringan) benar2 memicu img.onerror & alur retry yg sudah ada.
+  return `https://wsrv.nl/?url=${encodeURIComponent(geoapifyUrl)}`;
 }
 // Kunci pembanding jepretan mana yg lagi/sudah dipetakan -- dibulatkan
 // ke 5 desimal (~1m) supaya bacaan GPS yg goyang recehan tidak dianggap
@@ -12918,6 +12930,17 @@ function ccLoadMapForFix(fix, _retryCount) {
     // peta ini selesai dimuat, hasilnya dibuang -- tidak dipasang ke
     // ccMapImg supaya tidak "nyangkut" salah di jepretan yg baru.
     if (ccMapKeyFor(ccCapturedFix) !== key) return;
+    // FIX: proxy gambar (wsrv.nl) kadang membalas 200 OK dgn gambar
+    // nyaris kosong (mis. 1x1 px) alih2 error asli saat request ke
+    // Geoapify di baliknya bermasalah -- img.onload TETAP terpanggil
+    // (bukan onerror) walau isinya tidak berguna, bikin kartu "Memuat
+    // peta..." dilepas seolah sukses tapi tidak ada apa2 yg tergambar.
+    // Anggap hasil sekecil ini sbg kegagalan supaya masuk jalur retry yg
+    // sama spt img.onerror di bawah, bukan diam2 "berhasil" tanpa peta.
+    if (!img.naturalWidth || img.naturalWidth < 10 || !img.naturalHeight || img.naturalHeight < 10) {
+      img.onerror();
+      return;
+    }
     ccMapImg = img;
     ccMapImgKey = key;
     ccMapStatus = null;
@@ -13153,7 +13176,32 @@ function ccRenderStampedPhoto(addrText, placeText) {
   ctx.fillText(deviceLine, pad, y); y += lineGapSmall;
   ctx.fillText(when, pad, y);
 
-  const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+  // FIX: kalau gambar peta ternyata dimuat browser TANPA header CORS yg
+  // benar (mis. proxy wsrv.nl sedang bermasalah), canvas jadi "tainted"
+  // & toDataURL() di bawah akan throw SecurityError -- sebelumnya ini
+  // TIDAK ditangkap sama sekali, jadi seluruh stempel (termasuk teks
+  // alamat/koordinat yg sudah digambar duluan) GAGAL tampil tanpa
+  // keterangan apa2, bukan cuma peta mininya yg hilang. Ditangkap di
+  // sini supaya kalau itu terjadi, peta dibuang & foto digambar ULANG
+  // tanpa peta (tetap tersimpan normal) drpd seluruh foto ikut gagal.
+  let dataUrl;
+  try {
+    dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+  } catch (err) {
+    ccMapImg = null;
+    ccMapImgKey = null;
+    ccMapStatus = 'failed';
+    ccMapStatusKey = null;
+    // PENTING: set ulang canvas.width/height (bukan cuma clearRect) --
+    // ini satu2nya cara "membersihkan" flag tainted pd canvas yg sama,
+    // krn clearRect saja TIDAK menghapus status tainted-nya. Panggil
+    // ulang fungsi ini dari awal (bukan lanjut manual di sini) supaya
+    // canvas.width=w di baris paling atas fungsi benar2 dieksekusi lagi
+    // sebelum apa pun digambar -- ccMapImg sudah null shg
+    // ccDrawMapThumbnail otomatis tidak menggambar peta lagi kali ini.
+    ccRenderStampedPhoto(addrText, placeText);
+    return;
+  }
   photo.src = dataUrl;
 
   // Tipe & ukuran file dihitung ULANG tiap kali stempel digambar ulang
