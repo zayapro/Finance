@@ -11200,32 +11200,103 @@ document.getElementById('videoDlFetchBtn')?.addEventListener('click', async () =
   // CORS dari browser).
   const apiBase = usingWorker ? videoDlSettings.workerUrl : 'https://api.fastsaver.io';
 
+  // Kamus terjemahan kode error yg dibalas FastSaverAPI (field `detail`)
+  // ke pesan Bahasa Indonesia yg lebih jelas -- kalau kodenya belum ada
+  // di kamus ini, tampilkan kode aslinya apa adanya supaya tetap
+  // kelihatan (bukan disembunyikan), sekaligus dicatat lengkap ke
+  // console (F12) buat keperluan debug.
+  const VIDEODL_ERROR_MESSAGES = {
+    'download.failed': 'FastSaverAPI gagal memproses video ini. Kemungkinan: video privat/dihapus/dibatasi wilayah, kuota/kredit API di akun FastSaverAPI sudah habis, atau format 1080p tidak tersedia utk video ini.',
+    'invalid.url': 'Link video tidak valid atau tidak dikenali FastSaverAPI.',
+    'quota.exceeded': 'Kuota/kredit API FastSaverAPI kamu sudah habis. Cek dashboard di api.fastsaver.io/auth.',
+    'unauthorized': 'API key ditolak FastSaverAPI (mungkin salah/kadaluarsa). Cek lagi FASTSAVER_API_KEY di Worker Settings.',
+  };
+
   const fetchBtn = document.getElementById('videoDlFetchBtn');
   fetchBtn.disabled = true;
   videoDlSetStatus('Mengambil video...', false);
+  // Batas waktu 25 detik per percobaan -- server FastSaverAPI kadang
+  // lambat memproses video panjang, tapi kalau lebih dari itu mending
+  // kasih tau user drpd biarkan tombol "loading" tanpa batas.
+  async function videoDlFetchOnce(body, signal) {
+    const res = await fetch(`${apiBase}/v1/youtube/download`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(usingWorker ? {} : { 'X-Api-Key': videoDlSettings.apiKey }),
+      },
+      body: JSON.stringify(body),
+      signal,
+    });
+    return res.json();
+  }
+
   try {
-    let res, data;
+    let data;
     if (platform === 'youtube') {
-      res = await fetch(`${apiBase}/v1/youtube/download`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(usingWorker ? {} : { 'X-Api-Key': videoDlSettings.apiKey }),
-        },
-        body: JSON.stringify({ url, format: '1080p' }),
-      });
+      if (usingWorker) {
+        // Worker sudah urus semua percobaan format & fallback RapidAPI
+        // secara internal (lihat cloudflare-worker.js) -- cukup 1
+        // request dari sini, tidak perlu diulang-ulang di frontend.
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 40000); // sedikit lebih lama krn worker bisa nyoba >1 provider
+        try {
+          data = await videoDlFetchOnce({ url, format: '1080p' }, controller.signal);
+        } finally {
+          clearTimeout(timeoutId);
+        }
+      } else {
+        // Tanpa Worker (panggil FastSaverAPI langsung dari browser) --
+        // tidak ada fallback RapidAPI di sini, jadi tetap dicoba
+        // beberapa kandidat format spt sebelumnya.
+        const formatCandidates = ['1080p', '1080', '720p', '720', 'best'];
+        for (let i = 0; i < formatCandidates.length; i++) {
+          const fmt = formatCandidates[i];
+          if (i > 0) videoDlSetStatus(`Mencoba format "${fmt}"...`, false);
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 25000);
+          try {
+            data = await videoDlFetchOnce({ url, format: fmt }, controller.signal);
+          } finally {
+            clearTimeout(timeoutId);
+          }
+          if (data.ok) { console.info(`[UnduhVideo] Format "${fmt}" berhasil.`); break; }
+          console.warn(`[UnduhVideo] Format "${fmt}" gagal:`, data);
+        }
+      }
     } else {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 25000);
       const qs = new URLSearchParams({ url });
-      res = await fetch(`${apiBase}/v1/fetch?${qs.toString()}`, {
+      const res = await fetch(`${apiBase}/v1/fetch?${qs.toString()}`, {
         headers: usingWorker ? {} : { 'X-Api-Key': videoDlSettings.apiKey },
+        signal: controller.signal,
       });
+      clearTimeout(timeoutId);
+      data = await res.json();
     }
-    data = await res.json();
-    if (!data.ok) throw new Error(data.detail || 'Link tidak bisa diproses (mungkin privat/dihapus/terkunci wilayah).');
+
+    if (!data.ok) {
+      // Log respons lengkap ke console -- kalau kode errornya belum ada
+      // di kamus VIDEODL_ERROR_MESSAGES di atas, buka DevTools > Console
+      // utk lihat field lain yg mungkin dibalas FastSaverAPI (mis. sisa
+      // kredit, kode error lebih spesifik, dst).
+      console.error('[UnduhVideo] Respons gagal dari FastSaverAPI:', data);
+      const code = data.detail || data.error || data.message || '';
+      const friendly = VIDEODL_ERROR_MESSAGES[code];
+      throw new Error(
+        friendly ? `${friendly} (kode: ${code})`
+          : (code ? `Gagal: ${code}` : 'Link tidak bisa diproses (mungkin privat/dihapus/terkunci wilayah).')
+      );
+    }
     videoDlSetStatus('', false);
     videoDlRenderResult(data);
   } catch (err) {
-    videoDlSetStatus(err.message || 'Gagal mengambil video. Cek koneksi & API key.', true);
+    if (err.name === 'AbortError') {
+      videoDlSetStatus('Waktu tunggu habis (25 detik). Server FastSaverAPI kemungkinan lambat/sibuk -- coba lagi.', true);
+    } else {
+      videoDlSetStatus(err.message || 'Gagal mengambil video. Cek koneksi & API key.', true);
+    }
   } finally {
     fetchBtn.disabled = false;
   }
