@@ -10763,7 +10763,7 @@ document.getElementById('fmGridSayaBtn')?.addEventListener('click', () => {
    disimpan (auto-save), jadi tombol pil cuma berfungsi buka/tutup
    mode-edit -- teksnya berubah jadi "Selesai Mengatur" selama aktif. */
 const FAST_MENU_SETTINGS_KEY = 'alirin_fast_menu_settings_v1';
-const FAST_MENU_ORDER_DEFAULT = ['addtx', 'tagihan', 'laporan', 'dompet', 'pendapatan', 'pengaturan', 'kalkulator', 'kurs', 'scanner', 'camera'];
+const FAST_MENU_ORDER_DEFAULT = ['addtx', 'tagihan', 'laporan', 'dompet', 'pendapatan', 'pengaturan', 'kalkulator', 'kurs', 'scanner', 'camera', 'unduhvideo'];
 let fastMenuEditMode = false;
 
 function loadFastMenuSettings() {
@@ -10954,6 +10954,220 @@ document.getElementById('fmHomeKalkulatorBtn')?.addEventListener('click', openKa
 document.getElementById('fmGridKalkulatorBtn')?.addEventListener('click', () => {
   closeFastMenuOverlay();
   openKalkulatorOverlay();
+});
+
+/* ==========================================================
+   UNDUH VIDEO (#videoDlOverlay) -- pintasan baru di kartu Fast Menu
+   Beranda (#fmHomeVideoDlBtn) & grid "Menu Utama" halaman Fast Menu
+   (#fmGridVideoDlBtn). Buka/tutup pola SAMA PERSIS dgn
+   openKalkulatorOverlay/closeKalkulatorOverlay di atas.
+
+   Dipakai API pihak-ketiga FastSaverAPI (https://api.fastsaver.io) --
+   dipilih karena TIDAK butuh VPS/server sendiri (di-fetch langsung dari
+   browser user). API key disimpan di localStorage lewat cloudStorage,
+   PERSIS pola #aiSettingsModalOverlay (Pengaturan Tanya AI) di atas,
+   supaya tiap user pakai key gratis miliknya sendiri (bukan dibagi
+   bersama & rawan kehabisan kredit).
+
+   Cakupan platform endpoint generik `/v1/fetch` (GET, param `url`):
+   Instagram, TikTok, Facebook, Pinterest, X/Twitter, RuTube. YouTube
+   pakai endpoint terpisah `/v1/youtube/download` (POST, butuh param
+   `format`). Threads & Snack Video BELUM didukung API ini -- kalau
+   linknya dari situ, ditolak lebih awal dgn pesan jelas (lihat
+   videoDlDetectPlatform) drpd dikirim ke API & gagal membingungkan. --*/
+const VIDEODL_SETTINGS_KEY = 'zayapro_videodl_settings';
+function loadVideoDlSettings() {
+  try {
+    const raw = JSON.parse(cloudStorage.getItem(VIDEODL_SETTINGS_KEY) || '{}');
+    return { apiKey: raw.apiKey || '' };
+  } catch (e) { return { apiKey: '' }; }
+}
+function persistVideoDlSettings(data) {
+  try { cloudStorage.setItem(VIDEODL_SETTINGS_KEY, JSON.stringify(data)); }
+  catch (e) { /* biarkan gagal senyap */ }
+}
+let videoDlSettings = loadVideoDlSettings();
+
+function openVideoDlOverlay() {
+  document.getElementById('videoDlOverlay')?.classList.add('open');
+  lockBodyScroll();
+}
+function closeVideoDlOverlay() {
+  document.getElementById('videoDlOverlay')?.classList.remove('open');
+  unlockBodyScroll();
+}
+document.getElementById('videoDlBackBtn')?.addEventListener('click', closeVideoDlOverlay);
+document.getElementById('fmHomeVideoDlBtn')?.addEventListener('click', openVideoDlOverlay);
+document.getElementById('fmGridVideoDlBtn')?.addEventListener('click', () => {
+  closeFastMenuOverlay();
+  openVideoDlOverlay();
+});
+
+/* ---- Modal Pengaturan API (#videoDlSettingsModalOverlay) -- pola SAMA
+   PERSIS dgn modal Pengaturan Tanya AI (#aiSettingsModalOverlay). ---- */
+const videoDlSettingsModal = document.getElementById('videoDlSettingsModalOverlay');
+const videoDlSettingsForm = document.getElementById('videoDlSettingsForm');
+const videoDlApiKeyInput = document.getElementById('videoDlApiKeyInput');
+const videoDlApiKeyToggle = document.getElementById('videoDlApiKeyToggle');
+bindPasswordEyeToggle(videoDlApiKeyInput, videoDlApiKeyToggle);
+
+function openVideoDlSettingsModal() {
+  if (videoDlApiKeyInput) videoDlApiKeyInput.value = videoDlSettings.apiKey || '';
+  openModal(videoDlSettingsModal);
+}
+document.getElementById('videoDlSettingsBtn')?.addEventListener('click', openVideoDlSettingsModal);
+document.getElementById('videoDlSettingsCloseBtn')?.addEventListener('click', () => closeModal(videoDlSettingsModal));
+videoDlSettingsModal?.addEventListener('click', (e) => { if (e.target === videoDlSettingsModal) closeModal(videoDlSettingsModal); });
+videoDlSettingsForm?.addEventListener('submit', (e) => {
+  e.preventDefault();
+  videoDlSettings = { apiKey: (videoDlApiKeyInput.value || '').trim() };
+  persistVideoDlSettings(videoDlSettings);
+  closeModal(videoDlSettingsModal);
+  showToast('Pengaturan Unduh Video disimpan.');
+});
+document.getElementById('videoDlSettingsClearBtn')?.addEventListener('click', () => {
+  if (videoDlApiKeyInput) videoDlApiKeyInput.value = '';
+  videoDlSettings = { apiKey: '' };
+  persistVideoDlSettings(videoDlSettings);
+  showToast('API key Unduh Video dihapus.');
+});
+
+/* ---- Deteksi platform dari URL -- dipakai utk menyorot chip info
+   (#videoDlPlatformRow) & menolak lebih awal link dari platform yg
+   belum didukung (Threads, Snack Video), drpd baru gagal di respons
+   API dgn pesan yg membingungkan user. ---- */
+function videoDlDetectPlatform(url) {
+  let host = '';
+  try { host = new URL(url).hostname.replace(/^www\./, ''); } catch (e) { return null; }
+  if (/youtube\.com$|youtu\.be$/.test(host)) return 'youtube';
+  if (/tiktok\.com$/.test(host)) return 'tiktok';
+  if (/instagram\.com$/.test(host)) return 'instagram';
+  if (/facebook\.com$|fb\.watch$/.test(host)) return 'facebook';
+  if (/threads\.net$/.test(host)) return 'threads-unsupported';
+  if (/snackvideo\.com$/.test(host)) return 'snack-unsupported';
+  return 'unknown';
+}
+
+const videoDlUrlInput = document.getElementById('videoDlUrlInput');
+const videoDlPlatformRow = document.getElementById('videoDlPlatformRow');
+videoDlUrlInput?.addEventListener('input', () => {
+  const detected = videoDlDetectPlatform((videoDlUrlInput.value || '').trim());
+  videoDlPlatformRow?.querySelectorAll('.videodl-platform-chip').forEach((chip) => {
+    chip.classList.toggle('videodl-active', chip.dataset.platform === detected);
+  });
+});
+
+document.getElementById('videoDlPasteBtn')?.addEventListener('click', async () => {
+  try {
+    const text = await navigator.clipboard.readText();
+    if (text && videoDlUrlInput) {
+      videoDlUrlInput.value = text.trim();
+      videoDlUrlInput.dispatchEvent(new Event('input'));
+    }
+  } catch (e) {
+    showToast('Tidak bisa akses clipboard, tempel manual saja.', 'err');
+  }
+});
+
+function videoDlSetStatus(msg, isErr) {
+  const el = document.getElementById('videoDlStatus');
+  if (!el) return;
+  if (!msg) { el.style.display = 'none'; el.textContent = ''; return; }
+  el.style.display = 'block';
+  el.textContent = msg;
+  el.classList.toggle('videodl-status-err', !!isErr);
+}
+
+function videoDlFormatDuration(sec) {
+  if (sec === null || sec === undefined) return '';
+  const s = Math.round(sec);
+  const m = Math.floor(s / 60);
+  const r = s % 60;
+  return `${m}:${String(r).padStart(2, '0')}`;
+}
+
+/* ---- Render hasil ke #videoDlResultBox -- 3 bentuk (SAMA dgn 3 `type`
+   yg dibalas API): video (1 tombol unduh), image (1 gambar + 1 tombol
+   unduh), album (grid gambar, tiap gambar tombol unduhnya sendiri).
+   `music_url` (khusus TikTok) ditambahkan sbg tombol "Unduh Musik"
+   terpisah kalau ada, di ketiga bentuk itu. ---- */
+function videoDlRenderResult(data) {
+  const box = document.getElementById('videoDlResultBox');
+  if (!box) return;
+  const thumb = data.thumbnail_url ? `<img class="videodl-result-thumb" src="${data.thumbnail_url}" alt="">` : '';
+  const title = data.caption || data.title || 'Video';
+  const durTxt = videoDlFormatDuration(data.duration);
+  let actionsHtml = '';
+  let albumHtml = '';
+  if (data.type === 'album' && Array.isArray(data.items)) {
+    albumHtml = `<div class="videodl-album-grid">${data.items.map((it, i) => `
+      <div class="videodl-album-item">
+        <img src="${it.thumbnail_url || it.download_url}" alt="">
+        <a href="${it.download_url}" download target="_blank" rel="noopener" aria-label="Unduh gambar ${i + 1}">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        </a>
+      </div>`).join('')}</div>`;
+  } else if (data.download_url) {
+    actionsHtml += `<a class="btn btn-primary" href="${data.download_url}" download target="_blank" rel="noopener">Unduh ${data.type === 'image' ? 'Gambar' : 'Video'}</a>`;
+  }
+  if (data.music_url) {
+    actionsHtml += `<a class="btn btn-ghost" href="${data.music_url}" download target="_blank" rel="noopener">Unduh Musik</a>`;
+  }
+  box.innerHTML = `
+    <div class="videodl-result-card">
+      ${thumb}
+      <div class="videodl-result-body">
+        <div class="videodl-result-title">${title}</div>
+        ${durTxt ? `<div class="videodl-result-meta">Durasi: ${durTxt}</div>` : ''}
+        ${actionsHtml ? `<div class="videodl-result-actions">${actionsHtml}</div>` : ''}
+      </div>
+      ${albumHtml}
+    </div>`;
+  box.style.display = 'block';
+}
+
+document.getElementById('videoDlFetchBtn')?.addEventListener('click', async () => {
+  const url = (videoDlUrlInput?.value || '').trim();
+  const resultBox = document.getElementById('videoDlResultBox');
+  if (resultBox) { resultBox.style.display = 'none'; resultBox.innerHTML = ''; }
+  if (!url) { videoDlSetStatus('Tempel link video dulu.', true); return; }
+  if (!videoDlSettings.apiKey) {
+    videoDlSetStatus('Atur API key dulu lewat ikon gerigi di pojok kanan atas.', true);
+    return;
+  }
+  const platform = videoDlDetectPlatform(url);
+  if (platform === 'threads-unsupported' || platform === 'snack-unsupported') {
+    videoDlSetStatus('Threads & Snack Video belum didukung API yang dipakai ZAYAIN saat ini.', true);
+    return;
+  }
+  if (!platform) { videoDlSetStatus('Link tidak valid.', true); return; }
+
+  const fetchBtn = document.getElementById('videoDlFetchBtn');
+  fetchBtn.disabled = true;
+  videoDlSetStatus('Mengambil video...', false);
+  try {
+    let res, data;
+    if (platform === 'youtube') {
+      res = await fetch('https://api.fastsaver.io/v1/youtube/download', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Api-Key': videoDlSettings.apiKey },
+        body: JSON.stringify({ url, format: '1080p' }),
+      });
+    } else {
+      const qs = new URLSearchParams({ url });
+      res = await fetch(`https://api.fastsaver.io/v1/fetch?${qs.toString()}`, {
+        headers: { 'X-Api-Key': videoDlSettings.apiKey },
+      });
+    }
+    data = await res.json();
+    if (!data.ok) throw new Error(data.detail || 'Link tidak bisa diproses (mungkin privat/dihapus/terkunci wilayah).');
+    videoDlSetStatus('', false);
+    videoDlRenderResult(data);
+  } catch (err) {
+    videoDlSetStatus(err.message || 'Gagal mengambil video. Cek koneksi & API key.', true);
+  } finally {
+    fetchBtn.disabled = false;
+  }
 });
 
 /* ---- Mesin hitung Kalkulator -- state disimpan di objek `calcState`
