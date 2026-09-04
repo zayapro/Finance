@@ -11114,7 +11114,7 @@ function videoDlDetectPlatform(url) {
   // Shopee (foto & video PRODUK, bukan lewat FastSaverAPI -- lihat rute
   // /v1/shopee/fetch di cloudflare-worker.js): shopee.co.id/.sg/.tw/dst,
   // plus link pendek shp.ee & s.shopee.co.id.
-  if (/(^|\.)shopee\.[a-z.]+$/.test(host) || /^shp\.ee$/.test(host)) return 'shopee';
+  if (/(^|\.)shopee\.[a-z.]+$/.test(host) || /(^|\.)shp\.ee$/.test(host)) return 'shopee';
   return 'unknown';
 }
 
