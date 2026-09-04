@@ -11520,18 +11520,19 @@ function videoDlRenderFetchResult(data, platform, sourceUrl) {
       sub: 'Kualitas sumber',
       filetype: data.type === 'image' ? 'JPG' : 'MP4',
       downloadUrl: data.download_url,
-      badge: 'Kualitas Asli',
+      badge: 'Original',
     });
   }
   if (data.music_url) {
     // ---- Disamakan dgn kartu Video di atas (permintaan user lanjutan:
-    // "begitu juga utk audio/suaranya") -- badge "Suara Asli" ditambah
+    // "begitu juga utk audio/suaranya") -- badge "Original" ditambah
     // di sini jg supaya kartu Audio ikut dapat tint border/background
     // primary yg sama, konsisten dgn kartu Video yg sudah berbadge
-    // "Kualitas Asli" (bukan "Kualitas Asli" jg krn ini audio bukan
-    // video, tapi maknanya sama: satu2nya kualitas audio yg dikasih
-    // API, bukan hasil pilihan dari beberapa opsi).
-    resItemsHtml += videoDlResItemHtml({ label: 'Audio', sub: 'Suara asli', filetype: 'MP3', downloadUrl: data.music_url, icon: VIDEODL_MUSIC_ICON, badge: 'Suara Asli' });
+    // "Original" (teks badge DISERAGAMKAN jadi 1 kata generik utk
+    // Video & Audio -- permintaan user lanjutan lagi, sebelumnya beda
+    // teks "Kualitas Asli"/"Suara Asli" yg lebih panjang & rawan
+    // mepet/nabrak ikon di kartu sempit versi mobile).
+    resItemsHtml += videoDlResItemHtml({ label: 'Audio', sub: 'Suara asli', filetype: 'MP3', downloadUrl: data.music_url, icon: VIDEODL_MUSIC_ICON, badge: 'Original' });
   }
   videoDlRenderCard({ thumbnailUrl: data.thumbnail_url, title, duration: data.duration, resItemsHtml, sourceUrl });
 }
@@ -11579,12 +11580,12 @@ function videoDlRenderYoutubeInfo(info, sourceUrl) {
       label: (f.format || '').toUpperCase(),
       sub: videoDlFormatBytes(f.filesize) || 'Ketuk utk ambil',
       filetype: 'MP4',
-      badge: (res !== null && res === highestRes) ? 'Kualitas Asli' : null,
+      badge: (res !== null && res === highestRes) ? 'Original' : null,
     });
   }).join('');
   resItemsHtml += videoDlResItemHtml({
     format: 'audio', label: 'Audio', sub: 'Suara asli', filetype: 'MP3', icon: VIDEODL_MUSIC_ICON,
-    badge: 'Suara Asli',
+    badge: 'Original',
   });
   videoDlRenderCard({
     thumbnailUrl: info.thumbnail || info.thumbnails?.max || info.thumbnails?.low,

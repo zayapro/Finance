@@ -3877,16 +3877,41 @@ html.dark-mode .videodl-platform-chip.videodl-active{background:var(--card);}
   min-height:92px;
 }
 .videodl-res-item:active{transform:scale(0.96);}
-/* Kartu yg py badge "Kualitas Asli" diberi tint warna SENADA dgn warna
-   badge-nya (var(--primary)) -- sebelumnya kartu ini polos beige sama
-   spt kartu lain padahal badge-nya oranye, jadi kombinasinya kelihatan
-   "nyeleneh"/kurang menyatu. Cuma WARNA yg disentuh di sini (border &
-   background tint tipis 6%/22%), UKURAN/PADDING tetap ikut aturan dasar
-   .videodl-res-item di atas (sesuai permintaan user sblmnya: ukuran
-   kartu ini sudah disamakan dgn kartu lain, jangan diubah lagi). */
+/* Kartu yg py badge "Kualitas Asli"/"Suara Asli" diberi tint warna SENADA
+   dgn warna badge-nya (var(--primary)) -- sebelumnya kartu ini polos beige
+   sama spt kartu lain padahal badge-nya oranye, jadi kombinasinya kelihatan
+   "nyeleneh"/kurang menyatu. */
+/* ---- FIX "berantakan di versi mobile" (permintaan user, lihat screenshot:
+   ribbon "Kualitas Asli"/"Suara Asli" numpuk/mepet banget sama ikon di
+   bawahnya) -- PENYEBABNYA: ribbon badge itu posisinya absolute (top:-1px)
+   jadi "melayang" DI ATAS konten kartu, bukan ikut alur normal dokumen.
+   Selama ini padding-top kartu (11px, dari aturan dasar .videodl-res-item
+   di atas) SAMA baik kartu berbadge maupun tidak -- padahal tinggi badge
+   sendiri kira2 ~19px (font 8.5px + padding atas/bawah). Di kartu SEMPIT
+   (mis. layar HP kecil, atau kartu Video/Audio yg skrg SEMUA platform
+   dapat badge, bukan cuma 1 kartu YouTube spt dulu), ikon di baris
+   pertama konten jadi ketiban/nempel pas di bawah badge krn ruang
+   atasnya cuma 11px, kurang dari tinggi badge -- makanya kelihatan
+   "berantakan"/numpuk terutama begitu ukuran kartu mengecil (versi
+   mobile menyempitkan kartu ke 1/3 lebar layar, ribbon tetap ukuran
+   tetap, jadi PROPORSInya thdp kartu jadi lebih besar/dekat).
+   FIX: kartu berbadge diberi padding-top LEBIH BESAR (26px, bukan 11px)
+   -- SPESIFIK cuma utk kartu ini (:has(.videodl-res-item-badge), kartu
+   TANPA badge tidak disentuh sama sekali) -- supaya konten (ikon dst)
+   SELALU mulai di bawah area ribbon dgn jarak "napas" yg cukup, di
+   LEBAR/LAYAR APA PUN (bukan cuma ngandelin kartu kebetulan cukup lebar
+   spy ribbon "kebagian tempat" di pojok tanpa nabrak konten) -- karena
+   overlap-nya SEKARANG dicegah lewat RUANG VERTIKAL (padding), efeknya
+   konsisten terlepas dari lebar kartu, jadi rapi di versi mobile MAUPUN
+   desktop/tablet sekaligus. min-height ikut ditambah (+15px, jadi 107px)
+   spy kartu berbadge tetap proporsional/tidak kependekan dibanding kartu
+   tanpa badge di baris yg sama (skrg tinggi kontennya efektif nambah
+   krn padding-top yg lebih besar). */
 .videodl-res-item:has(.videodl-res-item-badge){
   border-color:color-mix(in srgb, var(--primary) 35%, var(--line));
   background:color-mix(in srgb, var(--primary) 7%, var(--card-2, #F8F5F2));
+  padding-top:26px;
+  min-height:107px;
 }
 .videodl-res-item-ic{color:var(--ink-faint);}
 /* Font-weight 700 (bukan 800) dgn size sedikit lebih besar (13px) --
@@ -3947,6 +3972,27 @@ html.dark-mode .videodl-platform-chip.videodl-active{background:var(--card);}
   font-size:8.5px;font-weight:600;line-height:1.2;letter-spacing:0.01em;white-space:nowrap;
   padding:4.5px 8px 4px 7px;
   border-radius:0 11px 0 8px;
+  /* ---- FIX "berantakan di mobile" (permintaan user) -- SEBELUM ini
+     lebar badge cuma ngikutin panjang teksnya sendiri (white-space:
+     nowrap tanpa batas lebar), jadi di kartu SEMPIT (versi mobile,
+     kartu Video/Audio yg skrg SEMUA dapat badge) teks "Kualitas Asli"/
+     "Suara Asli" bisa lebih lebar dari kartunya sendiri & MELEBER
+     keluar tepi kartu -- kelihatan nabrak/kepotong kartu sebelahnya.
+     Dikasih max-width:100% (nempel batas lebar kartu, parent-nya
+     position:relative jadi 100% di sini = selebar kartu) + overflow
+     hidden & text-overflow:ellipsis sbg JARING PENGAMAN -- di kartu yg
+     cukup lebar teks tetap tampil utuh spt biasa (tidak pernah kepotong
+     krn "Kualitas Asli"/"Suara Asli" muat), tapi kalau suatu saat ada
+     kartu SANGAT sempit yg beneran tidak muat, teks rapi terpotong "..."
+     drpd meleber keluar kartu. */
+  max-width:100%;overflow:hidden;text-overflow:ellipsis;
+  box-sizing:border-box;
+}
+/* Di layar sangat sempit (HP kecil, breakpoint sama dgn
+   .videodl-input-row di atas) badge dikecilkan sedikit lagi supaya
+   makin lega jaraknya dari tepi kartu yg jg ikut menyempit. */
+@media (max-width:380px){
+  .videodl-res-item-badge{font-size:7.8px;padding:4px 6px 3.5px 6px;}
 }
 /* ---- Redesain KHUSUS kartu "Kualitas Asli" (permintaan user, niru
    referensi gambar: kartu tunggal besar & lega, ikon+angka+ukuran file
