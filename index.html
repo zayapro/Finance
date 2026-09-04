@@ -3530,14 +3530,35 @@ tr.fade-up{animation:fadeRow .35s ease both;}
    .videodl-hero-subtitle/.videodl-platform-chip/.videodl-status/
    .videodl-info-popover/.videodl-res-item-sub) -- elemen yg memang
    perlu tebal (judul, label aktif, tombol) TIDAK ikut diubah. ---- */
-.videodl-platform-row{display:flex;gap:2px;padding:8px 8px 0;}
+/* ---- FIX (permintaan user: "sesuaikan agar tidak ada yang tertutup
+   saat di versi apapun") -- SEBELUM ini baris platform pakai flex:1
+   utk tiap chip, jadi begitu layar sempit (HP kecil / app di-resize)
+   7 chip dipaksa muat berdampingan -> teks label kepotong/ellipsis
+   ("Instagra...", "Facebo...", dst, lihat screenshot user). Diganti
+   jadi scroll horizontal: tiap chip skrg lebar SEDIKIT tetap sesuai
+   isinya (flex:0 0 auto, bukan flex:1) & baris pembungkusnya boleh
+   di-scroll ke samping (overflow-x:auto) kalau semua chip tidak
+   muat dalam 1 layar -- jadi LABEL SELALU UTUH/TIDAK PERNAH TERPOTONG
+   di layar sebesar apa pun, tinggal geser kalau perlu lihat platform
+   lain. Scrollbar disembunyikan (webkit+firefox) biar tetap rapi
+   spt tab bar pada umumnya, TAPI tetap bisa discroll dgn jari/mouse.
+   -webkit-overflow-scrolling:touch utk scroll halus di iOS. ---- */
+.videodl-platform-row{
+  display:flex;gap:2px;padding:8px 8px 0;
+  overflow-x:auto;overflow-y:hidden;
+  scrollbar-width:none;-ms-overflow-style:none;
+  -webkit-overflow-scrolling:touch;
+}
+.videodl-platform-row::-webkit-scrollbar{display:none;height:0;}
 .videodl-platform-chip{
-  flex:1;min-width:0;text-align:center;
+  flex:0 0 auto;min-width:0;text-align:center;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
-  padding:9px 4px 8px;border-radius:12px 12px 0 0;background:transparent;
+  padding:9px 10px 8px;border-radius:12px 12px 0 0;background:transparent;
   transition:background .18s ease,color .18s ease;
   color:var(--videodl-tab-inactive);
+  scroll-snap-align:start;
 }
+.videodl-platform-row{scroll-snap-type:x proximity;}
 /* ---- Ikon platform (permintaan user: ganti label teks polos jadi
    ikon) -- SENGAJA dibuat sendiri (bukan logo resmi berwarna YouTube/
    TikTok/dst) supaya senada monokrom dgn gaya line-icon lain di app
@@ -3577,14 +3598,31 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 html.dark-mode .videodl-platform-chip[data-platform="twitter"].videodl-active{color:#E7E9EA;}
 .videodl-platform-chip[data-platform="pinterest"].videodl-active{color:#C8102E;}
 .videodl-platform-chip[data-platform="rutube"].videodl-active{color:#0077B6;}
-.videodl-hero-panel{padding:22px 18px 24px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;}
+.videodl-hero-panel{padding:22px 18px 24px;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;}
 .videodl-hero-title{
   margin:0;font-family:'Poppins',sans-serif;font-weight:800;letter-spacing:-0.01em;
-  font-size:clamp(19px,5.6vw,24px);line-height:1.25;
+  font-size:clamp(18px,5.2vw,22px);line-height:1.25;
   background:linear-gradient(135deg,var(--videodl-accent),var(--videodl-accent-deep));
   -webkit-background-clip:text;background-clip:text;color:transparent;
 }
-.videodl-hero-subtitle{margin:0 0 10px;font-size:12.5px;font-weight:500;color:var(--ink-faint);max-width:36ch;}
+/* ---- PENYESUAIAN ukuran & ketebalan subjudul (permintaan user) --
+   teks subjudul sekarang jauh lebih panjang (menyebut video/musik/
+   foto + 7 nama platform), jadi kalau dipertahankan font-weight:500 +
+   max-width:44ch spt sebelumnya, teksnya numpuk jadi 4+ baris rapat &
+   kelihatan "berat"/padat. Disesuaikan jadi: font-weight diturunkan ke
+   450 (masih lebih tebal dari teks normal 400 tapi tidak se-tebal
+   badan teks lain spt label resolusi, biar tetap terlihat "sekunder"
+   dibanding judul), ukuran huruf dibuat responsif via clamp (11px di
+   layar sempit s.d. 12.5px di layar lebar -- SEBELUMNYA cuma angka
+   tetap 12.5px, jadi di HP kecil malah kepanjangan barisnya), line-
+   height dilonggarkan ke 1.5 (dari default ~1.4 bawaan browser) spy
+   antar baris tidak dempet mengingat sekarang bisa 3-4 baris, dan
+   max-width dilebarkan jadi 52ch (dari 44ch) supaya baris tidak
+   terlalu sempit/gampang pecah di tengah nama platform. ---- */
+.videodl-hero-subtitle{
+  margin:0 0 10px;font-size:clamp(11px,3.1vw,12.5px);font-weight:450;
+  line-height:1.5;color:var(--ink-faint);max-width:52ch;
+}
 .videodl-input-row{
   width:100%;display:flex;align-items:stretch;
   background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;
@@ -3629,7 +3667,33 @@ html.dark-mode .videodl-platform-chip[data-platform="twitter"].videodl-active{co
   font-size:12.5px;font-weight:500;color:var(--ink-faint);text-align:center;margin:0;
 }
 .videodl-status.videodl-status-err{color:#DC2626;}
-.videodl-legal-hint{text-align:center;margin-top:2px;}
+/* ---- STICKY di bawah (permintaan user) -- halaman "Unduh Video"
+   scroll di dalam .detail-page-overlay (overflow-y:auto, lihat CSS-
+   nya), jadi teks disclaimer ini SEBELUMNYA cuma elemen biasa di akhir
+   .lap-filter-card.videodl-page-body-rest -- kalau hasil unduhan
+   (#videoDlResultBox) banyak/panjang, teks ini ikut terdorong jauh ke
+   bawah & user harus scroll penuh dulu baru kebaca. Sekarang dibuat
+   position:sticky;bottom:0 spy SELALU nempel di tepi bawah layar
+   selagi halaman ini kebuka, apa pun panjang kontennya -- tidak perlu
+   position:fixed krn cukup sticky di dalam scroll container yg sudah
+   ada (tidak ada leluhur ber-overflow:hidden yg motong stickiness,
+   sudah dicek: .lap-filter-page & .lap-filter-card sama2 tidak
+   nyetel overflow). Dikasih background var(--card) (SAMA dgn warna
+   kartu putihnya) + border atas tipis spy waktu konten discroll ke
+   bawahnya, teks tidak "tembus pandang" ketimpa elemen lain, dan
+   margin kiri/kanan negatif -16px (nyamain besar padding horizontal
+   .lap-filter-card) + padding balik spy baloknya nempel EDGE-TO-EDGE
+   selebar layar (bukan cuma selebar area teks). padding-bottom
+   ditambah env(safe-area-inset-bottom) utk HP yg py "notch"/gesture
+   bar di bawah (iPhone dll) spy teks tidak ketutup area sistem. */
+.videodl-legal-hint{
+  text-align:center;margin-top:2px;
+  position:sticky;bottom:0;z-index:3;
+  background:var(--card);
+  margin-left:-16px;margin-right:-16px;
+  padding:10px 16px calc(10px + env(safe-area-inset-bottom));
+  border-top:1px solid var(--line);
+}
 /* Ikon perisai-centang (shield-check) di depan teks -- dipilih krn
    maknanya pas utk pesan izin/legalitas konten (bukan sekadar info
    netral), gaya SVG-nya disamakan (viewBox 24x24, stroke-width ~2.2,
@@ -3652,19 +3716,29 @@ html.dark-mode .videodl-platform-chip.videodl-active{background:var(--card);}
    Pengaturan API) + balon kredit tool (#videoDlInfoPopover) -- muncul
    TEPAT di bawah icon-nya sendiri (bukan modal/overlay terpisah),
    nempel rata kanan supaya tidak kepotong tepi layar krn posisinya di
-   pojok kanan atas. Warna balon SENGAJA ungu (senada palet baru
-   .videodl-card) di atas latar oranye header, biar kelihatan sbg
-   "aksen" tool ini, bukan ikut oranye tema utama app. ---- */
+   pojok kanan atas. ---- */
+/* ---- WARNA BALON DISESUAIKAN (permintaan user) -- SEBELUM ini balon
+   dikasih gradien UNGU (#6C63FF->#4338CA) yg SENGAJA dibuat beda dari
+   oranye tema utama app, tapi hasilnya malah kelihatan "nyeleneh"/
+   nabrak di atas header oranye (var(--nav-orange)) di baliknya --
+   warnanya sama sekali tidak senada. Diganti jadi gradien ORANYE
+   memakai token warna app yg SUDAH ada (var(--nav-orange)->var(--primary-deep),
+   SAMA persis dgn warna header di belakangnya, cuma digelapkan sedikit
+   di ujung bawah gradiennya spy tetap ada kedalaman/dimensi, bukan
+   1 warna oranye polos rata) -- otomatis ikut berubah kalau user ganti
+   warna tema app (krn pakai var(), bukan hex hardcode lagi), & shadow-
+   nya jg disesuaikan ke warna oranye (dari ungu) spy bayangannya jg
+   senada, bukan cuma badan balonnya saja. ---- */
 .videodl-info-wrap{position:relative;flex-shrink:0;}
 .videodl-info-btn{position:relative;z-index:1;}
 .videodl-info-btn[aria-expanded="true"]{background:rgba(255,255,255,0.32);}
 .videodl-info-popover{
   position:absolute;top:calc(100% + 12px);right:0;z-index:5;
   min-width:200px;max-width:min(78vw,260px);
-  background:linear-gradient(135deg,#6C63FF,#4338CA);color:#fff;
+  background:linear-gradient(135deg,var(--nav-orange),var(--primary-deep));color:#fff;
   font-size:12.5px;font-weight:500;line-height:1.45;text-align:left;
   padding:12px 14px;border-radius:14px;
-  box-shadow:0 10px 28px rgba(38,32,110,0.35);
+  box-shadow:0 10px 28px rgba(194,65,12,0.35);
   opacity:0;visibility:hidden;transform:translateY(-6px) scale(0.96);transform-origin:top right;
   transition:opacity .16s ease,transform .16s ease,visibility .16s;
   pointer-events:none;
@@ -3675,7 +3749,7 @@ html.dark-mode .videodl-platform-chip.videodl-active{background:var(--card);}
 }
 .videodl-info-popover-arrow{
   position:absolute;top:-5px;right:14px;width:10px;height:10px;
-  background:#5B4FE0;transform:rotate(45deg);border-radius:2px;
+  background:var(--primary-deep);transform:rotate(45deg);border-radius:2px;
 }
 /* ---- FIX LAMA (SUDAH DIHAPUS, disimpan sbg catatan): dulu di sini ada
    aturan ".videodl-sticky-head:has(.videodl-info-popover.videodl-show)
@@ -15999,7 +16073,7 @@ html.dark-mode .bd-row-close{
 
           <div class="videodl-hero-panel">
             <h3 class="videodl-hero-title">Video Downloader</h3>
-            <p class="videodl-hero-subtitle">Pilih platform di atas, tempel link videonya — gratis &amp; tanpa watermark</p>
+            <p class="videodl-hero-subtitle">Unduh video, musik &amp; foto dari YouTube, TikTok, Instagram, Facebook, X, Pinterest &amp; RuTube — tinggal tempel link, gratis dan tanpa watermark</p>
 
             <div class="videodl-input-row">
               <div class="videodl-input-wrap">

@@ -11502,15 +11502,36 @@ function videoDlRenderFetchResult(data, platform, sourceUrl) {
   }
   let resItemsHtml = '';
   if (data.download_url) {
+    // ---- FIX (permintaan user: "di TikTok kok kualitas asli & sumber
+    // tidak sama spt di YouTube") -- kartu video platform NON-YouTube
+    // ini SEBENARNYA juga "kualitas asli" (satu2nya kualitas yg
+    // dikembalikan API-nya, bukan hasil pilihan dari beberapa opsi
+    // spt YouTube), tapi SEBELUMNYA cuma dikasih teks sub "Kualitas
+    // sumber" polos tanpa badge -- beda tampilan dgn kartu resolusi
+    // tertinggi YouTube yg dapat badge ribbon "Kualitas Asli" di pojok
+    // (lihat videoDlRenderYoutubeInfo & .videodl-res-item-badge).
+    // Ditambahkan badge yg SAMA di sini supaya konsisten platform
+    // apa pun (TikTok/Instagram/Facebook/X/Pinterest/RuTube) -- badge
+    // ini otomatis ikut nge-tint border/background kartu jadi warna
+    // primary jg (via :has(.videodl-res-item-badge) di CSS), SAMA
+    // persis dgn kartu YouTube yg berbadge.
     resItemsHtml += videoDlResItemHtml({
       label: data.type === 'image' ? 'Gambar' : 'Video',
       sub: 'Kualitas sumber',
       filetype: data.type === 'image' ? 'JPG' : 'MP4',
       downloadUrl: data.download_url,
+      badge: 'Kualitas Asli',
     });
   }
   if (data.music_url) {
-    resItemsHtml += videoDlResItemHtml({ label: 'Audio', sub: 'Suara asli', filetype: 'MP3', downloadUrl: data.music_url, icon: VIDEODL_MUSIC_ICON });
+    // ---- Disamakan dgn kartu Video di atas (permintaan user lanjutan:
+    // "begitu juga utk audio/suaranya") -- badge "Suara Asli" ditambah
+    // di sini jg supaya kartu Audio ikut dapat tint border/background
+    // primary yg sama, konsisten dgn kartu Video yg sudah berbadge
+    // "Kualitas Asli" (bukan "Kualitas Asli" jg krn ini audio bukan
+    // video, tapi maknanya sama: satu2nya kualitas audio yg dikasih
+    // API, bukan hasil pilihan dari beberapa opsi).
+    resItemsHtml += videoDlResItemHtml({ label: 'Audio', sub: 'Suara asli', filetype: 'MP3', downloadUrl: data.music_url, icon: VIDEODL_MUSIC_ICON, badge: 'Suara Asli' });
   }
   videoDlRenderCard({ thumbnailUrl: data.thumbnail_url, title, duration: data.duration, resItemsHtml, sourceUrl });
 }
@@ -11563,6 +11584,7 @@ function videoDlRenderYoutubeInfo(info, sourceUrl) {
   }).join('');
   resItemsHtml += videoDlResItemHtml({
     format: 'audio', label: 'Audio', sub: 'Suara asli', filetype: 'MP3', icon: VIDEODL_MUSIC_ICON,
+    badge: 'Suara Asli',
   });
   videoDlRenderCard({
     thumbnailUrl: info.thumbnail || info.thumbnails?.max || info.thumbnails?.low,
