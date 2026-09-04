@@ -11202,6 +11202,11 @@ function videoDlFormatBytes(bytes) {
 
 const VIDEODL_DOWNLOAD_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
 const VIDEODL_MUSIC_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>';
+// Ikon salin (copy) & tautan-keluar (external link) -- dipakai fitur
+// baru "salin judul" & "lihat sumber asli" di kartu hasil, gaya SVG-nya
+// disamakan (viewBox 24x24, currentColor) dgn 2 ikon di atas spy senada.
+const VIDEODL_COPY_ICON = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+const VIDEODL_LINK_ICON = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>';
 
 // ---- Ring progres (GANTI animasi ikon lama yg cuma rotate polos) --
 // lingkaran track abu2 tipis + 1 lingkaran "bar" yg stroke-dashoffset-
@@ -11404,13 +11409,15 @@ function videoDlResItemHtml({ format, label, sub, downloadUrl, icon, badge, file
 // Bungkus kartu (thumbnail + judul + durasi) + grid resolusi jadi 1
 // #videoDlResultBox -- dipakai baik utk hasil YouTube (/youtube/info)
 // maupun platform lain (/v1/fetch), supaya bentuknya SAMA PERSIS.
-function videoDlRenderCard({ thumbnailUrl, title, duration, resItemsHtml, albumHtml }) {
+function videoDlRenderCard({ thumbnailUrl, title, duration, resItemsHtml, albumHtml, sourceUrl }) {
   const box = document.getElementById('videoDlResultBox');
   if (!box) return;
   // Judul video disimpan di dataset box supaya bisa dipakai bikin nama
   // file saat kartu resolusi "siap" diunduh (lihat videoDlDownloadFile
   // & listener klik #videoDlResultBox di bawah) -- tanpa ini nama file
-  // hasil unduhan cuma angka acak dari URL CDN-nya.
+  // hasil unduhan cuma angka acak dari URL CDN-nya. Juga dipakai fitur
+  // "salin judul" (data-copy-title-btn) baru di bawah, biar tidak perlu
+  // nyimpen judul 2x di tempat beda.
   box.dataset.videoTitle = title || '';
   const thumb = thumbnailUrl ? `
       <div class="videodl-result-thumb-wrap">
@@ -11420,12 +11427,26 @@ function videoDlRenderCard({ thumbnailUrl, title, duration, resItemsHtml, albumH
         </button>
       </div>` : '';
   const durTxt = videoDlFormatDuration(duration);
+  // Tombol "salin judul" -- nempel di SEBELAH judul (bukan di bawahnya
+  // sendiri) spy jelas terkait langsung dgn teks judul di sampingnya,
+  // data-copy-title-btn ditangani via delegasi klik yg sama dgn tombol2
+  // lain di kartu ini (lihat listener #videoDlResultBox di bawah).
+  const copyBtnHtml = title ? `<button type="button" class="videodl-copy-title-btn" data-copy-title-btn title="Salin judul" aria-label="Salin judul">${VIDEODL_COPY_ICON}</button>` : '';
+  // Tautan "lihat sumber asli" -- link LANGSUNG ke halaman/URL yg user
+  // tempel (BUKAN lewat videoDlProxiedUrl, krn itu cuma utk proksi file
+  // media spy lolos CORS saat diunduh -- ini cuma link biasa buka
+  // halaman platform aslinya di tab baru, tidak ada masalah CORS).
+  const sourceHtml = sourceUrl ? `<a class="videodl-result-source" href="${escapeAttr(sourceUrl)}" target="_blank" rel="noopener">${VIDEODL_LINK_ICON}<span>Lihat sumber asli</span></a>` : '';
   box.innerHTML = `
     <div class="videodl-result-card">
       ${thumb}
       <div class="videodl-result-body">
-        <div class="videodl-result-title">${title || 'Video'}</div>
+        <div class="videodl-result-title-row">
+          <div class="videodl-result-title">${title || 'Video'}</div>
+          ${copyBtnHtml}
+        </div>
         ${durTxt ? `<div class="videodl-result-meta">Durasi: ${durTxt}</div>` : ''}
+        ${sourceHtml}
         ${resItemsHtml ? `<div class="videodl-res-grid">${resItemsHtml}</div>` : ''}
       </div>
       ${albumHtml || ''}
@@ -11463,7 +11484,7 @@ const VIDEODL_PLATFORM_LABEL = {
 // ada `music_url`, khusus TikTok) -- tidak ada state pending krn link-nya
 // sudah didapat SEKALIAN dari 1x panggilan /v1/fetch di atas, tanpa
 // tambahan kredit/API call lagi. ----
-function videoDlRenderFetchResult(data, platform) {
+function videoDlRenderFetchResult(data, platform, sourceUrl) {
   // SEBELUM ini fallback-nya cuma teks generik "Video" polos kalau
   // `caption`/`title` kosong (SERING terjadi utk Facebook, krn banyak
   // video/Reels FB memang tidak punya keterangan teks utk dikirim balik
@@ -11476,7 +11497,7 @@ function videoDlRenderFetchResult(data, platform) {
     : `Video -- ${new Date().toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}`;
   const title = data.caption || data.title || fallbackTitle;
   if (data.type === 'album' && Array.isArray(data.items)) {
-    videoDlRenderCard({ thumbnailUrl: data.thumbnail_url, title, duration: data.duration, albumHtml: videoDlAlbumHtml(data.items) });
+    videoDlRenderCard({ thumbnailUrl: data.thumbnail_url, title, duration: data.duration, albumHtml: videoDlAlbumHtml(data.items), sourceUrl });
     return;
   }
   let resItemsHtml = '';
@@ -11491,7 +11512,7 @@ function videoDlRenderFetchResult(data, platform) {
   if (data.music_url) {
     resItemsHtml += videoDlResItemHtml({ label: 'Audio', sub: 'Suara asli', filetype: 'MP3', downloadUrl: data.music_url, icon: VIDEODL_MUSIC_ICON });
   }
-  videoDlRenderCard({ thumbnailUrl: data.thumbnail_url, title, duration: data.duration, resItemsHtml });
+  videoDlRenderCard({ thumbnailUrl: data.thumbnail_url, title, duration: data.duration, resItemsHtml, sourceUrl });
 }
 
 // ---- Hasil /youtube/info -- SEMUA `formats` (144p..2160p, apa adanya
@@ -11502,7 +11523,7 @@ function videoDlRenderFetchResult(data, platform) {
 // format:"audio" utk SEMUA video (tidak muncul di `formats`, yg isinya
 // cuma varian video), jadi ditambahkan sendiri di sini spy pilihan audio
 // tetap ada. ---- */
-function videoDlRenderYoutubeInfo(info) {
+function videoDlRenderYoutubeInfo(info, sourceUrl) {
   const formats = Array.isArray(info.formats) ? info.formats : [];
   // Resolusi tertinggi di daftar `formats` == kualitas asli video ini
   // sesuai yg tersedia di YouTube (server FastSaverAPI/RapidAPI sudah
@@ -11534,6 +11555,7 @@ function videoDlRenderYoutubeInfo(info) {
     title: info.title,
     duration: info.duration,
     resItemsHtml,
+    sourceUrl,
   });
 }
 
@@ -11552,6 +11574,26 @@ function videoDlRenderYoutubeInfo(info) {
 //      meneruskan `format` ini apa adanya ke FastSaverAPI (baru
 //      fallback ke RapidAPI kalau format PERSIS ini gagal). ---- */
 document.getElementById('videoDlResultBox')?.addEventListener('click', async (e) => {
+  // ---- (0) Tombol "salin judul" -- ambil teks dari box.dataset.videoTitle
+  // (SUDAH disimpan videoDlRenderCard, bukan baca ulang dari DOM #videodl-
+  // result-title, krn kalau ada HTML-escaping/entity di judul teks DOM bisa
+  // beda dgn teks asli) lewat navigator.clipboard, fallback pesan error via
+  // showToast kalau browser/izin clipboard tidak tersedia (mis. http bukan
+  // https, atau permission ditolak). ----
+  const copyTitleBtn = e.target.closest('.videodl-copy-title-btn');
+  if (copyTitleBtn) {
+    const box = document.getElementById('videoDlResultBox');
+    const titleText = box?.dataset.videoTitle || '';
+    if (!titleText) return;
+    try {
+      await navigator.clipboard.writeText(titleText);
+      showToast('Judul disalin.', 'ok');
+    } catch (err) {
+      showToast('Gagal menyalin judul.', 'err');
+    }
+    return;
+  }
+
   // ---- (1) Tombol unduh thumbnail ----
   const thumbBtn = e.target.closest('.videodl-thumb-dl-btn');
   if (thumbBtn) {
@@ -11767,7 +11809,7 @@ document.getElementById('videoDlFetchBtn')?.addEventListener('click', async () =
       data = await res.json();
       if (!data.ok) throw new Error(videoDlFriendlyError(data));
       videoDlSetStatus('', false);
-      videoDlRenderYoutubeInfo(data);
+      videoDlRenderYoutubeInfo(data, url);
     } else {
       const qs = new URLSearchParams({ url });
       const res = await fetch(`${apiBase}/v1/fetch?${qs.toString()}`, {
@@ -11777,7 +11819,7 @@ document.getElementById('videoDlFetchBtn')?.addEventListener('click', async () =
       data = await res.json();
       if (!data.ok) throw new Error(videoDlFriendlyError(data));
       videoDlSetStatus('', false);
-      videoDlRenderFetchResult(data, platform);
+      videoDlRenderFetchResult(data, platform, url);
     }
   } catch (err) {
     if (err.name === 'AbortError') {

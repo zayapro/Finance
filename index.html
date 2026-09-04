@@ -3555,6 +3555,26 @@ tr.fade-up{animation:fadeRow .35s ease both;}
   background:var(--card);color:var(--videodl-accent-deep);
 }
 .videodl-platform-chip.videodl-active .videodl-platform-label{font-weight:800;}
+/* ---- Warna KHAS tiap platform saat aktif (permintaan user: "sesuaikan
+   warna" utk chip YouTube/TikTok/Instagram/Facebook/X-Twitter) --
+   sebelumnya SEMUA chip aktif pakai 1 warna generik yg sama
+   (var(--videodl-accent-deep)) apa pun platformnya, jadi kurang
+   "hidup"/gampang dikenali sekilas. Sekarang tiap platform py warna
+   brand-nya sendiri (via currentColor, jadi ikon+teks label ikut
+   berubah bareng) -- TAPI cuma dipakai pas chip-nya AKTIF/terpilih
+   saja (state nonaktif tetap monokrom var(--videodl-tab-inactive) spy
+   baris tab tidak berubah jadi "ramai warna" saat belum ada yg dipilih,
+   warna cuma "menyala" pas user benar2 pilih platform itu). Nilai hex
+   diambil dari warna resmi tiap brand (YouTube merah, TikTok cyan-pink
+   dicampur jadi satu aksen gelap biar tetap kebaca, Instagram magenta,
+   Facebook biru, X/Twitter hitam pekat) supaya user langsung asosiasi
+   warna dgn platformnya, bukan sekadar warna app generik. */
+.videodl-platform-chip[data-platform="youtube"].videodl-active{color:#E02020;}
+.videodl-platform-chip[data-platform="tiktok"].videodl-active{color:#12A6A6;}
+.videodl-platform-chip[data-platform="instagram"].videodl-active{color:#C1327A;}
+.videodl-platform-chip[data-platform="facebook"].videodl-active{color:#1877F2;}
+.videodl-platform-chip[data-platform="twitter"].videodl-active{color:#1B1F23;}
+html.dark-mode .videodl-platform-chip[data-platform="twitter"].videodl-active{color:#E7E9EA;}
 .videodl-hero-panel{padding:22px 18px 24px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;}
 .videodl-hero-title{
   margin:0;font-family:'Poppins',sans-serif;font-weight:800;letter-spacing:-0.01em;
@@ -3697,8 +3717,34 @@ html.dark-mode .videodl-platform-chip.videodl-active{background:var(--card);}
 .videodl-thumb-dl-btn--loading{pointer-events:none;}
 .videodl-thumb-dl-btn--loading svg{animation:videodlResSpin .8s linear infinite;}
 .videodl-result-body{padding:12px 14px;display:flex;flex-direction:column;gap:8px;}
-.videodl-result-title{font-size:13.5px;font-weight:700;color:var(--ink);line-height:1.4;}
+/* Baris judul + tombol salin -- flex row, judul boleh sampai 2 baris
+   (line-clamp) sementara tombol salin TETAP di kanan-atas & tidak ikut
+   menyusut (flex-shrink:0) brp pun panjang judulnya. align-items:
+   flex-start (bukan center) supaya kalau judul jadi 2 baris, tombolnya
+   tetap sejajar dgn baris PERTAMA teks, bukan ketarik ke tengah blok. */
+.videodl-result-title-row{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;}
+.videodl-result-title{
+  font-size:13.5px;font-weight:700;color:var(--ink);line-height:1.4;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+}
+.videodl-copy-title-btn{
+  flex-shrink:0;width:26px;height:26px;border-radius:8px;border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;padding:0;margin-top:1px;
+  background:var(--card-2, #F1F1F6);color:var(--ink-faint);
+  transition:background .15s ease,color .15s ease,transform .1s ease;
+}
+.videodl-copy-title-btn:hover{background:color-mix(in srgb, var(--primary) 14%, transparent);color:var(--primary-deep, var(--primary));}
+.videodl-copy-title-btn:active{transform:scale(0.9);}
 .videodl-result-meta{font-size:11.5px;color:var(--ink-faint);}
+/* Tautan "Lihat sumber asli" -- baris kecil terpisah dari meta durasi,
+   ikon tautan-keluar + teks, warna --primary spy jelas kelihatan sbg
+   link yg bisa diklik (bukan teks info pasif spt durasi/ukuran file). */
+.videodl-result-source{
+  display:inline-flex;align-items:center;gap:5px;width:fit-content;
+  font-size:11.5px;font-weight:600;color:var(--primary-deep, var(--primary));
+  text-decoration:none;
+}
+.videodl-result-source:hover{text-decoration:underline;}
 /* ---- Grid pilihan resolusi/kualitas (.videodl-res-grid) -- GANTI dari
    deretan tombol "Unduh Video/Gambar" tunggal (.videodl-result-actions
    lama) jadi grid kartu rapi (3 kolom, 2 di layar sempit), tiap kartu
@@ -3742,8 +3788,30 @@ html.dark-mode .videodl-platform-chip.videodl-active{background:var(--card);}
   text-decoration:none;cursor:pointer;font:inherit;color:inherit;
   transition:border-color .15s ease, background .15s ease, transform .1s ease;
   -webkit-tap-highlight-color:transparent;
+  /* min-height DITAMBAHKAN supaya SEMUA kartu kecil (720P/480P/.../Audio)
+     selalu sama tinggi apa pun isinya -- sebelumnya tinggi kartu ikut
+     mengalir dari konten (icon+label+tag+sub-label), jadi kalau salah
+     satu kartu sub-labelnya kebetulan lebih panjang & sampai wrap ke 2
+     baris (mis. "Ketuk utk ambil" di kartu YouTube yg masih "pending",
+     dibanding "23.1 MB" yg muat 1 baris), kartu ITU SAJA jadi lebih
+     tinggi drpd kartu2 lain di baris yg sama -- keliatan "pincang" persis
+     yg dikeluhkan user. 92px dipilih supaya cukup utk skenario terburuk
+     (sub-label wrap 2 baris) TANPA bikin kartu2 yg kontennya pendek
+     (1 baris) kelihatan longgar berlebihan. */
+  min-height:92px;
 }
 .videodl-res-item:active{transform:scale(0.96);}
+/* Kartu yg py badge "Kualitas Asli" diberi tint warna SENADA dgn warna
+   badge-nya (var(--primary)) -- sebelumnya kartu ini polos beige sama
+   spt kartu lain padahal badge-nya oranye, jadi kombinasinya kelihatan
+   "nyeleneh"/kurang menyatu. Cuma WARNA yg disentuh di sini (border &
+   background tint tipis 6%/22%), UKURAN/PADDING tetap ikut aturan dasar
+   .videodl-res-item di atas (sesuai permintaan user sblmnya: ukuran
+   kartu ini sudah disamakan dgn kartu lain, jangan diubah lagi). */
+.videodl-res-item:has(.videodl-res-item-badge){
+  border-color:color-mix(in srgb, var(--primary) 35%, var(--line));
+  background:color-mix(in srgb, var(--primary) 7%, var(--card-2, #F8F5F2));
+}
 .videodl-res-item-ic{color:var(--ink-faint);}
 /* Font-weight 700 (bukan 800) dgn size sedikit lebih besar (13px) --
    800 di banyak font-stack sistem malah jatuh ke "faux bold" (browser
@@ -3756,7 +3824,12 @@ html.dark-mode .videodl-platform-chip.videodl-active{background:var(--card);}
    terlalu pudar/abu muda) ke color-mix yg sedikit lebih gelap, supaya
    info ukuran file/"Ketuk utk ambil" tetap gampang dibaca tanpa
    menyaingi label utama. */
-.videodl-res-item-sub{font-size:10.5px;font-weight:600;color:color-mix(in srgb, var(--ink-faint) 75%, var(--ink));}
+/* min-height (bukan height fix) diberikan berdasar 2x line-height teks
+   10.5px ini -- disamakan dgn skenario TERPANJANG (2 baris, mis. "Ketuk
+   utk ambil") supaya ruang yg direservasi tiap kartu SAMA baik teksnya
+   akhirnya muat 1 baris (mis. "23.1 MB") maupun 2 baris, jadi kartu2
+   yg bersebelahan tetap sama tinggi tanpa peduli isi tekstualnya. */
+.videodl-res-item-sub{font-size:10.5px;font-weight:600;line-height:1.3;color:color-mix(in srgb, var(--ink-faint) 75%, var(--ink));min-height:27px;display:flex;align-items:center;justify-content:center;}
 /* Tag jenis file (MP4/MP3/JPG dst) -- pil kecil di antara label
    resolusi & sub-label ukuran file, supaya user langsung tahu format
    unduhannya tanpa perlu menebak dari label "720P"/"Audio" saja.
@@ -3785,8 +3858,18 @@ html.dark-mode .videodl-platform-chip.videodl-active{background:var(--card);}
 .videodl-res-item-badge{
   position:absolute;top:-1px;right:-1px;
   background:var(--primary);color:#fff;
-  font-size:8px;font-weight:700;line-height:1;letter-spacing:0.02em;white-space:nowrap;
-  padding:4px 8px 3px 7px;
+  /* Font tetap 'Poppins' (senada dgn label resolusi "1080P" dkk) tapi
+     weight DITURUNKAN lagi ke 600 (dari 800) -- 800 kelihatan kelewat
+     tebal/berat utk teks sekecil ini, 600 tetap terbaca jelas tanpa
+     berkesan "menggumpal". letter-spacing dikembalikan ke positif tipis
+     (0.01em, bukan negatif) krn di weight yg lebih ringan ini teks
+     malah butuh sedikit renggang biar tidak kelihatan mepet. Padding
+     kanan-kiri & bawah ditambah tipis (7px/6px -> 8px/7px, 3px -> 4px)
+     supaya teksnya ada jarak "nafas" ke tepi kotak, bukan langsung
+     nempel ke garis pinggir badge. */
+  font-family:'Poppins',sans-serif;
+  font-size:8.5px;font-weight:600;line-height:1.2;letter-spacing:0.01em;white-space:nowrap;
+  padding:4.5px 8px 4px 7px;
   border-radius:0 11px 0 8px;
 }
 /* ---- Redesain KHUSUS kartu "Kualitas Asli" (permintaan user, niru
@@ -3803,45 +3886,16 @@ html.dark-mode .videodl-platform-chip.videodl-active{background:var(--card);}
    tipis) -- bukan oranye/putih polos hardcode spt di gambar aslinya --
    supaya otomatis senada dgn tema warna app & tetap konsisten kalau
    user ganti dark-mode/glass-mode. */
-.videodl-res-item:has(.videodl-res-item-badge){
-  flex-basis:100%;
-  /* Padding vertikal dipangkas (26px/22px -> 16px/14px) supaya tinggi
-     kartu ini proporsional dgn kartu2 kecil di bawahnya (yg cuma
-     11px/10px) -- sebelumnya kartu ini kelewat jangkung/menonjol
-     dibanding baris kartu kecil, skrg skalanya lebih senada meski
-     tetap 1 baris penuh & tetap kartu paling menonjol lewat aksen
-     warna + ukuran font, bukan lewat tinggi kartu yg berlebihan. */
-  padding:16px 16px 14px;gap:6px;
-  border-radius:16px;
-  border-color:color-mix(in srgb, var(--primary) 30%, var(--line));
-  background:color-mix(in srgb, var(--primary) 7%, var(--card));
-  box-shadow:var(--shadow-sm);
-}
-.videodl-res-item:has(.videodl-res-item-badge) .videodl-res-item-ic{
-  color:color-mix(in srgb, var(--ink-faint) 65%, var(--ink) 10%);
-  margin-bottom:2px;
-}
-/* Ikon dikecilkan sedikit (30px -> 24px) selaras dgn padding yg
-   dipangkas -- tetap jelas lebih besar drpd ikon kartu kecil (yg
-   defaultnya ukuran ikon SVG bawaan, jauh lebih kecil dari ini). */
-.videodl-res-item:has(.videodl-res-item-badge) .videodl-res-item-ic svg{width:24px;height:24px;stroke-width:2;}
-/* Label "1080P" dipindah ke font 'Poppins' + weight 800 SUNGGUHAN (bukan
-   font sistem spt label kecil di atas) krn Poppins yg sudah dimuat app
-   ini PUNYA varian 800 asli, jadi aman dari faux-bold yg dihindari di
-   komentar .videodl-res-item-label -- di ukuran besar begini bedanya
-   jelas kelihatan & inilah yg dimaksud "ketebalan font" biar tegas spt
-   referensi. */
-.videodl-res-item:has(.videodl-res-item-badge) .videodl-res-item-label{
-  font-family:'Poppins',sans-serif;font-size:17px;font-weight:800;
-  letter-spacing:-0.01em;color:var(--ink);
-}
-.videodl-res-item:has(.videodl-res-item-badge) .videodl-res-item-sub{
-  font-family:'Poppins',sans-serif;font-size:11.5px;font-weight:600;
-  color:var(--ink-faint);letter-spacing:0.005em;
-}
-.videodl-res-item:has(.videodl-res-item-badge) .videodl-res-item-type{
-  font-size:9.5px;padding:2px 7px;
-}
+/* ---- PERMINTAAN USER: kartu "Kualitas Asli" DISAMAKAN sepenuhnya dgn
+   kartu kecil lain (720P/480P/dst) -- bukan lagi kartu besar full-width
+   yg menonjol sendiri spt sebelumnya. Makanya SEMUA override :has(badge)
+   utk ukuran/font/padding/min-height yg dulu ada di sini (flex-basis:100%,
+   padding lebih besar, font Poppins 17px, min-height:150px, dst) DIHAPUS
+   total -- kartu ini skrg otomatis ikut aturan dasar .videodl-res-item
+   yg sama persis dgn kartu2 lain (flex-basis 1/3 kolom, min-height:92px,
+   padding & font sama). Satu2nya yg masih beda dari kartu lain cuma
+   badge "Kualitas Asli" di pojoknya (lihat .videodl-res-item-badge di
+   atas) sbg penanda visual kecil, tanpa mengubah UKURAN kartunya. */
 /* Badge pil "nyatu" dgn border kartu -- diposisikan pas DI ATAS garis
    border (top negatif separuh tinggi pil) supaya separuh badan pil
    ketutup/ketindih border kartu & separuh lagi nongol ke luar, kayak
@@ -3935,16 +3989,10 @@ html.dark-mode .videodl-platform-chip.videodl-active{background:var(--card);}
    radius sudut lengkung ikut dibesarkan proporsional, jadi sapuan
    kurva-nya kelihatan menyatu turun sampai ke pinggir/garis kartu,
    niru kesan "nempel & tumbuh dari sudut" spt di gambar referensi. */
-.videodl-res-item:has(.videodl-res-item-badge) .videodl-res-item-badge{
-  position:absolute;top:-1.5px;right:-1.5px;
-  padding:6.5px 10px 15px 24px;
-  background:linear-gradient(135deg, var(--primary-deep), var(--primary));
-  color:#fff;white-space:nowrap;
-  font-size:9.5px;font-weight:700;letter-spacing:0.02em;
-  border-radius:8px 16px 8px 42px;
-  border:none;
-  box-shadow:0 3px 8px -2px color-mix(in srgb, var(--primary-deep) 45%, transparent);
-}
+/* Override badge versi "pita besar" DIHAPUS (dulu dipakai khusus utk
+   kartu Kualitas Asli yg besar) -- skrg badge cukup pakai ribbon kecil
+   standar dari .videodl-res-item-badge di atas, krn kartunya sendiri
+   sudah kembali ke ukuran normal spt kartu lain. */
 /* Kartu "siap unduh" (sudah ada link asli, dari platform 1-kualitas ATAU
    YouTube yg resolusinya sudah diklik & berhasil diambil) -- aksen hijau
    var(--primary), SAMA dgn warna tombol "Ambil Video"/.btn-primary, jadi
