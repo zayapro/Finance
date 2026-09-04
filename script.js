@@ -11478,6 +11478,26 @@ const VIDEODL_PLATFORM_LABEL = {
   pinterest: 'Pinterest', rutube: 'RuTube',
 };
 
+// ---- Pesan status loading per platform (permintaan user: sebelumnya
+// SEMUA platform non-YouTube dipukul rata teksnya jadi "Mengambil
+// video..." -- padahal Facebook/Instagram/X/Pinterest bisa juga berupa
+// POSTINGAN GAMBAR/album (bukan cuma video), jenis kontennya baru
+// ketahuan SETELAH respons /v1/fetch balik (lihat data.type di
+// videoDlRenderFetchResult), jadi belum bisa ditebak "gambar" vs "video"
+// SAAT loading. Solusinya dibedakan per-platform: platform yg memang
+// SELALU video (YouTube/TikTok/RuTube) tetap pakai kata "video", platform
+// yg bisa video ATAU gambar/album (Facebook/Instagram/X/Pinterest) pakai
+// kata netral "konten" spy tidak salah sebut. ---- */
+const VIDEODL_LOADING_MSG = {
+  youtube: 'Mengambil daftar resolusi...',
+  tiktok: 'Mengambil video TikTok...',
+  rutube: 'Mengambil video RuTube...',
+  facebook: 'Mengambil konten Facebook...',
+  instagram: 'Mengambil konten Instagram...',
+  twitter: 'Mengambil konten X/Twitter...',
+  pinterest: 'Mengambil konten Pinterest...',
+};
+
 // ---- Hasil platform NON-YouTube (/v1/fetch) -- API-nya cuma balas SATU
 // kualitas per link (lihat catatan di komentar CSS .videodl-res-grid),
 // jadi grid-nya cuma berisi 1 kartu "siap" (+ 1 lagi kartu Audio kalau
@@ -11821,7 +11841,7 @@ document.getElementById('videoDlFetchBtn')?.addEventListener('click', async () =
 
   const fetchBtn = document.getElementById('videoDlFetchBtn');
   fetchBtn.disabled = true;
-  videoDlSetStatus(platform === 'youtube' ? 'Mengambil daftar resolusi...' : 'Mengambil video...', false);
+  videoDlSetStatus(VIDEODL_LOADING_MSG[platform] || 'Mengambil konten...', false);
   // Batas waktu 25 detik -- server FastSaverAPI kadang lambat memproses
   // video panjang, tapi kalau lebih dari itu mending kasih tau user
   // drpd biarkan tombol "loading" tanpa batas.

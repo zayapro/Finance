@@ -3605,6 +3605,63 @@ html.dark-mode .videodl-platform-chip[data-platform="twitter"].videodl-active{co
   background:linear-gradient(135deg,var(--videodl-accent),var(--videodl-accent-deep));
   -webkit-background-clip:text;background-clip:text;color:transparent;
 }
+/* ---- Label kecil "by Zayain" di samping judul "Downloader"
+   (permintaan user: judulnya diringkas dari "Video Downloader" jadi
+   "Downloader", ditambah tag brand "by Zayain" dgn gaya beda/lebih
+   "keren" -- bukan ikut gaya gradien besar judul utama, tapi pil kecil
+   miring biar berkesan tanda-tangan/signature brand). Karena parent
+   .videodl-hero-title pakai background-clip:text + color:transparent
+   utk efek gradien, span ini WAJIB dikasih color & background sendiri
+   scr eksplisit (properti background-clip TIDAK diwariskan otomatis ke
+   child, jadi pil di bawah ini otomatis tampil normal/tidak ikut
+   "transparan" spt teks induknya). Warna pil dipakaikan var(--videodl-
+   accent-deep) di atas background tipis var(--videodl-accent) 14% --
+   ikut berubah otomatis kalau tema warna app diganti, senada dgn judul
+   di atasnya tanpa perlu disetel manual. */
+.videodl-hero-brand{
+  display:inline-block;vertical-align:middle;position:relative;top:-2px;
+  margin-left:7px;padding:3px 9px 2.5px;
+  border-radius:999px;
+  font-family:'Poppins',sans-serif;font-size:10px;font-weight:700;font-style:italic;
+  letter-spacing:0.05em;text-transform:uppercase;line-height:1;
+  color:var(--videodl-accent-deep);
+  background:color-mix(in srgb, var(--videodl-accent) 14%, transparent);
+  /* ---- Animasi (permintaan user lanjutan) -- 2 lapis: (1) pil-nya
+     sendiri "bernapas" pelan (scale naik-turun tipis) via keyframe
+     videodlBrandPulse, (2) kilauan cahaya diagonal yg lewat berkala
+     di ATAS teks lewat pseudo-elemen ::after (videodlBrandShine di
+     bawah) -- overflow:hidden di sini WAJIB spy sapuan cahaya ::after
+     kepotong rapi ikut bentuk bulat pil, tidak meleber keluar kotak.
+     isolation:isolate spy blend/stacking ::after tidak "bocor" ke
+     elemen lain di luar pil. Animasinya sengaja PELAN & AMPLITUDONYA
+     kecil (bukan neon flash) supaya tetap kelihatan elegan/premium,
+     bukan norak/mengganggu -- selaras dgn gaya visual ZAYAIN yg lain. */
+  overflow:hidden;isolation:isolate;
+  animation:videodlBrandPulse 2.6s ease-in-out infinite;
+}
+.videodl-hero-brand::after{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(115deg,
+    transparent 30%,
+    color-mix(in srgb, #fff 75%, var(--videodl-accent)) 48%,
+    transparent 66%);
+  background-size:220% 100%;background-position:-140% 0;
+  animation:videodlBrandShine 3.4s ease-in-out infinite;
+}
+@keyframes videodlBrandPulse{
+  0%,100%{transform:scale(1);}
+  50%{transform:scale(1.055);}
+}
+@keyframes videodlBrandShine{
+  0%,20%{background-position:-140% 0;}
+  60%,100%{background-position:140% 0;}
+}
+/* Hormati preferensi user yg matikan animasi di OS/browser-nya --
+   pil tetap tampil normal (statis), cuma gerakannya yg dihentikan. */
+@media (prefers-reduced-motion:reduce){
+  .videodl-hero-brand{animation:none;}
+  .videodl-hero-brand::after{animation:none;display:none;}
+}
 /* ---- PENYESUAIAN ukuran & ketebalan subjudul (permintaan user) --
    teks subjudul sekarang jauh lebih panjang (menyebut video/musik/
    foto + 7 nama platform), jadi kalau dipertahankan font-weight:500 +
@@ -3692,7 +3749,6 @@ html.dark-mode .videodl-platform-chip[data-platform="twitter"].videodl-active{co
   background:var(--card);
   margin-left:-16px;margin-right:-16px;
   padding:10px 16px calc(10px + env(safe-area-inset-bottom));
-  border-top:1px solid var(--line);
 }
 /* Ikon perisai-centang (shield-check) di depan teks -- dipilih krn
    maknanya pas utk pesan izin/legalitas konten (bukan sekadar info
@@ -3930,7 +3986,7 @@ html.dark-mode .videodl-platform-chip.videodl-active{background:var(--card);}
    utk ambil") supaya ruang yg direservasi tiap kartu SAMA baik teksnya
    akhirnya muat 1 baris (mis. "23.1 MB") maupun 2 baris, jadi kartu2
    yg bersebelahan tetap sama tinggi tanpa peduli isi tekstualnya. */
-.videodl-res-item-sub{font-size:10.5px;font-weight:600;line-height:1.3;color:color-mix(in srgb, var(--ink-faint) 75%, var(--ink));min-height:27px;display:flex;align-items:center;justify-content:center;}
+.videodl-res-item-sub{font-size:10.5px;font-weight:600;line-height:1.3;color:color-mix(in srgb, var(--ink-faint) 75%, var(--ink));min-height:27px;display:flex;align-items:center;justify-content:center;text-align:center;}
 /* Tag jenis file (MP4/MP3/JPG dst) -- pil kecil di antara label
    resolusi & sub-label ukuran file, supaya user langsung tahu format
    unduhannya tanpa perlu menebak dari label "720P"/"Audio" saja.
@@ -16118,7 +16174,7 @@ html.dark-mode .bd-row-close{
           </div>
 
           <div class="videodl-hero-panel">
-            <h3 class="videodl-hero-title">Video Downloader</h3>
+            <h3 class="videodl-hero-title">Downloader<span class="videodl-hero-brand">by Zayain</span></h3>
             <p class="videodl-hero-subtitle">Unduh video, musik &amp; foto dari YouTube, TikTok, Instagram, Facebook, X, Pinterest &amp; RuTube — tinggal tempel link, gratis dan tanpa watermark</p>
 
             <div class="videodl-input-row">
