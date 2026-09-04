@@ -3554,7 +3554,7 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 .videodl-platform-chip.videodl-active{
   background:var(--card);color:var(--videodl-accent-deep);
 }
-.videodl-platform-chip.videodl-active .videodl-platform-label{font-weight:800;}
+.videodl-platform-chip.videodl-active .videodl-platform-label{font-weight:700;}
 /* ---- Warna KHAS tiap platform saat aktif (permintaan user: "sesuaikan
    warna" utk chip YouTube/TikTok/Instagram/Facebook/X-Twitter) --
    sebelumnya SEMUA chip aktif pakai 1 warna generik yg sama
@@ -3575,6 +3575,8 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 .videodl-platform-chip[data-platform="facebook"].videodl-active{color:#1877F2;}
 .videodl-platform-chip[data-platform="twitter"].videodl-active{color:#1B1F23;}
 html.dark-mode .videodl-platform-chip[data-platform="twitter"].videodl-active{color:#E7E9EA;}
+.videodl-platform-chip[data-platform="pinterest"].videodl-active{color:#C8102E;}
+.videodl-platform-chip[data-platform="rutube"].videodl-active{color:#0077B6;}
 .videodl-hero-panel{padding:22px 18px 24px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;}
 .videodl-hero-title{
   margin:0;font-family:'Poppins',sans-serif;font-weight:800;letter-spacing:-0.01em;
@@ -15985,11 +15987,19 @@ html.dark-mode .bd-row-close{
               <svg class="videodl-platform-ic" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M4 4l7.2 8.6L4.3 20h1.9l6-6.7 4.6 6.7H20l-7.5-9.1L19 4h-1.9l-5.6 6.3L7.9 4H4z" fill="currentColor"/></svg>
               <span class="videodl-platform-label">X/Twitter</span>
             </span>
+            <span class="videodl-platform-chip" data-platform="pinterest">
+              <svg class="videodl-platform-ic" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="12" cy="12" r="9.2" stroke="currentColor" stroke-width="1.8"/><path d="M10.3 17.5c.4-1.7 1-4.3 1-4.3M11 8.3c2.4-.5 4.3.6 4.3 2.8 0 2.3-1.4 3.7-3.3 3.7-.6 0-1.1-.2-1.4-.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg>
+              <span class="videodl-platform-label">Pinterest</span>
+            </span>
+            <span class="videodl-platform-chip" data-platform="rutube">
+              <svg class="videodl-platform-ic" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="8.2" y="8.2" width="10.4" height="10.4" rx="2.2" transform="rotate(45 13.4 13.4)" stroke="currentColor" stroke-width="1.8"/></svg>
+              <span class="videodl-platform-label">RuTube</span>
+            </span>
           </div>
 
           <div class="videodl-hero-panel">
             <h3 class="videodl-hero-title">Video Downloader</h3>
-            <p class="videodl-hero-subtitle">Tempel link, ambil videonya tanpa watermark — gratis</p>
+            <p class="videodl-hero-subtitle">Pilih platform di atas, tempel link videonya — gratis &amp; tanpa watermark</p>
 
             <div class="videodl-input-row">
               <div class="videodl-input-wrap">

@@ -11536,7 +11536,21 @@ function videoDlRenderYoutubeInfo(info, sourceUrl) {
     const m = String(f.format || '').match(/\d+/);
     if (m) highestRes = Math.max(highestRes, parseInt(m[0], 10));
   }
-  let resItemsHtml = formats.map((f) => {
+  // FILTER dulu: cuma entri yg format-nya BENAR resolusi video (ada
+  // angkanya, mis. "720p"/"1080p") yg boleh lanjut dirender & ditag
+  // 'MP4' -- sebelumnya SEMUA isi `formats` langsung di-map apa adanya
+  // & selalu ditag 'MP4', padahal ternyata provider (FastSaverAPI/
+  // RapidAPI) KADANG menyelipkan 1 entri non-resolusi bernama "audio"
+  // di dalam `formats` (di luar dugaan komentar lama di atas yg
+  // mengira 'audio' TIDAK PERNAH muncul di sana) -- entri itu ikut
+  // ke-render sbg kartu "AUDIO" tapi salah ditag MP4 (harusnya bukan
+  // MP4 sama sekali), DAN jadi duplikat dgn kartu "Audio (MP3/Suara
+  // asli)" yg memang sengaja ditambahkan manual di baris setelah ini.
+  // Di-skip di sini (bukan di-render lalu disembunyikan) supaya kartu
+  // Audio yg tampil ke user cuma SATU, yaitu yg manual & sudah benar
+  // filetype-nya (MP3).
+  const videoFormats = formats.filter((f) => /\d/.test(String(f.format || '')));
+  let resItemsHtml = videoFormats.map((f) => {
     const m = String(f.format || '').match(/\d+/);
     const res = m ? parseInt(m[0], 10) : null;
     return videoDlResItemHtml({
