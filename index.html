@@ -8681,7 +8681,7 @@ tbody tr:last-child td{border-bottom:none;}
 
 /* ---- 2) Saklar jenis datar -- warna teks aktif ikut jenis, latar
    putih + bayangan tipis sama seperti .sel-in/.sel-out di tx-modal ---- */
-.bill-modal .bill-kind-switch{margin-bottom:16px;}
+.bill-modal .bill-kind-switch{margin-bottom:12px;}
 .bill-modal .type-toggle button.sel-bill.active{
   background:#fff;color:var(--banner-orange-deep);box-shadow:0 2px 8px -2px rgba(15,23,42,0.16);
 }
@@ -8695,7 +8695,7 @@ tbody tr:last-child td{border-bottom:none;}
    sekarang diberi ruang ekstra di bawah utk garis putus² + 2 lubang
    gigitan + catatan kecil format ribuan. */
 .bill-amount-hero{
-  position:relative;text-align:center;margin:0 0 16px;padding:14px 16px 14px;
+  position:relative;text-align:center;margin:0 0 12px;padding:12px 16px 12px;
   border-radius:16px;overflow:visible;
   background:linear-gradient(180deg, color-mix(in srgb, var(--banner-orange-deep) 7%, #fff) 0%, color-mix(in srgb, var(--banner-orange-deep) 3%, var(--paper)) 100%);
   border:1.5px solid color-mix(in srgb, var(--banner-orange-deep) 20%, var(--line));
@@ -8871,7 +8871,7 @@ tbody tr:last-child td{border-bottom:none;}
    dipertahankan, cuma disamakan tone-nya dgn kepala popup yg baru) ---- */
 .bill-recurring-row{
   display:flex;align-items:center;gap:10px;cursor:pointer;
-  padding:10px 12px;margin-bottom:12px;border-radius:12px;
+  padding:9px 12px;margin-bottom:8px;border-radius:12px;
   background:var(--paper);border:1.5px solid var(--line);
   transition:border-color .15s ease, background .15s ease;
 }
@@ -8912,7 +8912,7 @@ tbody tr:last-child td{border-bottom:none;}
    "Tambah Tagihan" konsisten sama persis di layar desktop/tablet,
    bukan lagi beda padding (22px vs 16px) cuma krn beda popup. ---- */
 .modal.tx-modal,
-.modal.bill-modal{padding:16px 16px 16px;border-radius:18px;}
+.modal.bill-modal{padding:16px 16px 16px;border-radius:18px;max-height:94vh;}
 .tx-modal .form-row,
 .bill-modal .form-row{margin-bottom:10px;}
 .tx-modal .modal-actions,
@@ -8973,52 +8973,52 @@ tbody tr:last-child td{border-bottom:none;}
      alasan apa pun JS gagal menghitung/tidak ada banner yg terlihat. */
   #billModalOverlay{
     align-items:flex-end;
-    padding:var(--modal-safe-top, calc(8px + env(safe-area-inset-top,0px))) 10px calc(72px + 10px + env(safe-area-inset-bottom,0px));
+    padding:var(--modal-safe-top, calc(8px + env(safe-area-inset-top,0px))) 10px calc(72px + 6px + env(safe-area-inset-bottom,0px));
   }
   #billModalOverlay .bill-modal{
     width:100%;
-    max-height:calc(100vh - 72px - 10px - env(safe-area-inset-bottom,0px) - var(--modal-safe-top, calc(8px + env(safe-area-inset-top,0px))));
-    max-height:calc(100dvh - 72px - 10px - env(safe-area-inset-bottom,0px) - var(--modal-safe-top, calc(8px + env(safe-area-inset-top,0px))));
+    max-height:calc(100vh - 72px - 6px - env(safe-area-inset-bottom,0px) - var(--modal-safe-top, calc(8px + env(safe-area-inset-top,0px))));
+    max-height:calc(100dvh - 72px - 6px - env(safe-area-inset-bottom,0px) - var(--modal-safe-top, calc(8px + env(safe-area-inset-top,0px))));
     /* Konten diatur jadi kolom flex supaya form bisa menyusut (min-height:0)
        persis tinggi wadahnya kalau perlu, bukan cuma mengandalkan margin
        kecil satu-satu -- lihat #billForm di bawah. */
     display:flex;flex-direction:column;
   }
-  .modal.bill-modal{padding:10px 12px 10px;border-radius:16px;}
+  .modal.bill-modal{padding:12px 14px 12px;border-radius:16px;}
   .bill-modal #billForm{display:flex;flex-direction:column;min-height:0;}
-  .bill-modal .modal-head{margin-bottom:8px;}
+  .bill-modal .modal-head{margin-bottom:10px;}
   .bill-modal .modal-head-icon{width:30px;height:30px;border-radius:9px;}
   .bill-modal .modal-head-icon svg{width:15px;height:15px;}
   .bill-modal .modal-head-titles h3{font-size:14.5px;}
   .bill-modal .modal-head-sub{font-size:9.5px;}
   .bill-modal .modal-close{width:26px;height:26px;}
-  .bill-modal .bill-kind-switch{margin-bottom:6px;padding:3px;}
-  .bill-modal .bill-kind-switch button{padding:5px 4px;font-size:11px;gap:4px;}
+  .bill-modal .bill-kind-switch{margin-bottom:8px;padding:3px;}
+  .bill-modal .bill-kind-switch button{padding:6px 4px;font-size:11px;gap:4px;}
   .bill-modal .bill-kind-switch button svg{width:11px;height:11px;}
-  .bill-amount-hero{padding:6px 10px 6px;margin-bottom:6px;border-radius:12px;}
+  .bill-amount-hero{padding:8px 10px 8px;margin-bottom:8px;border-radius:12px;}
   .bill-amount-hero-label{font-size:8.5px;margin-bottom:2px;gap:3px;}
   .bill-amount-hero-label svg{width:9px;height:9px;}
   .bill-amount-hero .amount-prefix{font-size:12px;}
   .bill-amount-hero #billAmount{font-size:18px;max-width:140px;}
-  .bill-amount-perf{margin:5px auto 3px;}
+  .bill-amount-perf{margin:6px auto 4px;}
   /* Catatan "otomatis dipisah titik ribuan" -- murni dekoratif, tanpa
      memengaruhi fungsi input, jadi aman disembunyikan demi hemat tinggi. */
   .bill-amount-hint{display:none;}
   .bill-amount-hero::before,.bill-amount-hero::after{width:11px;height:11px;top:calc(100% - 17px);}
-  .bill-modal .form-row{margin-bottom:6px;}
+  .bill-modal .form-row{margin-bottom:8px;}
   .bill-modal .form-row label{margin-bottom:3px;font-size:11.5px;}
   .bill-modal .form-row input,
-  .bill-modal .form-row textarea{padding:6px 10px;font-size:12.5px;}
+  .bill-modal .form-row textarea{padding:7px 10px;font-size:12.5px;}
   /* Catatan (opsional) -- kotak teks dipendekkan jadi 1 baris (rows="2"
      di HTML tetap dibiarkan apa adanya, cukup ditimpa lewat min-height/
      height CSS) krn field ini paling boleh mengalah tingginya drpd
      field wajib lain. */
-  .bill-modal #billNote{min-height:30px;height:30px;resize:none;}
-  .bill-due-chips{margin-top:4px;gap:4px;}
-  .bill-due-chip{padding:3px 8px;font-size:10px;}
+  .bill-modal #billNote{min-height:34px;height:34px;resize:none;}
+  .bill-due-chips{margin-top:5px;gap:4px;}
+  .bill-due-chip{padding:4px 9px;font-size:10px;}
   .bill-due-chip-check{width:0;}
   .bill-due-chip.active .bill-due-chip-check{width:8px;}
-  .bill-recurring-row{padding:6px 9px;gap:8px;margin-bottom:6px;border-radius:10px;}
+  .bill-recurring-row{padding:7px 10px;gap:8px;margin-bottom:8px;border-radius:10px;}
   .bill-recurring-row-icon{width:21px;height:21px;border-radius:7px;}
   .bill-recurring-row-icon svg{width:10px;height:10px;}
   .bill-recurring-row-text{font-size:10.5px;line-height:1.2;}
@@ -9026,8 +9026,8 @@ tbody tr:last-child td{border-bottom:none;}
   .bill-recurring-toggle-track{width:29px;height:16px;padding:2px;}
   .bill-recurring-toggle-thumb{width:12px;height:12px;}
   .bill-recurring-row input:checked ~ .bill-recurring-toggle-track .bill-recurring-toggle-thumb{transform:translateX(13px);}
-  .bill-modal .modal-actions{margin-top:6px;flex-shrink:0;}
-  .bill-modal .modal-actions .btn{padding:8px;font-size:12.5px;}
+  .bill-modal .modal-actions{margin-top:8px;flex-shrink:0;}
+  .bill-modal .modal-actions .btn{padding:9px;font-size:12.5px;}
 }
 /* ---- Layar SANGAT pendek (mis. HP landscape) -- kalau setelah semua
    pemadatan di atas masih berpotensi mepet, baris "Ulangi otomatis"
@@ -9057,45 +9057,45 @@ tbody tr:last-child td{border-bottom:none;}
      script.js. ---- */
   #txModalOverlay{
     align-items:flex-end;
-    padding:var(--modal-safe-top, calc(8px + env(safe-area-inset-top,0px))) 10px calc(72px + 10px + env(safe-area-inset-bottom,0px));
+    padding:var(--modal-safe-top, calc(8px + env(safe-area-inset-top,0px))) 10px calc(72px + 6px + env(safe-area-inset-bottom,0px));
   }
   #txModalOverlay .tx-modal{
     width:100%;
-    max-height:calc(100vh - 72px - 10px - env(safe-area-inset-bottom,0px) - var(--modal-safe-top, calc(8px + env(safe-area-inset-top,0px))));
-    max-height:calc(100dvh - 72px - 10px - env(safe-area-inset-bottom,0px) - var(--modal-safe-top, calc(8px + env(safe-area-inset-top,0px))));
+    max-height:calc(100vh - 72px - 6px - env(safe-area-inset-bottom,0px) - var(--modal-safe-top, calc(8px + env(safe-area-inset-top,0px))));
+    max-height:calc(100dvh - 72px - 6px - env(safe-area-inset-bottom,0px) - var(--modal-safe-top, calc(8px + env(safe-area-inset-top,0px))));
     display:flex;flex-direction:column;
   }
-  .modal.tx-modal{padding:10px 12px 10px;border-radius:16px;}
+  .modal.tx-modal{padding:12px 14px 12px;border-radius:16px;}
   .tx-modal #txForm{display:flex;flex-direction:column;min-height:0;}
-  .tx-modal .modal-head{margin-bottom:8px;}
+  .tx-modal .modal-head{margin-bottom:10px;}
   .tx-modal .modal-head-icon{width:30px;height:30px;border-radius:9px;}
   .tx-modal .modal-head-icon svg{width:15px;height:15px;}
   .tx-modal .modal-head-titles h3{font-size:14.5px;}
   .tx-modal .modal-head-sub{font-size:9.5px;}
   .tx-modal .modal-close{width:26px;height:26px;}
-  .tx-modal .type-toggle{margin-bottom:6px;}
-  .tx-modal .type-toggle button{padding:5px 4px;font-size:11px;gap:4px;}
+  .tx-modal .type-toggle{margin-bottom:8px;}
+  .tx-modal .type-toggle button{padding:6px 4px;font-size:11px;gap:4px;}
   .tx-modal .type-toggle button svg{width:11px;height:11px;}
-  .tx-amount-hero{padding:6px 10px 6px;margin-bottom:6px;border-radius:12px;}
+  .tx-amount-hero{padding:8px 10px 8px;margin-bottom:8px;border-radius:12px;}
   .tx-amount-hero-label{font-size:8.5px;margin-bottom:2px;gap:3px;}
   .tx-amount-hero-label svg{width:9px;height:9px;}
   .tx-amount-hero .amount-prefix{font-size:12px;}
   .tx-amount-hero #txAmount{font-size:18px;max-width:140px;}
-  .tx-amount-perf{margin:5px auto 3px;}
+  .tx-amount-perf{margin:6px auto 4px;}
   /* Catatan "otomatis dipisah titik ribuan" -- sama spt di .bill-modal,
      murni dekoratif jadi aman disembunyikan demi hemat tinggi. */
   .tx-amount-hint{display:none;}
   .tx-amount-hero::before,.tx-amount-hero::after{width:11px;height:11px;top:calc(100% - 17px);}
-  .tx-modal .form-row{margin-bottom:6px;}
+  .tx-modal .form-row{margin-bottom:8px;}
   .tx-modal .form-row label{margin-bottom:3px;font-size:11.5px;}
   .tx-modal .form-row input,
   .tx-modal .form-row select,
-  .tx-modal .form-row textarea{padding:6px 10px;font-size:12.5px;}
+  .tx-modal .form-row textarea{padding:7px 10px;font-size:12.5px;}
   /* Keterangan (opsional) -- kotak teks dipendekkan jadi 1 baris, pola
      sama dgn #billNote di .bill-modal. */
-  .tx-modal #txDesc{min-height:30px;height:30px;resize:none;}
-  .tx-modal .modal-actions{margin-top:6px;flex-shrink:0;}
-  .tx-modal .modal-actions .btn{padding:8px;font-size:12.5px;}
+  .tx-modal #txDesc{min-height:34px;height:34px;resize:none;}
+  .tx-modal .modal-actions{margin-top:8px;flex-shrink:0;}
+  .tx-modal .modal-actions .btn{padding:9px;font-size:12.5px;}
 }
 /* ---- Layar SANGAT pendek (mis. HP landscape) -- pola sama dgn
    .bill-modal di atas: kartu nominal ikut disusutkan lagi drpd
