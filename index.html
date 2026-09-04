@@ -3605,9 +3605,9 @@ html.dark-mode .videodl-platform-chip[data-platform="twitter"].videodl-active{co
   background:linear-gradient(135deg,var(--videodl-accent),var(--videodl-accent-deep));
   -webkit-background-clip:text;background-clip:text;color:transparent;
 }
-/* ---- Label kecil "by Zayain" di samping judul "Downloader"
+/* ---- Label kecil "by Zayadev" di samping judul "Downloader"
    (permintaan user: judulnya diringkas dari "Video Downloader" jadi
-   "Downloader", ditambah tag brand "by Zayain" dgn gaya beda/lebih
+   "Downloader", ditambah tag brand "by Zayadev" dgn gaya beda/lebih
    "keren" -- bukan ikut gaya gradien besar judul utama, tapi pil kecil
    miring biar berkesan tanda-tangan/signature brand). Karena parent
    .videodl-hero-title pakai background-clip:text + color:transparent
@@ -3635,9 +3635,21 @@ html.dark-mode .videodl-platform-chip[data-platform="twitter"].videodl-active{co
      isolation:isolate spy blend/stacking ::after tidak "bocor" ke
      elemen lain di luar pil. Animasinya sengaja PELAN & AMPLITUDONYA
      kecil (bukan neon flash) supaya tetap kelihatan elegan/premium,
-     bukan norak/mengganggu -- selaras dgn gaya visual ZAYAIN yg lain. */
+     bukan norak/mengganggu -- selaras dgn gaya visual ZAYAIN yg lain.
+     ---- PERBAIKAN smoothness (permintaan user lanjutan): dulu kilauan
+     digerakkan lewat background-position, yg di banyak HP/browser TIDAK
+     di-akselerasi GPU shg sering kelihatan "patah-patah" (jank) krn
+     browser harus repaint tiap frame. Sekarang dipindah ke transform:
+     translateX (via ::after yg lebar penuh + will-change:transform),
+     yg selalu jalan di compositor/GPU shg mulus di HP low-end sekalipun.
+     Durasi juga diperlambat (2.6s->3.6s utk napas, 3.4s->4.8s utk
+     kilauan) & easing dihaluskan pakai cubic-bezier custom (bukan
+     ease-in-out bawaan) spy transisi masuk/keluar terasa lebih landai,
+     tidak "nyentak" -- sekaligus menjawab permintaan "jangan terlalu
+     cepat". Amplitudo napas juga dikecilkan tipis (1.055->1.045). */
   overflow:hidden;isolation:isolate;
-  animation:videodlBrandPulse 2.6s ease-in-out infinite;
+  will-change:transform;
+  animation:videodlBrandPulse 3.6s cubic-bezier(0.45,0,0.55,1) infinite;
 }
 .videodl-hero-brand::after{
   content:'';position:absolute;inset:0;pointer-events:none;
@@ -3645,16 +3657,17 @@ html.dark-mode .videodl-platform-chip[data-platform="twitter"].videodl-active{co
     transparent 30%,
     color-mix(in srgb, #fff 75%, var(--videodl-accent)) 48%,
     transparent 66%);
-  background-size:220% 100%;background-position:-140% 0;
-  animation:videodlBrandShine 3.4s ease-in-out infinite;
+  will-change:transform;
+  transform:translateX(-100%);
+  animation:videodlBrandShine 4.8s cubic-bezier(0.4,0,0.2,1) infinite;
 }
 @keyframes videodlBrandPulse{
   0%,100%{transform:scale(1);}
-  50%{transform:scale(1.055);}
+  50%{transform:scale(1.045);}
 }
 @keyframes videodlBrandShine{
-  0%,20%{background-position:-140% 0;}
-  60%,100%{background-position:140% 0;}
+  0%,18%{transform:translateX(-100%);}
+  62%,100%{transform:translateX(100%);}
 }
 /* Hormati preferensi user yg matikan animasi di OS/browser-nya --
    pil tetap tampil normal (statis), cuma gerakannya yg dihentikan. */
@@ -11333,8 +11346,37 @@ html.zp-app-loading .page-body > .lap-panel{display:none;}
 .uv-changelog-item .bantuan-faq-q-title{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
 .uv-changelog-date{font-size:11px;font-weight:500;color:var(--ink-faint);display:block;margin-top:2px;}
 #updateVersionChangelogList .bantuan-faq-item.open .bantuan-faq-a{max-height:640px;}
-.uv-changelog-list-inner{margin:0;padding-left:17px;display:flex;flex-direction:column;gap:6px;}
-.uv-changelog-list-inner li{font-size:12.5px;line-height:1.55;color:var(--ink-soft);}
+/* ---- Redesign daftar poin changelog (dalam tiap jawaban accordion
+   versi): dari bullet titik polos jadi "langkah bernomor" ala kartu
+   panduan -- lingkaran angka urut (dibuat otomatis via CSS counter,
+   TANPA perlu diberi angka manual di JS) terhubung garis putus-putus
+   vertikal antar poin (meniru referensi tampilan panduan bernomor),
+   tiap poin bisa punya judul singkat tebal (opsional, dipisah oleh
+   pemisah " -- " di teks catatannya sendiri -- lihat cara split-nya
+   di renderUpdateVersionChangelog() di script.js) diikuti deskripsi
+   dengan warna lebih redup di bawahnya. Poin TANPA pemisah " -- "
+   cukup tampil sebagai deskripsi polos, tanpa judul. */
+.uv-changelog-list-inner{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;counter-reset:uvchangelogstep;}
+.uv-changelog-list-inner li{
+  position:relative;padding:0 0 15px 32px;font-size:12.5px;line-height:1.55;color:var(--ink-soft);
+}
+.uv-changelog-list-inner li:last-child{padding-bottom:0;}
+.uv-changelog-list-inner li::before{
+  counter-increment:uvchangelogstep;content:counter(uvchangelogstep);
+  position:absolute;left:0;top:0;box-sizing:border-box;
+  width:21px;height:21px;border-radius:50%;flex-shrink:0;
+  display:grid;place-items:center;z-index:1;
+  font-family:'Poppins',sans-serif;font-size:10.5px;font-weight:700;line-height:1;
+  font-variant-numeric:tabular-nums;text-align:center;text-indent:0;padding:0;
+  color:var(--primary-deep);background:var(--card);border:1.5px solid var(--primary);
+}
+.uv-changelog-list-inner li::after{
+  content:'';position:absolute;left:10px;top:21px;bottom:0;width:0;
+  border-left:1.5px dotted color-mix(in srgb, var(--primary) 40%, transparent);
+}
+.uv-changelog-list-inner li:last-child::after{content:none;}
+.uv-changelog-step-title{display:block;font-family:'Poppins',sans-serif;font-weight:700;font-size:12.5px;color:var(--ink);margin-bottom:2px;}
+.uv-changelog-step-desc{display:block;}
 /* ================================================================ */
 /* ---- Kotak "Pilih Bulan" / "Pilih Tanggal": muncul menempel tepat di
    bawah baris radio terkait begitu radio itu dipilih (bukan dipisah ke
@@ -16174,7 +16216,7 @@ html.dark-mode .bd-row-close{
           </div>
 
           <div class="videodl-hero-panel">
-            <h3 class="videodl-hero-title">Downloader<span class="videodl-hero-brand">by Zayain</span></h3>
+            <h3 class="videodl-hero-title">Downloader<span class="videodl-hero-brand">by Zayadev</span></h3>
             <p class="videodl-hero-subtitle">Unduh video, musik &amp; foto dari YouTube, TikTok, Instagram, Facebook, X, Pinterest &amp; RuTube — tinggal tempel link, gratis dan tanpa watermark</p>
 
             <div class="videodl-input-row">

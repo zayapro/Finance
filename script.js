@@ -10638,7 +10638,22 @@ function renderUpdateVersionChangelog() {
       </button>
       <div class="bantuan-faq-a">
         <ul class="uv-changelog-list-inner">
-          ${entry.notes.map((n) => `<li>${escapeHtml(n)}</li>`).join('')}
+          ${entry.notes.map((n) => {
+            // Poin changelog boleh opsional diberi "judul singkat" tebal
+            // dengan menulisnya diikuti pemisah " -- " lalu deskripsi
+            // (persis gaya penulisan yang sudah dipakai di beberapa
+            // catatan v1.1.0 di atas) -- kalau pemisah ini tidak ada,
+            // poin cukup tampil sebagai deskripsi polos tanpa judul.
+            // Angka lingkarannya sendiri OTOMATIS dari CSS counter
+            // (lihat .uv-changelog-list-inner li::before), bukan dari sini.
+            const sepIdx = n.indexOf(' -- ');
+            if (sepIdx === -1) {
+              return `<li><span class="uv-changelog-step-desc">${escapeHtml(n)}</span></li>`;
+            }
+            const title = n.slice(0, sepIdx);
+            const desc = n.slice(sepIdx + 4);
+            return `<li><span class="uv-changelog-step-title">${escapeHtml(title)}</span><span class="uv-changelog-step-desc">${escapeHtml(desc)}</span></li>`;
+          }).join('')}
         </ul>
       </div>
     </div>
