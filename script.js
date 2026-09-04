@@ -10511,6 +10511,14 @@ const APP_BUILD_ID = document.querySelector('meta[name="app-build"]')?.content |
 // tidak perlu ubah apa pun di markup HTML/CSS.
 const UPDATE_CHANGELOG_DATA = [
   {
+    version: '1.1.0',
+    date: '4 September 2026',
+    notes: [
+      'Fitur unduh foto/video produk Shopee di Unduh Video DIHAPUS -- Shopee kini memblokir hampir semua permintaan otomatis (termasuk dari layanan lain sejenis) lewat sistem anti-bot mereka, jadi fiturnya sudah tidak bisa diandalkan.',
+      'Perbaikan deteksi link pendek shp.ee dengan subdomain negara (mis. id.shp.ee) sebelum fitur Shopee dihapus sepenuhnya.',
+    ]
+  },
+  {
     version: '1.0.0',
     date: '30 Agustus 2026',
     notes: [
@@ -16553,6 +16561,37 @@ function deleteCustomNotification(id) {
 // oleh fitur pengiriman notifikasi terpisah yang akan dibangun nanti).
 window.pushCustomNotification = pushCustomNotification;
 
+// ---- Notifikasi OTOMATIS tiap rilis versi baru -- begitu entri PALING
+// ATAS UPDATE_CHANGELOG_DATA (lihat definisi di atas, dekat
+// APP_VERSION_NUMBER) py nomor versi yg BELUM pernah dikirim
+// notifikasinya, kirim 1 notifikasi kustom berisi ringkasan
+// perubahannya lewat pushCustomNotification() yg sudah ada.
+// Flag "versi terakhir yg sudah dinotifikasi" disimpan lewat
+// cloudStorage (BUKAN localStorage polos) supaya ikut tersinkron ke
+// akun yg sama -- begitu SATU perangkat pertama kali memuat versi baru
+// & notifikasinya terkirim (otomatis masuk ke feed notifikasi
+// bersama, tersinkron ke semua device/user yg berbagi akun yg sama),
+// device/user LAIN yg buka app ini setelahnya tidak mengirim notifikasi
+// duplikat lagi krn flag-nya sudah kebaca ke-update.
+const NOTIF_VERSION_SEEN_KEY = 'alirin_notif_version_seen_v1';
+function maybeNotifyAppUpdate() {
+  const latest = UPDATE_CHANGELOG_DATA[0];
+  if (!latest || !latest.version) return;
+  let lastSeen = '';
+  try { lastSeen = cloudStorage.getItem(NOTIF_VERSION_SEEN_KEY) || ''; } catch (e) { /* abaikan */ }
+  if (lastSeen === latest.version) return; // sudah pernah dinotif utk versi ini
+
+  const bodyPreview = latest.notes && latest.notes.length
+    ? latest.notes[0] + (latest.notes.length > 1 ? ` (+${latest.notes.length - 1} perubahan lainnya)` : '')
+    : 'Ada pembaruan baru. Cek halaman Riwayat Pembaruan di Pengaturan > Informasi.';
+  pushCustomNotification({
+    source: 'ZAYAIN',
+    title: `Pembaruan v${latest.version} tersedia`,
+    body: bodyPreview,
+  });
+  try { cloudStorage.setItem(NOTIF_VERSION_SEEN_KEY, latest.version); } catch (e) { /* abaikan */ }
+}
+
 // ---- Cek apakah SATU notifikasi kustom boleh tampil di perangkat
 // yang sedang dipakai -- notifikasi bertarget 'all' selalu tampil ke
 // semua (spt sebelumnya). Notifikasi bertarget member_id tertentu
@@ -18833,6 +18872,7 @@ function init() {
   renderDevices();
   renderSocial();
   maybeShowDueReminder();
+  maybeNotifyAppUpdate();
   deviceMgmtStartHeartbeat();
   initFooter();
   initAiChat();
