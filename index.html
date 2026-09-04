@@ -12631,17 +12631,9 @@ body.is-scrolling *{
 .ai-chat-foot-hint{font-size:10px;color:var(--ink-faint);text-align:center;margin:7px 0 0;}
 
 /* ---- Tool AI (fitur baru, terpisah dari Tanya AI di atas): toggle
-   mode "Chat/Analisis" vs "Buat Gambar", lampiran gambar/video, &
-   render hasil gambar AI -- pakai ulang class .ai-chat-* yg sudah ada
-   utk kerangka panel/tab/bubble supaya tampilannya konsisten. ---- */
-.atk-attach-preview{display:flex;align-items:center;gap:8px;padding:7px 9px;margin-bottom:8px;border-radius:12px;background:var(--paper);border:1px solid var(--line);}
-.atk-attach-preview img{width:38px;height:38px;border-radius:8px;object-fit:cover;flex-shrink:0;}
-.atk-attach-file-chip{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:var(--ink-soft);flex:1;min-width:0;}
-.atk-attach-file-chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.atk-attach-preview img ~ #atkAttachFileName,.atk-attach-preview{flex-wrap:nowrap;}
-#atkAttachRemoveBtn{margin-left:auto;flex-shrink:0;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--ink-faint);background:rgba(15,23,42,0.06);border:none;}
-.atk-attach-btn{width:36px;height:36px;border-radius:11px;border:1px solid var(--line);background:var(--paper);color:var(--ink-soft);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-.atk-attach-btn:disabled{opacity:.45;pointer-events:none;}
+   mode "Chat" vs "Buat Gambar", & render hasil gambar AI -- pakai
+   ulang class .ai-chat-* yg sudah ada utk kerangka panel/tab/bubble
+   supaya tampilannya konsisten. ---- */
 .atk-result-img{max-width:100%;border-radius:14px;display:block;margin-bottom:8px;}
 .atk-img-download{display:inline-block;font-size:12px;font-weight:700;color:var(--forest-glow);text-decoration:underline;}
 .atk-user-attach-img{max-width:160px;max-height:160px;border-radius:12px;display:block;margin-bottom:6px;object-fit:cover;}
@@ -19464,7 +19456,7 @@ html.dark-mode .bd-row-close{
       </span>
       <div>
         <h3>Tanya AI</h3>
-        <p class="ai-chat-head-sub" id="aiChatHeadSub">Ditenagai ZayaDev</p>
+        <p class="ai-chat-head-sub" id="aiChatHeadSub">Ditenagai Groq</p>
       </div>
     </div>
     <div class="ai-chat-head-actions">
@@ -19490,7 +19482,7 @@ html.dark-mode .bd-row-close{
 
   <div class="ai-key-banner" id="aiKeyBanner" style="display:none;">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
-    <span>API Key ZayaDev belum diatur.</span>
+    <span>API Key Groq belum diatur.</span>
     <button type="button" id="aiKeyBannerBtn">Atur Sekarang</button>
   </div>
 
@@ -19507,7 +19499,7 @@ html.dark-mode .bd-row-close{
   </div>
 </div>
 
-<!-- ===== MODAL PENGATURAN API AI (Gemini / Claude) ===== -->
+<!-- ===== MODAL PENGATURAN API AI (Groq) ===== -->
 <div class="modal-overlay" id="aiSettingsModalOverlay">
   <div class="modal ai-settings-modal">
     <div class="modal-head">
@@ -19518,34 +19510,19 @@ html.dark-mode .bd-row-close{
     </div>
     <form id="aiSettingsForm">
       <div class="form-row">
-        <label>Penyedia AI</label>
-        <div class="ai-provider-toggle" style="display:flex;gap:8px;">
-          <label style="display:flex;align-items:center;gap:6px;font-weight:400;opacity:.45;">
-            <input type="radio" name="aiProvider" id="aiProviderGemini" value="gemini" disabled> Google Gemini
-          </label>
-          <label style="display:flex;align-items:center;gap:6px;font-weight:400;opacity:.45;">
-            <input type="radio" name="aiProvider" id="aiProviderClaude" value="claude" disabled> Anthropic Claude
-          </label>
-          <label style="display:flex;align-items:center;gap:6px;font-weight:400;">
-            <input type="radio" name="aiProvider" id="aiProviderGroq" value="groq" checked> Groq (gratis)
-          </label>
-        </div>
-        <p class="ai-settings-hint">Sementara hanya Groq yang aktif sebagai default (Gemini & Claude dimatikan dulu). Masing-masing punya API key & nama model sendiri (tidak saling terhubung).</p>
-      </div>
-      <div class="form-row">
-        <label for="aiApiKeyInput" id="aiApiKeyLabel">API Key ZayaDev</label>
+        <label for="aiApiKeyInput" id="aiApiKeyLabel">API Key Groq</label>
         <div class="pw-field-wrap">
-          <input type="password" id="aiApiKeyInput" placeholder="Tempel API key di sini" autocomplete="off">
+          <input type="password" id="aiApiKeyInput" placeholder="gsk_..." autocomplete="off">
           <button type="button" class="pw-eye-toggle" id="aiApiKeyToggle" tabindex="-1" aria-label="Tampilkan API key" aria-pressed="false">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>
           </button>
         </div>
-        <p class="ai-settings-hint" id="aiApiKeyHint">Dapatkan API key gratis di <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a>. Key disimpan hanya di browser ini (localStorage), tidak dikirim ke server manapun selain Google.</p>
+        <p class="ai-settings-hint" id="aiApiKeyHint">Dapatkan API key gratis di <a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com</a> (tanpa kartu kredit). Key disimpan hanya di browser ini (localStorage), tidak dikirim ke server manapun selain Groq.</p>
       </div>
       <div class="form-row">
-        <label for="aiModelInput" id="aiModelLabel">Model ZayaDev</label>
-        <input type="text" id="aiModelInput" placeholder="gemini-3.7-flash">
-        <p class="ai-settings-hint" id="aiModelHint">Kosongkan untuk pakai default (<span class="mono">gemini-3.7-flash</span>). Model lain yang bisa dicoba: <span class="mono">gemini-3.6-flash</span>, <span class="mono">gemini-3.5-flash-lite</span>. Ganti di sini jika API key-mu hanya mendukung model tertentu.</p>
+        <label for="aiModelInput" id="aiModelLabel">Model Groq</label>
+        <input type="text" id="aiModelInput" placeholder="llama-3.3-70b-versatile">
+        <p class="ai-settings-hint" id="aiModelHint">Kosongkan untuk pakai default (<span class="mono">llama-3.3-70b-versatile</span>). Model lain yang bisa dicoba: <span class="mono">llama-3.1-8b-instant</span> (lebih cepat), <span class="mono">openai/gpt-oss-120b</span>. Lihat daftar lengkap di console.groq.com.</p>
       </div>
       <div class="form-row">
         <label for="aiImageModelInput">Model Gambar (Pollinations, untuk fitur "Buat Gambar" di Tool AI)</label>
@@ -19560,7 +19537,7 @@ html.dark-mode .bd-row-close{
       <div class="form-row">
         <label for="aiWorkerUrlInput">URL Cloudflare Worker (opsional)</label>
         <input type="text" id="aiWorkerUrlInput" placeholder="https://nama-worker-anda.workers.dev">
-        <p class="ai-settings-hint">Kosongkan untuk kirim permintaan LANGSUNG dari browser ke Gemini/Claude (API key di atas akan terlihat di DevTools/Network tab). Isi dgn URL Worker (lihat <span class="mono">cloudflare-worker.js</span>, langkah 8) supaya API key disimpan aman di server & tidak pernah terlihat browser -- kalau mode ini aktif, field API Key di atas boleh dikosongkan.</p>
+        <p class="ai-settings-hint">Kosongkan untuk kirim permintaan LANGSUNG dari browser ke Groq (API key di atas akan terlihat di DevTools/Network tab). Isi dgn URL Worker (lihat <span class="mono">cloudflare-worker.js</span>) supaya API key disimpan aman di server & tidak pernah terlihat browser -- kalau mode ini aktif, field API Key di atas boleh dikosongkan.</p>
       </div>
       <p class="ai-settings-hint" id="aiTestResult" style="display:none;margin-top:-4px;"></p>
       <div class="modal-actions">
@@ -19605,7 +19582,7 @@ html.dark-mode .bd-row-close{
           </span>
           <span class="atk-head-title-text">
             <h2>Tool AI</h2>
-            <span class="atk-head-sub" id="atkHeadSub">Ditenagai ZayaDev</span>
+            <span class="atk-head-sub" id="atkHeadSub">Ditenagai Groq</span>
           </span>
         </div>
         <button class="lap-filter-back-btn" id="atkSettingsBtn" type="button" title="Pengaturan API AI" aria-label="Pengaturan API AI" style="display:none;">
@@ -19634,28 +19611,14 @@ html.dark-mode .bd-row-close{
 
       <div class="ai-key-banner" id="atkKeyBanner" style="display:none;">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
-        <span>API Key ZayaDev belum diatur.</span>
+        <span>API Key Groq belum diatur.</span>
         <button type="button" id="atkKeyBannerBtn">Atur Sekarang</button>
       </div>
 
       <div class="ai-chat-body atk-chat-body" id="atkChatBody"></div>
 
       <div class="ai-chat-foot atk-composer">
-        <div class="atk-attach-preview" id="atkAttachPreviewWrap" style="display:none;">
-          <img id="atkAttachPreviewImg" alt="" style="display:none;">
-          <span class="atk-attach-file-chip" id="atkAttachFileChip" style="display:none;">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
-            <span id="atkAttachFileName"></span>
-          </span>
-          <button type="button" id="atkAttachRemoveBtn" aria-label="Hapus lampiran">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M18 6 6 18M6 6l12 12"/></svg>
-          </button>
-        </div>
         <div class="ai-chat-inputbar atk-inputbar">
-          <button type="button" class="atk-attach-btn" id="atkAttachBtn" title="Lampirkan gambar/video" aria-label="Lampirkan gambar/video">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
-          </button>
-          <input type="file" id="atkFileInput" accept="image/*,video/*" style="display:none;">
           <textarea id="atkChatInput" rows="1" placeholder="Tulis pertanyaan..."></textarea>
           <button type="button" class="ai-chat-send" id="atkSendBtn" aria-label="Kirim">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>

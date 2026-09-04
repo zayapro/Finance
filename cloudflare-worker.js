@@ -56,23 +56,15 @@
  *      https://zayain-videodl.NAMA-ANDA.workers.dev) -> tempel ke
  *      ZAYAIN: Fast Menu > Unduh Video > ikon gerigi > field "URL
  *      Cloudflare Worker" -> Simpan.
- *   8. OPSIONAL -- proxy "Tanya AI"/"Tool AI" (Gemini/Claude) supaya API
+ *   8. OPSIONAL -- proxy "Tanya AI"/"Tool AI" (Groq) supaya API
  *      key-nya tidak kelihatan di browser: di Worker yg SAMA, tambah
- *      Secret lagi -> Name: CLAUDE_API_KEY, Value: (API key dari
- *      console.anthropic.com/settings/keys) utk Claude, dan/atau Name:
- *      GEMINI_API_KEY, Value: (API key dari aistudio.google.com/apikey)
- *      utk Gemini -> Save and Deploy. Lalu di ZAYAIN: tombol Tanya AI >
- *      ikon gerigi > field "URL Cloudflare Worker" -> tempel URL worker
- *      yg sama spt langkah 7 -> Simpan. Field API Key di form yg sama
- *      boleh dikosongkan kalau sudah pakai mode Worker ini (key-nya
- *      dibaca worker dari Secret, bukan dari browser).
- *   9. OPSIONAL -- provider "Groq" (gratis, model open-source spt Llama,
- *      cepat) sbg alternatif Gemini/Claude: di Worker yg SAMA, tambah
- *      Secret lagi -> Name: GROQ_API_KEY, Value: (API key dari
+ *      Secret -> Name: GROQ_API_KEY, Value: (API key dari
  *      console.groq.com/keys, daftar gratis tanpa kartu kredit) -> Save
- *      and Deploy. Lalu di ZAYAIN: Tanya AI > ikon gerigi > pilih
- *      provider "Groq" > field "URL Cloudflare Worker" diisi URL worker
- *      yg sama spt langkah 7 -> Simpan.
+ *      and Deploy. Lalu di ZAYAIN: tombol Tanya AI > ikon gerigi >
+ *      field "URL Cloudflare Worker" -> tempel URL worker yg sama spt
+ *      langkah 7 -> Simpan. Field API Key di form yg sama boleh
+ *      dikosongkan kalau sudah pakai mode Worker ini (key-nya dibaca
+ *      worker dari Secret, bukan dari browser).
  *
  * Free tier Cloudflare Workers: 100.000 request/hari. Free tier
  * RapidAPI "YouTube Media Downloader": cek sendiri kuotanya di halaman
@@ -82,7 +74,6 @@
 
 const FASTSAVER_UPSTREAM = 'https://api.fastsaver.io';
 const RAPIDAPI_HOST = 'youtube-media-downloader.p.rapidapi.com';
-const ANTHROPIC_API_VERSION = '2023-06-01';
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -477,105 +468,46 @@ export default {
       }, 502);
     }
 
-    // ---- Proxy "Tanya AI" / "Tool AI" (Gemini & Claude) -- MODE OPSIONAL.
+    // ---- Proxy "Tanya AI" / "Tool AI" (Groq) -- MODE OPSIONAL.
     // Kalau user isi field "URL Cloudflare Worker" di Pengaturan Tanya AI
     // (script.js), permintaan AI dikirim ke sini dulu, BUKAN langsung ke
-    // generativelanguage.googleapis.com / api.anthropic.com dari browser.
-    // Worker inilah yg pegang API key asli (CLAUDE_API_KEY / GEMINI_API_KEY
-    // sbg Secret, lihat langkah deploy di atas) -- jadi key TIDAK PERNAH
-    // terlihat di DevTools/Network tab milik user, beda dgn mode langsung
-    // (browser -> provider) yg tetap didukung sbg fallback kalau field
-    // Worker URL dikosongkan.
-    // Body diteruskan APA ADANYA sesuai bentuk yg dipakai tiap provider
-    // (Claude: {model,system,messages,max_tokens}; Gemini:
-    // {model,contents,systemInstruction}) supaya frontend tidak perlu
-    // logika terjemahan tambahan -- cukup ganti tujuan fetch-nya saja.
+    // api.groq.com dari browser. Worker inilah yg pegang API key asli
+    // (GROQ_API_KEY sbg Secret, lihat langkah deploy di atas) -- jadi key
+    // TIDAK PERNAH terlihat di DevTools/Network tab milik user, beda dgn
+    // mode langsung (browser -> Groq) yg tetap didukung sbg fallback
+    // kalau field Worker URL dikosongkan.
     if (incoming.pathname === '/v1/ai/chat' && request.method === 'POST') {
       let body;
       try { body = JSON.parse(await request.text()); } catch (e) {
         return jsonResponse({ ok: false, detail: 'Body request tidak valid (harus JSON).' }, 400);
       }
-      const provider = body && (body.provider === 'claude' || body.provider === 'groq') ? body.provider : 'gemini';
 
-      if (provider === 'groq') {
-        if (!env.GROQ_API_KEY) {
-          return jsonResponse({ ok: false, detail: 'GROQ_API_KEY belum diatur di Worker Settings > Variables and Secrets.' }, 500);
-        }
-        if (!body.messages) return jsonResponse({ ok: false, detail: 'Field "messages" wajib diisi.' }, 400);
-        try {
-          const res = await fetchWithTimeout('https://api.groq.com/openai/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${env.GROQ_API_KEY}`,
-            },
-            body: JSON.stringify({
-              model: body.model || 'llama-3.3-70b-versatile',
-              max_tokens: body.max_tokens || 2048,
-              messages: body.system
-                ? [{ role: 'system', content: body.system }, ...body.messages]
-                : body.messages,
-            }),
-          }, 30000);
-          const data = await res.json();
-          if (!res.ok) return jsonResponse({ ok: false, detail: data.error?.message || `HTTP ${res.status}` }, res.status);
-          const text = data?.choices?.[0]?.message?.content || '';
-          return jsonResponse({ ok: true, text });
-        } catch (err) {
-          const timedOut = err.name === 'AbortError';
-          return jsonResponse({ ok: false, detail: timedOut ? 'Groq tidak merespons dlm 30 detik (timeout).' : 'Worker gagal menghubungi Groq: ' + err.message }, 502);
-        }
+      if (!env.GROQ_API_KEY) {
+        return jsonResponse({ ok: false, detail: 'GROQ_API_KEY belum diatur di Worker Settings > Variables and Secrets.' }, 500);
       }
-
-      if (provider === 'claude') {
-        if (!env.CLAUDE_API_KEY) {
-          return jsonResponse({ ok: false, detail: 'CLAUDE_API_KEY belum diatur di Worker Settings > Variables and Secrets.' }, 500);
-        }
-        if (!body.messages) return jsonResponse({ ok: false, detail: 'Field "messages" wajib diisi.' }, 400);
-        try {
-          const res = await fetchWithTimeout('https://api.anthropic.com/v1/messages', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'x-api-key': env.CLAUDE_API_KEY,
-              'anthropic-version': ANTHROPIC_API_VERSION,
-            },
-            body: JSON.stringify({
-              model: body.model || 'claude-sonnet-5',
-              max_tokens: body.max_tokens || 2048,
-              system: body.system || undefined,
-              messages: body.messages,
-            }),
-          }, 30000);
-          const data = await res.json();
-          if (!res.ok) return jsonResponse({ ok: false, detail: data.error?.message || `HTTP ${res.status}` }, res.status);
-          const text = (data.content || []).filter((b) => b.type === 'text').map((b) => b.text || '').join('') || '';
-          return jsonResponse({ ok: true, text });
-        } catch (err) {
-          const timedOut = err.name === 'AbortError';
-          return jsonResponse({ ok: false, detail: timedOut ? 'Claude tidak merespons dlm 30 detik (timeout).' : 'Worker gagal menghubungi Claude: ' + err.message }, 502);
-        }
-      }
-
-      // provider === 'gemini'
-      if (!env.GEMINI_API_KEY) {
-        return jsonResponse({ ok: false, detail: 'GEMINI_API_KEY belum diatur di Worker Settings > Variables and Secrets.' }, 500);
-      }
-      if (!body.contents) return jsonResponse({ ok: false, detail: 'Field "contents" wajib diisi.' }, 400);
-      const model = body.model || 'gemini-3.7-flash';
+      if (!body.messages) return jsonResponse({ ok: false, detail: 'Field "messages" wajib diisi.' }, 400);
       try {
-        const res = await fetchWithTimeout(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
+        const res = await fetchWithTimeout('https://api.groq.com/openai/v1/chat/completions', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'x-goog-api-key': env.GEMINI_API_KEY },
-          body: JSON.stringify({ contents: body.contents, systemInstruction: body.systemInstruction }),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${env.GROQ_API_KEY}`,
+          },
+          body: JSON.stringify({
+            model: body.model || 'llama-3.3-70b-versatile',
+            max_tokens: body.max_tokens || 2048,
+            messages: body.system
+              ? [{ role: 'system', content: body.system }, ...body.messages]
+              : body.messages,
+          }),
         }, 30000);
         const data = await res.json();
         if (!res.ok) return jsonResponse({ ok: false, detail: data.error?.message || `HTTP ${res.status}` }, res.status);
-        const text = data?.candidates?.[0]?.content?.parts?.map((p) => p.text || '').join('') || '';
+        const text = data?.choices?.[0]?.message?.content || '';
         return jsonResponse({ ok: true, text });
       } catch (err) {
         const timedOut = err.name === 'AbortError';
-        return jsonResponse({ ok: false, detail: timedOut ? 'Gemini tidak merespons dlm 30 detik (timeout).' : 'Worker gagal menghubungi Gemini: ' + err.message }, 502);
+        return jsonResponse({ ok: false, detail: timedOut ? 'Groq tidak merespons dlm 30 detik (timeout).' : 'Worker gagal menghubungi Groq: ' + err.message }, 502);
       }
     }
 

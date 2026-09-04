@@ -27,7 +27,7 @@
   // Key yang SENGAJA tidak disinkron ke cloud (murni cache atau
   // sensitif/perangkat-spesifik):
   //  - cache berita: cuma cache sementara, tidak penting disamakan
-  //  - API key Gemini pribadi user & riwayat chat AI: disimpan lokal saja
+  //  - API key Groq pribadi user & riwayat chat AI: disimpan lokal saja
   //  - 'zayapro_this_device_id' = ID unik "perangkat ini" utk fitur
   //    Manajemen Device (lihat deviceMgmtGetLocalId() di script.js).
   //    Key ini SENGAJA ditulis LANGSUNG ke localStorage biasa (bukan
