@@ -3696,7 +3696,7 @@ html.dark-mode .videodl-platform-chip.videodl-active{background:var(--card);}
 .videodl-res-item{
   position:relative;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
-  padding:13px 4px 10px;border-radius:12px;border:1px solid var(--line);background:var(--card-2, #F8F5F2);
+  padding:11px 4px 10px;border-radius:12px;border:1px solid var(--line);background:var(--card-2, #F8F5F2);
   text-decoration:none;cursor:pointer;font:inherit;color:inherit;
   transition:border-color .15s ease, background .15s ease, transform .1s ease;
   -webkit-tap-highlight-color:transparent;
@@ -3715,15 +3715,165 @@ html.dark-mode .videodl-platform-chip.videodl-active{background:var(--card);}
    info ukuran file/"Ketuk utk ambil" tetap gampang dibaca tanpa
    menyaingi label utama. */
 .videodl-res-item-sub{font-size:10.5px;font-weight:600;color:color-mix(in srgb, var(--ink-faint) 75%, var(--ink));}
-/* Badge kecil "Kualitas Asli" -- ditempel di kartu resolusi tertinggi
-   (dihitung di JS, lihat videoDlRenderYoutubeInfo) supaya user langsung
-   tahu resolusi mana yg sama dgn video aslinya di YouTube, tanpa harus
-   menebak dari angka semata. */
+/* Badge "Kualitas Asli" -- didesain sbg "ribbon" yg NYATU dgn sudut
+   kanan-atas kartu (bukan pil ngambang lagi): radius kanan-atas-nya
+   dibuat SAMA (11px) dgn radius kartu (12px, dikurangi 1px lebar
+   border kartu) supaya lengkungannya menyambung persis mengikuti
+   lengkungan kartu, radius kiri-bawah dibuat lebih kecil (8px) biar
+   bentuknya kayak label sudut, bukan kotak siku. Warnanya var(--primary)
+   -- otomatis ikut berubah kalau user ganti tema warna aplikasi (lihat
+   root.setProperty('--primary', ...) di initTheme), jadi tidak perlu
+   disesuaikan manual tiap ganti tema. */
 .videodl-res-item-badge{
-  position:absolute;top:-8px;left:50%;transform:translateX(-50%);
-  background:var(--primary);color:#fff;font-size:8.5px;font-weight:800;
-  padding:2.5px 7px;border-radius:999px;letter-spacing:0.02em;white-space:nowrap;
-  box-shadow:0 1px 3px rgba(0,0,0,.18);
+  position:absolute;top:-1px;right:-1px;
+  background:var(--primary);color:#fff;
+  font-size:8px;font-weight:700;line-height:1;letter-spacing:0.02em;white-space:nowrap;
+  padding:4px 8px 3px 7px;
+  border-radius:0 11px 0 8px;
+}
+/* ---- Redesain KHUSUS kartu "Kualitas Asli" (permintaan user, niru
+   referensi gambar: kartu tunggal besar & lega, ikon+angka+ukuran file
+   ditumpuk rapi di tengah, badge jadi pil melayang di pojok kanan-atas
+   -- bukan ribbon nyatu spt sebelumnya). Kartu lain di grid (yg TIDAK
+   punya badge) TIDAK disentuh, tetap kecil 3-kolom spt semula (:has()
+   dipakai persis krn cuma kartu berbadge ini yg boleh berubah).
+   grid-column:1/-1 bikin kartu ini melebar penuh 1 baris sendiri di
+   dalam .videodl-res-grid (kartu lain otomatis lanjut ke baris
+   berikutnya), match dgn gambar referensi yg tampil selebar kartu.
+   Warna & bayangan SENGAJA dipakaikan token yg sama dgn kartu2 lain di
+   app (var(--card)/var(--line)/var(--shadow-sm), tint var(--primary)
+   tipis) -- bukan oranye/putih polos hardcode spt di gambar aslinya --
+   supaya otomatis senada dgn tema warna app & tetap konsisten kalau
+   user ganti dark-mode/glass-mode. */
+.videodl-res-item:has(.videodl-res-item-badge){
+  grid-column:1 / -1;
+  padding:26px 16px 22px;gap:8px;
+  border-radius:16px;
+  border-color:color-mix(in srgb, var(--primary) 30%, var(--line));
+  background:color-mix(in srgb, var(--primary) 7%, var(--card));
+  box-shadow:var(--shadow-sm);
+}
+.videodl-res-item:has(.videodl-res-item-badge) .videodl-res-item-ic{
+  color:color-mix(in srgb, var(--ink-faint) 65%, var(--ink) 10%);
+  margin-bottom:2px;
+}
+.videodl-res-item:has(.videodl-res-item-badge) .videodl-res-item-ic svg{width:30px;height:30px;stroke-width:2;}
+/* Label "1080P" dipindah ke font 'Poppins' + weight 800 SUNGGUHAN (bukan
+   font sistem spt label kecil di atas) krn Poppins yg sudah dimuat app
+   ini PUNYA varian 800 asli, jadi aman dari faux-bold yg dihindari di
+   komentar .videodl-res-item-label -- di ukuran besar begini bedanya
+   jelas kelihatan & inilah yg dimaksud "ketebalan font" biar tegas spt
+   referensi. */
+.videodl-res-item:has(.videodl-res-item-badge) .videodl-res-item-label{
+  font-family:'Poppins',sans-serif;font-size:19px;font-weight:800;
+  letter-spacing:-0.01em;color:var(--ink);
+}
+.videodl-res-item:has(.videodl-res-item-badge) .videodl-res-item-sub{
+  font-family:'Poppins',sans-serif;font-size:12.5px;font-weight:600;
+  color:var(--ink-faint);letter-spacing:0.005em;
+}
+/* Badge pil "nyatu" dgn border kartu -- diposisikan pas DI ATAS garis
+   border (top negatif separuh tinggi pil) supaya separuh badan pil
+   ketutup/ketindih border kartu & separuh lagi nongol ke luar, kayak
+   "notch"/label yg nempel di garis pinggir, bukan mengambang bebas di
+   dalam kartu spt sebelumnya. Diberi border tipis warna --card di
+   sekeliling pil (border-width 2px, warna SAMA dgn bg kartu) biar
+   perpotongannya dgn garis border kartu di baliknya kelihatan rapi
+   (nutup ujung garis border yg numpuk), bukan keliatan "ketabrak". */
+/* Badge pil "menyatu" persis dgn border kartu -- posisi vertikal pil
+   diseimbangkan supaya GARIS BORDER KARTU lewat tepat di TENGAH badan
+   pil (bukan cuma nempel di atas/luar spt sebelumnya), dan warna+lebar
+   garis pil disamakan PERSIS dgn warna+lebar border kartu (bukan warna
+   putih/var(--card) yg malah bikin pil kelihatan "beda potongan" dari
+   kartu). Hasilnya garis border kartu itu SEOLAH menyambung lurus jadi
+   garis pil, spt satu kontur yg sama -- bukan 2 elemen terpisah yg
+   ditumpuk. */
+/* Badge pil disatukan PERSIS dgn garis border kartu -- pakai top:0 +
+   translateY(-100%) (bukan nilai top negatif hasil kira-kira spt
+   sebelumnya) supaya TEPI BAWAH pil selalu presisi menempel di garis
+   border kartu persis di titik 0, berapa pun tinggi pil berubah nanti
+   (mis. kalau teks badge diganti lebih panjang). Warna & lebar garis
+   pil disamakan dgn border kartu spy sambungannya kelihatan jadi SATU
+   garis lurus yg menyambung, bukan 2 garis beririsan/ketumpuk. */
+/* Badge pil disatukan tepat DI SUDUT kartu (bukan di tengah garis atas
+   spt sebelumnya) -- top:0;right:0 + translate(50%,-50%) naruh TITIK
+   TENGAH pil persis di titik pertemuan garis border atas & kanan
+   kartu, jadi separuh badan pil "mengambil alih" lengkungan sudut
+   kartu & separuh lagi nongol ke luar, spt satu potongan yg nyambung
+   dari sudut kartu itu sendiri -- bukan nempel di tengah salah satu
+   sisi garisnya lagi. */
+/* Titik tengah pil digeser dikit ke DALAM (top/right:5px, bukan 0)
+   supaya pas jatuh di titik 45° lengkungan sudut kartu (radius kartu
+   16px) -- kalau dipatok persis di titik 0 spt sebelumnya, pusat pil
+   malah jatuh di "sudut siku" matematis yg sebenarnya sudah dipotong
+   melengkung sama border-radius kartu, jadi kelihatan agak nyeleneh/
+   ga pas nempel di lengkungannya. Offset 5px ini bikin pil kelihatan
+   betul2 duduk di puncak lengkungan sudut, bukan mengambang di luar
+   lengkungannya. */
+/* Redesain badge jadi PITA SUDUT MELENGKUNG spt referensi gambar
+   "Subsidi" yg dikasih user: sudut LUAR pita menyatu dgn lengkungan
+   sudut kartu (border-top-right-radius SAMA dgn radius kartu), teks
+   HORIZONTAL (bukan diputar diagonal lagi), ujung dalam pita dipotong
+   miring (clip-path) jadi bentuk "pennant" runcing, + gradasi warna
+   var(--primary)->var(--primary-deep) niru gradasi oranye->merah muda
+   di referensi, ditutup 1 segitiga kecil gelap (::after) di ujung
+   runcingnya buat efek "lipatan" pita 3D spt di gambar. */
+/* GANTI PENDEKATAN: clip-path presisi susah dijamin ga motong teks di
+   segala ukuran font/device (rawan kepotong spt draft sebelumnya), jadi
+   dibalik ke bentuk lebih AMAN tapi tetap kental kesan "pita nempel di
+   sudut & melipat" spt referensi -- kotak solid (sudut LUAR-nya nyatu
+   dgn lengkungan sudut kartu via border-top-right-radius SAMA dgn
+   radius kartu, sudut sebelahnya dibulatkan kecil), + segitiga kecil
+   nempel di sudut satunya (::after, teknik border-triangle klasik)
+   sbg "lipatan pita" yg melengkung turun ke bawah kartu -- warnanya
+   digelapkan (filter brightness) niru bayangan lipatan di gambar
+   referensi. Teks selalu di kotak solid utuh, TIDAK PERNAH kepotong. */
+/* ULANG TOTAL setelah lihat referensi di-zoom: ternyata BUKAN pita
+   miring/clip-path bertitik spt draft2 sebelumnya -- badge "Subsidi"
+   di gambar itu sebenarnya cuma KOTAK dgn border-radius ASIMETRIS:
+   sudut yg nempel di sudut kartu (kiri-atas di gambar aslinya) radius-
+   nya nyatu dgn radius kartu, TAPI sudut DIAGONAL-nya (kanan-bawah di
+   gambar asli) dikasih radius BESAR SEKALI (jauh lebih besar dari
+   tinggi/lebar box-nya sendiri) -- itu yg bikin efek "lengkungan besar
+   menyapu" khas di foto, bukan garis lurus miring. Utk kartu kita,
+   badge nempel di sudut KANAN-atas (mirror dari kiri-atas di gambar),
+   jadi radius besarnya dipasang di sudut kiri-BAWAH box (border-radius
+   singkatan: kiri-atas kanan-atas kanan-bawah kiri-bawah). */
+/* Border kartu (1.5px) DIPERHITUNGKAN skrg: badge digeser -1.5px (top &
+   right) senilai lebar border kartu, supaya sudut LUAR badge nyambung
+   PAS di sudut luar border kartu (bukan mulai dari sisi DALAM border
+   spt sebelumnya, yg nyisain garis border kartu kelihatan motong badge
+   -- kelihatan "2 elemen ketumpuk" bukan "menyatu"). Warna dibalikin
+   ke murni var(--primary)/var(--primary-deep) SAJA (drop tambahan hex
+   pink #DB2777) spy 100% ikut tema warna kartu app, bukan warna asing
+   yg beda dari kartu2 lain. */
+/* Ukuran badge diperkecil biar PAS sama panjang teks "Kualitas Asli"
+   (draft sblmnya kepanjangan padding-nya, jadi kartu kelihatan
+   "berlebih" ruang kosong di sekitar teks) -- padding dipangkas &
+   radius sudut lengkung besar (kiri-bawah) ikut dikecilkan proporsional
+   spy tetap seimbang dgn ukuran badge yg baru, ga jadi kelewat
+   membundar drpd badge-nya sendiri. */
+/* Ukuran font badge diturunkan (10.5px -> 9.5px) biar proporsional sama
+   skala teks lain di kartu ini (label besar "1080P" 19px, sub-label
+   12.5px) -- 10.5px kelihatan agak gede utk elemen "tag" kecil di
+   pojok, 9.5px lebih pas & rapi tanpa bikin badge jadi kelewat kecil
+   buat dibaca. Padding ikut dipangkas tipis biar tetap muat rapat sama
+   teks yg kini lebih kecil. */
+/* Ujung lengkungan besar (kiri-bawah) diperpanjang biar SAMPAI ke area
+   deket border kartu (bukan cuma "mengambang" di tengah ruang kosong
+   kartu spt sebelumnya) -- padding-kiri & padding-bawah ditambah +
+   radius sudut lengkung ikut dibesarkan proporsional, jadi sapuan
+   kurva-nya kelihatan menyatu turun sampai ke pinggir/garis kartu,
+   niru kesan "nempel & tumbuh dari sudut" spt di gambar referensi. */
+.videodl-res-item:has(.videodl-res-item-badge) .videodl-res-item-badge{
+  position:absolute;top:-1.5px;right:-1.5px;
+  padding:6.5px 10px 15px 24px;
+  background:linear-gradient(135deg, var(--primary-deep), var(--primary));
+  color:#fff;white-space:nowrap;
+  font-size:9.5px;font-weight:700;letter-spacing:0.02em;
+  border-radius:8px 16px 8px 42px;
+  border:none;
+  box-shadow:0 3px 8px -2px color-mix(in srgb, var(--primary-deep) 45%, transparent);
 }
 /* Kartu "siap unduh" (sudah ada link asli, dari platform 1-kualitas ATAU
    YouTube yg resolusinya sudah diklik & berhasil diambil) -- aksen hijau
