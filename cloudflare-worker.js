@@ -405,14 +405,28 @@ async function tryShopeeProduct(rawUrl, env) {
   let finalUrl = rawUrl;
   if (!ids) {
     try {
-      const res = await fetchWithTimeout(rawUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } }, 10000);
+      // UA generik ('Mozilla/5.0' doang) sering dianggap bot sama short-link
+      // redirector Shopee -> dibalas halaman interstitial "Buka di app" (HTTP
+      // 200 biasa) BUKAN redirect 302 ke URL produk, jadi res.url tetap sama
+      // dgn link pendeknya. Pakai UA browser lengkap (sama spt panggilan
+      // get_pc di bawah) supaya kemungkinan besar dapat redirect HTTP normal.
+      const res = await fetchWithTimeout(rawUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        },
+      }, 10000);
       finalUrl = res.url || rawUrl;
       ids = parseShopeeIds(finalUrl);
     } catch (err) {
       return { ok: false, detail: 'Gagal membuka link pendek Shopee: ' + err.message };
     }
   }
-  if (!ids) return { ok: false, detail: 'Tidak bisa mengenali shop_id/item_id dari link Shopee ini.' };
+  // Sertakan finalUrl di pesan error -- kalau masih gagal, ini nunjukin
+  // PERSIS link-nya nyasar ke mana stlh di-follow (mis. masih ketahan di
+  // halaman interstitial shp.ee, bukan sampai ke shopee.co.id/...-i.xxx.yyy),
+  // jadi lebih gampang didiagnosis drpd cuma pesan generik.
+  if (!ids) return { ok: false, detail: `Tidak bisa mengenali shop_id/item_id dari link Shopee ini. URL setelah di-follow: ${finalUrl}` };
 
   const region = shopeeRegionFromHost(ids.host);
   const imgCdn = SHOPEE_IMG_CDN_BY_REGION[region] || SHOPEE_IMG_CDN_BY_REGION.id;
