@@ -11358,8 +11358,13 @@ async function videoDlDownloadFile(url, filenameBase, ext) {
 //  - "pending" (khusus YouTube, resolusi blm diambil): <button
 //    data-format> yg baru minta link sungguhan pas diklik (lihat
 //    videoDlResolveYoutubeFormat).
-function videoDlResItemHtml({ format, label, sub, downloadUrl, icon }) {
+function videoDlResItemHtml({ format, label, sub, downloadUrl, icon, badge }) {
   const ic = icon || VIDEODL_DOWNLOAD_ICON;
+  // Badge opsional (mis. "Kualitas Asli") ditempel di kartu resolusi
+  // tertinggi -- ditentukan pemanggil (videoDlRenderYoutubeInfo), bukan
+  // di sini, krn cuma pemanggil yg tahu resolusi mana yg paling tinggi
+  // dari SELURUH daftar `formats`.
+  const badgeHtml = badge ? `<span class="videodl-res-item-badge">${badge}</span>` : '';
   if (downloadUrl) {
     // href dibuat lewat videoDlProxiedUrl (bukan downloadUrl mentah dari
     // fastsaver.io) supaya bahkan kalau klik-nya "lolos" dari listener JS
@@ -11373,12 +11378,14 @@ function videoDlResItemHtml({ format, label, sub, downloadUrl, icon }) {
     // fungsi itu SUDAH memproksi sendiri lewat videoDlProxiedUrl (baca
     // href yg sudah diproksi lagi di sini bakal double-proxy/rusak).
     return `<a class="videodl-res-item videodl-res-item--ready" href="${videoDlProxiedUrl(downloadUrl)}" data-raw-url="${escapeAttr(downloadUrl)}" download target="_blank" rel="noopener">
+      ${badgeHtml}
       <span class="videodl-res-item-ic">${ic}</span>
       <span class="videodl-res-item-label">${label}</span>
       <span class="videodl-res-item-sub">${sub || ''}</span>
     </a>`;
   }
   return `<button type="button" class="videodl-res-item" data-pending="1" data-format="${format}">
+    ${badgeHtml}
     <span class="videodl-res-item-ic">${ic}</span>
     <span class="videodl-res-item-label">${label}</span>
     <span class="videodl-res-item-sub">${sub || ''}</span>
@@ -11487,11 +11494,27 @@ function videoDlRenderFetchResult(data, platform) {
 // tetap ada. ---- */
 function videoDlRenderYoutubeInfo(info) {
   const formats = Array.isArray(info.formats) ? info.formats : [];
-  let resItemsHtml = formats.map((f) => videoDlResItemHtml({
-    format: f.format,
-    label: (f.format || '').toUpperCase(),
-    sub: videoDlFormatBytes(f.filesize) || 'Ketuk utk ambil',
-  })).join('');
+  // Resolusi tertinggi di daftar `formats` == kualitas asli video ini
+  // sesuai yg tersedia di YouTube (server FastSaverAPI/RapidAPI sudah
+  // mengurutkan dari yg tersedia, bukan kita yg menebak) -- dipakai utk
+  // nempelin badge "Kualitas Asli" cuma di SATU kartu itu, bukan
+  // menyimpulkan bhw video tsb "aslinya" 4K/8K kalau memang provider
+  // tidak menyediakan resolusi setinggi itu.
+  let highestRes = -1;
+  for (const f of formats) {
+    const m = String(f.format || '').match(/\d+/);
+    if (m) highestRes = Math.max(highestRes, parseInt(m[0], 10));
+  }
+  let resItemsHtml = formats.map((f) => {
+    const m = String(f.format || '').match(/\d+/);
+    const res = m ? parseInt(m[0], 10) : null;
+    return videoDlResItemHtml({
+      format: f.format,
+      label: (f.format || '').toUpperCase(),
+      sub: videoDlFormatBytes(f.filesize) || 'Ketuk utk ambil',
+      badge: (res !== null && res === highestRes) ? 'Kualitas Asli' : null,
+    });
+  }).join('');
   resItemsHtml += videoDlResItemHtml({
     format: 'audio', label: 'Audio', sub: 'MP3', icon: VIDEODL_MUSIC_ICON,
   });
