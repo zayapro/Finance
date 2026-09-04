@@ -3768,6 +3768,17 @@ html.dark-mode .videodl-platform-chip.videodl-active{background:var(--card);}
   text-decoration:none;cursor:pointer;font:inherit;color:inherit;
   transition:border-color .15s ease, background .15s ease, transform .1s ease;
   -webkit-tap-highlight-color:transparent;
+  /* min-height DITAMBAHKAN supaya SEMUA kartu kecil (720P/480P/.../Audio)
+     selalu sama tinggi apa pun isinya -- sebelumnya tinggi kartu ikut
+     mengalir dari konten (icon+label+tag+sub-label), jadi kalau salah
+     satu kartu sub-labelnya kebetulan lebih panjang & sampai wrap ke 2
+     baris (mis. "Ketuk utk ambil" di kartu YouTube yg masih "pending",
+     dibanding "23.1 MB" yg muat 1 baris), kartu ITU SAJA jadi lebih
+     tinggi drpd kartu2 lain di baris yg sama -- keliatan "pincang" persis
+     yg dikeluhkan user. 92px dipilih supaya cukup utk skenario terburuk
+     (sub-label wrap 2 baris) TANPA bikin kartu2 yg kontennya pendek
+     (1 baris) kelihatan longgar berlebihan. */
+  min-height:92px;
 }
 .videodl-res-item:active{transform:scale(0.96);}
 .videodl-res-item-ic{color:var(--ink-faint);}
@@ -3782,7 +3793,12 @@ html.dark-mode .videodl-platform-chip.videodl-active{background:var(--card);}
    terlalu pudar/abu muda) ke color-mix yg sedikit lebih gelap, supaya
    info ukuran file/"Ketuk utk ambil" tetap gampang dibaca tanpa
    menyaingi label utama. */
-.videodl-res-item-sub{font-size:10.5px;font-weight:600;color:color-mix(in srgb, var(--ink-faint) 75%, var(--ink));}
+/* min-height (bukan height fix) diberikan berdasar 2x line-height teks
+   10.5px ini -- disamakan dgn skenario TERPANJANG (2 baris, mis. "Ketuk
+   utk ambil") supaya ruang yg direservasi tiap kartu SAMA baik teksnya
+   akhirnya muat 1 baris (mis. "23.1 MB") maupun 2 baris, jadi kartu2
+   yg bersebelahan tetap sama tinggi tanpa peduli isi tekstualnya. */
+.videodl-res-item-sub{font-size:10.5px;font-weight:600;line-height:1.3;color:color-mix(in srgb, var(--ink-faint) 75%, var(--ink));min-height:27px;display:flex;align-items:center;justify-content:center;}
 /* Tag jenis file (MP4/MP3/JPG dst) -- pil kecil di antara label
    resolusi & sub-label ukuran file, supaya user langsung tahu format
    unduhannya tanpa perlu menebak dari label "720P"/"Audio" saja.
@@ -3842,6 +3858,12 @@ html.dark-mode .videodl-platform-chip.videodl-active{background:var(--card);}
   border-color:color-mix(in srgb, var(--primary) 30%, var(--line));
   background:color-mix(in srgb, var(--primary) 7%, var(--card));
   box-shadow:var(--shadow-sm);
+  /* min-height sendiri (beda dari kartu kecil) -- supaya kartu "Kualitas
+     Asli" ini juga TIDAK berubah tinggi antar video (mis. "144P" vs
+     "2160P", atau ukuran file "23.1 MB" vs "1,203.4 MB" yg lebih
+     panjang & berpotensi wrap). override min-height:92px dari base
+     .videodl-res-item krn kartu ini py padding & font lebih besar. */
+  min-height:150px;
 }
 .videodl-res-item:has(.videodl-res-item-badge) .videodl-res-item-ic{
   color:color-mix(in srgb, var(--ink-faint) 65%, var(--ink) 10%);
@@ -3864,6 +3886,10 @@ html.dark-mode .videodl-platform-chip.videodl-active{background:var(--card);}
 .videodl-res-item:has(.videodl-res-item-badge) .videodl-res-item-sub{
   font-family:'Poppins',sans-serif;font-size:11.5px;font-weight:600;
   color:var(--ink-faint);letter-spacing:0.005em;
+  /* min-height override (skala mengikuti font 11.5px kartu ini, beda dari
+     27px punya kartu kecil) -- alasan sama: reservasi ruang teks 2 baris
+     spy tinggi kartu ini tetap sama dari 1 hasil video ke video lain. */
+  min-height:29px;display:flex;align-items:center;justify-content:center;
 }
 .videodl-res-item:has(.videodl-res-item-badge) .videodl-res-item-type{
   font-size:9.5px;padding:2px 7px;
