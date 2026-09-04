@@ -3697,34 +3697,8 @@ html.dark-mode .videodl-platform-chip.videodl-active{background:var(--card);}
 .videodl-thumb-dl-btn--loading{pointer-events:none;}
 .videodl-thumb-dl-btn--loading svg{animation:videodlResSpin .8s linear infinite;}
 .videodl-result-body{padding:12px 14px;display:flex;flex-direction:column;gap:8px;}
-/* Baris judul + tombol salin -- flex row, judul boleh sampai 2 baris
-   (line-clamp) sementara tombol salin TETAP di kanan-atas & tidak ikut
-   menyusut (flex-shrink:0) brp pun panjang judulnya. align-items:
-   flex-start (bukan center) supaya kalau judul jadi 2 baris, tombolnya
-   tetap sejajar dgn baris PERTAMA teks, bukan ketarik ke tengah blok. */
-.videodl-result-title-row{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;}
-.videodl-result-title{
-  font-size:13.5px;font-weight:700;color:var(--ink);line-height:1.4;
-  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
-}
-.videodl-copy-title-btn{
-  flex-shrink:0;width:26px;height:26px;border-radius:8px;border:none;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;padding:0;margin-top:1px;
-  background:var(--card-2, #F1F1F6);color:var(--ink-faint);
-  transition:background .15s ease,color .15s ease,transform .1s ease;
-}
-.videodl-copy-title-btn:hover{background:color-mix(in srgb, var(--primary) 14%, transparent);color:var(--primary-deep, var(--primary));}
-.videodl-copy-title-btn:active{transform:scale(0.9);}
+.videodl-result-title{font-size:13.5px;font-weight:700;color:var(--ink);line-height:1.4;}
 .videodl-result-meta{font-size:11.5px;color:var(--ink-faint);}
-/* Tautan "Lihat sumber asli" -- baris kecil terpisah dari meta durasi,
-   ikon tautan-keluar + teks, warna --primary spy jelas kelihatan sbg
-   link yg bisa diklik (bukan teks info pasif spt durasi/ukuran file). */
-.videodl-result-source{
-  display:inline-flex;align-items:center;gap:5px;width:fit-content;
-  font-size:11.5px;font-weight:600;color:var(--primary-deep, var(--primary));
-  text-decoration:none;
-}
-.videodl-result-source:hover{text-decoration:underline;}
 /* ---- Grid pilihan resolusi/kualitas (.videodl-res-grid) -- GANTI dari
    deretan tombol "Unduh Video/Gambar" tunggal (.videodl-result-actions
    lama) jadi grid kartu rapi (3 kolom, 2 di layar sempit), tiap kartu
