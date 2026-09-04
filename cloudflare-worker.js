@@ -100,7 +100,6 @@ const ALLOWED_PROXY_HOST_SUFFIXES = [
   'twimg.com',          // X/Twitter
   'pinimg.com',         // Pinterest
   'rutube.ru',
-  'susercontent.com',   // Shopee (foto & video produk)
 ];
 
 function isAllowedProxyUrl(rawUrl) {
@@ -351,157 +350,6 @@ function mergeYoutubeFormats(primaryFormats, extra) {
   return existing;
 }
 
-// ---- Shopee (unduh foto & video PRODUK) -- BEDA TOTAL dgn semua
-// platform di atas: BUKAN lewat FastSaverAPI/RapidAPI pihak ketiga sama
-// sekali. Shopee sendiri punya endpoint publik `/api/v4/pdp/get_pc` yg
-// bisa diakses tanpa login/API key -- dipakai banyak tool scraper produk
-// e-commerce (dikonfirmasi lewat riset publik, Sep 2026). Worker ini cuma
-// jadi jembatan CORS (endpoint Shopee tidak izinkan dipanggil langsung
-// dari browser lintas-origin) + header Referer/User-Agent yg realistis.
-//
-// CATATAN JUJUR soal video produk: field `videoInfoList` di respons
-// get_pc BELUM PERNAH dikonfirmasi thd produk yg BENERAN py video (contoh
-// yg dites saat riset kebetulan kosong) -- kode di bawah nebak beberapa
-// nama field yg umum (mirip gaya defensif tryRapidApiYoutube di atas).
-// Kalau ternyata skemanya beda, foto tetap kekirim normal, cuma video-nya
-// yg terlewat -- BUKAN bikin seluruh permintaan gagal.
-const SHOPEE_IMG_CDN_BY_REGION = {
-  id: 'down-id.img.susercontent.com',
-  sg: 'down-sg.img.susercontent.com',
-  th: 'down-th.img.susercontent.com',
-  my: 'down-my.img.susercontent.com',
-  vn: 'down-vn.img.susercontent.com',
-  ph: 'down-ph.img.susercontent.com',
-  tw: 'down-tw.img.susercontent.com',
-  br: 'down-br.img.susercontent.com',
-};
-
-function shopeeRegionFromHost(host) {
-  // shopee.co.id -> id, shopee.com.my -> my, shopee.tw -> tw, shopee.sg -> sg, dst.
-  const m = host.match(/shopee\.(?:com\.)?([a-z]{2,3})$/i);
-  return m ? m[1].toLowerCase() : 'id';
-}
-
-// Ambil {shopId, itemId} dari berbagai bentuk URL produk Shopee. Link
-// pendek (shp.ee/xxx, s.shopee.co.id/xxx) TIDAK ketemu di sini -- perlu
-// diikuti redirect-nya dulu di tryShopeeProduct sebelum dipanggil ulang.
-function parseShopeeIds(rawUrl) {
-  try {
-    const u = new URL(rawUrl);
-    let m = u.pathname.match(/-i\.(\d+)\.(\d+)/);           // ...-i.SHOPID.ITEMID
-    if (m) return { shopId: m[1], itemId: m[2], host: u.hostname };
-    m = u.pathname.match(/\/product\/(\d+)\/(\d+)/);         // /product/SHOPID/ITEMID
-    if (m) return { shopId: m[1], itemId: m[2], host: u.hostname };
-    m = u.pathname.match(/(\d{5,})\.(\d{5,})$/);              // shopee.tw/SHOPID.ITEMID
-    if (m) return { shopId: m[1], itemId: m[2], host: u.hostname };
-    return null;
-  } catch (e) {
-    return null;
-  }
-}
-
-async function tryShopeeProduct(rawUrl, env) {
-  let ids = parseShopeeIds(rawUrl);
-  let finalUrl = rawUrl;
-  if (!ids) {
-    try {
-      // UA generik ('Mozilla/5.0' doang) sering dianggap bot sama short-link
-      // redirector Shopee -> dibalas halaman interstitial "Buka di app" (HTTP
-      // 200 biasa) BUKAN redirect 302 ke URL produk, jadi res.url tetap sama
-      // dgn link pendeknya. Pakai UA browser lengkap (sama spt panggilan
-      // get_pc di bawah) supaya kemungkinan besar dapat redirect HTTP normal.
-      const res = await fetchWithTimeout(rawUrl, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        },
-      }, 10000);
-      finalUrl = res.url || rawUrl;
-      ids = parseShopeeIds(finalUrl);
-    } catch (err) {
-      return { ok: false, detail: 'Gagal membuka link pendek Shopee: ' + err.message };
-    }
-  }
-  // Sertakan finalUrl di pesan error -- kalau masih gagal, ini nunjukin
-  // PERSIS link-nya nyasar ke mana stlh di-follow (mis. masih ketahan di
-  // halaman interstitial shp.ee, bukan sampai ke shopee.co.id/...-i.xxx.yyy),
-  // jadi lebih gampang didiagnosis drpd cuma pesan generik.
-  if (!ids) return { ok: false, detail: `Tidak bisa mengenali shop_id/item_id dari link Shopee ini. URL setelah di-follow: ${finalUrl}` };
-
-  const region = shopeeRegionFromHost(ids.host);
-  const imgCdn = SHOPEE_IMG_CDN_BY_REGION[region] || SHOPEE_IMG_CDN_BY_REGION.id;
-  const apiUrl = `https://${ids.host}/api/v4/pdp/get_pc?item_id=${ids.itemId}&shop_id=${ids.shopId}`;
-
-  let json;
-  try {
-    const res = await fetchWithTimeout(apiUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-        'Accept': 'application/json',
-        'Referer': finalUrl,
-        'Accept-Language': 'id-ID,id;q=0.9',
-      },
-    }, 15000);
-    json = await res.json();
-  } catch (err) {
-    const timedOut = err.name === 'AbortError';
-    return { ok: false, detail: timedOut ? 'Shopee tidak merespons dlm 15 detik (timeout).' : 'Worker gagal menghubungi Shopee: ' + err.message };
-  }
-
-  const item = json && json.data && json.data.item;
-  if (!item) {
-    // Sertakan field error/error_msg mentah dari respons Shopee (kalau
-    // ada) ke pesan -- get_pc BIASANYA balikin { error, error_msg, data:
-    // null } saat menolak permintaan (mis. anti-bot/IP diblokir), field
-    // ini nunjukin ALASAN penolakannya persis apa, drpd pesan generik yg
-    // nggak kelihatan bedanya "produk dihapus" vs "diblokir Shopee".
-    // Kode 90309999 = kode error RESMI sistem anti-bot Shopee (dikonfirmasi
-    // dari banyak laporan publik developer lain, Sep 2026) -- Shopee
-    // menolak permintaan yg tidak py "tanda tangan" anti-bot yg dihitung
-    // JS asli di browser (af-ac-enc-dat dst). Ini BUKAN bug di Worker kita
-    // & TIDAK BISA diakali cuma dgn ganti header/User-Agent -- bahkan
-    // scraper Shopee berbayar sekalipun kadang masih kena ini. Kasih pesan
-    // yg jujur + actionable (bukan pesan generik yg bikin user mikir ada
-    // yg salah di link/kode-nya) kalau ini penyebabnya.
-    if (json && json.error === 90309999) {
-      return { ok: false, detail: 'Shopee memblokir permintaan otomatis ini (sistem anti-bot Shopee, bukan masalah di link/Worker kamu). Fitur unduh otomatis Shopee memang sering gagal krn ini -- coba beberapa saat lagi, atau ambil videonya manual: buka link-nya di browser desktop, tekan F12 > tab Network > putar videonya > cari request video (domain susercontent.com) > copy link-nya > buka & simpan manual.' };
-    }
-    const rawErr = (json && (json.error_msg || json.error)) ? ` (Shopee: ${json.error_msg || json.error})` : '';
-    return { ok: false, detail: `Shopee tidak mengembalikan data produk (mungkin produk dihapus/privat, atau permintaan diblokir Shopee).${rawErr}` };
-  }
-
-  const images = Array.isArray(item.images) ? item.images : [];
-  if (!images.length) {
-    return { ok: false, detail: 'Produk ini tidak punya foto yang bisa diambil.' };
-  }
-  const items = images.map((hash) => ({
-    thumbnail_url: `https://${imgCdn}/file/${hash}`,
-    download_url: `https://${imgCdn}/file/${hash}`,
-  }));
-
-  const videoList = Array.isArray(item.videoInfoList) ? item.videoInfoList : [];
-  if (videoList.length) {
-    const v = videoList[0] || {};
-    const videoUrl = v.url || v.video_url
-      || (Array.isArray(v.format_infos) && v.format_infos[0] && v.format_infos[0].url)
-      || (Array.isArray(v.formatInfos) && v.formatInfos[0] && v.formatInfos[0].url);
-    if (videoUrl) {
-      items.unshift({
-        thumbnail_url: v.thumb_url || v.cover_url || items[0].thumbnail_url,
-        download_url: videoUrl,
-      });
-    }
-  }
-
-  return {
-    ok: true,
-    type: 'album',
-    caption: item.name || 'Produk Shopee',
-    thumbnail_url: items[0].thumbnail_url,
-    items,
-  };
-}
-
 export default {
   async fetch(request, env) {
     // Preflight CORS (browser selalu kirim OPTIONS dulu utk request
@@ -629,16 +477,6 @@ export default {
         detail: primary.detail || 'Gagal mengambil video YouTube (FastSaverAPI & fallback RapidAPI sama-sama gagal).',
         _fallbackDetail: fallback.detail,
       }, 502);
-    }
-
-    // ---- Shopee (foto & video produk) -- endpoint publik resmi Shopee
-    // sendiri, BUKAN FastSaverAPI, lihat komentar panjang di
-    // tryShopeeProduct di atas.
-    if (incoming.pathname === '/v1/shopee/fetch' && request.method === 'GET') {
-      const productUrl = incoming.searchParams.get('url');
-      if (!productUrl) return jsonResponse({ ok: false, detail: 'Parameter "url" wajib diisi.' }, 400);
-      const result = await tryShopeeProduct(productUrl, env);
-      return jsonResponse(result, result.ok ? 200 : 502);
     }
 
     // ---- Proxy "Tanya AI" / "Tool AI" (Groq) -- MODE OPSIONAL.

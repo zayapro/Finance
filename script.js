@@ -11111,24 +11111,12 @@ function videoDlDetectPlatform(url) {
   if (/rutube\.ru$/.test(host)) return 'rutube';
   if (/threads\.net$/.test(host)) return 'threads-unsupported';
   if (/snackvideo\.com$/.test(host)) return 'snack-unsupported';
-  // Shopee (foto & video PRODUK, bukan lewat FastSaverAPI -- lihat rute
-  // /v1/shopee/fetch di cloudflare-worker.js): shopee.co.id/.sg/.tw/dst,
-  // plus link pendek shp.ee & s.shopee.co.id.
-  if (/(^|\.)shopee\.[a-z.]+$/.test(host) || /(^|\.)shp\.ee$/.test(host)) return 'shopee';
   return 'unknown';
 }
 
 const videoDlUrlInput = document.getElementById('videoDlUrlInput');
 const videoDlPlatformRow = document.getElementById('videoDlPlatformRow');
 const videoDlClearBtn = document.getElementById('videoDlClearBtn');
-// Pesan info (BUKAN error) yg ditampilin pas chip Shopee kedeteksi aktif --
-// disclaimer jujur di awal, sebelum user sempat klik "Ambil Video" & baru
-// kaget dpt error. Shopee (produk MAUPUN Shopee Video) sering diblokir
-// sistem anti-bot Shopee sendiri (kode error 90309999, dikonfirmasi lewat
-// riset publik Sep 2026) -- ini BUKAN bug di app ini, & tidak selalu bisa
-// diakali. Disimpen sbg konstanta spy gampang dicek balik di bawah (buat
-// tau kapan boleh dihapus/ditimpa pesan lain).
-const VIDEODL_SHOPEE_DISCLAIMER = 'Fitur Shopee kadang diblokir sistem anti-bot Shopee sendiri (bukan masalah link kamu) -- kalau gagal, coba lagi nanti.';
 videoDlUrlInput?.addEventListener('input', () => {
   const detected = videoDlDetectPlatform((videoDlUrlInput.value || '').trim());
   videoDlPlatformRow?.querySelectorAll('.videodl-platform-chip').forEach((chip) => {
@@ -11137,15 +11125,6 @@ videoDlUrlInput?.addEventListener('input', () => {
   // Tombol "X" cuma nongol kalau field-nya ada isinya, biar tidak
   // ganggu placeholder pas kosong.
   videoDlClearBtn?.classList.toggle('videodl-show', !!videoDlUrlInput.value.trim());
-  const statusEl = document.getElementById('videoDlStatus');
-  if (detected === 'shopee') {
-    videoDlSetStatus(VIDEODL_SHOPEE_DISCLAIMER, false);
-  } else if (statusEl && statusEl.textContent === VIDEODL_SHOPEE_DISCLAIMER) {
-    // Bersihin disclaimer kalau user ganti link ke platform lain -- tapi
-    // JANGAN sentuh kalau isinya pesan lain (mis. hasil error dari fetch
-    // sebelumnya), supaya tidak menimpa status yg lagi relevan.
-    videoDlSetStatus('', false);
-  }
 });
 
 document.getElementById('videoDlPasteBtn')?.addEventListener('click', async () => {
@@ -11517,7 +11496,6 @@ const VIDEODL_LOADING_MSG = {
   instagram: 'Mengambil konten Instagram...',
   twitter: 'Mengambil konten X/Twitter...',
   pinterest: 'Mengambil konten Pinterest...',
-  shopee: 'Mengambil foto & video produk Shopee...',
 };
 
 // ---- Hasil platform NON-YouTube (/v1/fetch) -- API-nya cuma balas SATU
@@ -11852,16 +11830,6 @@ document.getElementById('videoDlFetchBtn')?.addEventListener('click', async () =
     return;
   }
   if (!platform) { videoDlSetStatus('Link tidak valid.', true); return; }
-  // Shopee (foto & video produk) WAJIB lewat Cloudflare Worker -- beda dgn
-  // platform lain yg masih py fallback panggil FastSaverAPI langsung dari
-  // browser (usingWorker false), endpoint publik Shopee sendiri tidak
-  // mengizinkan dipanggil lintas-origin langsung dari browser sama sekali
-  // (butuh Worker sbg jembatan CORS, lihat /v1/shopee/fetch di
-  // cloudflare-worker.js).
-  if (platform === 'shopee' && !usingWorker) {
-    videoDlSetStatus('Fitur Shopee butuh Cloudflare Worker aktif -- isi dulu "URL Cloudflare Worker" lewat ikon gerigi.', true);
-    return;
-  }
 
   // Lewat Worker (kalau sudah di-deploy & diisi di Pengaturan) -> header
   // 'X-Api-Key' TIDAK dikirim dari browser sama sekali, Worker yg
@@ -11899,17 +11867,6 @@ document.getElementById('videoDlFetchBtn')?.addEventListener('click', async () =
       if (!data.ok) throw new Error(videoDlFriendlyError(data));
       videoDlSetStatus('', false);
       videoDlRenderYoutubeInfo(data, url);
-    } else if (platform === 'shopee') {
-      // Endpoint terpisah /v1/shopee/fetch (bukan /v1/fetch spt platform
-      // lain di bawah) -- lihat komentar tryShopeeProduct di
-      // cloudflare-worker.js. Tidak perlu header X-Api-Key sama sekali
-      // krn ini bukan panggilan ke FastSaverAPI.
-      const qs = new URLSearchParams({ url });
-      const res = await fetch(`${apiBase}/v1/shopee/fetch?${qs.toString()}`, { signal: controller.signal });
-      data = await res.json();
-      if (!data.ok) throw new Error(videoDlFriendlyError(data));
-      videoDlSetStatus('', false);
-      videoDlRenderFetchResult(data, platform, url);
     } else {
       const qs = new URLSearchParams({ url });
       const res = await fetch(`${apiBase}/v1/fetch?${qs.toString()}`, {
