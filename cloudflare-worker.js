@@ -189,7 +189,11 @@ async function tryRapidApiYoutube(url, format, env) {
   const wantedRes = format && format !== 'audio' ? parseInt(format, 10) : null;
 
   try {
-    const qs = new URLSearchParams({ videoId, urlAccess: 'normal', videos: 'true', audios: 'true' });
+    // Nilai 'auto' (bukan 'true') dipakai krn itulah yg terkonfirmasi
+    // jalan di contoh permintaan nyata pengguna lain API ini (dicek lewat
+    // web search Sep 2026) -- 'true' sebelumnya cuma tebakan, belum
+    // pernah dites terhadap key sungguhan.
+    const qs = new URLSearchParams({ videoId, urlAccess: 'normal', videos: 'auto', audios: 'auto' });
     const res = await fetchWithTimeout(`https://${RAPIDAPI_HOST}/v2/video/details?${qs.toString()}`, {
       headers: {
         'X-RapidAPI-Key': env.RAPIDAPI_KEY,
@@ -223,7 +227,7 @@ async function tryRapidApiYoutube(url, format, env) {
     // pertama apa adanya, atau entri pertama yg punya url).
     let best = null;
     if (wantedRes) {
-      const combined = videos.filter((v) => v && v.url && v.hasAudio && v.hasVideo);
+      const combined = videos.filter((v) => v && v.url && v.hasAudio);
       if (combined.length) {
         best = combined.reduce((closest, v) => {
           const r = resOf(v);
@@ -234,7 +238,7 @@ async function tryRapidApiYoutube(url, format, env) {
       }
     }
     best = best
-      || videos.find((v) => v && v.url && v.hasAudio && v.hasVideo)
+      || videos.find((v) => v && v.url && v.hasAudio)
       || videos.find((v) => v && v.url);
 
     const audios = Array.isArray(raw.audios) ? raw.audios : (Array.isArray(raw.audios?.items) ? raw.audios.items : []);
@@ -271,7 +275,10 @@ async function tryRapidApiYoutube(url, format, env) {
 // -- termasuk yg ditambahkan fungsi ini -- tetap lewat alur
 // primary(FastSaverAPI)->fallback(RapidAPI) yg SAMA spt sebelumnya).
 //
-// SENGAJA cuma ambil entri video+audio GABUNGAN (hasAudio && hasVideo).
+// SENGAJA cuma ambil entri video+audio GABUNGAN (hasAudio: true -- setiap
+// entri di `videos.items` sudah pasti video, jadi hasAudio saja cukup
+// membedakan progressive/gabungan dari video-only; dikonfirmasi dari
+// respons JSON nyata API ini, Sep 2026).
 // YouTube sendiri cuma nyediain file gabungan-jadi-1 (progressive) itu
 // sampai res tertentu (biasanya <=720p) -- resolusi lebih tinggi
 // (1080p/1440p/2160p spt di player YouTube) di sumbernya SELALU
@@ -287,13 +294,13 @@ async function tryRapidApiYoutubeFormats(url, env) {
   const videoId = extractYoutubeId(url);
   if (!videoId) return [];
   try {
-    const qs = new URLSearchParams({ videoId, urlAccess: 'normal', videos: 'true', audios: 'true' });
+    const qs = new URLSearchParams({ videoId, urlAccess: 'normal', videos: 'auto', audios: 'auto' });
     const res = await fetchWithTimeout(`https://${RAPIDAPI_HOST}/v2/video/details?${qs.toString()}`, {
       headers: { 'X-RapidAPI-Key': env.RAPIDAPI_KEY, 'X-RapidAPI-Host': RAPIDAPI_HOST },
     });
     const raw = await res.json();
     const videos = Array.isArray(raw.videos) ? raw.videos : (Array.isArray(raw.videos?.items) ? raw.videos.items : []);
-    const combined = videos.filter((v) => v && v.url && v.hasAudio && v.hasVideo);
+    const combined = videos.filter((v) => v && v.url && v.hasAudio);
     const seen = new Set();
     const out = [];
     for (const v of combined) {
@@ -303,8 +310,12 @@ async function tryRapidApiYoutubeFormats(url, env) {
       const resNum = parseInt(m[0], 10);
       if (seen.has(resNum)) continue;
       seen.add(resNum);
-      const size = v.contentLength != null ? parseInt(v.contentLength, 10) : (v.filesize || undefined);
-      out.push({ format: `${resNum}p`, filesize: Number.isNaN(size) ? undefined : size, _res: resNum });
+      // Field ukuran file di skema nyata API ini adalah `size` (angka
+      // langsung) -- `contentLength`/`filesize` sebelumnya cuma tebakan
+      // yang salah dan selalu kosong (dikonfirmasi dari respons JSON
+      // nyata, Sep 2026).
+      const size = typeof v.size === 'number' ? v.size : undefined;
+      out.push({ format: `${resNum}p`, filesize: size, _res: resNum });
     }
     return out;
   } catch (err) {
