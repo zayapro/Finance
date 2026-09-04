@@ -450,7 +450,24 @@ async function tryShopeeProduct(rawUrl, env) {
 
   const item = json && json.data && json.data.item;
   if (!item) {
-    return { ok: false, detail: 'Shopee tidak mengembalikan data produk (mungkin produk dihapus/privat, atau permintaan diblokir Shopee).' };
+    // Sertakan field error/error_msg mentah dari respons Shopee (kalau
+    // ada) ke pesan -- get_pc BIASANYA balikin { error, error_msg, data:
+    // null } saat menolak permintaan (mis. anti-bot/IP diblokir), field
+    // ini nunjukin ALASAN penolakannya persis apa, drpd pesan generik yg
+    // nggak kelihatan bedanya "produk dihapus" vs "diblokir Shopee".
+    // Kode 90309999 = kode error RESMI sistem anti-bot Shopee (dikonfirmasi
+    // dari banyak laporan publik developer lain, Sep 2026) -- Shopee
+    // menolak permintaan yg tidak py "tanda tangan" anti-bot yg dihitung
+    // JS asli di browser (af-ac-enc-dat dst). Ini BUKAN bug di Worker kita
+    // & TIDAK BISA diakali cuma dgn ganti header/User-Agent -- bahkan
+    // scraper Shopee berbayar sekalipun kadang masih kena ini. Kasih pesan
+    // yg jujur + actionable (bukan pesan generik yg bikin user mikir ada
+    // yg salah di link/kode-nya) kalau ini penyebabnya.
+    if (json && json.error === 90309999) {
+      return { ok: false, detail: 'Shopee memblokir permintaan otomatis ini (sistem anti-bot Shopee, bukan masalah di link/Worker kamu). Fitur unduh otomatis Shopee memang sering gagal krn ini -- coba beberapa saat lagi, atau ambil videonya manual: buka link-nya di browser desktop, tekan F12 > tab Network > putar videonya > cari request video (domain susercontent.com) > copy link-nya > buka & simpan manual.' };
+    }
+    const rawErr = (json && (json.error_msg || json.error)) ? ` (Shopee: ${json.error_msg || json.error})` : '';
+    return { ok: false, detail: `Shopee tidak mengembalikan data produk (mungkin produk dihapus/privat, atau permintaan diblokir Shopee).${rawErr}` };
   }
 
   const images = Array.isArray(item.images) ? item.images : [];

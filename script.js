@@ -11121,6 +11121,14 @@ function videoDlDetectPlatform(url) {
 const videoDlUrlInput = document.getElementById('videoDlUrlInput');
 const videoDlPlatformRow = document.getElementById('videoDlPlatformRow');
 const videoDlClearBtn = document.getElementById('videoDlClearBtn');
+// Pesan info (BUKAN error) yg ditampilin pas chip Shopee kedeteksi aktif --
+// disclaimer jujur di awal, sebelum user sempat klik "Ambil Video" & baru
+// kaget dpt error. Shopee (produk MAUPUN Shopee Video) sering diblokir
+// sistem anti-bot Shopee sendiri (kode error 90309999, dikonfirmasi lewat
+// riset publik Sep 2026) -- ini BUKAN bug di app ini, & tidak selalu bisa
+// diakali. Disimpen sbg konstanta spy gampang dicek balik di bawah (buat
+// tau kapan boleh dihapus/ditimpa pesan lain).
+const VIDEODL_SHOPEE_DISCLAIMER = 'Fitur Shopee kadang diblokir sistem anti-bot Shopee sendiri (bukan masalah link kamu) -- kalau gagal, coba lagi nanti.';
 videoDlUrlInput?.addEventListener('input', () => {
   const detected = videoDlDetectPlatform((videoDlUrlInput.value || '').trim());
   videoDlPlatformRow?.querySelectorAll('.videodl-platform-chip').forEach((chip) => {
@@ -11129,6 +11137,15 @@ videoDlUrlInput?.addEventListener('input', () => {
   // Tombol "X" cuma nongol kalau field-nya ada isinya, biar tidak
   // ganggu placeholder pas kosong.
   videoDlClearBtn?.classList.toggle('videodl-show', !!videoDlUrlInput.value.trim());
+  const statusEl = document.getElementById('videoDlStatus');
+  if (detected === 'shopee') {
+    videoDlSetStatus(VIDEODL_SHOPEE_DISCLAIMER, false);
+  } else if (statusEl && statusEl.textContent === VIDEODL_SHOPEE_DISCLAIMER) {
+    // Bersihin disclaimer kalau user ganti link ke platform lain -- tapi
+    // JANGAN sentuh kalau isinya pesan lain (mis. hasil error dari fetch
+    // sebelumnya), supaya tidak menimpa status yg lagi relevan.
+    videoDlSetStatus('', false);
+  }
 });
 
 document.getElementById('videoDlPasteBtn')?.addEventListener('click', async () => {
