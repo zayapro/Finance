@@ -13927,186 +13927,162 @@ body.is-scrolling *{
 .pw-change-step[hidden]{ display:none; }
 
 /* ============================================================
-   REDESAIN ISI HALAMAN NOTIFIKASI (kartu putih) — mengikuti PERSIS
-   gambar referensi (daftar notifikasi ala app BRI): baris RATA/FLAT
-   tanpa kartu per item (tanpa border/shadow/radius sendiri-sendiri),
-   dipisah garis tipis antar-baris dalam tanggal yang sama, ikon
-   kotak kecil solid di kiri, judul tebal + subjudul + keterangan
-   waktu, dan lencana/gambar kotak kecil di kanan. Kartu ringkasan
-   nominal (chip "Tagihan Aktif"/"Hutang Aktif"), tab pemilih
-   Tagihan/Hutang, dan tombol "+ Tambah Tagihan"/"Lihat Semua" di
-   kaki halaman SEMUA DIHILANGKAN (lihat index.html & script.js) —
-   halaman ini sekarang murni daftar notifikasi tagihan+hutang yg
-   digabung jadi satu feed kronologis, tanpa fitur tambah/kelola
-   data lagi. Ikon tiap baris SEKARANG dibedakan BENTUKnya per
-   kategori (lihat NOTIF_DETAIL_ICONS di script.js -- tagihan pakai
-   ikon kwitansi, hutang pakai ikon lingkaran "Rp" ), bukan lagi
-   lencana "i" polos yg diseragamkan (NOTIF_ITEM_ICON kini cuma
-   fallback utk notifikasi kustom tanpa ikon sendiri). Warna latar
-   ikon tetap mengikuti kategori juga (amber=tagihan, ungu=hutang,
-   merah=terlambat).
+   REDESAIN ISI HALAMAN NOTIFIKASI (v3) — "gaya umum notifikasi"
+   ala WhatsApp/Telegram/Gmail/notifikasi sistem Android: daftar
+   RATA (bukan kartu terpisah lagi spt v2) dipisah garis tipis
+   antar-baris, avatar/ikon bulat SOLID di kiri, nama sumber kecil
+   abu-abu di atas judul (bukan pil berwarna lagi), judul & isi
+   pesan cuma 1 baris terpotong (...) spt notifikasi ringkas pada
+   umumnya, jam MASUK nempel di POJOK KANAN ATAS tiap baris (bukan
+   di bawah lagi), dan status belum-dibaca ditandai lewat BOBOT
+   TEKS TEBAL + titik kecil di depan judul (pola umum chat app),
+   BUKAN lagi rona latar penuh satu baris -- supaya kesannya netral
+   & lazim dipakai di hampir semua aplikasi, bukan gaya kartu
+   berwarna yg lebih "custom". Warna cuma dipakai seperlunya: avatar
+   ikon (penanda kategori) & warna jam saat mendesak/terlambat.
    ============================================================ */
 
-/* Kartu ringkasan nominal dihilangkan */
 .notif-summary{display:none !important;}
-
-/* Daftar: tanpa jarak antar-item (dipisah garis, bukan gap kartu) */
 .notif-list{gap:0;}
 
-/* Judul pengelompokan tanggal: jeda lebih lega dari grup sebelumnya,
-   persis pola "29 Agustus 2026" / "28 Agustus 2026" di referensi */
+/* Judul pengelompokan tanggal: label kecil polos, tanpa garis
+   dekoratif -- pola umum "Hari ini" / "Kemarin" pada notification
+   center kebanyakan aplikasi. */
 .notif-date-heading{
-  /* PERMINTAAN: dikurangi ketebalannya dari 800 -> 700 (800 kelihatan
-     terlalu tebal utk teks sentence-case sebesar ini dibanding label
-     kecil huruf-kapital ala .isp-date-group-head). */
-  font-size:13px;font-weight:700;color:var(--ink);
-  padding:18px 0 10px;
+  font-size:12.5px;font-weight:700;color:var(--ink-soft);
+  padding:16px 4px 6px;
 }
-.notif-date-heading:first-child{padding-top:0;}
+.notif-date-heading:first-child{padding-top:2px;}
 
-/* Baris notifikasi: RATA/FLAT, tanpa kartu (tanpa border keliling,
-   tanpa shadow, tanpa radius per-baris) — dipisah garis tipis di
-   bawah tiap baris, PERSIS pola daftar notifikasi pada referensi. */
+/* Baris notifikasi: RATA, dipisah garis tipis, tanpa kartu/bayangan
+   -- pola paling umum dipakai (Gmail/WhatsApp/Android system tray). */
 .notif-item{
+  position:relative;z-index:0;
   align-items:flex-start;
-  padding:14px 0;gap:12px;
+  padding:13px 54px 13px 4px;gap:11px;
   border-radius:0;border:none;box-shadow:none;background:transparent;
   border-bottom:1px solid var(--line);
   animation:none;
 }
-.notif-item:hover{transform:none;border-color:transparent;box-shadow:none;background:transparent;}
-.notif-item:active{transform:none;background:rgba(15,23,42,0.03);}
-/* Baris terakhir dlm satu grup tanggal (langsung diikuti judul grup
-   baru) atau baris terakhir di daftar: tanpa garis pemisah, biar
-   jeda antar-tanggal bersih tanpa garis dobel. */
-.notif-item:has(+ .notif-date-heading),
+.notif-item:hover{background:rgba(15,23,42,0.02);}
+.notif-item:active{background:rgba(15,23,42,0.045);}
 .notif-item:last-child{border-bottom:none;}
-/* Baris yg butuh perhatian (jatuh tempo dekat/terlambat): rona
-   lembut MEMENUHI LEBAR PENUH kartu putih (nembus keluar padding
-   halaman), niru baris "disorot" pada referensi — tetap tanpa
-   kartu/bayangan, cuma warna latar. Ini tetap didahulukan drpd rona
-   belum-dibaca di bawah (urgensi jatuh tempo lebih penting utk
-   terlihat drpd status baca). */
-.notif-item.soon,
-.notif-item.overdue{
-  margin:0 -18px;padding:14px 18px;border-radius:0;
-}
-.notif-item.soon{background:rgba(217,119,6,0.07);}
-.notif-item.overdue{background:rgba(225,29,72,0.07);}
 
-/* ---- Status BELUM DIBACA vs SUDAH DIBAKA ----
-   Persis pola referensi (daftar notifikasi ala app BRI): baris yang
-   belum pernah dibuka diberi rona lembut MEMENUHI LEBAR PENUH
-   (nembus keluar padding halaman, sama seperti trik .soon/.overdue
-   di atas) + judul lebih tegas/gelap, sedangkan baris yang sudah
-   dibuka kembali polos/putih + judul sedikit lebih ringan biar mata
-   langsung tahu mana yang masih baru tanpa harus baca isinya.
-   Dipakai var(--primary-soft) -- BUKAN warna biru mati/color-mix
-   generik -- karena ini variabel racikan resmi per tema (lihat
-   PRESETS di <script> paling atas & deriveGlobalThemeShades() di
-   script.js): tiap tema (oranye/emerald/sapphire/teal/amethyst/gold/
-   custom) sudah py versi "soft"-nya sendiri yang serasi, jadi begitu
-   pengguna ganti tema, rona baris belum-dibaca ini IKUT BERUBAH
-   SEKETIKA tanpa perlu kode tambahan (CSS var live, sama seperti
-   var(--primary) di titik/dot judul di bawah). */
-.notif-item.unread:not(.soon):not(.overdue){
-  margin:0 -18px;padding:14px 18px;border-radius:0;
-  background:var(--primary-soft);
-}
-.notif-item.unread:not(.soon):not(.overdue):active{
-  background:color-mix(in srgb, var(--primary) 12%, var(--primary-soft));
-}
-.notif-item.is-read{background:transparent;}
-/* Titik penanda kecil di kiri judul, cuma tampil selagi belum
-   dibaca — bantu penanda tambahan selain warna latar saja, supaya
-   tetap jelas dibedakan walau di layar dgn kontras rendah. */
-.notif-item .nm::before{
-  content:'';width:6px;height:6px;border-radius:50%;
-  background:var(--primary);flex:none;
-  display:inline-block;margin-right:1px;
-}
-.notif-item.is-read .nm::before{display:none;}
-/* Bobot judul ikut dilonggarkan begitu sudah dibaca (persis pola
-   app chat/email: yg belum dibaca tebal & gelap, yg sudah dibaca
-   sedikit lebih ringan & abu-abu) — ini bagian dari perapian font
-   yg diminta, biar hierarki "baru vs lama" langsung kebaca dari
-   jauh tanpa perlu merhatikan rona latarnya juga. */
-.notif-item.is-read .nm-text{font-weight:600;color:var(--ink-soft);}
-
-/* Ikon kiri: kotak kecil solid (bukan lingkaran/kotak besar
-   gradien), sejajar dgn baris judul — persis lencana "i" pada
-   referensi, warnanya tetap mengikuti kategori (tagihan/hutang/
-   terlambat) supaya makna semantiknya tidak hilang. */
+/* Avatar/ikon: lingkaran SOLID (bukan lagi soft-tint) -- pola umum
+   avatar ikon aplikasi di depan tiap notifikasi. */
 .notif-item-ic{
-  width:24px;height:24px;border-radius:7px;margin-top:2px;
-  background:#D97706;color:#fff;
+  position:relative;z-index:1;
+  width:42px;height:42px;border-radius:50%;margin-top:1px;
+  background:#D97706;color:#fff;flex-shrink:0;
 }
 .notif-item.type-hutang .notif-item-ic{background:#7C3AED;}
 .notif-item.overdue .notif-item-ic{background:var(--wine);}
 .notif-item.type-custom .notif-item-ic{background:var(--primary);}
-.notif-item-ic svg{width:13px;height:13px;}
+.notif-item-ic svg{width:18px;height:18px;}
 
-/* Ikon di dalam lencana kanan (thumbnail) sengaja dibuat lebih besar
-   drpd ikon kiri, biar kotak 50x50-nya tidak terasa kosong (ikon
-   kecilnya sama, cuma ukuran tampilnya dibedakan lewat CSS). */
-.notif-item-thumb svg{width:22px;height:22px;}
+/* Thumbnail kanan: cuma dipakai kalau notifikasi kustom bawa gambar
+   sungguhan, selebihnya disembunyikan (tidak duplikat ikon kiri). */
+.notif-item-thumb{display:none;}
+.notif-item-thumb.has-img{
+  display:block;width:40px;height:40px;border-radius:8px;
+  box-shadow:none;margin-top:1px;background:var(--paper);
+  flex-shrink:0;overflow:hidden;
+}
+.notif-item-thumb img{width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block;}
 
-/* Judul + subjudul + keterangan waktu: pola 3-baris ala referensi
-   (judul tebal, subjudul abu-abu bisa 2 baris, keterangan waktu
-   kecil di bawahnya). */
-.notif-item-body .nm{font-size:14px;font-weight:700;line-height:1.35;}
-.notif-item-body .meta{margin-top:3px;gap:2px;}
+/* Nama sumber: teks kecil abu-abu polos di atas judul (bukan pil
+   berwarna lagi) -- persis posisi "nama aplikasi" pada notifikasi
+   Android/Gmail. */
+.notif-item-source{
+  font-size:11px;font-weight:600;color:var(--ink-faint);
+  text-transform:none;letter-spacing:0;
+  line-height:1.3;margin-bottom:1px;
+}
+.notif-item-body{position:relative;z-index:1;}
+
+/* ---- REDESAIN (permintaan baru): KHUSUS penanda status BACA vs
+   BELUM DIBACA -- bagian lain (avatar, label sumber, 1 baris
+   terpotong, posisi jam) TIDAK diubah dari versi sebelumnya.
+   Belum dibaca: rona latar lembut kini MEMENUHI LEBAR PENUH baris
+   (nembus keluar padding halaman via margin negatif, niru trik
+   "full-bleed" ala aplikasi inbox), + titik kecil bertema kini
+   ditaruh TEPAT DI DEPAN JAM (bukan lagi di depan judul) supaya
+   penanda "baru"-nya nempel dekat info waktu & tidak mengganggu
+   keterbacaan judul lagi. Titik ini ikut berubah warna kalau
+   barisnya juga berstatus mendesak/terlambat, jadi satu lirikan ke
+   pojok kanan atas sudah cukup tahu: ada titik = baru, warnanya =
+   seberapa mendesak. Sudah dibaca: rona latar hilang (polos/putih
+   lagi), titik hilang, judul melunak jadi abu-abu medium. ---- */
+.notif-item-body .nm{
+  font-size:14px;font-weight:700;line-height:1.35;color:var(--ink);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;
+}
+.notif-item-body .nm .nm-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline;}
+
+/* ---- FIX (permintaan user): rona latar tetap "penuh" secara visual
+   (nembus keluar padding halaman), TAPI garis pembatas antar-baris
+   (border-bottom di .notif-item) TIDAK ikut ke pinggir layar lagi --
+   sebelumnya dicapai dgn margin negatif langsung di kotak .notif-item
+   (yg juga melebarkan border-bottom-nya sampai mentok pinggir).
+   SEKARANG rona itu dipindah ke ::before terpisah (dilebarkan sendiri
+   via left/right negatif, DITARUH DI BELAKANG via z-index:-1), sedangkan
+   kotak .notif-item & border-bottom-nya tetap di lebar semula (inset
+   sesuai padding halaman) -- jadi garis antar-baris berhenti pas di
+   dalam, cuma warnanya saja yg terasa penuh. */
+.notif-item.unread:not(.soon):not(.overdue)::before{
+  content:'';position:absolute;z-index:-1;
+  top:0;bottom:0;left:-18px;right:-18px;
+  background:var(--primary-soft);
+}
+.notif-item.unread:not(.soon):not(.overdue):active::before{
+  background:color-mix(in srgb, var(--primary) 12%, var(--primary-soft));
+}
+.notif-item.is-read{background:transparent;}
+.notif-item.is-read .nm{font-weight:500;color:var(--ink-soft);}
+
+.notif-item.unread .notif-item-time::before{
+  content:'';width:6px;height:6px;border-radius:50%;
+  background:var(--primary);display:inline-block;
+  margin-right:5px;vertical-align:middle;
+}
+.notif-item.unread.soon .notif-item-time::before{background:#D97706;}
+.notif-item.unread.overdue .notif-item-time::before{background:var(--wine);}
+
+/* Isi pesan: 1 baris terpotong (...) spt pratinjau notifikasi pada
+   umumnya, bukan lagi chip nominal berwarna. */
+.notif-item-body .meta{margin-top:2px;display:block;}
 .notif-item-body .amt{
-  font-family:inherit;font-size:12.5px;font-weight:500;color:var(--ink-soft);
-  line-height:1.42;white-space:normal;max-width:100%;
-  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+  display:block;font-family:inherit;font-size:12.5px;font-weight:500;
+  color:var(--ink-soft);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;
 }
 .notif-item-body .due{font-size:11.5px;color:var(--ink-faint);font-weight:500;margin-top:1px;}
 .notif-item-body .due.due-soon{color:#B45309;}
 .notif-item-body .due.due-pill{color:var(--wine);}
 
-/* Baris "sumber" (PERMINTAAN BARU): label kecil di atas judul yg
-   menandakan asal notifikasi (mis. "Tagihan"/"Hutang", atau nama
-   sumber bebas dari notifikasi kustom, mis. "Promo"/"Admin") --
-   dibuat kecil, huruf besar-renggang, warna redup, PERSIS gaya
-   eyebrow-label yg lazim dipakai di atas judul notifikasi aplikasi
-   (mis. nama app di atas judul notifikasi Android). */
-.notif-item-source{
-  font-size:10px;font-weight:700;color:var(--ink-faint);
-  text-transform:uppercase;letter-spacing:0.04em;
-  line-height:1.3;margin-bottom:2px;
-}
-/* Baris jam masuk notifikasi (PERMINTAAN BARU): kecil & paling
-   redup, ditaruh PALING BAWAH tiap baris (di bawah subjudul/nominal)
-   -- persis posisi "11:00 WIB" pada gambar referensi. */
+/* Jam masuk: dipindah ke POJOK KANAN ATAS tiap baris (posisi paling
+   umum utk waktu notifikasi di hampir semua aplikasi), warnanya
+   ikut berubah jadi tegas saat mendesak/terlambat. */
 .notif-item-time{
+  position:absolute;top:14px;right:4px;
   font-size:11px;color:var(--ink-faint);font-weight:500;
-  margin-top:4px;
+  margin-top:0;
 }
+.notif-item.soon .notif-item-time{color:#B45309;font-weight:700;}
+.notif-item.overdue .notif-item-time{color:var(--wine);font-weight:700;}
 
-/* Lencana/gambar kanan: lebih rata, bayangan tipis saja (bukan
-   dramatis) supaya terasa seperti thumbnail foto kecil ala
-   referensi, bukan lencana ikon besar. */
-/* ---- FIX: SEBELUMNYA thumbnail fallback (tanpa gambar) masih
-   mewarisi latar gradien diagonal + bayangan dari gaya kartu lama
-   (.notif-item-thumb paling atas file) krn baris ini cuma menimpa
-   ukuran/radius, TIDAK ikut menimpa "background" -- padahal gambar
-   referensi menampilkan lencana flat/rata (bukan gradien), niru
-   PERSIS palet .notif-item-ic supaya kategori (tagihan/hutang/
-   kustom) tetap konsisten warnanya antara ikon kiri & lencana kanan. ---- */
-.notif-item-thumb{width:50px;height:50px;border-radius:13px;box-shadow:none;margin-top:1px;background:#D97706;}
-.notif-item.type-hutang .notif-item-thumb{background:#7C3AED;}
-.notif-item.overdue .notif-item-thumb{background:var(--wine);}
-.notif-item.type-custom .notif-item-thumb{background:var(--primary);}
-/* Kalau notifikasi (kustom) membawa gambar sungguhan (PERMINTAAN
-   BARU): thumbnail kanan menampilkan gambar itu APA ADANYA (cover
-   penuh kotak 50x50, tanpa warna latar solid/ikon lagi) -- kalau
-   tidak ada gambar, tetap jatuh ke ikon+warna solid seperti semula. */
-.notif-item-thumb.has-img{background:var(--paper);}
-.notif-item-thumb img{
-  width:100%;height:100%;object-fit:cover;border-radius:inherit;
-  display:block;
+.notif-recur-badge{transform:scale(0.92);transform-origin:left center;}
+
+/* Status kosong: lencana netral abu-abu (warna dilepas, biar konsisten
+   dgn nada netral daftar di atas). */
+.notif-empty{text-align:center;padding:56px 24px 24px;color:var(--ink-faint);}
+.notif-empty .notif-empty-ic{
+  width:56px;height:56px;border-radius:50%;
+  background:rgba(15,23,42,0.06);color:var(--ink-faint);
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 14px;
 }
+.notif-empty p{font-weight:600;color:var(--ink-soft);max-width:220px;margin:0 auto;font-size:13px;}
 
 /* ==========================================================
    FITUR BARU: "Tampilan Aplikasi" -- 3 mode: Default (bawaan, tidak
