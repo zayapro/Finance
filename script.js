@@ -16600,9 +16600,10 @@ function maybeNotifyAppUpdate() {
     ? latest.notes[0] + (latest.notes.length > 1 ? ` (+${latest.notes.length - 1} perubahan lainnya)` : '')
     : 'Ada pembaruan baru. Cek halaman Riwayat Pembaruan di Pengaturan > Informasi.';
   pushCustomNotification({
-    source: 'ZAYAIN',
+    source: 'System',
     title: `Pembaruan v${latest.version} tersedia`,
     body: bodyPreview,
+    icon: NOTIF_UPDATE_ICON,
   });
   try { cloudStorage.setItem(NOTIF_VERSION_SEEN_KEY, latest.version); } catch (e) { /* abaikan */ }
 }
@@ -16707,7 +16708,7 @@ function renderNotifPanel() {
       <div class="notif-item type-${item.feedKind}${urgencyClass}${readClass}" data-notifopen="${item.id}" data-notifkind="${item.feedKind}" role="button" tabindex="0">
         <div class="notif-item-ic">${iconMarkup}</div>
         <div class="notif-item-body">
-          <div class="notif-item-source">${escapeHtml(item.source)}</div>
+          <div class="notif-item-source notif-item-source-pill">${NOTIF_SOURCE_PILL_ICONS[item.feedKind] || ''}${escapeHtml(item.source)}</div>
           <div class="nm">
             <span class="nm-text" title="${escapeHtml(item.title)}">${escapeHtml(item.title)}</span>
             ${item.recurring ? '<span class="notif-recur-badge" title="Berulang tiap bulan">↻ Bulanan</span>' : ''}
@@ -16721,7 +16722,7 @@ function renderNotifPanel() {
                tetap dihitung & dipertahankan krn masih dipakai utk
                urgencyClass (rona latar soon/overdue), cuma teksnya saja
                yg tidak dicetak di sini. -->
-          <div class="notif-item-time">${notifTimeLabel(item.arrivedAt)}</div>
+          <div class="notif-item-time"><svg class="notif-item-time-ic" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/></svg>${notifTimeLabel(item.arrivedAt)}</div>
         </div>
         <div class="notif-item-thumb${item.image ? ' has-img' : ''}">${thumbMarkup}</div>
       </div>`;
@@ -16746,6 +16747,25 @@ function notifGroupDateLabel(dateStr) {
 const notifDetailOverlay = document.getElementById('notifDetailOverlay');
 const notifDetailSheet = document.getElementById('notifDetailSheet');
 let notifDetailCurrent = null; // { kind, id }
+
+// Ikon khusus notifikasi "pembaruan aplikasi tersedia" (dulu ikut
+// fallback NOTIF_ITEM_ICON polos yang cuma titik "!" -- kurang cocok
+// utk konteks update). Pakai bentuk panah melingkar (refresh/sync)
+// yang lebih umum dikenali sbg lambang "versi baru/pembaruan",
+// gaya guratannya disamakan persis dgn NOTIF_DETAIL_ICONS di atas.
+const NOTIF_UPDATE_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg>';
+
+// Ikon mini utk pil label SUMBER di baris daftar notifikasi (bukan
+// ikon avatar kiri yg sudah ada -- ini versi kecil 10x10 yg nempel
+// pas di depan teks "Tagihan"/"Hutang"/"System" dkk, supaya pil
+// sumbernya kelihatan berbeda bentuk per kategori juga, tidak cuma
+// warna avatar kirinya saja). Guratannya sengaja lebih tipis (2.3)
+// & viewBox sama (24) spy pas dikecilkan ke 10px tetap tajam.
+const NOTIF_SOURCE_PILL_ICONS = {
+  tagihan: '<svg class="notif-source-pill-ic" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="3" width="15" height="18" rx="3"/><path d="M8.5 9.5h7M8.5 14.5h4.5"/></svg>',
+  hutang: '<svg class="notif-source-pill-ic" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 6.7v10.6M9.3 15.3c0 1.15 1.1 1.9 2.7 1.9s2.7-.85 2.7-1.9-1.1-1.6-2.7-2-2.7-.85-2.7-1.9 1.1-1.9 2.7-1.9 2.7.75 2.7 1.9"/></svg>',
+  custom: '<svg class="notif-source-pill-ic" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8.6a3.4 3.4 0 1 0 0 6.8 3.4 3.4 0 0 0 0-6.8z"/><path d="M19.4 13.8l1.3 1-1 1.7-1.6-.4a5.9 5.9 0 0 1-1.4 1l-.2 1.6h-2l-.2-1.6a5.9 5.9 0 0 1-1.4-1l-1.6.4-1-1.7 1.3-1a5.9 5.9 0 0 1 0-1.6l-1.3-1 1-1.7 1.6.4c.4-.4.9-.75 1.4-1l.2-1.6h2l.2 1.6c.5.25 1 .6 1.4 1l1.6-.4 1 1.7-1.3 1c.1.5.1 1.1 0 1.6z"/></svg>'
+};
 
 const NOTIF_DETAIL_ICONS = {
   tagihan: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="3" width="15" height="18" rx="3"/><path d="M8.5 9.5h7M8.5 14.5h4.5"/></svg>',

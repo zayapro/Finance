@@ -13998,9 +13998,21 @@ body.is-scrolling *{
    begitu tagihan jatuh tempo, aturan overdue lama itu tetap menang
    duluan (specificity CSS lebih tinggi krn 3 class vs cuma 1 class)
    & warnanya balik pudar walau kita sudah hapus override-nya di sini. */
-.notif-item.type-tagihan .notif-item-ic{background:#C2670D;}
-.notif-item.type-hutang .notif-item-ic{background:#6D28D9;}
-.notif-item.type-custom .notif-item-ic{background:var(--primary-deep);}
+.notif-item.type-tagihan .notif-item-ic{background:#C2670D;color:#fff;}
+.notif-item.type-hutang .notif-item-ic{background:#6D28D9;color:#fff;}
+.notif-item.type-custom .notif-item-ic{background:var(--primary-deep);color:#fff;}
+/* FIX: 2 aturan lama peninggalan versi sebelumnya (lihat baris ~1483 &
+   ~1644) masih menimpa warna ikon jadi ungu/wine pudar (karena
+   selector-nya sama beratnya & aturan di atas ini tidak pernah
+   menyentuh properti color utk kasus hutang/overdue) -- padahal
+   lingkaran ikon sekarang solid pekat, jadi ikon jadi nyaris tak
+   kelihatan (warna hampir sama dgn latarnya). Aturan baru di bawah
+   ini SENGAJA ditulis PALING TERAKHIR (menang di pertarungan urutan
+   saat spesifisitas seri) supaya ikon SELALU putih bersih & lingkaran
+   kategori selalu solid pekat (tanpa transparansi) apa pun status
+   baris (baca/blm, jatuh tempo/tidak). */
+.notif-item.overdue .notif-item-ic,
+.notif-item.soon .notif-item-ic{color:#fff;}
 /* BUG LAMA: overdue dulu menimpa background jadi satu warna wine yang
    sama utk tagihan MAUPUN hutang, jadi kategori tidak bisa dibedakan
    lagi begitu jatuh tempo lewat (lihat screenshot: "Korek" (Hutang)
@@ -14030,6 +14042,20 @@ body.is-scrolling *{
   line-height:1.3;margin-bottom:1px;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:76px;
 }
+/* Pil khusus label sumber notifikasi KUSTOM/sistem (mis. "System")
+   -- dibedakan dari Tagihan/Hutang yg sudah cukup terwakili lewat
+   warna ikon kategorinya sendiri, jadi label polos. Posisinya SAMA
+   PERSIS spt sebelumnya (baris paling atas kartu, di atas judul),
+   cuma sekarang dibungkus pil kecil + ikon supaya kelihatan sbg
+   "lencana" sumber, bukan teks polos yg gampang tertukar dgn nama
+   Tagihan/Hutang di baris lain. */
+.notif-item-source-pill{
+  display:inline-flex;align-items:center;gap:4px;
+  background:var(--paper);color:var(--ink-soft);font-weight:700;
+  padding:2.5px 8px 2.5px 6px;border-radius:999px;
+  max-width:calc(100% - 76px);
+}
+.notif-source-pill-ic{flex-shrink:0;opacity:0.85;}
 .notif-item-body{min-width:0;}
 
 /* ---- REDESAIN (permintaan baru): KHUSUS penanda status BACA vs
@@ -14090,11 +14116,19 @@ body.is-scrolling *{
    ikut berubah jadi tegas saat mendesak/terlambat. */
 .notif-item-time{
   position:absolute;top:1px;right:4px;
+  display:inline-flex;align-items:center;gap:3px;
   font-size:clamp(10px,2.6vw,11px);color:var(--ink-faint);font-weight:500;
   margin-top:0;
 }
-.notif-item.soon .notif-item-time{color:#B45309;font-weight:600;}
-.notif-item.overdue .notif-item-time{color:var(--wine);font-weight:600;}
+/* Ikon jam kecil di depan teks jam: warnanya otomatis ikut warna teks
+   (currentColor) jadi tidak perlu diatur berulang tiap status
+   (normal/soon/overdue) -- cukup redupkan sedikit opacity-nya saja
+   supaya tidak lebih menonjol drpd angkanya sendiri. */
+.notif-item-time-ic{flex-shrink:0;opacity:0.75;}
+/* PERMINTAAN: jam dibuat SATU warna netral saja, tidak lagi berubah
+   ikut status mendesak/terlambat (dulu jadi amber/merah) -- status
+   urgensi baris cukup diwakili warna judul/latar lain, jam cukup jadi
+   info waktu polos yang konsisten di semua baris. */
 
 .notif-recur-badge{font-size:clamp(9.5px,2.4vw,10.5px);font-weight:600;}
 
