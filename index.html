@@ -13956,9 +13956,17 @@ body.is-scrolling *{
    sisa lebar baris di SEBELAH KANAN teks lewat ::after + flex:1),
    pola "31 Agustus 2026 ───" rata kiri. */
 .notif-date-heading{
-  display:flex;align-items:center;gap:10px;justify-content:flex-start;
+  display:flex;align-items:center;gap:0;justify-content:flex-start;
   font-size:clamp(11.5px,3vw,13px);font-weight:700;color:var(--ink-soft);
   padding:16px 4px 6px;
+}
+/* Label tanggal dibungkus pil kecil (border tipis warna SAMA dgn
+   garis pembatas .line di bawah, biar keduanya "menyatu" -- garis
+   nempel pas di ujung kanan pil, spt satu elemen utuh, bukan dua
+   elemen lepas yg kebetulan bersebelahan). */
+.notif-date-heading span{
+  border:1px solid var(--line);border-radius:999px;
+  padding:3px 11px;flex-shrink:0;
 }
 .notif-date-heading::after{
   content:'';flex:1;height:1px;background:var(--line);
@@ -14051,10 +14059,17 @@ body.is-scrolling *{
    Tagihan/Hutang di baris lain. */
 .notif-item-source-pill{
   display:inline-flex;align-items:center;gap:4px;
-  background:var(--paper);color:var(--ink-soft);font-weight:700;
-  padding:2.5px 8px 2.5px 6px;border-radius:999px;
+  background:var(--paper);color:var(--ink-soft);font-weight:600;
+  padding:3px 9px;border-radius:999px;
   max-width:calc(100% - 76px);
 }
+/* Warna pil disamakan dgn warna ikon kategorinya masing-masing (versi
+   pudar/tint 12% sbg latar, warna solidnya sbg teks) supaya sekilas
+   pandang langsung nyambung dgn ikon di kiri -- bukan cuma abu-abu
+   generik utk semua tipe. */
+.notif-item.type-tagihan .notif-item-source-pill{background:rgba(194,103,13,0.13);color:#C2670D;}
+.notif-item.type-hutang .notif-item-source-pill{background:rgba(109,40,217,0.13);color:#6D28D9;}
+.notif-item.type-custom .notif-item-source-pill{background:color-mix(in srgb, var(--primary-deep) 14%, transparent);color:var(--primary-deep);}
 .notif-source-pill-ic{flex-shrink:0;opacity:0.85;}
 .notif-item-body{min-width:0;}
 
@@ -14115,7 +14130,7 @@ body.is-scrolling *{
    umum utk waktu notifikasi di hampir semua aplikasi), warnanya
    ikut berubah jadi tegas saat mendesak/terlambat. */
 .notif-item-time{
-  position:absolute;top:1px;right:4px;
+  position:absolute;top:13px;right:4px;
   display:inline-flex;align-items:center;gap:3px;
   font-size:clamp(10px,2.6vw,11px);color:var(--ink-faint);font-weight:500;
   margin-top:0;

@@ -16688,7 +16688,7 @@ function renderNotifPanel() {
     const arrivedDateOnly = item.arrivedAt.slice(0, 10);
     const groupLabel = notifGroupDateLabel(arrivedDateOnly);
     const groupHeading = groupLabel !== lastGroupDate
-      ? `<div class="notif-date-heading">${escapeHtml(groupLabel)}</div>` : '';
+      ? `<div class="notif-date-heading"><span>${escapeHtml(groupLabel)}</span></div>` : '';
     lastGroupDate = groupLabel;
     // PERMINTAAN BARU: ikon kiri & thumbnail kanan tidak lagi seragam
     // (dulu semua baris pakai NOTIF_ITEM_ICON polos, cuma warnanya yg
@@ -16708,7 +16708,7 @@ function renderNotifPanel() {
       <div class="notif-item type-${item.feedKind}${urgencyClass}${readClass}" data-notifopen="${item.id}" data-notifkind="${item.feedKind}" role="button" tabindex="0">
         <div class="notif-item-ic">${iconMarkup}</div>
         <div class="notif-item-body">
-          <div class="notif-item-source notif-item-source-pill">${NOTIF_SOURCE_PILL_ICONS[item.feedKind] || ''}${escapeHtml(item.source)}</div>
+          <div class="notif-item-source notif-item-source-pill">${escapeHtml(item.source)}</div>
           <div class="nm">
             <span class="nm-text" title="${escapeHtml(item.title)}">${escapeHtml(item.title)}</span>
             ${item.recurring ? '<span class="notif-recur-badge" title="Berulang tiap bulan">↻ Bulanan</span>' : ''}
