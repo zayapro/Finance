@@ -1462,11 +1462,18 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
   animation:notifItemIn .25s ease both;
   transition:border-color .15s ease, background .15s ease, transform .15s ease, box-shadow .15s ease;
 }
-.notif-item:hover{transform:translateY(-1px);border-color:rgba(37,99,235,0.28);box-shadow:0 6px 16px -8px rgba(15,23,42,0.18);}
 @keyframes notifItemIn{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
-.notif-item.soon{background:rgba(217,119,6,0.04);}
-.notif-item.overdue{border-color:rgba(225,29,72,0.32);background:rgba(225,29,72,0.05);}
-.notif-item.overdue:hover{border-color:rgba(225,29,72,0.5);box-shadow:0 6px 16px -8px rgba(225,29,72,0.25);}
+/* CATATAN: aturan hover/overdue kartu lama (border-color, background
+   tint, box-shadow, transform) DIHAPUS dari sini -- itu peninggalan
+   gaya kartu sebelum daftar notifikasi diredesain jadi baris rata ala
+   Gmail/WhatsApp. Karena selector .notif-item.overdue & .notif-item.
+   overdue:hover LEBIH SPESIFIK, aturan lama itu tetap menimpa border
+   & hover baris overdue di gaya baru walau baris lain sudah rata --
+   itulah sebabnya sebagian garis pembatas kelihatan pink/beda sendiri
+   & hover-nya tidak konsisten antar baris. Gaya hover & garis
+   pembatas yang berlaku SEKARANG cuma satu, ada di .notif-item /
+   .notif-item:hover / .notif-item.overdue .notif-item-ic dkk di
+   dekat komentar "Baris notifikasi: RATA, dipisah garis tipis". */
 .notif-recur-badge{display:inline-flex;align-items:center;gap:3px;font-size:9.5px;font-weight:800;color:var(--forest-glow);background:rgba(37,99,235,0.1);padding:2px 7px;border-radius:999px;flex-shrink:0;white-space:nowrap;}
 .notif-item-ic{
   width:38px;height:38px;border-radius:12px;flex-shrink:0;
@@ -13392,7 +13399,6 @@ body.is-scrolling *{
   .notif-panel-head-sub,.ai-chat-head-sub{font-size:10.5px;}
   .notif-summary-chip .v{font-size:13px;}
   .notif-item-ic{width:34px;height:34px;border-radius:10px;}
-  .notif-item-body .nm{font-size:12.5px;}
 
   /* ---- Halaman detail & leaderboard ---- */
   .detail-page-titles h2{font-size:16px;}
@@ -13945,12 +13951,19 @@ body.is-scrolling *{
 .notif-summary{display:none !important;}
 .notif-list{gap:0;}
 
-/* Judul pengelompokan tanggal: label kecil polos, tanpa garis
-   dekoratif -- pola umum "Hari ini" / "Kemarin" pada notification
-   center kebanyakan aplikasi. */
+/* Judul pengelompokan tanggal: label kecil polos + garis pembatas
+   TEPAT DI SEBELAH teks tanggal (bukan lagi garis penuh terpisah di
+   atas/bawah -- garis dijadikan ::after yang mengisi sisa lebar baris
+   lewat flex:1, jadi menyatu dalam satu baris yang sama dengan
+   tanggal), pola umum "Hari ini ───" pada beberapa notification
+   center. */
 .notif-date-heading{
-  font-size:12.5px;font-weight:700;color:var(--ink-soft);
+  display:flex;align-items:center;gap:10px;
+  font-size:clamp(11.5px,3vw,13px);font-weight:600;color:var(--ink-soft);
   padding:16px 4px 6px;
+}
+.notif-date-heading::after{
+  content:'';flex:1;height:1px;background:var(--line);
 }
 .notif-date-heading:first-child{padding-top:2px;}
 
@@ -13967,17 +13980,22 @@ body.is-scrolling *{
 .notif-item:hover{background:rgba(15,23,42,0.02);}
 .notif-item:active{background:rgba(15,23,42,0.045);}
 .notif-item:last-child{border-bottom:none;}
+.notif-item:has(+ .notif-date-heading){border-bottom:none;}
 
-/* Avatar/ikon: lingkaran SOLID (bukan lagi soft-tint) -- pola umum
-   avatar ikon aplikasi di depan tiap notifikasi. */
+/* Avatar/ikon: lingkaran SOLID -- warnanya SENGAJA dipakai versi
+   lebih gelap/redup drpd sebelumnya (bukan lagi #D97706/#7C3AED/
+   var(--wine)/var(--primary) yang terlalu terang), pakai shade gelap
+   yang SUDAH ADA & dipakai konsisten di bagian lain file ini (tab
+   aktif Hutang/Tagihan, gradient thumbnail lama, dst) supaya tidak
+   menambah warna baru. */
 .notif-item-ic{
   position:relative;z-index:1;
   width:42px;height:42px;border-radius:50%;margin-top:1px;
-  background:#D97706;color:#fff;flex-shrink:0;
+  background:#B45309;color:#fff;flex-shrink:0;
 }
-.notif-item.type-hutang .notif-item-ic{background:#7C3AED;}
-.notif-item.overdue .notif-item-ic{background:var(--wine);}
-.notif-item.type-custom .notif-item-ic{background:var(--primary);}
+.notif-item.type-hutang .notif-item-ic{background:#6D28D9;}
+.notif-item.overdue .notif-item-ic{background:#9F1239;}
+.notif-item.type-custom .notif-item-ic{background:var(--primary-deep);}
 .notif-item-ic svg{width:18px;height:18px;}
 
 /* Thumbnail kanan: cuma dipakai kalau notifikasi kustom bawa gambar
@@ -13994,7 +14012,7 @@ body.is-scrolling *{
    berwarna lagi) -- persis posisi "nama aplikasi" pada notifikasi
    Android/Gmail. */
 .notif-item-source{
-  font-size:11px;font-weight:600;color:var(--ink-faint);
+  font-size:clamp(10px,2.6vw,11px);font-weight:600;color:var(--ink-faint);
   text-transform:none;letter-spacing:0;
   line-height:1.3;margin-bottom:1px;
 }
@@ -14014,7 +14032,7 @@ body.is-scrolling *{
    seberapa mendesak. Sudah dibaca: rona latar hilang (polos/putih
    lagi), titik hilang, judul melunak jadi abu-abu medium. ---- */
 .notif-item-body .nm{
-  font-size:14px;font-weight:700;line-height:1.35;color:var(--ink);
+  font-size:clamp(13px,3.4vw,14.5px);font-weight:700;line-height:1.35;color:var(--ink);
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;
 }
 .notif-item-body .nm .nm-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline;}
@@ -14052,7 +14070,7 @@ body.is-scrolling *{
    umumnya, bukan lagi chip nominal berwarna. */
 .notif-item-body .meta{margin-top:2px;display:block;}
 .notif-item-body .amt{
-  display:block;font-family:inherit;font-size:12.5px;font-weight:500;
+  display:block;font-family:inherit;font-size:clamp(11.5px,3vw,12.5px);font-weight:500;
   color:var(--ink-soft);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;
 }
@@ -14065,13 +14083,13 @@ body.is-scrolling *{
    ikut berubah jadi tegas saat mendesak/terlambat. */
 .notif-item-time{
   position:absolute;top:14px;right:4px;
-  font-size:11px;color:var(--ink-faint);font-weight:500;
+  font-size:clamp(10px,2.6vw,11px);color:var(--ink-faint);font-weight:500;
   margin-top:0;
 }
 .notif-item.soon .notif-item-time{color:#B45309;font-weight:700;}
 .notif-item.overdue .notif-item-time{color:var(--wine);font-weight:700;}
 
-.notif-recur-badge{transform:scale(0.92);transform-origin:left center;}
+.notif-recur-badge{font-size:clamp(9.5px,2.4vw,10.5px);font-weight:700;}
 
 /* Status kosong: lencana netral abu-abu (warna dilepas, biar konsisten
    dgn nada netral daftar di atas). */
