@@ -13952,17 +13952,15 @@ body.is-scrolling *{
 .notif-list{gap:0;}
 
 /* Judul pengelompokan tanggal: label kecil polos + garis pembatas
-   TEPAT DI SEBELAH teks tanggal (bukan lagi garis penuh terpisah di
-   atas/bawah -- garis dijadikan ::after yang mengisi sisa lebar baris
-   lewat flex:1, jadi menyatu dalam satu baris yang sama dengan
-   tanggal), pola umum "Hari ini ───" pada beberapa notification
-   center. */
+   TEPAT DI SEBELAH teks tanggal, teksnya RATA KANAN (garis mengisi
+   sisa lebar baris di SEBELAH KIRI teks lewat ::before + flex:1),
+   pola "─── 31 Agustus 2026" rata kanan. */
 .notif-date-heading{
-  display:flex;align-items:center;gap:10px;
+  display:flex;align-items:center;gap:10px;justify-content:flex-end;
   font-size:clamp(11.5px,3vw,13px);font-weight:600;color:var(--ink-soft);
   padding:16px 4px 6px;
 }
-.notif-date-heading::after{
+.notif-date-heading::before{
   content:'';flex:1;height:1px;background:var(--line);
 }
 .notif-date-heading:first-child{padding-top:2px;}
