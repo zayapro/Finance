@@ -13989,7 +13989,7 @@ body.is-scrolling *{
 .notif-item-ic{
   position:relative;z-index:1;
   width:42px;height:42px;border-radius:50%;margin-top:1px;
-  background:#B45309;color:#fff;flex-shrink:0;
+  background:#C2670D;color:#fff;flex-shrink:0;
   box-shadow:none;
 }
 /* CATATAN: .type-tagihan ditulis eksplisit (bukan cuma andalkan warna
@@ -13998,16 +13998,17 @@ body.is-scrolling *{
    begitu tagihan jatuh tempo, aturan overdue lama itu tetap menang
    duluan (specificity CSS lebih tinggi krn 3 class vs cuma 1 class)
    & warnanya balik pudar walau kita sudah hapus override-nya di sini. */
-.notif-item.type-tagihan .notif-item-ic{background:#B45309;}
+.notif-item.type-tagihan .notif-item-ic{background:#C2670D;}
 .notif-item.type-hutang .notif-item-ic{background:#6D28D9;}
 .notif-item.type-custom .notif-item-ic{background:var(--primary-deep);}
 /* BUG LAMA: overdue dulu menimpa background jadi satu warna wine yang
    sama utk tagihan MAUPUN hutang, jadi kategori tidak bisa dibedakan
    lagi begitu jatuh tempo lewat (lihat screenshot: "Korek" (Hutang)
    & "Satu lagi" (Tagihan) sama-sama jadi maroon). Sekarang overdue
-   cuma nambah cincin merah di luar warna kategori aslinya -- kategori
-   (amber/ungu) tetap kelihatan + status terlambat tetap jelas. */
-.notif-item.overdue .notif-item-ic{box-shadow:0 0 0 2px var(--wine);}
+   TIDAK lagi mengubah tampilan ikon sama sekali (tanpa cincin/border) --
+   kategori (amber/ungu) tetap solid & bersih, status mendesak/terlambat
+   cukup diwakili teks jam yang sudah merah + tebal + titik penanda,
+   jadi ikonnya tidak usah dobel penanda. */
 .notif-item-ic svg{width:21px;height:21px;}
 
 /* Thumbnail kanan: cuma dipakai kalau notifikasi kustom bawa gambar
@@ -14027,8 +14028,9 @@ body.is-scrolling *{
   font-size:clamp(10px,2.6vw,11px);font-weight:500;color:var(--ink-faint);
   text-transform:none;letter-spacing:0;
   line-height:1.3;margin-bottom:1px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:76px;
 }
-.notif-item-body{position:relative;z-index:1;}
+.notif-item-body{min-width:0;}
 
 /* ---- REDESAIN (permintaan baru): KHUSUS penanda status BACA vs
    BELUM DIBACA -- bagian lain (avatar, label sumber, 1 baris
@@ -14049,34 +14051,27 @@ body.is-scrolling *{
 }
 .notif-item-body .nm .nm-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline;}
 
-/* ---- FIX (permintaan user): rona latar tetap "penuh" secara visual
-   (nembus keluar padding halaman), TAPI garis pembatas antar-baris
-   (border-bottom di .notif-item) TIDAK ikut ke pinggir layar lagi --
-   sebelumnya dicapai dgn margin negatif langsung di kotak .notif-item
-   (yg juga melebarkan border-bottom-nya sampai mentok pinggir).
-   SEKARANG rona itu dipindah ke ::before terpisah (dilebarkan sendiri
-   via left/right negatif, DITARUH DI BELAKANG via z-index:-1), sedangkan
-   kotak .notif-item & border-bottom-nya tetap di lebar semula (inset
-   sesuai padding halaman) -- jadi garis antar-baris berhenti pas di
-   dalam, cuma warnanya saja yg terasa penuh. */
-.notif-item.unread:not(.soon):not(.overdue)::before{
-  content:'';position:absolute;z-index:-1;
-  top:0;bottom:0;left:-18px;right:-18px;
-  background:var(--primary-soft);
-}
-.notif-item.unread:not(.soon):not(.overdue):active::before{
-  background:color-mix(in srgb, var(--primary) 12%, var(--primary-soft));
-}
 .notif-item.is-read{background:transparent;}
 .notif-item.is-read .nm{font-weight:500;color:var(--ink-soft);}
 
-.notif-item.unread .notif-item-time::before{
-  content:'';width:6px;height:6px;border-radius:50%;
-  background:var(--primary);display:inline-block;
-  margin-right:5px;vertical-align:middle;
+/* ---- GANTI GAYA (permintaan user, Opsi B): penanda belum-dibaca
+   TIDAK lagi rona latar penuh + titik dekat jam, tapi titik kecil
+   yang nempel di POJOK KANAN-ATAS ikon/avatar (spt badge story
+   IG/WA) -- lebih tenang & tidak bikin baris terasa ramai. Judul yg
+   tetap tebal (lihat .is-read .nm di atas yg melunakkan begitu
+   dibaca) sudah cukup jadi penanda utama; titik di ikon ini jadi
+   penguat sekali lirik. Warnanya ikut berubah kalau barisnya juga
+   berstatus mendesak/terlambat (persis logika lama, cuma lokasinya
+   dipindah). border 2px warna var(--card) di titiknya berfungsi
+   sbg "celah" spy titik tetap kelihatan jelas walau nempel di ikon
+   berwarna apa pun (sama teknik dgn celah cincin overdue sebelumnya). */
+.notif-item.unread .notif-item-ic::after{
+  content:'';position:absolute;top:-2px;right:-2px;
+  width:11px;height:11px;border-radius:50%;
+  background:var(--primary);border:2px solid var(--card);
 }
-.notif-item.unread.soon .notif-item-time::before{background:#D97706;}
-.notif-item.unread.overdue .notif-item-time::before{background:var(--wine);}
+.notif-item.unread.soon .notif-item-ic::after{background:#D97706;}
+.notif-item.unread.overdue .notif-item-ic::after{background:var(--wine);}
 
 /* Isi pesan: 1 baris terpotong (...) spt pratinjau notifikasi pada
    umumnya, bukan lagi chip nominal berwarna. */
@@ -14094,7 +14089,7 @@ body.is-scrolling *{
    umum utk waktu notifikasi di hampir semua aplikasi), warnanya
    ikut berubah jadi tegas saat mendesak/terlambat. */
 .notif-item-time{
-  position:absolute;top:14px;right:4px;
+  position:absolute;top:1px;right:4px;
   font-size:clamp(10px,2.6vw,11px);color:var(--ink-faint);font-weight:500;
   margin-top:0;
 }
