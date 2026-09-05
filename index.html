@@ -13952,15 +13952,15 @@ body.is-scrolling *{
 .notif-list{gap:0;}
 
 /* Judul pengelompokan tanggal: label kecil polos + garis pembatas
-   TEPAT DI SEBELAH teks tanggal, teksnya RATA KANAN (garis mengisi
-   sisa lebar baris di SEBELAH KIRI teks lewat ::before + flex:1),
-   pola "─── 31 Agustus 2026" rata kanan. */
+   TEPAT DI SEBELAH teks tanggal, teksnya RATA KIRI (garis mengisi
+   sisa lebar baris di SEBELAH KANAN teks lewat ::after + flex:1),
+   pola "31 Agustus 2026 ───" rata kiri. */
 .notif-date-heading{
-  display:flex;align-items:center;gap:10px;justify-content:flex-end;
+  display:flex;align-items:center;gap:10px;justify-content:flex-start;
   font-size:clamp(11.5px,3vw,13px);font-weight:600;color:var(--ink-soft);
   padding:16px 4px 6px;
 }
-.notif-date-heading::before{
+.notif-date-heading::after{
   content:'';flex:1;height:1px;background:var(--line);
 }
 .notif-date-heading:first-child{padding-top:2px;}
@@ -13990,10 +13990,17 @@ body.is-scrolling *{
   position:relative;z-index:1;
   width:42px;height:42px;border-radius:50%;margin-top:1px;
   background:#B45309;color:#fff;flex-shrink:0;
+  box-shadow:none;
 }
 .notif-item.type-hutang .notif-item-ic{background:#6D28D9;}
-.notif-item.overdue .notif-item-ic{background:#9F1239;}
 .notif-item.type-custom .notif-item-ic{background:var(--primary-deep);}
+/* BUG LAMA: overdue dulu menimpa background jadi satu warna wine yang
+   sama utk tagihan MAUPUN hutang, jadi kategori tidak bisa dibedakan
+   lagi begitu jatuh tempo lewat (lihat screenshot: "Korek" (Hutang)
+   & "Satu lagi" (Tagihan) sama-sama jadi maroon). Sekarang overdue
+   cuma nambah cincin merah di luar warna kategori aslinya -- kategori
+   (amber/ungu) tetap kelihatan + status terlambat tetap jelas. */
+.notif-item.overdue .notif-item-ic{box-shadow:0 0 0 2px var(--wine);}
 .notif-item-ic svg{width:18px;height:18px;}
 
 /* Thumbnail kanan: cuma dipakai kalau notifikasi kustom bawa gambar
