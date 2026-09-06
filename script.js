@@ -1494,13 +1494,20 @@ function applySaldoVisibility() {
   valueEl.innerHTML = hidden ? maskCurrencyString(fmtRupiah(raw)) : fmtSaldoDisplayHTML(raw);
   iconEl.innerHTML = hidden ? EYE_OFF_SVG : EYE_OPEN_SVG;
   if (btn) btn.title = hidden ? 'Tampilkan saldo' : 'Sembunyikan saldo';
+  if (typeof renderDompetPage === 'function') renderDompetPage();
 }
 
-document.getElementById('saldoToggle').addEventListener('click', () => {
+/* Dipisah dari listener klik supaya bisa dipanggil ULANG dari tempat lain
+   (mis. tombol mata "Total Saldo Kamu" di halaman Dompet) -- keduanya
+   sengaja berbagi SATU status tersimpan yg sama (SALDO_HIDE_KEY), supaya
+   sembunyikan/tampilkan saldo di satu tempat otomatis ikut berubah di
+   tempat lain juga. */
+function toggleSaldoHidden() {
   const nextHidden = !isSaldoHidden();
   cloudStorage.setItem(SALDO_HIDE_KEY, nextHidden ? '1' : '0');
   applySaldoVisibility();
-});
+}
+document.getElementById('saldoToggle').addEventListener('click', toggleSaldoHidden);
 
 let saldoAnimFrame = null;
 // PENTING (fix "saldo sempat kelihatan minus/salah" sesaat setelah
@@ -4853,6 +4860,99 @@ function renderWalletCardHtml(iconWalletCard, animIndex) {
       <div class="wallet-manual-note">Total saldo di-update secara manual</div>
     </div>
   `;
+}
+
+/* ==========================================================
+   HALAMAN DOMPET (#page-dompet) -- kartu "Total Saldo Kamu" + daftar
+   akun bank/e-wallet, mengikuti struktur gambar referensi "Portofolio"
+   (kartu saldo besar + daftar "Tabungan" di bawahnya).
+
+   PENTING: BUKAN data contoh/statis -- memakai ULANG array `wallets`
+   yg sama dgn kartu "Saldo Bank & E-Wallet" di Beranda, dan status
+   sembunyikan/tampilkan saldo yg sama dgn toggle privasi Beranda
+   (isSaldoHidden()/toggleSaldoHidden()). Tombol "+ Tambah", tiap baris
+   akun (buka utk edit), & tombol hapus di sini memakai ULANG modal +
+   fungsi yg sudah ada (openWalletModal/openEditWalletModal/
+   openDeleteConfirm) -- TIDAK ada modal/endpoint baru dibuat khusus
+   utk halaman ini, supaya datanya selalu konsisten dgn Beranda.
+========================================================== */
+function renderDompetPage() {
+  const listEl = document.getElementById('dompetWalletList');
+  if (!listEl) return; // markup halaman Dompet versi lama, belum ada elemen ini
+
+  const hidden = isSaldoHidden();
+  const total = wallets.reduce((s, w) => s + (Number(w.balance) || 0), 0);
+
+  const totalValueEl = document.getElementById('dompetTotalValue');
+  const totalEyeEl = document.getElementById('dompetTotalEye');
+  const eyeBtn = document.getElementById('dompetTotalEyeBtn');
+  if (totalValueEl) totalValueEl.textContent = hidden ? maskCurrencyString(fmtRupiah(total)) : fmtRupiah(total);
+  if (totalEyeEl) totalEyeEl.innerHTML = hidden ? EYE_OFF_SVG : EYE_OPEN_SVG;
+  if (eyeBtn) eyeBtn.title = hidden ? 'Tampilkan saldo' : 'Sembunyikan saldo';
+
+  const emptyEl = document.getElementById('dompetEmptyState');
+  if (!wallets.length) {
+    listEl.innerHTML = '';
+    listEl.hidden = true;
+    if (emptyEl) emptyEl.hidden = false;
+    bindDompetPageEvents();
+    return;
+  }
+  if (emptyEl) emptyEl.hidden = true;
+  listEl.hidden = false;
+
+  listEl.innerHTML = wallets.map(w => `
+    <div class="dompet-item" data-wallet="${w.id}" role="button" tabindex="0" aria-label="Lihat/ubah akun ${escapeAttr(w.name)}">
+      <div class="dompet-item-ic" style="--w-color:${w.color || '#EA580C'}">${walletLogoHtml(w)}</div>
+      <div class="dompet-item-body">
+        <div class="dompet-item-name">${escapeHtml(w.name)}</div>
+        <div class="dompet-item-cat">${escapeHtml(WALLET_CATEGORY_LABELS[w.category] || WALLET_CATEGORY_LABELS.other)}</div>
+      </div>
+      <div class="dompet-item-right">
+        <div class="dompet-item-balance mono">${hidden ? maskCurrencyString(fmtRupiah(w.balance)) : fmtRupiah(w.balance)}</div>
+        <button type="button" class="dompet-item-del" data-walletdel="${w.id}" title="Hapus akun" aria-label="Hapus akun ${escapeAttr(w.name)}">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6h16Z"/></svg>
+        </button>
+      </div>
+    </div>
+  `).join('');
+
+  bindDompetPageEvents();
+}
+
+function bindDompetPageEvents() {
+  const eyeBtn = document.getElementById('dompetTotalEyeBtn');
+  if (eyeBtn && !eyeBtn._dompetBound) {
+    eyeBtn._dompetBound = true;
+    eyeBtn.addEventListener('click', () => toggleSaldoHidden());
+  }
+
+  const addBtn = document.getElementById('dompetAddBtn');
+  if (addBtn && !addBtn._dompetBound) {
+    addBtn._dompetBound = true;
+    addBtn.addEventListener('click', () => openWalletModal());
+  }
+
+  const emptyAddBtn = document.getElementById('dompetEmptyAddBtn');
+  if (emptyAddBtn && !emptyAddBtn._dompetBound) {
+    emptyAddBtn._dompetBound = true;
+    emptyAddBtn.addEventListener('click', () => openWalletModal());
+  }
+
+  const listEl = document.getElementById('dompetWalletList');
+  if (listEl && !listEl._dompetBound) {
+    listEl._dompetBound = true;
+    listEl.addEventListener('click', (e) => {
+      const delBtn = e.target.closest('[data-walletdel]');
+      if (delBtn) { e.stopPropagation(); openDeleteConfirm(delBtn.dataset.walletdel, 'wallet'); return; }
+      const item = e.target.closest('[data-wallet]');
+      if (item) openEditWalletModal(item.dataset.wallet);
+    });
+    listEl.addEventListener('keydown', (e) => {
+      const delBtn = e.target.closest('[data-walletdel]');
+      if (delBtn && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); e.stopPropagation(); openDeleteConfirm(delBtn.dataset.walletdel, 'wallet'); }
+    });
+  }
 }
 
 /* Kartu "Saldo Bank & E-Wallet" menampilkan semua akun sebagai strip
