@@ -14791,6 +14791,7 @@ function renderPemberitahuanPromosiList(items) {
   }
   list.innerHTML = items.map((n) => `
     <div class="promo-notif-item">
+      ${n.image_url ? `<img class="promo-notif-item-img" src="${escapeHtml(n.image_url)}" alt="" loading="lazy" onerror="this.remove()">` : ''}
       <div class="promo-notif-item-head">
         <span class="promo-notif-item-title">${escapeHtml(n.title)}</span>
         <span class="promo-notif-item-date">${escapeHtml(formatPromoNotifDate(n.created_at))}</span>

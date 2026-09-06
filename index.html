@@ -11053,6 +11053,10 @@ html.zp-app-loading .page-body > .lap-panel{display:none;}
   background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
   box-shadow:var(--shadow-sm);padding:14px;display:flex;flex-direction:column;gap:6px;
 }
+.promo-notif-item-img{
+  width:100%;max-height:160px;object-fit:cover;border-radius:calc(var(--radius) - 4px);
+  display:block;margin-bottom:2px;background:var(--paper);
+}
 .promo-notif-item-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;}
 .promo-notif-item-title{
   font-family:'Poppins',sans-serif;font-weight:500;letter-spacing:-0.005em;
@@ -11065,6 +11069,12 @@ html.zp-app-loading .page-body > .lap-panel{display:none;}
   color:var(--primary,#0F8A4C);text-decoration:none;
 }
 .promo-notif-item-link:active{opacity:.7;}
+/* Kartu asli (DI LUAR wrapper sticky): lengkungannya sudah "dipakai"
+   cap di .tentang-doc-sticky-head di atas, diratakan lewat
+   .lap-filter-card--rest (bawaan), diberi sedikit padding-top pengganti
+   spy jaraknya konsisten -- pola PERSIS .tentang-page-card/.bantuan-card
+   .lap-filter-card--rest lain. */
+.promo-notif-page-card.lap-filter-card--rest{padding-top:14px;}
 .promo-notif-error{text-align:center;font-size:12.5px;color:var(--wine,#E11D48);padding:10px 4px 2px;}
 .promo-notif-login-hint{text-align:center;font-size:12.5px;color:var(--ink-faint);padding:20px 4px;line-height:1.6;}
 
@@ -16997,15 +17007,26 @@ html.dark-mode .bd-row-close{
        dibuka -- pola sama seperti #updateVersionChangelogList. ---- -->
   <div class="detail-page-overlay lap-filter-overlay" id="pemberitahuanPromosiOverlay">
     <div class="lap-filter-page">
-      <div class="lap-filter-head">
-        <button class="lap-filter-back-btn" id="pemberitahuanPromosiBackBtn" type="button" aria-label="Tutup Pemberitahuan Promosi">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
-        </button>
-        <h2>Pemberitahuan Promosi</h2>
-        <span class="lap-filter-back-btn" style="visibility:hidden" aria-hidden="true"></span>
+      <!-- ---- Header oranye dibuat MENEMPEL (sticky) di puncak layar
+           saat daftar promo di bawahnya discroll -- pola PERSIS
+           .tentang-doc-sticky-head/.bantuan-sticky-top (lihat catatan
+           lengkap di sana): dibungkus wrapper sticky tersendiri + cap
+           kosong (menampilkan lengkungan atas kartu putih) supaya
+           konsisten dgn halaman penuh lain di app ini (Laporan/Tema/
+           Tagihan & Hutang/Kebijakan Privasi, dst), bukan cuma diam di
+           puncak lalu ikut hilang ke atas spt sebelumnya. ---- -->
+      <div class="tentang-doc-sticky-head" id="pemberitahuanPromosiStickyHead">
+        <div class="lap-filter-head">
+          <button class="lap-filter-back-btn" id="pemberitahuanPromosiBackBtn" type="button" aria-label="Tutup Pemberitahuan Promosi">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <h2>Pemberitahuan Promosi</h2>
+          <span class="lap-filter-back-btn" style="visibility:hidden" aria-hidden="true"></span>
+        </div>
+        <div class="lap-filter-card tentang-doc-cap" aria-hidden="true"></div>
       </div>
 
-      <div class="lap-filter-card lap-filter-card--rest">
+      <div class="lap-filter-card lap-filter-card--rest promo-notif-page-card">
         <div class="promo-notif-list" id="pemberitahuanPromosiList">
           <p class="bantuan-empty">Memuat pemberitahuan…</p>
         </div>

@@ -1529,7 +1529,7 @@
   window.cloudFetchPromoNotifications = async function () {
     if (!currentUser) return { ok: true, loggedIn: false, data: [] };
     const { data, error } = await sb.from('promo_notifications')
-      .select('id,title,message,link_url,created_at')
+      .select('id,title,message,image_url,link_url,created_at')
       .eq('is_active', true)
       .order('created_at', { ascending: false })
       .limit(50);
