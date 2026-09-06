@@ -1184,6 +1184,87 @@
      TETAP dibuka seperti biasa -- jangan sampai kegagalan cek ini
      malah memblokir semua orang. ---------- */
   const maintenanceOverlay = document.getElementById('maintenanceOverlay');
+
+  // ---- Format tanggal+jam "Perkiraan Selesai" dalam bahasa Indonesia,
+  // pakai zona waktu PERANGKAT masing2 pengguna (bukan dipaksa WIB),
+  // krn admin mengisinya lewat <input type="datetime-local"> yang
+  // sudah dikonversi ke ISO/UTC saat disimpan (lihat
+  // localInputValueToIso() di admin.html) -- jadi begitu ditampilkan
+  // ulang di sini lewat toLocaleString(), otomatis benar utk zona
+  // waktu pengguna manapun. ----
+  function formatMaintenanceEta(d) {
+    try {
+      return d.toLocaleString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    } catch (e) { return ''; }
+  }
+
+  let maintenanceCountdownTimer = null;
+  // ---- Hitung mundur ke waktu "Perkiraan Selesai" (opsional, diatur
+  // admin di Pengaturan Aplikasi > "Perkiraan Selesai"). Tanpa waktu
+  // ini (untilIso kosong/tidak valid), cukup tampilkan indikator
+  // "sedang bekerja" generik (#maintenanceDots) tanpa janji waktu
+  // pasti. Begitu waktunya lewat, otomatis reload halaman sekali
+  // (kalau mode pemeliharaan SUDAH dimatikan admin saat itu, pengguna
+  // langsung masuk ke app; kalau admin lupa mematikannya/memperpanjang
+  // waktunya, layar ini akan tampil lagi dgn hitung mundur baru). ----
+  function startMaintenanceCountdown(untilIso) {
+    const cdBox = document.getElementById('maintenanceCountdown');
+    const dotsBox = document.getElementById('maintenanceDots');
+    const etaBox = document.getElementById('maintenanceEta');
+    const target = untilIso ? new Date(untilIso) : null;
+
+    if (!target || isNaN(target.getTime())) {
+      if (cdBox) cdBox.hidden = true;
+      if (etaBox) etaBox.hidden = true;
+      if (dotsBox) dotsBox.hidden = false;
+      return;
+    }
+
+    if (cdBox) cdBox.hidden = false;
+    if (dotsBox) dotsBox.hidden = true;
+    if (etaBox) { etaBox.hidden = false; etaBox.textContent = 'Perkiraan selesai: ' + formatMaintenanceEta(target); }
+
+    const elD = document.getElementById('maintCdDays');
+    const elH = document.getElementById('maintCdHours');
+    const elM = document.getElementById('maintCdMinutes');
+    const elS = document.getElementById('maintCdSeconds');
+    const pad = function (n) { return String(Math.max(0, n)).padStart(2, '0'); };
+
+    // Kedip singkat (kelas .tick, lihat CSS) tiap kali ANGKA pada
+    // kotak ini benar2 berubah -- bukan tiap render, supaya tidak
+    // "berkedip" percuma kalau nilainya kebetulan sama (mis. menit
+    // yang belum berganti saat detik berjalan).
+    function setBox(el, val) {
+      if (!el) return;
+      const text = pad(val);
+      if (el.textContent !== text) {
+        el.textContent = text;
+        el.classList.remove('tick');
+        void el.offsetWidth; // paksa reflow supaya animasi bisa diulang
+        el.classList.add('tick');
+      }
+    }
+
+    function render() {
+      const diffMs = target.getTime() - Date.now();
+      if (diffMs <= 0) {
+        clearInterval(maintenanceCountdownTimer);
+        setBox(elD, 0); setBox(elH, 0); setBox(elM, 0); setBox(elS, 0);
+        if (etaBox) etaBox.textContent = 'Waktu pemeliharaan sudah tercapai — memuat ulang…';
+        setTimeout(function () { location.reload(); }, 1500);
+        return;
+      }
+      const totalSec = Math.floor(diffMs / 1000);
+      setBox(elD, Math.floor(totalSec / 86400));
+      setBox(elH, Math.floor((totalSec % 86400) / 3600));
+      setBox(elM, Math.floor((totalSec % 3600) / 60));
+      setBox(elS, totalSec % 60);
+    }
+    render();
+    clearInterval(maintenanceCountdownTimer);
+    maintenanceCountdownTimer = setInterval(render, 1000);
+  }
+
   async function checkMaintenanceMode() {
     if (!maintenanceOverlay) return false;
     try {
@@ -1193,6 +1274,7 @@
       if (!maint.enabled) return false;
       const msgEl = document.getElementById('maintenanceMsg');
       if (msgEl && maint.message) msgEl.textContent = maint.message;
+      startMaintenanceCountdown(maint.until);
       maintenanceOverlay.classList.remove('hidden');
       return true;
     } catch (e) {

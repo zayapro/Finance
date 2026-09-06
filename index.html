@@ -13469,39 +13469,113 @@ body.is-scrolling *{
    satunya aksi yg tersedia cuma "Coba Lagi" (reload halaman). */
 #maintenanceOverlay{
   position:fixed; inset:0; z-index:100000;
-  background:
-    radial-gradient(760px 420px at 15% -10%, color-mix(in srgb, var(--primary) 30%, transparent), transparent 60%),
-    radial-gradient(680px 460px at 105% 110%, color-mix(in srgb, var(--primary-deep) 20%, transparent), transparent 55%),
-    var(--forest-deep, #0B1220);
   display:flex; align-items:center; justify-content:center;
-  padding:24px;
+  padding:24px; overflow:hidden;
+  background:linear-gradient(160deg, #0B1220 0%, #141b2e 45%, #1c1233 100%);
 }
 #maintenanceOverlay.hidden{ display:none; }
-.maintenance-card{
-  width:100%; max-width:380px;
-  background:var(--card, #FFFFFF);
-  border:1px solid var(--line, #E4E8EF);
-  border-radius:22px;
-  padding:34px 26px 28px;
-  color:var(--ink, #131A2A);
-  box-shadow:0 24px 60px -20px color-mix(in srgb, var(--primary-deep) 35%, transparent), 0 0 0 1px rgba(255,255,255,.4) inset;
-  text-align:center;
-  animation:cloudAuthPop .35s cubic-bezier(.2,.8,.25,1);
+/* Blob gradasi lembut yang mengambang pelan di latar -- murni
+   dekoratif (aria-hidden), memberi kesan "hidup" pada layar blokir
+   ini alih-alih terasa seperti halaman error statis. */
+.maintenance-blob{
+  position:absolute; border-radius:50%; filter:blur(60px); opacity:.5;
+  pointer-events:none; animation:maintBlobFloat 16s ease-in-out infinite;
 }
-.maintenance-card .maintenance-ic{
-  width:56px; height:56px; margin:0 auto 18px;
-  border-radius:16px;
+.maintenance-blob.b1{ width:360px; height:360px; top:-100px; left:-80px; background:radial-gradient(circle, var(--primary,#F2672B), transparent 70%); }
+.maintenance-blob.b2{ width:320px; height:320px; bottom:-110px; right:-70px; background:radial-gradient(circle, var(--primary-deep,#C2410C), transparent 70%); animation-duration:20s; animation-delay:-5s; }
+.maintenance-blob.b3{ width:240px; height:240px; top:45%; right:8%; background:radial-gradient(circle, #6d5bd0, transparent 70%); animation-duration:22s; animation-delay:-9s; }
+@keyframes maintBlobFloat{
+  0%,100%{ transform:translate(0,0) scale(1); }
+  33%{ transform:translate(26px,-18px) scale(1.08); }
+  66%{ transform:translate(-18px,22px) scale(.95); }
+}
+.maintenance-card{
+  position:relative; z-index:1;
+  width:100%; max-width:400px;
+  background:var(--card, #FFFFFF);
+  border-radius:26px;
+  padding:38px 28px 30px;
+  color:var(--ink, #131A2A);
+  box-shadow:0 30px 70px -20px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.5) inset;
+  text-align:center;
+  animation:maintCardPop .5s cubic-bezier(.2,.8,.25,1);
+}
+@keyframes maintCardPop{
+  from{ opacity:0; transform:translateY(22px) scale(.96); }
+  to{ opacity:1; transform:translateY(0) scale(1); }
+}
+.maintenance-ic-wrap{
+  position:relative; width:88px; height:88px; margin:0 auto 20px;
+  display:flex; align-items:center; justify-content:center;
+}
+.maintenance-ic-ring{
+  position:absolute; inset:0; border-radius:50%;
+  border:2px solid color-mix(in srgb, var(--primary,#F2672B) 45%, transparent);
+  animation:maintRingPulse 2.6s ease-out infinite;
+}
+.maintenance-ic-ring.r2{ animation-delay:.9s; }
+@keyframes maintRingPulse{
+  0%{ transform:scale(.68); opacity:.9; }
+  100%{ transform:scale(1.55); opacity:0; }
+}
+.maintenance-ic{
+  position:relative; width:64px; height:64px; border-radius:20px;
   display:flex; align-items:center; justify-content:center;
   background:linear-gradient(135deg, var(--primary,#F2672B), var(--primary-deep,#C2410C));
   color:#fff;
-  box-shadow:0 10px 22px -8px color-mix(in srgb, var(--primary-deep) 50%, transparent);
+  box-shadow:0 12px 26px -8px color-mix(in srgb, var(--primary-deep) 55%, transparent);
 }
-.maintenance-card h2{ margin:0 0 10px; font-size:20px; font-weight:700; color:var(--ink,#131A2A); }
-.maintenance-card p{ margin:0 0 24px; font-size:14px; line-height:1.55; color:var(--ink-soft,#5B6472); white-space:pre-line; }
+.maintenance-ic svg{ animation:maintIconWiggle 3.4s ease-in-out infinite; transform-origin:60% 60%; }
+@keyframes maintIconWiggle{
+  0%,100%{ transform:rotate(0deg); }
+  50%{ transform:rotate(16deg); }
+}
+.maintenance-card h2{ margin:0 0 8px; font-size:21px; font-weight:800; color:var(--ink,#131A2A); }
+.maintenance-card .maintenance-msg{ margin:0 0 22px; font-size:14px; line-height:1.6; color:var(--ink-soft,#5B6472); white-space:pre-line; }
+/* Hitung mundur -- lihat startMaintenanceCountdown() di cloud-sync.js.
+   Disembunyikan (hidden) sampai admin mengisi "Perkiraan Selesai";
+   kalau tidak diisi, .maintenance-dots di bawah yang tampil sbg
+   gantinya (indikator "sedang bekerja" tanpa waktu pasti). */
+.maintenance-countdown{ display:flex; justify-content:center; align-items:flex-start; gap:7px; margin:0 0 14px; }
+.maintenance-countdown .unit{ display:flex; flex-direction:column; align-items:center; gap:5px; }
+.maintenance-countdown .box{
+  min-width:46px; padding:10px 4px; border-radius:12px;
+  background:var(--paper,#F4F6F9); border:1px solid var(--line,#E4E8EF);
+  font-family:'Poppins',sans-serif; font-size:20px; font-weight:700; color:var(--ink,#131A2A);
+}
+.maintenance-countdown .box.tick{ animation:maintTick .35s ease; }
+@keyframes maintTick{
+  0%{ transform:scale(1.2); color:var(--primary,#F2672B); }
+  100%{ transform:scale(1); }
+}
+.maintenance-countdown .lbl{ font-size:10px; color:var(--ink-faint,#6B7690); text-transform:uppercase; letter-spacing:.05em; }
+.maintenance-countdown .sep{ font-size:19px; font-weight:700; color:var(--ink-faint,#6B7690); padding-top:8px; }
+.maintenance-eta{ font-size:12px; color:var(--ink-faint,#6B7690); margin:0 0 22px; }
+.maintenance-dots{ display:flex; justify-content:center; align-items:center; gap:7px; margin:0 0 24px; height:20px; }
+.maintenance-dots span{
+  width:7px; height:7px; border-radius:50%; background:var(--primary,#F2672B);
+  animation:maintDotBounce 1.2s ease-in-out infinite;
+}
+.maintenance-dots span:nth-child(2){ animation-delay:.15s; }
+.maintenance-dots span:nth-child(3){ animation-delay:.3s; }
+@keyframes maintDotBounce{
+  0%,80%,100%{ transform:translateY(0); opacity:.45; }
+  40%{ transform:translateY(-6px); opacity:1; }
+}
 .maintenance-card .btn{
   width:100%; box-sizing:border-box; border:none; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; gap:8px;
   background:linear-gradient(135deg, var(--primary,#F2672B), var(--primary-deep,#C2410C));
-  color:#fff; font-size:14.5px; font-weight:600; padding:13px 16px; border-radius:12px;
+  color:#fff; font-size:14.5px; font-weight:700; padding:14px 16px; border-radius:14px;
+  box-shadow:0 10px 24px -8px color-mix(in srgb, var(--primary-deep) 55%, transparent);
+  transition:transform .15s, box-shadow .15s;
+}
+.maintenance-card .btn:hover{ transform:translateY(-2px); box-shadow:0 14px 30px -8px color-mix(in srgb, var(--primary-deep) 60%, transparent); }
+.maintenance-card .btn:active{ transform:translateY(0); }
+.maintenance-card .btn svg{ transition:transform .5s ease; }
+.maintenance-card .btn:hover svg{ transform:rotate(180deg); }
+@media (prefers-reduced-motion:reduce){
+  .maintenance-blob, .maintenance-ic-ring, .maintenance-ic svg, .maintenance-dots span, .maintenance-card{ animation:none; }
 }
 .cloud-auth-card{
   width:100%; max-width:380px;
@@ -20279,18 +20353,53 @@ html.dark-mode .bd-row-close{
      dieksekusi duluan kalau memang tidak sedang dipakai. -->
 <!-- ===== OVERLAY LOGIN / DAFTAR (CLOUD SYNC) ===== -->
 <!-- Overlay Mode Pemeliharaan -- lihat CSS #maintenanceOverlay & logika
-     checkMaintenanceMode() di cloud-sync.js. Ditaruh SEBELUM
-     #cloudAuthOverlay di DOM (z-index-nya juga lebih tinggi) supaya
-     kalau mode pemeliharaan aktif, overlay ini yang tampil paling atas
-     menutupi semuanya, termasuk overlay login. -->
+     checkMaintenanceMode()/startMaintenanceCountdown() di
+     cloud-sync.js. Ditaruh SEBELUM #cloudAuthOverlay di DOM (z-index-
+     nya juga lebih tinggi) supaya kalau mode pemeliharaan aktif,
+     overlay ini yang tampil paling atas menutupi semuanya, termasuk
+     overlay login. -->
 <div id="maintenanceOverlay" class="hidden">
+  <div class="maintenance-blob b1" aria-hidden="true"></div>
+  <div class="maintenance-blob b2" aria-hidden="true"></div>
+  <div class="maintenance-blob b3" aria-hidden="true"></div>
   <div class="maintenance-card">
-    <div class="maintenance-ic">
-      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 1-5.4 5.4L4 17v3h3l5.3-5.3a4 4 0 0 1 5.4-5.4L21 6l-3 3-2-2 3-3-2.3-2.3-3 3"/></svg>
+    <div class="maintenance-ic-wrap">
+      <div class="maintenance-ic-ring r1" aria-hidden="true"></div>
+      <div class="maintenance-ic-ring r2" aria-hidden="true"></div>
+      <div class="maintenance-ic">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 1-5.4 5.4L4 17v3h3l5.3-5.3a4 4 0 0 1 5.4-5.4L21 6l-3 3-2-2 3-3-2.3-2.3-3 3"/></svg>
+      </div>
     </div>
     <h2>Sedang Pemeliharaan</h2>
-    <p id="maintenanceMsg">Aplikasi sedang dalam perbaikan sistem. Silakan coba lagi beberapa saat lagi.</p>
-    <button type="button" class="btn" onclick="location.reload()">Coba Lagi</button>
+    <p class="maintenance-msg" id="maintenanceMsg">Aplikasi sedang dalam perbaikan sistem. Silakan coba lagi beberapa saat lagi.</p>
+
+    <!-- Hitung mundur ke waktu "Perkiraan Selesai" yang diatur admin
+         (opsional) -- diisi & ditampilkan/disembunyikan oleh
+         startMaintenanceCountdown() di cloud-sync.js. Kalau admin
+         tidak mengisi waktu selesai, blok ini tetap hidden & yang
+         tampil sbg gantinya cuma #maintenanceDots di bawah. -->
+    <div class="maintenance-countdown" id="maintenanceCountdown" hidden>
+      <div class="unit"><div class="box" id="maintCdDays">00</div><span class="lbl">Hari</span></div>
+      <span class="sep">:</span>
+      <div class="unit"><div class="box" id="maintCdHours">00</div><span class="lbl">Jam</span></div>
+      <span class="sep">:</span>
+      <div class="unit"><div class="box" id="maintCdMinutes">00</div><span class="lbl">Menit</span></div>
+      <span class="sep">:</span>
+      <div class="unit"><div class="box" id="maintCdSeconds">00</div><span class="lbl">Detik</span></div>
+    </div>
+    <p class="maintenance-eta" id="maintenanceEta" hidden></p>
+
+    <!-- Indikator "sedang bekerja" generik (titik berdenyut) -- tampil
+         default, disembunyikan otomatis kalau hitung mundur di atas
+         aktif (ada "Perkiraan Selesai"). -->
+    <div class="maintenance-dots" id="maintenanceDots">
+      <span></span><span></span><span></span>
+    </div>
+
+    <button type="button" class="btn" onclick="location.reload()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg>
+      Coba Lagi
+    </button>
   </div>
 </div>
 <div id="cloudAuthOverlay" class="hidden">
