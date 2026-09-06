@@ -10510,8 +10510,11 @@ html.zp-app-loading .page-body > .settings-list{display:none;}
   font-size:14px;color:var(--ink);
 }
 .settings-row-chevron{flex-shrink:0;color:var(--ink-faint);}
-/* Titik merah kecil "ada promo baru" di baris "Pemberitahuan Promosi"
-   -- lihat #promoNotifDot & refreshPromoNotifBadge() di script.js. */
+/* .settings-row-dot: titik merah kecil generik utk baris menu
+   Pengaturan yg butuh penanda "ada yang baru" (dulu dipakai baris
+   "Pemberitahuan Promosi" yang sekarang sudah dihapus -- lihat
+   syncPromoNotifsToBell() di script.js -- kelas ini dipertahankan
+   krn masih bisa dipakai baris menu lain di masa depan). */
 .settings-row-dot{
   flex-shrink:0;width:8px;height:8px;border-radius:50%;
   background:var(--wine,#E11D48);margin-right:-4px;
@@ -11044,39 +11047,11 @@ html.zp-app-loading .page-body > .lap-panel{display:none;}
    Tiap pertanyaan jadi kartu putih juga (konsisten dgn .bantuan-row),
    jawabannya toggle lewat class .open (lihat initBantuanPage() di
    script.js). ---- */
-/* ---- Halaman "Pemberitahuan Promosi" (#pemberitahuanPromosiOverlay)
-   -- daftar kartu promo, dirender oleh initPemberitahuanPromosiPage()
-   di script.js. Kartu reuse gaya .bantuan-faq-item (radius/shadow
-   sama), tapi TIDAK accordion (langsung tampil semua, bukan Q&A). ---- */
-.promo-notif-list{display:flex;flex-direction:column;gap:10px;margin-top:2px;}
-.promo-notif-item{
-  background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
-  box-shadow:var(--shadow-sm);padding:14px;display:flex;flex-direction:column;gap:6px;
-}
-.promo-notif-item-img{
-  width:100%;max-height:160px;object-fit:cover;border-radius:calc(var(--radius) - 4px);
-  display:block;margin-bottom:2px;background:var(--paper);
-}
-.promo-notif-item-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;}
-.promo-notif-item-title{
-  font-family:'Poppins',sans-serif;font-weight:500;letter-spacing:-0.005em;
-  font-size:13.5px;color:var(--ink);line-height:1.4;
-}
-.promo-notif-item-date{flex-shrink:0;font-size:11px;color:var(--ink-faint);white-space:nowrap;padding-top:2px;}
-.promo-notif-item-msg{font-size:12.5px;color:var(--ink-soft);line-height:1.55;white-space:pre-line;}
-.promo-notif-item-link{
-  align-self:flex-start;margin-top:2px;font-size:12px;font-weight:700;
-  color:var(--primary,#0F8A4C);text-decoration:none;
-}
-.promo-notif-item-link:active{opacity:.7;}
-/* Kartu asli (DI LUAR wrapper sticky): lengkungannya sudah "dipakai"
-   cap di .tentang-doc-sticky-head di atas, diratakan lewat
-   .lap-filter-card--rest (bawaan), diberi sedikit padding-top pengganti
-   spy jaraknya konsisten -- pola PERSIS .tentang-page-card/.bantuan-card
-   .lap-filter-card--rest lain. */
-.promo-notif-page-card.lap-filter-card--rest{padding-top:14px;}
-.promo-notif-error{text-align:center;font-size:12.5px;color:var(--wine,#E11D48);padding:10px 4px 2px;}
-.promo-notif-login-hint{text-align:center;font-size:12.5px;color:var(--ink-faint);padding:20px 4px;line-height:1.6;}
+/* CSS halaman "Pemberitahuan Promosi" (.promo-notif-*) DIHAPUS --
+   halaman terpisahnya sudah tidak ada lagi, promo dari admin sekarang
+   tampil di panel notifikasi lonceng (lihat syncPromoNotifsToBell() &
+   openNotifDetail() di script.js, memakai style .notif-detail-* yang
+   sudah ada). */
 
 .bantuan-faq-list{display:flex;flex-direction:column;gap:10px;margin-top:2px;}
 .bantuan-faq-list[hidden]{display:none;}
@@ -13483,6 +13458,51 @@ body.is-scrolling *{
   padding:24px;
 }
 #cloudAuthOverlay.hidden{ display:none; }
+/* ============ MODE PEMELIHARAAN — OVERLAY BLOKIR PENUH ============
+   Ditampilkan oleh cloud-sync.js SEBELUM overlay login/daftar & SEBELUM
+   app (script.js) dimuat sama sekali, begitu app_settings.app_config
+   .maintenance.enabled = true (diatur dari admin panel > Pengaturan
+   Aplikasi). Sengaja pakai gaya visual & struktur yang sama dengan
+   #cloudAuthOverlay (kartu putih di atas gradasi oranye gelap) supaya
+   terasa konsisten sbg bagian dari ZAYAIN, bukan halaman error generik
+   dari browser. TIDAK ADA tombol tutup -- ini blokir total, satu-
+   satunya aksi yg tersedia cuma "Coba Lagi" (reload halaman). */
+#maintenanceOverlay{
+  position:fixed; inset:0; z-index:100000;
+  background:
+    radial-gradient(760px 420px at 15% -10%, color-mix(in srgb, var(--primary) 30%, transparent), transparent 60%),
+    radial-gradient(680px 460px at 105% 110%, color-mix(in srgb, var(--primary-deep) 20%, transparent), transparent 55%),
+    var(--forest-deep, #0B1220);
+  display:flex; align-items:center; justify-content:center;
+  padding:24px;
+}
+#maintenanceOverlay.hidden{ display:none; }
+.maintenance-card{
+  width:100%; max-width:380px;
+  background:var(--card, #FFFFFF);
+  border:1px solid var(--line, #E4E8EF);
+  border-radius:22px;
+  padding:34px 26px 28px;
+  color:var(--ink, #131A2A);
+  box-shadow:0 24px 60px -20px color-mix(in srgb, var(--primary-deep) 35%, transparent), 0 0 0 1px rgba(255,255,255,.4) inset;
+  text-align:center;
+  animation:cloudAuthPop .35s cubic-bezier(.2,.8,.25,1);
+}
+.maintenance-card .maintenance-ic{
+  width:56px; height:56px; margin:0 auto 18px;
+  border-radius:16px;
+  display:flex; align-items:center; justify-content:center;
+  background:linear-gradient(135deg, var(--primary,#F2672B), var(--primary-deep,#C2410C));
+  color:#fff;
+  box-shadow:0 10px 22px -8px color-mix(in srgb, var(--primary-deep) 50%, transparent);
+}
+.maintenance-card h2{ margin:0 0 10px; font-size:20px; font-weight:700; color:var(--ink,#131A2A); }
+.maintenance-card p{ margin:0 0 24px; font-size:14px; line-height:1.55; color:var(--ink-soft,#5B6472); white-space:pre-line; }
+.maintenance-card .btn{
+  width:100%; box-sizing:border-box; border:none; cursor:pointer;
+  background:linear-gradient(135deg, var(--primary,#F2672B), var(--primary-deep,#C2410C));
+  color:#fff; font-size:14.5px; font-weight:600; padding:13px 16px; border-radius:12px;
+}
 .cloud-auth-card{
   width:100%; max-width:380px;
   /* Kartu login sekarang pakai permukaan putih bersih senada kartu
@@ -16990,50 +17010,18 @@ html.dark-mode .bd-row-close{
   </div>
   <!-- ===== /HALAMAN "SUMBER DANA UTAMA" ===== -->
 
-  <!-- ===== HALAMAN "PEMBERITAHUAN PROMOSI" (#pemberitahuanPromosiOverlay) =====
-       Halaman baru di Pengaturan > Notifikasi, dibuka dari baris
-       "Pemberitahuan Promosi" (#pemberitahuanPromosiOpenBtn). Struktur
-       & pola SAMA PERSIS dgn #sumberDanaUtamaOverlay/#fastMenuOverlay
-       di atas (.detail-page-overlay.lap-filter-overlay > .lap-filter-page
-       > .lap-filter-head + .lap-filter-card).
-
-       Isinya daftar promo yang dikirim admin lewat admin panel (menu
-       Notifikasi > "Kirim Notifikasi"), ditarik dari tabel Supabase
-       `promo_notifications` (lihat window.cloudFetchPromoNotifications
-       di cloud-sync.js & supabase-schema.sql). Markup daftarnya SENGAJA
-       kosong (<div id="pemberitahuanPromosiList">) krn seluruh isinya
-       (loading/kosong/error/daftar) dirender oleh
-       initPemberitahuanPromosiPage() di script.js begitu halaman ini
-       dibuka -- pola sama seperti #updateVersionChangelogList. ---- -->
-  <div class="detail-page-overlay lap-filter-overlay" id="pemberitahuanPromosiOverlay">
-    <div class="lap-filter-page">
-      <!-- ---- Header oranye dibuat MENEMPEL (sticky) di puncak layar
-           saat daftar promo di bawahnya discroll -- pola PERSIS
-           .tentang-doc-sticky-head/.bantuan-sticky-top (lihat catatan
-           lengkap di sana): dibungkus wrapper sticky tersendiri + cap
-           kosong (menampilkan lengkungan atas kartu putih) supaya
-           konsisten dgn halaman penuh lain di app ini (Laporan/Tema/
-           Tagihan & Hutang/Kebijakan Privasi, dst), bukan cuma diam di
-           puncak lalu ikut hilang ke atas spt sebelumnya. ---- -->
-      <div class="tentang-doc-sticky-head" id="pemberitahuanPromosiStickyHead">
-        <div class="lap-filter-head">
-          <button class="lap-filter-back-btn" id="pemberitahuanPromosiBackBtn" type="button" aria-label="Tutup Pemberitahuan Promosi">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
-          </button>
-          <h2>Pemberitahuan Promosi</h2>
-          <span class="lap-filter-back-btn" style="visibility:hidden" aria-hidden="true"></span>
-        </div>
-        <div class="lap-filter-card tentang-doc-cap" aria-hidden="true"></div>
-      </div>
-
-      <div class="lap-filter-card lap-filter-card--rest promo-notif-page-card">
-        <div class="promo-notif-list" id="pemberitahuanPromosiList">
-          <p class="bantuan-empty">Memuat pemberitahuan…</p>
-        </div>
-      </div>
-    </div>
-  </div>
-  <!-- ===== /HALAMAN "PEMBERITAHUAN PROMOSI" ===== -->
+  <!-- ===== HALAMAN "PEMBERITAHUAN PROMOSI" TERPISAH DIHAPUS =====
+       Sebelumnya ada halaman detail sendiri (#pemberitahuanPromosiOverlay)
+       yg menarik tabel `promo_notifications` & menampilkannya di
+       Pengaturan > Notifikasi. Sekarang promo yg dikirim admin (menu
+       Notifikasi > "Kirim Notifikasi" di admin panel) langsung
+       disuntikkan ke panel notifikasi LONCENG (lihat
+       syncPromoNotifsToBell() & pushCustomNotification() di script.js)
+       supaya penggunanya cukup satu tempat notifikasi, bukan dua
+       tempat terpisah yang membingungkan. Tabel Supabase
+       `promo_notifications` & window.cloudFetchPromoNotifications di
+       cloud-sync.js TETAP dipakai sbg sumber datanya, cuma tujuannya
+       yang berubah. ===== -->
 
   <!-- ===== HALAMAN "PUSAT BANTUAN" (#bantuanOverlay) =====
        Struktur & pola animasi (slide dari kanan, header warna tema +
@@ -18078,17 +18066,11 @@ html.dark-mode .bd-row-close{
               <span class="settings-row-title">Update Version</span>
               <svg class="settings-row-chevron" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"/></svg>
             </button>
-            <button type="button" class="settings-row" id="pemberitahuanPromosiOpenBtn">
-              <span class="settings-row-icon">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.5 3.5 4 10v4.5L13.5 24l7-7L11 8V3.5Z" transform="translate(0 -1) scale(.92)"/><circle cx="8.3" cy="8.3" r="1.15" fill="currentColor" stroke="none"/></svg>
-              </span>
-              <span class="settings-row-title">Pemberitahuan Promosi</span>
-              <!-- Titik merah kecil "ada promo baru" -- disembunyikan
-                   default (hidden), ditampilkan/disembunyikan oleh
-                   refreshPromoNotifBadge() di script.js. -->
-              <span class="settings-row-dot" id="promoNotifDot" hidden aria-hidden="true"></span>
-              <svg class="settings-row-chevron" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"/></svg>
-            </button>
+            <!-- Menu "Pemberitahuan Promosi" terpisah DIHAPUS -- promo
+                 yang dikirim admin sekarang langsung masuk ke panel
+                 notifikasi lonceng (lihat syncPromoNotifsToBell() di
+                 script.js) supaya tidak ada 2 tempat notifikasi
+                 terpisah yang membingungkan. -->
           </div>
         </div>
 
@@ -20074,6 +20056,10 @@ html.dark-mode .bd-row-close{
         <span id="notifDetailAmt">Rp0</span>
       </div>
       <p class="notif-detail-desc" id="notifDetailDesc"></p>
+      <!-- Tombol "Lihat Selengkapnya" -- CUMA muncul utk notifikasi
+           kustom (mis. promo dari admin) yang membawa link_url, lihat
+           openNotifDetail() di script.js. Disembunyikan default. -->
+      <a class="btn btn-primary notif-detail-primary" id="notifDetailLinkBtn" href="#" target="_blank" rel="noopener noreferrer" style="display:none;text-decoration:none;text-align:center;">Lihat Selengkapnya</a>
       <div class="notif-detail-links">
         <button type="button" id="notifDetailEditBtn">Edit</button>
         <span class="dot">&middot;</span>
@@ -20292,6 +20278,21 @@ html.dark-mode .bd-row-close{
      halaman tidak perlu menunggu pustaka besar itu dimuat &
      dieksekusi duluan kalau memang tidak sedang dipakai. -->
 <!-- ===== OVERLAY LOGIN / DAFTAR (CLOUD SYNC) ===== -->
+<!-- Overlay Mode Pemeliharaan -- lihat CSS #maintenanceOverlay & logika
+     checkMaintenanceMode() di cloud-sync.js. Ditaruh SEBELUM
+     #cloudAuthOverlay di DOM (z-index-nya juga lebih tinggi) supaya
+     kalau mode pemeliharaan aktif, overlay ini yang tampil paling atas
+     menutupi semuanya, termasuk overlay login. -->
+<div id="maintenanceOverlay" class="hidden">
+  <div class="maintenance-card">
+    <div class="maintenance-ic">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 1-5.4 5.4L4 17v3h3l5.3-5.3a4 4 0 0 1 5.4-5.4L21 6l-3 3-2-2 3-3-2.3-2.3-3 3"/></svg>
+    </div>
+    <h2>Sedang Pemeliharaan</h2>
+    <p id="maintenanceMsg">Aplikasi sedang dalam perbaikan sistem. Silakan coba lagi beberapa saat lagi.</p>
+    <button type="button" class="btn" onclick="location.reload()">Coba Lagi</button>
+  </div>
+</div>
 <div id="cloudAuthOverlay" class="hidden">
   <div class="cloud-auth-card">
     <!-- App sekarang bisa dipakai tanpa login (data tersimpan lokal

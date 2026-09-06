@@ -14725,120 +14725,77 @@ document.getElementById('sumberDanaUtamaOpenBtn')?.addEventListener('click', ope
 document.getElementById('sumberDanaUtamaBackBtn')?.addEventListener('click', closeSumberDanaUtamaOverlay);
 
 /* ==========================================================
-   PENGATURAN > NOTIFIKASI — "Pemberitahuan Promosi"
-   (#pemberitahuanPromosiOverlay). Pola buka/tutup dasarnya SAMA dgn
-   openSumberDanaUtamaOverlay/closeSumberDanaUtamaOverlay di atas,
-   TAPI halaman ini sekarang diisi penuh: menarik daftar promo yang
-   dikirim admin (tabel Supabase `promo_notifications`, lihat
-   window.cloudFetchPromoNotifications di cloud-sync.js) & menampilkan
-   titik merah kecil di baris menu kalau ada promo baru yang belum
-   dibuka (murni penanda per PERANGKAT, disimpan di localStorage
-   langsung -- sama seperti pola UPDATE_VERSION_LAST_CHECK_KEY di
-   atas, BUKAN lewat cloudStorage, krn cuma status "sudah dilihat di
-   HP ini", bukan data akun). ---- */
+   PROMO ADMIN -> PANEL NOTIFIKASI LONCENG
+   (dulu punya halaman detail sendiri di Pengaturan > Notifikasi >
+   "Pemberitahuan Promosi" -- SEKARANG DIHAPUS atas permintaan: promo
+   yang dikirim admin panel (tabel Supabase `promo_notifications`,
+   lihat window.cloudFetchPromoNotifications di cloud-sync.js)
+   langsung disuntikkan sbg notifikasi KUSTOM ke panel notifikasi
+   lonceng yang sudah ada (lihat pushCustomNotification() &
+   renderNotifPanel() di atas), supaya cuma ada SATU tempat notifikasi
+   di app ini, bukan dua yang terpisah & membingungkan.
 
-// Cuma menyimpan created_at (ISO string) promo PALING BARU yang
-// pernah dilihat pengguna di perangkat ini -- promo dgn created_at
-// lebih baru dari ini dianggap "belum dibaca" & memunculkan titik
-// merah. Array notifikasi SELALU diurutkan created_at terbaru dulu
-// (lihat query-nya di cloud-sync.js), jadi cukup 1 nilai, tidak perlu
-// simpan daftar id yang sudah dibaca satu-satu.
-const PROMO_NOTIF_SEEN_KEY = 'zayapro_promo_seen_v1';
+   Caranya: setiap promo baru (id-nya belum pernah "disuntik" ke bell
+   di PERANGKAT ini) langsung dipush lewat pushCustomNotification()
+   dgn source 'Promo' & target 'all' (tampil ke semua yg berbagi data
+   yg sama, sama seperti sebelumnya di halaman lama). Daftar id yang
+   sudah disuntik disimpan di localStorage (BUKAN cloudStorage) --
+   sengaja murni per-perangkat spt PROMO_NOTIF_SEEN_KEY yg lama, krn
+   ini cuma status "sudah pernah dimasukkan ke bell HP ini", bukan
+   data akun yang perlu ikut sinkron ke perangkat lain (masing2
+   perangkat yg login akun yg sama tetap akan menyuntik promo yg sama
+   sendiri2 begitu pertama kali membuka app-nya, hasil akhirnya sama
+   spt kalau memang disinkron). ---- */
+const PROMO_NOTIF_SYNCED_KEY = 'zayapro_promo_synced_ids_v1';
 
-function readPromoNotifSeenTs() {
-  try { return localStorage.getItem(PROMO_NOTIF_SEEN_KEY) || ''; } catch (e) { return ''; }
+function readPromoNotifSyncedIds() {
+  try { return JSON.parse(localStorage.getItem(PROMO_NOTIF_SYNCED_KEY) || '[]'); } catch (e) { return []; }
 }
-function writePromoNotifSeenTs(iso) {
-  try { localStorage.setItem(PROMO_NOTIF_SEEN_KEY, iso); } catch (e) { /* localStorage penuh/diblokir — abaikan */ }
+function writePromoNotifSyncedIds(ids) {
+  // Cap 200 id terakhir saja supaya key ini tidak membengkak tanpa
+  // batas seiring waktu -- lebih dari cukup krn query di cloud-sync.js
+  // sendiri sudah dibatasi limit(50).
+  try { localStorage.setItem(PROMO_NOTIF_SYNCED_KEY, JSON.stringify(ids.slice(-200))); }
+  catch (e) { /* localStorage penuh/diblokir — abaikan, paling promo lama ke-notif ulang */ }
 }
 
-function formatPromoNotifDate(iso) {
-  try {
-    return new Date(iso).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
-  } catch (e) { return ''; }
-}
-
-// Cache hasil tarikan terakhir supaya buka-tutup halaman berkali-kali
-// tidak perlu selalu nge-fetch ulang ke server; direfresh lagi kalau
-// benar-benar dibuka (lihat openPemberitahuanPromosiOverlay).
-let promoNotifCache = null;
-
-// Dipanggil di init() (lihat paling bawah file ini) supaya titik
-// merah di menu Pengaturan sudah benar sejak app pertama dibuka, TANPA
-// perlu pengguna masuk ke halamannya dulu.
-async function refreshPromoNotifBadge() {
-  const dot = document.getElementById('promoNotifDot');
-  if (!dot) return;
-  if (!window.cloudFetchPromoNotifications) { dot.hidden = true; return; }
+// Dipanggil di init() & tiap kali panel notifikasi lonceng dibuka
+// (lihat openNotifPanel di bawah) supaya promo baru dari admin cepat
+// muncul tanpa perlu reload app dulu.
+async function syncPromoNotifsToBell() {
+  if (!window.cloudFetchPromoNotifications) return;
   try {
     const res = await window.cloudFetchPromoNotifications();
-    if (!res || !res.loggedIn || !res.ok) { dot.hidden = true; return; }
-    promoNotifCache = res.data || [];
-    const seenTs = readPromoNotifSeenTs();
-    const hasUnread = promoNotifCache.some((n) => !seenTs || new Date(n.created_at) > new Date(seenTs));
-    dot.hidden = !hasUnread;
+    if (!res || !res.loggedIn || !res.ok) return;
+    const items = res.data || [];
+    if (!items.length) return;
+    const syncedIds = readPromoNotifSyncedIds();
+    const syncedSet = new Set(syncedIds);
+    // Data sudah terurut created_at terbaru dulu (lihat query-nya di
+    // cloud-sync.js) -- dibalik dulu supaya yang benar2 lebih dulu
+    // dikirim admin juga lebih dulu masuk ke feed bell (arrivedAt-nya
+    // pakai created_at asli, jadi urutan render tetap benar walau
+    // urutan push di sini dibalik).
+    const toPush = items.filter((n) => !syncedSet.has(n.id)).reverse();
+    if (!toPush.length) return;
+    toPush.forEach((n) => {
+      pushCustomNotification({
+        source: 'Promo',
+        title: n.title,
+        body: n.message || '',
+        image: n.image_url || null,
+        link: n.link_url || null,
+        target: 'all',
+        sentAt: n.created_at,
+      });
+      syncedIds.push(n.id);
+    });
+    writePromoNotifSyncedIds(syncedIds);
   } catch (e) {
-    dot.hidden = true;
+    // Gagal ambil (offline/dll) -- diamkan saja, dicoba lagi nanti
+    // (tiap init()/buka panel notifikasi).
   }
 }
-
-function renderPemberitahuanPromosiList(items) {
-  const list = document.getElementById('pemberitahuanPromosiList');
-  if (!list) return;
-  if (!items.length) {
-    list.innerHTML = '<p class="bantuan-empty">Belum ada pemberitahuan promosi saat ini.</p>';
-    return;
-  }
-  list.innerHTML = items.map((n) => `
-    <div class="promo-notif-item">
-      ${n.image_url ? `<img class="promo-notif-item-img" src="${escapeHtml(n.image_url)}" alt="" loading="lazy" onerror="this.remove()">` : ''}
-      <div class="promo-notif-item-head">
-        <span class="promo-notif-item-title">${escapeHtml(n.title)}</span>
-        <span class="promo-notif-item-date">${escapeHtml(formatPromoNotifDate(n.created_at))}</span>
-      </div>
-      <p class="promo-notif-item-msg">${escapeHtml(n.message)}</p>
-      ${n.link_url ? `<a class="promo-notif-item-link" href="${escapeHtml(n.link_url)}" target="_blank" rel="noopener noreferrer">Lihat Selengkapnya →</a>` : ''}
-    </div>
-  `).join('');
-}
-
-async function initPemberitahuanPromosiPage() {
-  const list = document.getElementById('pemberitahuanPromosiList');
-  if (!list) return;
-  list.innerHTML = '<p class="bantuan-empty">Memuat pemberitahuan…</p>';
-  if (!window.cloudFetchPromoNotifications) {
-    list.innerHTML = '<p class="promo-notif-error">Gagal memuat pemberitahuan. Coba lagi nanti.</p>';
-    return;
-  }
-  const res = await window.cloudFetchPromoNotifications();
-  if (!res || !res.loggedIn) {
-    list.innerHTML = '<p class="promo-notif-login-hint">Masuk / daftar akun dulu di halaman Pengaturan untuk menerima pemberitahuan promosi.</p>';
-    return;
-  }
-  if (!res.ok) {
-    list.innerHTML = '<p class="promo-notif-error">Gagal memuat pemberitahuan. Periksa koneksi internet kamu, lalu coba lagi.</p>';
-    return;
-  }
-  promoNotifCache = res.data || [];
-  renderPemberitahuanPromosiList(promoNotifCache);
-  // Halaman ini sudah dibuka & dilihat -- catat promo TERBARU sbg
-  // "sudah dibaca" supaya titik merah di menu Pengaturan hilang.
-  if (promoNotifCache.length) writePromoNotifSeenTs(promoNotifCache[0].created_at);
-  const dot = document.getElementById('promoNotifDot');
-  if (dot) dot.hidden = true;
-}
-
-function openPemberitahuanPromosiOverlay() {
-  document.getElementById('pemberitahuanPromosiOverlay')?.classList.add('open');
-  lockBodyScroll();
-  initPemberitahuanPromosiPage();
-}
-function closePemberitahuanPromosiOverlay() {
-  document.getElementById('pemberitahuanPromosiOverlay')?.classList.remove('open');
-  unlockBodyScroll();
-}
-document.getElementById('pemberitahuanPromosiOpenBtn')?.addEventListener('click', openPemberitahuanPromosiOverlay);
-document.getElementById('pemberitahuanPromosiBackBtn')?.addEventListener('click', closePemberitahuanPromosiOverlay);
 
 /* ==========================================================
    PENGATURAN > KONTAK — Pusat Bantuan (#bantuanOverlay).
@@ -16657,13 +16614,17 @@ function saveCustomNotifs(list) {
   try { cloudStorage.setItem(NOTIF_CUSTOM_KEY, JSON.stringify(list)); }
   catch (e) { /* localStorage diblokir — abaikan, tak tersimpan */ }
 }
-function pushCustomNotification({ source, title, body = '', icon = null, image = null, sentAt = null, target = 'all' } = {}) {
+function pushCustomNotification({ source, title, body = '', icon = null, image = null, link = null, sentAt = null, target = 'all' } = {}) {
   if (!title) return null; // judul wajib, selain itu semua opsional
   const list = getCustomNotifs();
   const entry = {
     id: 'ntf_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8),
     source: source || 'Sistem',
     title, body, icon, image,
+    // link: URL opsional (mis. dari field "URL Link" saat admin kirim
+    // notifikasi promosi) -- kalau diisi, tombol "Lihat Selengkapnya"
+    // ditampilkan di popup detail (lihat openNotifDetail()).
+    link: link || null,
     // target: 'all' (tampil ke semua yg berbagi data yang sama, spt
     // sebelumnya) ATAU member_id spesifik (cuma tampil ke user itu --
     // lihat penyaringan di renderNotifPanel() & isNotifVisibleToMe()).
@@ -16895,6 +16856,7 @@ function openNotifDetail(kind, id) {
   const linksWrap = document.querySelector('.notif-detail-links');
   const amtChip = document.querySelector('.notif-detail-amt-chip');
   const bannerEl = document.getElementById('notifDetailBannerIc');
+  const linkBtn = document.getElementById('notifDetailLinkBtn');
 
   // ---- Notifikasi KUSTOM (bukan tagihan/hutang) -- popup detail
   // versi ringkas: sumber+waktu masuk sbg "tanggal", gambar/ikonnya
@@ -16918,6 +16880,13 @@ function openNotifDetail(kind, id) {
     editBtn.style.display = 'none';
     delBtn.style.display = '';
     primaryBtn.style.display = 'none';
+    // Notifikasi promo dari admin bisa bawa link_url (field "URL
+    // Link" di modal Kirim Notifikasi) -- tampilkan tombol "Lihat
+    // Selengkapnya" kalau ada, sembunyikan kalau tidak.
+    if (linkBtn) {
+      if (item.link) { linkBtn.href = item.link; linkBtn.style.display = ''; }
+      else linkBtn.style.display = 'none';
+    }
 
     notifDetailOverlay.classList.add('open');
     lockBodyScroll();
@@ -16946,6 +16915,7 @@ function openNotifDetail(kind, id) {
   document.getElementById('notifDetailDesc').textContent = item.note ? `${desc} Catatan: ${item.note}` : desc;
 
   if (linksWrap) linksWrap.style.display = '';
+  if (linkBtn) linkBtn.style.display = 'none';
   editBtn.style.display = '';
   delBtn.style.display = '';
   primaryBtn.textContent = 'Tandai Lunas';
@@ -17024,6 +16994,12 @@ function openNotifPanel() {
   notifPanelOverlay.classList.add('open');
   lockBodyScroll();
   renderNotifPanel();
+  // Cek promo baru dari admin tiap kali panel dibuka (selain sekali
+  // di init()) supaya promo yang baru saja dikirim admin tidak perlu
+  // menunggu reload app dulu utk muncul di sini -- pushCustomNotification()
+  // di dalamnya sendiri sudah memanggil ulang renderNotifPanel() kalau
+  // ada entri baru.
+  syncPromoNotifsToBell();
   notifPanel.scrollTop = 0;
   const bodyEl = document.getElementById('notifPageBody');
   if (bodyEl) bodyEl.scrollTop = 0;
@@ -19015,7 +18991,7 @@ function init() {
   renderSocial();
   maybeShowDueReminder();
   maybeNotifyAppUpdate();
-  refreshPromoNotifBadge();
+  syncPromoNotifsToBell();
   deviceMgmtStartHeartbeat();
   initFooter();
   initAiChat();

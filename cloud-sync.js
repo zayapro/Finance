@@ -1170,8 +1170,43 @@
     }
   };
 
+  /* ==========================================================
+     MODE PEMELIHARAAN — dicek PALING AWAL, sebelum overlay login/
+     daftar & sebelum script.js dimuat sama sekali (persis catatan di
+     migrasi-konten-dan-pengaturan.sql: "cek mode pemeliharaan SEBELUM
+     layar login muncul"). Dibaca dari tabel `app_settings`, baris
+     key='app_config' (diatur dari admin panel > menu "Pengaturan
+     Aplikasi"), yang RLS-nya sengaja `using(true)` -- bisa dibaca
+     SIAPA SAJA termasuk yang belum login, jadi blokir ini berlaku utk
+     SEMUA pengguna tanpa terkecuali begitu admin mengaktifkannya.
+     Best-effort: kalau fetch gagal (mis. offline / tabel belum ada di
+     project Supabase lama yang belum menjalankan migrasinya), app
+     TETAP dibuka seperti biasa -- jangan sampai kegagalan cek ini
+     malah memblokir semua orang. ---------- */
+  const maintenanceOverlay = document.getElementById('maintenanceOverlay');
+  async function checkMaintenanceMode() {
+    if (!maintenanceOverlay) return false;
+    try {
+      const { data, error } = await sb.from('app_settings').select('value').eq('key', 'app_config').maybeSingle();
+      if (error || !data || !data.value) return false;
+      const maint = data.value.maintenance || {};
+      if (!maint.enabled) return false;
+      const msgEl = document.getElementById('maintenanceMsg');
+      if (msgEl && maint.message) msgEl.textContent = maint.message;
+      maintenanceOverlay.classList.remove('hidden');
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
   /* ---------- cek sesi saat halaman dibuka ---------- */
   (async function boot() {
+    // Mode pemeliharaan aktif -> tampilkan overlay blokir & JANGAN
+    // lanjut sama sekali (tidak cek sesi, tidak tampilkan overlay
+    // login, tidak memuat script.js) -- persis spt jaminan "app tidak
+    // bisa dibuka sama sekali" saat mode ini menyala.
+    if (await checkMaintenanceMode()) return;
     const { data } = await sb.auth.getSession();
     if (data && data.session && data.session.user) {
       currentUser = data.session.user;
