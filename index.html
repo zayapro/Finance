@@ -10441,90 +10441,61 @@ html.zp-app-loading .page-body > .settings-list{display:none;}
   will-change:transform;
 }
 /* ---- FIX LANJUTAN "banner bocor saat discroll" (DISAMAKAN PERSIS dgn
-   .saya-sticky-top .page-banner & .saya-page-body-cap, lihat catatan
-   lengkap 3-angka di sana). INI ADA 3 ANGKA YANG WAJIB SELALU DIUBAH
-   BARENG-BARENG:
+   .lap-sticky-top .page-banner & .lap-page-body-top, halaman Laporan --
+   lihat catatan lengkap 3-angka di sana). INI ADA 3 ANGKA YANG WAJIB
+   SELALU DIUBAH BARENG-BARENG:
      1) padding-bottom EKSTRA di .page-banner Dompet (+8px)
-     2) margin-top .dompet-page-body-cap (di bawah) -- jadi -32px
-     3) padding-top .dompet-page-body-cap (di bawah) -- jadi 32px
-   overflow:hidden ditambah juga di cap (sama seperti .saya-page-body-cap)
-   supaya sudut lengkungnya benar2 di-hard-clip -- aman krn cap ini
-   kosong (aria-hidden, tanpa konten sama sekali). ---- */
+     2) margin-top .dompet-page-body-top (di bawah) -- jadi -32px
+     3) padding-top .dompet-page-body-top (di bawah) -- jadi 32px
+   BEDA dgn versi sebelumnya (dulu "cap" kosong aria-hidden, class-nya
+   ".dompet-page-body-cap"): potongan ini SEKARANG berisi tab utama
+   Semua/Simpanan/Investasi/Pinjaman (lihat HTML #page-dompet) -- makanya
+   diganti nama jadi ".dompet-page-body-top" (menyamai pola penamaan
+   .lap-page-body-top) & overflow:hidden yg dulu dipakai DILEPAS lagi di
+   sini (persis spt .lap-page-body-top di Laporan yg isinya juga bukan
+   cap kosong), supaya indikator pil tab (position:absolute, lihat
+   .tab-indicator) tidak ikut kepotong. ---- */
 .dompet-sticky-top .page-banner{padding-bottom:calc(clamp(44px,9vw,68px) + 8px);}
-.page-body.dompet-page-body-cap{margin-top:-32px;padding-top:32px;padding-bottom:0;overflow:hidden;}
+.page-body.dompet-page-body-top{margin-top:-32px;padding-top:32px;padding-bottom:0;}
 .page-body.dompet-page-body-rest{margin-top:0;border-radius:0;box-shadow:none;padding-top:14px;}
 .page-body.dompet-page-body-rest::before{display:none;}
 
-/* ============================================================
-   ISI HALAMAN DOMPET -- kartu "Total Saldo Kamu" + daftar akun
-   bank/e-wallet (analog "Tabungan" pada gambar referensi "Portofolio").
-   Sama seperti .settings-list milik halaman Pengaturan, blok-blok ini
-   disembunyikan dulu selagi html.zp-app-loading aktif supaya tidak
-   sempat kelihatan "Rp0"/kosong sebelum renderDompetPage() (script.js)
-   selesai mengisi data sebenarnya. ---- */
-html.zp-app-loading #page-dompet .dompet-hero,
-html.zp-app-loading #page-dompet .dompet-section-head,
-html.zp-app-loading #page-dompet .dompet-list,
-html.zp-app-loading #page-dompet #dompetEmptyState{display:none;}
-
-.dompet-hero{
-  background:linear-gradient(155deg,
-    color-mix(in srgb, var(--banner-orange) 10%, var(--card)) 0%,
-    color-mix(in srgb, var(--banner-orange) 20%, var(--card)) 100%);
-  border:1px solid color-mix(in srgb, var(--banner-orange) 22%, transparent);
-  border-radius:16px;padding:16px 18px;margin-bottom:18px;
+/* ---- Tab utama halaman Dompet: Semua / Simpanan / Investasi / Pinjaman
+   -- PERMINTAAN: tampilan mengikuti gambar referensi (portofolio bank),
+   tab-nya disesuaikan gaya "underline" PERSIS SAMA dgn .lap-toptabs (tab
+   utama halaman Laporan, lihat catatan lengkap di sana) -- disalin apa
+   adanya, cuma nama class-nya diganti "dompet" supaya scoped ke halaman
+   ini sendiri. Tetap pakai class dasar .tabs & .tab-indicator supaya
+   updateTabIndicator()/updateAllTabIndicators() (script.js) otomatis
+   ikut menggerakkan indikator pil di sini juga -- cukup ditimpa
+   tampilannya lewat aturan .dompet-toptabs di bawah. Kontennya
+   (.dompet-panel) masih placeholder kosong dulu (lihat HTML), belum ada
+   model data asli utk Simpanan/Investasi/Pinjaman. ---- */
+.dompet-toptabs{
+  background:transparent;border:none;border-bottom:1px solid var(--line);
+  padding:0;border-radius:0;gap:0;margin-bottom:18px;overflow:visible;
+  width:auto;margin-left:22px;margin-right:22px;
 }
-.dompet-hero-top{display:flex;align-items:center;gap:6px;margin-bottom:8px;}
-.dompet-hero-label{font-family:'Poppins',sans-serif;font-size:12px;font-weight:600;color:var(--ink-soft);}
-.dompet-hero-info{color:var(--ink-faint);flex-shrink:0;}
-.dompet-hero-row{display:flex;align-items:center;justify-content:space-between;gap:10px;}
-.dompet-hero-value{font-family:'Poppins',sans-serif;font-size:clamp(22px,6.5vw,26px);font-weight:800;color:var(--banner-orange-deep);letter-spacing:-0.01em;}
-.dompet-hero-eye{
-  flex-shrink:0;width:32px;height:32px;border-radius:999px;border:none;cursor:pointer;
-  background:color-mix(in srgb, var(--banner-orange) 14%, transparent);color:var(--banner-orange-deep);
-  display:flex;align-items:center;justify-content:center;transition:background .15s ease;
+.dompet-toptabs .tab-indicator{
+  top:auto;bottom:-1px;height:3.5px;background:var(--primary);
+  border-radius:2px 2px 0 0;box-shadow:none;
 }
-.dompet-hero-eye:hover{background:color-mix(in srgb, var(--banner-orange) 24%, transparent);}
-
-.dompet-section-head{display:flex;align-items:center;justify-content:space-between;padding:4px 2px 10px;}
-.dompet-section-title{font-family:'Poppins',sans-serif;font-size:14px;font-weight:700;color:var(--ink);}
-.dompet-add-btn{
-  display:flex;align-items:center;gap:5px;border:none;cursor:pointer;background:transparent;
-  color:var(--banner-orange-deep);font-family:'Poppins',sans-serif;font-size:12.5px;font-weight:700;padding:6px 4px;
+.dompet-toptabs .tab-btn{
+  padding:10px 4px;margin-right:22px;border-radius:0;font-size:15px;
+  color:var(--ink-faint);
+  font-family:'Poppins',sans-serif;font-weight:500;letter-spacing:-0.005em;
 }
-.dompet-add-btn:hover{text-decoration:underline;}
-
-/* Daftar akun: pola "flat list, garis pemisah tipis" DISAMAKAN PERSIS
-   dgn .rw-item (Riwayat Transaksi) supaya satu bahasa desain. */
-.dompet-list{display:flex;flex-direction:column;}
-.dompet-item{
-  display:flex;align-items:center;gap:12px;background:transparent;border:none;width:100%;text-align:left;
-  border-bottom:1px solid var(--line);padding:13px 2px;cursor:pointer;transition:background .15s ease;
+.dompet-toptabs .tab-btn.active{color:var(--primary);}
+@media (max-width:600px){
+  .dompet-toptabs .tab-btn{margin-right:16px;font-size:13.5px;}
+  .dompet-toptabs{margin-left:14px;margin-right:14px;}
 }
-.dompet-item:last-child{border-bottom:none;}
-.dompet-item:hover{background:rgba(15,23,42,0.03);}
-.dompet-item-ic{
-  width:40px;height:40px;border-radius:13px;flex-shrink:0;overflow:hidden;
-  display:flex;align-items:center;justify-content:center;background:var(--w-color,#EA580C);
+@media (max-width:400px){
+  .dompet-toptabs{margin-left:12px;margin-right:12px;}
 }
-.dompet-item-ic img{width:100%;height:100%;object-fit:cover;}
-.dompet-item-ic .wallet-logo-badge{font-size:11px;font-weight:800;color:#fff;letter-spacing:.01em;}
-.dompet-item-body{flex:1;min-width:0;}
-.dompet-item-name{font-family:'Poppins',sans-serif;font-size:13.5px;font-weight:600;letter-spacing:-0.005em;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.dompet-item-cat{font-family:'Poppins',sans-serif;font-size:12px;color:var(--ink-soft);font-weight:500;margin-top:2px;}
-.dompet-item-right{flex-shrink:0;display:flex;align-items:center;gap:8px;}
-.dompet-item-balance{font-family:'Poppins',sans-serif;font-size:13.5px;font-weight:700;color:var(--ink);white-space:nowrap;}
-.dompet-item-del{
-  width:25px;height:25px;border-radius:8px;border:none;cursor:pointer;flex-shrink:0;
-  background:rgba(190,18,60,0.1);color:var(--wine);display:flex;align-items:center;justify-content:center;
-  opacity:0;max-height:0;overflow:hidden;transition:opacity .15s ease;
-}
-.dompet-item:hover .dompet-item-del,.dompet-item:focus-within .dompet-item-del{opacity:1;max-height:none;}
-@media (max-width:640px){
-  .dompet-item{padding:11px 2px;gap:10px;}
-  .dompet-item-ic{width:34px;height:34px;border-radius:11px;}
-  .dompet-item-del{opacity:1;max-height:none;width:23px;height:23px;}
-}
+.dompet-panel{display:none;}
+.dompet-panel.active{display:block;}
+.dompet-panels-swipe{touch-action:pan-y;}
 /* Blok daftar menu (.settings-list) jadi .page-body TERPISAH DI LUAR
    wrapper sticky di atas -- margin negatif/radius/shadow "kartu
    menumpang di atas banner" (lengkungan dkk) DIMATIKAN TOTAL di sini
@@ -10745,6 +10716,11 @@ html.zp-app-loading .page-body > .bd-empty{display:none;}
 html.zp-app-loading .page-body > .lap-toptabs,
 html.zp-app-loading .page-body > .lap-aktifitas-head,
 html.zp-app-loading .page-body > .lap-panel{display:none;}
+/* Sama seperti tab utama Laporan di atas, tapi utk tab utama Dompet
+   (Semua/Simpanan/Investasi/Pinjaman) -- disembunyikan dulu selagi
+   skeleton masih tampil, biar tidak numpuk. */
+html.zp-app-loading .page-body > .dompet-toptabs,
+html.zp-app-loading .page-body .dompet-panel{display:none;}
 
 /* ============ HALAMAN LAPORAN — tab utama Aktifitas/Tabungan/Aset ============
    Sengaja dibuat gaya "underline" (bukan pil oranye seperti .tabs biasa)
@@ -17895,82 +17871,110 @@ html.dark-mode .bd-row-close{
     <!-- ---- PERMINTAAN: banner oren "Dompet" dibuat MENEMPEL (position:
          sticky) di atas layar saat isinya discroll -- niru PERSIS pola
          yang sudah dipakai di halaman Pengaturan (.saya-sticky-top) &
-         Laporan (.lap-sticky-top): banner dibungkus wrapper sticky
-         tersendiri (.dompet-sticky-top) beserta "cap" kosong (potongan
-         kartu putih tanpa isi, cuma utk menampilkan lengkungannya, biar
-         satu stacking context dgn banner -- lihat catatan panjang di
-         .saya-page-body-cap kalau mau tau kenapa perlu dipisah begini),
-         sedangkan isi aslinya jadi .page-body TERPISAH di luar wrapper
-         sticky (.dompet-page-body-rest) yg scroll normal seperti biasa
-         -- itulah "batas scroll"-nya, persis di radius kartu putih. ---- -->
+         Laporan (.lap-sticky-top).
+         BEDA dgn versi sebelumnya (dulu banner dibungkus bareng "cap"
+         kosong tanpa isi): PERMINTAAN BARU -- tampilan disesuaikan dgn
+         gambar referensi (halaman portofolio bank: banner + tab
+         kategori + daftar per-tab) -- jadi sekarang wrapper sticky ini
+         membungkus banner + TAB UTAMA (Semua/Simpanan/Investasi/
+         Pinjaman), niru PERSIS pola .lap-sticky-top (halaman Laporan)
+         yg juga membungkus tab utama Aktifitas/Tabungan/Aset di dalam
+         wrapper stickynya (lihat .lap-page-body-top di sana), BUKAN
+         cuma cap kosong lagi. Isi tiap tab (.dompet-panel) jadi
+         .page-body TERPISAH di luar wrapper sticky (.dompet-page-body-
+         rest) yg scroll normal spt biasa -- itulah "batas scroll"-nya,
+         persis di radius kartu putih.
+         Kontennya SENGAJA masih placeholder kosong dulu (belum ada
+         model data perangkat/akun sosial media per kategori) -- tinggal
+         diisi nanti di dalam masing-masing .dompet-panel, mekanisme
+         ganti tab (klik maupun usap kiri/kanan, lihat switchDompetMainTab
+         & setupDompetSwipeTabs di script.js) sudah berfungsi penuh dari
+         sekarang. ---- -->
     <div class="dompet-sticky-top" id="dompetStickyTop">
       <div class="page-banner">
         <h1>Dompet</h1>
-        <p>Saldo &amp; daftar akun bank/e-wallet kamu</p>
+        <p>Perangkat dan akun sosial media kamu</p>
       </div>
-      <div class="page-body dompet-page-body-cap" aria-hidden="true"></div>
+      <div class="page-body dompet-page-body-top">
+        <div class="zp-page-skel" aria-hidden="true">
+          <div class="zp-skel-card">
+            <div class="bd-skel-bar" style="width:35%;height:14px;"></div>
+            <div class="bd-skel-bar" style="width:88%;height:10px;"></div>
+          </div>
+        </div>
+        <!-- Tab utama halaman Dompet: Semua, Simpanan, Investasi,
+             Pinjaman -- pakai komponen .tabs yang sama dgn tab lain di
+             app (indikator pil meluncur otomatis lewat
+             updateTabIndicator() di script.js, cukup container ini
+             juga ikut kena querySelectorAll('.tabs')). -->
+        <div class="tabs dompet-toptabs" id="dompetMainTabs">
+          <span class="tab-indicator" aria-hidden="true"></span>
+          <button type="button" class="tab-btn active" data-dompettab="semua">Semua</button>
+          <button type="button" class="tab-btn" data-dompettab="simpanan">Simpanan</button>
+          <button type="button" class="tab-btn" data-dompettab="investasi">Investasi</button>
+          <button type="button" class="tab-btn" data-dompettab="pinjaman">Pinjaman</button>
+        </div>
+      </div>
     </div>
+    <!-- /.dompet-sticky-top -->
+
     <div class="page-body dompet-page-body-rest">
-      <div class="zp-page-skel" aria-hidden="true">
-        <div class="zp-skel-card">
-          <div class="bd-skel-bar" style="width:35%;height:14px;"></div>
-          <div class="bd-skel-bar" style="width:88%;height:10px;"></div>
-        </div>
-        <div class="zp-skel-card">
-          <div class="bd-skel-bar" style="width:50%;height:14px;"></div>
-          <div class="bd-skel-bar" style="width:95%;height:10px;"></div>
-          <div class="bd-skel-bar" style="width:60%;height:10px;"></div>
-        </div>
-      </div>
+      <!-- ---- Pembungkus keempat panel di bawah -- dipakai jg sbg area
+           deteksi usap (swipe) kiri/kanan utk pindah tab, lihat
+           setupDompetSwipeTabs() di script.js (pola PERSIS sama dgn
+           #lapPanelsSwipe milik halaman Laporan). ---- -->
+      <div class="dompet-panels-swipe" id="dompetPanelsSwipe">
 
-      <!-- ===== ISI HALAMAN DOMPET (mengikuti struktur gambar referensi
-           "Portofolio": kartu "Total Saldo Kamu" besar dengan tombol mata
-           di kanan, lalu daftar akun (analog "Tabungan" pada referensi) di
-           bawahnya. PENTING: ini BUKAN data contoh/statis -- daftarnya
-           diambil dari array `wallets` yg SAMA dipakai kartu "Saldo Bank &
-           E-Wallet" di Beranda, dirender oleh renderDompetPage() di
-           script.js (dipanggil dari renderSummary(), jadi otomatis ikut
-           ter-refresh tiap ada perubahan data). Tombol mata di sini
-           TERSAMBUNG ke toggle privasi saldo yg sama dgn Beranda
-           (toggleSaldoHidden(), status tersimpan di cloudStorage) --
-           bukan toggle terpisah, supaya sembunyikan saldo di satu tempat
-           otomatis kesembunyi juga di tempat lain. Tombol "+ Tambah" &
-           tiap baris akun memakai ULANG modal Tambah/Edit Bank & E-Wallet
-           yg sudah ada (openWalletModal()/openEditWalletModal()) -- tidak
-           ada modal baru yg dibuat khusus utk halaman ini. ===== -->
-      <div class="dompet-hero">
-        <div class="dompet-hero-top">
-          <span class="dompet-hero-label">Total Saldo Kamu</span>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="dompet-hero-info"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
+        <!-- ---- PANEL: SEMUA (belum ada model data -- placeholder kosong) ---- -->
+        <div class="dompet-panel active" data-dompet-panel="semua" id="dompetPanelSemua">
+          <div class="section-card lap-placeholder-flat">
+            <div class="bd-empty">
+              <div class="bd-empty-ic">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 12h18"/></svg>
+              </div>
+              <p>Belum ada data untuk ditampilkan.</p>
+            </div>
+          </div>
         </div>
-        <div class="dompet-hero-row">
-          <span class="dompet-hero-value mono" id="dompetTotalValue">Rp0</span>
-          <button type="button" class="dompet-hero-eye" id="dompetTotalEyeBtn" title="Tampilkan/sembunyikan saldo" aria-label="Tampilkan/sembunyikan saldo">
-            <svg id="dompetTotalEye" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a20.3 20.3 0 0 1 5.06-5.94M9.9 4.24A10.94 10.94 0 0 1 12 4c7 0 11 8 11 8a20.3 20.3 0 0 1-3.22 4.6M14.12 14.12a3 3 0 1 1-4.24-4.24"/><path d="M1 1l22 22"/></svg>
-          </button>
+
+        <!-- ---- PANEL: SIMPANAN (belum ada model data -- placeholder kosong) ---- -->
+        <div class="dompet-panel" data-dompet-panel="simpanan" id="dompetPanelSimpanan">
+          <div class="section-card lap-placeholder-flat">
+            <div class="bd-empty">
+              <div class="bd-empty-ic">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              </div>
+              <p>Belum ada data untuk ditampilkan.</p>
+            </div>
+          </div>
         </div>
-      </div>
 
-      <div class="dompet-section-head">
-        <span class="dompet-section-title">Tabungan</span>
-        <button type="button" class="dompet-add-btn" id="dompetAddBtn">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-          Tambah
-        </button>
-      </div>
-
-      <div class="dompet-list" id="dompetWalletList"></div>
-
-      <div class="bd-empty" id="dompetEmptyState" hidden>
-        <div class="bd-empty-ic">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 12h18"/></svg>
+        <!-- ---- PANEL: INVESTASI (belum ada model data -- placeholder kosong) ---- -->
+        <div class="dompet-panel" data-dompet-panel="investasi" id="dompetPanelInvestasi">
+          <div class="section-card lap-placeholder-flat">
+            <div class="bd-empty">
+              <div class="bd-empty-ic">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>
+              </div>
+              <p>Belum ada data untuk ditampilkan.</p>
+            </div>
+          </div>
         </div>
-        <p>Belum ada akun bank/e-wallet yang ditambahkan.</p>
-        <button type="button" class="dompet-add-btn" id="dompetEmptyAddBtn" style="margin:12px auto 0;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-          Tambah Akun
-        </button>
+
+        <!-- ---- PANEL: PINJAMAN (belum ada model data -- placeholder kosong) ---- -->
+        <div class="dompet-panel" data-dompet-panel="pinjaman" id="dompetPanelPinjaman">
+          <div class="section-card lap-placeholder-flat">
+            <div class="bd-empty">
+              <div class="bd-empty-ic">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="7" width="20" height="10" rx="2"/><circle cx="12" cy="12" r="2.5"/></svg>
+              </div>
+              <p>Belum ada data untuk ditampilkan.</p>
+            </div>
+          </div>
+        </div>
+
       </div>
+      <!-- /#dompetPanelsSwipe -->
     </div>
   </div>
   <!-- ===== /HALAMAN: DOMPET ===== -->

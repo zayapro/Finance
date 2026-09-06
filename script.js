@@ -1494,20 +1494,13 @@ function applySaldoVisibility() {
   valueEl.innerHTML = hidden ? maskCurrencyString(fmtRupiah(raw)) : fmtSaldoDisplayHTML(raw);
   iconEl.innerHTML = hidden ? EYE_OFF_SVG : EYE_OPEN_SVG;
   if (btn) btn.title = hidden ? 'Tampilkan saldo' : 'Sembunyikan saldo';
-  if (typeof renderDompetPage === 'function') renderDompetPage();
 }
 
-/* Dipisah dari listener klik supaya bisa dipanggil ULANG dari tempat lain
-   (mis. tombol mata "Total Saldo Kamu" di halaman Dompet) -- keduanya
-   sengaja berbagi SATU status tersimpan yg sama (SALDO_HIDE_KEY), supaya
-   sembunyikan/tampilkan saldo di satu tempat otomatis ikut berubah di
-   tempat lain juga. */
-function toggleSaldoHidden() {
+document.getElementById('saldoToggle').addEventListener('click', () => {
   const nextHidden = !isSaldoHidden();
   cloudStorage.setItem(SALDO_HIDE_KEY, nextHidden ? '1' : '0');
   applySaldoVisibility();
-}
-document.getElementById('saldoToggle').addEventListener('click', toggleSaldoHidden);
+});
 
 let saldoAnimFrame = null;
 // PENTING (fix "saldo sempat kelihatan minus/salah" sesaat setelah
@@ -4860,99 +4853,6 @@ function renderWalletCardHtml(iconWalletCard, animIndex) {
       <div class="wallet-manual-note">Total saldo di-update secara manual</div>
     </div>
   `;
-}
-
-/* ==========================================================
-   HALAMAN DOMPET (#page-dompet) -- kartu "Total Saldo Kamu" + daftar
-   akun bank/e-wallet, mengikuti struktur gambar referensi "Portofolio"
-   (kartu saldo besar + daftar "Tabungan" di bawahnya).
-
-   PENTING: BUKAN data contoh/statis -- memakai ULANG array `wallets`
-   yg sama dgn kartu "Saldo Bank & E-Wallet" di Beranda, dan status
-   sembunyikan/tampilkan saldo yg sama dgn toggle privasi Beranda
-   (isSaldoHidden()/toggleSaldoHidden()). Tombol "+ Tambah", tiap baris
-   akun (buka utk edit), & tombol hapus di sini memakai ULANG modal +
-   fungsi yg sudah ada (openWalletModal/openEditWalletModal/
-   openDeleteConfirm) -- TIDAK ada modal/endpoint baru dibuat khusus
-   utk halaman ini, supaya datanya selalu konsisten dgn Beranda.
-========================================================== */
-function renderDompetPage() {
-  const listEl = document.getElementById('dompetWalletList');
-  if (!listEl) return; // markup halaman Dompet versi lama, belum ada elemen ini
-
-  const hidden = isSaldoHidden();
-  const total = wallets.reduce((s, w) => s + (Number(w.balance) || 0), 0);
-
-  const totalValueEl = document.getElementById('dompetTotalValue');
-  const totalEyeEl = document.getElementById('dompetTotalEye');
-  const eyeBtn = document.getElementById('dompetTotalEyeBtn');
-  if (totalValueEl) totalValueEl.textContent = hidden ? maskCurrencyString(fmtRupiah(total)) : fmtRupiah(total);
-  if (totalEyeEl) totalEyeEl.innerHTML = hidden ? EYE_OFF_SVG : EYE_OPEN_SVG;
-  if (eyeBtn) eyeBtn.title = hidden ? 'Tampilkan saldo' : 'Sembunyikan saldo';
-
-  const emptyEl = document.getElementById('dompetEmptyState');
-  if (!wallets.length) {
-    listEl.innerHTML = '';
-    listEl.hidden = true;
-    if (emptyEl) emptyEl.hidden = false;
-    bindDompetPageEvents();
-    return;
-  }
-  if (emptyEl) emptyEl.hidden = true;
-  listEl.hidden = false;
-
-  listEl.innerHTML = wallets.map(w => `
-    <div class="dompet-item" data-wallet="${w.id}" role="button" tabindex="0" aria-label="Lihat/ubah akun ${escapeAttr(w.name)}">
-      <div class="dompet-item-ic" style="--w-color:${w.color || '#EA580C'}">${walletLogoHtml(w)}</div>
-      <div class="dompet-item-body">
-        <div class="dompet-item-name">${escapeHtml(w.name)}</div>
-        <div class="dompet-item-cat">${escapeHtml(WALLET_CATEGORY_LABELS[w.category] || WALLET_CATEGORY_LABELS.other)}</div>
-      </div>
-      <div class="dompet-item-right">
-        <div class="dompet-item-balance mono">${hidden ? maskCurrencyString(fmtRupiah(w.balance)) : fmtRupiah(w.balance)}</div>
-        <button type="button" class="dompet-item-del" data-walletdel="${w.id}" title="Hapus akun" aria-label="Hapus akun ${escapeAttr(w.name)}">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6h16Z"/></svg>
-        </button>
-      </div>
-    </div>
-  `).join('');
-
-  bindDompetPageEvents();
-}
-
-function bindDompetPageEvents() {
-  const eyeBtn = document.getElementById('dompetTotalEyeBtn');
-  if (eyeBtn && !eyeBtn._dompetBound) {
-    eyeBtn._dompetBound = true;
-    eyeBtn.addEventListener('click', () => toggleSaldoHidden());
-  }
-
-  const addBtn = document.getElementById('dompetAddBtn');
-  if (addBtn && !addBtn._dompetBound) {
-    addBtn._dompetBound = true;
-    addBtn.addEventListener('click', () => openWalletModal());
-  }
-
-  const emptyAddBtn = document.getElementById('dompetEmptyAddBtn');
-  if (emptyAddBtn && !emptyAddBtn._dompetBound) {
-    emptyAddBtn._dompetBound = true;
-    emptyAddBtn.addEventListener('click', () => openWalletModal());
-  }
-
-  const listEl = document.getElementById('dompetWalletList');
-  if (listEl && !listEl._dompetBound) {
-    listEl._dompetBound = true;
-    listEl.addEventListener('click', (e) => {
-      const delBtn = e.target.closest('[data-walletdel]');
-      if (delBtn) { e.stopPropagation(); openDeleteConfirm(delBtn.dataset.walletdel, 'wallet'); return; }
-      const item = e.target.closest('[data-wallet]');
-      if (item) openEditWalletModal(item.dataset.wallet);
-    });
-    listEl.addEventListener('keydown', (e) => {
-      const delBtn = e.target.closest('[data-walletdel]');
-      if (delBtn && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); e.stopPropagation(); openDeleteConfirm(delBtn.dataset.walletdel, 'wallet'); }
-    });
-  }
 }
 
 /* Kartu "Saldo Bank & E-Wallet" menampilkan semua akun sebagai strip
@@ -9976,6 +9876,64 @@ function setupLapSwipeTabs() {
   }, { passive: true });
 }
 setupLapSwipeTabs();
+
+/* ---- Tab utama halaman Dompet: Semua / Simpanan / Investasi / Pinjaman
+   ---- Pola PERSIS SAMA dgn tab utama halaman Laporan (switchLapMainTab
+   + setupLapSwipeTabs tepat di atas, lihat catatan lengkap di sana) --
+   disalin apa adanya, cuma nama variabel/ID-nya diganti "dompet" supaya
+   scoped ke halaman ini sendiri. Kontennya (.dompet-panel) masih
+   placeholder kosong (belum ada model data asli utk Semua/Simpanan/
+   Investasi/Pinjaman), tapi mekanisme ganti tab-nya (klik maupun usap
+   kiri/kanan) sudah berfungsi penuh dari sekarang. ---- */
+const DOMPET_TAB_ORDER = ['semua', 'simpanan', 'investasi', 'pinjaman'];
+function switchDompetMainTab(target) {
+  const container = document.getElementById('dompetMainTabs');
+  const btn = container?.querySelector(`.tab-btn[data-dompettab="${target}"]`);
+  if (!container || !btn) return;
+  container.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  updateTabIndicator(container);
+  document.querySelectorAll('.dompet-panel').forEach(p => p.classList.toggle('active', p.dataset.dompetPanel === target));
+}
+document.getElementById('dompetMainTabs')?.addEventListener('click', (e) => {
+  const btn = e.target.closest('.tab-btn');
+  if (!btn) return;
+  switchDompetMainTab(btn.dataset.dompettab);
+});
+
+function setupDompetSwipeTabs() {
+  const wrap = document.getElementById('dompetPanelsSwipe');
+  if (!wrap) return;
+  const SWIPE_THRESHOLD = 46;
+  let startX = 0, startY = 0, tracking = false;
+
+  wrap.addEventListener('touchstart', (e) => {
+    if (e.touches.length !== 1) { tracking = false; return; }
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    tracking = true;
+  }, { passive: true });
+
+  wrap.addEventListener('touchend', (e) => {
+    if (!tracking) return;
+    tracking = false;
+    const touch = e.changedTouches[0];
+    const dx = touch.clientX - startX;
+    const dy = touch.clientY - startY;
+    if (Math.abs(dx) < SWIPE_THRESHOLD || Math.abs(dx) < Math.abs(dy) * 1.3) return;
+
+    const activeBtn = document.querySelector('#dompetMainTabs .tab-btn.active');
+    const current = activeBtn ? activeBtn.dataset.dompettab : DOMPET_TAB_ORDER[0];
+    const idx = DOMPET_TAB_ORDER.indexOf(current);
+    if (idx === -1) return;
+    if (dx < 0 && idx < DOMPET_TAB_ORDER.length - 1) {
+      switchDompetMainTab(DOMPET_TAB_ORDER[idx + 1]); // usap ke kiri -> tab berikutnya
+    } else if (dx > 0 && idx > 0) {
+      switchDompetMainTab(DOMPET_TAB_ORDER[idx - 1]); // usap ke kanan -> tab sebelumnya
+    }
+  }, { passive: true });
+}
+setupDompetSwipeTabs();
 
 /* ==========================================================
    POPUP FILTER LAPORAN (halaman penuh)
