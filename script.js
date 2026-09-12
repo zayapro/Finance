@@ -11113,9 +11113,21 @@ let t2pCharIdxSeq = 0;
 function t2pLoadState() {
   try {
     const raw = cloudStorage.getItem(T2P_STATE_KEY);
-    if (raw) return Object.assign({ characters: [], story: '', worldNote: '', takeCount: 6, takeDuration: 8, subtitle: true, langId: true, langEn: false }, JSON.parse(raw));
+    if (raw) {
+      const state = Object.assign({ characters: [], story: '', worldNote: '', takeCount: 6, takeDuration: 8, subtitle: true, langId: true, langEn: false, dialogDefaultApplied: false }, JSON.parse(raw));
+      // MIGRASI TOGGLE DIALOG: dulu opsi ini namanya "Subtitle" & default-nya
+      // OFF. Sekarang jadi "Dialog" dan HARUS ON secara default tiap
+      // generate. User lama yang sempat kesimpan state dgn subtitle:false
+      // dari sebelum migrasi ini dipaksa ON sekali di sini saja -- abis itu
+      // (ditandai dialogDefaultApplied) pilihan manual mereka dihormati lagi.
+      if (!state.dialogDefaultApplied) {
+        state.subtitle = true;
+        state.dialogDefaultApplied = true;
+      }
+      return state;
+    }
   } catch (e) { /* abaikan, pakai default */ }
-  return { characters: [{ name: '', desc: '' }], story: '', worldNote: '', takeCount: 6, takeDuration: 8, subtitle: true, langId: true, langEn: false };
+  return { characters: [{ name: '', desc: '' }], story: '', worldNote: '', takeCount: 6, takeDuration: 8, subtitle: true, langId: true, langEn: false, dialogDefaultApplied: true };
 }
 function t2pSaveState() {
   try {
@@ -11132,6 +11144,7 @@ function t2pSaveState() {
       subtitle: !!document.getElementById('t2pOptSubtitle')?.checked,
       langId: !!document.getElementById('t2pLangId')?.checked,
       langEn: !!document.getElementById('t2pLangEn')?.checked,
+      dialogDefaultApplied: true,
     };
     cloudStorage.setItem(T2P_STATE_KEY, JSON.stringify(state));
   } catch (e) { /* riwayat form tidak kritikal, biarkan gagal senyap */ }

@@ -12147,11 +12147,20 @@ select#categoryFilter[hidden]{display:none;}
 .form-row{margin-bottom:13px;}
 .form-row label{display:block;font-size:12.5px;font-weight:700;color:var(--ink-soft);margin-bottom:6px;}
 .form-row input,.form-row select,.form-row textarea{
-  width:100%;padding:10px 12px;border-radius:9px;border:1px solid var(--line);
+  width:100%;max-width:100%;padding:10px 12px;border-radius:9px;border:1px solid var(--line);
   /* 16px, bukan 14px: di bawah 16px, Safari iOS auto-zoom begitu input
      disentuh (lihat catatan di media query mobile-nya juga). */
   font-size:16px;background:var(--paper);outline:none;
 }
+/* FIX BUG: textarea generik (mis. Sinopsis/Ide Cerita di kartu Naskah
+   Otomatis) sebelumnya TIDAK diberi "resize", jadi browser pakai
+   default resize:both -- gagang di pojok kanan-bawah bisa ditarik ke
+   SAMPING, bikin textarea melebar ngelewatin kartu/container-nya dan
+   nongol scrollbar horizontal aneh di halaman. Dikunci ke resize
+   vertikal saja (boleh ditinggiin, gak boleh dilebarin) -- pola yg
+   sama persis dgn textarea lain di app (t2p-char-desc, t2p-take-prompt,
+   dst yg sudah lebih dulu pakai resize:vertical). */
+.form-row textarea{resize:vertical;}
 .form-row select{
   appearance:none;-webkit-appearance:none;-moz-appearance:none;
   padding-right:36px;
@@ -13371,6 +13380,15 @@ body.is-scrolling *{
   .section-subtitle{font-size:10px;}
   .eyebrow{font-size:10px;letter-spacing:0.12em;}
   .chip-total{font-size:10.5px;padding:5px 10px;}
+
+  /* ---- Kartu "Naskah Otomatis" (Text to Prompt) -- dipadatkan sama
+     spt kartu lain di breakpoint ini. Font input/textarea SENGAJA tidak
+     ikut dikecilkan (tetap ikut aturan global 16px di .form-row) supaya
+     Safari iOS tidak auto-zoom saat disentuh. ---- */
+  .t2p-auto-card{padding:14px;}
+  .t2p-auto-card-title{font-size:14px;margin-bottom:6px;}
+  .t2p-auto-card-desc{font-size:12.5px;line-height:1.55;margin-bottom:12px;}
+  .t2p-auto-card-label{font-size:10.5px;margin-bottom:6px;}
 
   /* ---- Banner atas: logo, nama app, tanggal, ikon lonceng ---- */
   /* PENTING (fix overflow/geser horizontal tipis di HP): margin negatif
@@ -14912,17 +14930,27 @@ html.dark-mode .bd-row-close{
 .t2p-opts-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:4px;}
 .t2p-opts-grid .form-row label{margin-bottom:4px;font-size:12px;}
 .t2p-opts-grid .form-row input{padding:8px 10px;}
-.t2p-auto-card{background:linear-gradient(160deg, #0B1220 0%, #141b2e 45%, #1c1233 100%);border-radius:16px;padding:16px;}
-.t2p-auto-card-title{display:flex;align-items:center;gap:7px;font-size:16px;font-weight:800;color:var(--primary);margin-bottom:8px;}
-.t2p-auto-card-desc{font-size:13px;line-height:1.6;color:#C7CBD9;margin:0 0 16px;}
-.t2p-auto-card-desc b{color:#fff;}
+/* Kartu ini dulu SENGAJA dibikin gelap terus (spt kartu promo) apapun
+   temanya -- sesuai permintaan user, sekarang dibikin TERANG & ikut
+   var(--card)/var(--paper)/var(--ink) spt kartu form lain, otomatis
+   nyesuaiin diri ke Mode Terang maupun Mode Dark. Aksennya (judul,
+   "TAKE", border tipis) tetap dari var(--primary) biar masih kerasa
+   sbg kartu unggulan, bukan cuma dibedain lewat warna gelap doang. */
+.t2p-auto-card{
+  background:var(--card);
+  border:1px solid color-mix(in srgb, var(--primary) 22%, var(--line));
+  border-radius:16px;padding:16px;
+}
+.t2p-auto-card-title{display:flex;align-items:center;gap:7px;font-size:15px;font-weight:800;line-height:1.3;margin-bottom:8px;color:var(--primary);}
+.t2p-auto-card-desc{font-size:13.5px;font-weight:500;line-height:1.6;color:var(--ink-faint);margin:0 0 16px;}
+.t2p-auto-card-desc b{font-weight:700;color:var(--ink);}
 .t2p-auto-card-highlight{color:var(--primary);font-weight:800;border-bottom:2px dotted var(--primary);cursor:help;}
-.t2p-auto-card-label{display:block;font-size:11px;font-weight:800;letter-spacing:.04em;color:#8A90A6;margin-bottom:8px;text-transform:uppercase;}
+.t2p-auto-card-label{display:block;font-size:11px;font-weight:700;letter-spacing:.04em;line-height:1.3;color:var(--ink-faint);margin-bottom:8px;text-transform:uppercase;}
 .t2p-auto-card .form-row{margin-bottom:0;}
 .t2p-auto-card .form-row textarea,
-.t2p-auto-card .form-row input{background:#0B1220;border:1px solid #263047;color:#E7E9F1;}
+.t2p-auto-card .form-row input{background:var(--paper);border:1px solid var(--line);color:var(--ink);line-height:1.5;}
 .t2p-auto-card .form-row textarea::placeholder,
-.t2p-auto-card .form-row input::placeholder{color:#5B6178;}
+.t2p-auto-card .form-row input::placeholder{color:var(--ink-faint);}
 .t2p-auto-card .form-row textarea:focus,
 .t2p-auto-card .form-row input:focus{border-color:var(--primary);}
 .t2p-opts-pillrow{display:flex;flex-wrap:wrap;gap:8px;}
@@ -14955,7 +14983,6 @@ html.dark-mode .bd-row-close{
 .t2p-lang-switch-thumb{position:absolute;top:3px;left:3px;width:calc(50% - 3px);height:calc(100% - 6px);background:var(--primary);border-radius:999px;transition:transform .2s ease;z-index:0;}
 .t2p-lang-switch.lang-en .t2p-lang-switch-thumb{transform:translateX(100%);}
 .t2p-lang-switch-opt{position:relative;z-index:1;flex:1;display:flex;align-items:center;justify-content:center;gap:4px;padding:7px 0;font-size:12.5px;font-weight:700;color:var(--ink-faint);cursor:pointer;user-select:none;transition:color .15s ease;}
-.t2p-lang-switch-opt span[aria-hidden]{font-size:14px;line-height:1;}
 .t2p-lang-switch input:checked + .t2p-lang-switch-opt{color:#fff;}
 
 .t2p-locked-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:#7C3AED;background:rgba(124,58,237,0.1);border-radius:20px;padding:5px 11px;margin-bottom:10px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -15024,7 +15051,23 @@ html.dark-mode .bd-row-close{
    "Tes" per key utk cek status kapan saja (panggilan ringan ke
    endpoint list model, TIDAK makan kuota generate), & tombol "Pakai"
    utk pindah key aktif secara manual. ---- */
-.t2p-api-modal-body{padding:2px 2px 0;}
+/* Modal ini dibikin flex-column: bagian atas (judul, pilih Model,
+   form Tambah API Key) TIDAK ikut scroll (flex-shrink:0), cuma
+   ".t2p-api-modal-scroll" (Daftar Key & Status) yang scroll sendiri
+   di dalam -- jadi biar key-nya udah puluhan & panjang ke bawah,
+   bagian atas tetap kelihatan terus tanpa perlu scroll balik. Cuma
+   scope ke .ai-settings-modal, modal lain yg masih pakai
+   ".modal{overflow-y:auto}" polos di atas TIDAK kena efek ini. */
+.ai-settings-modal{
+  display:flex;flex-direction:column;
+  max-height:86vh;overflow:hidden;
+}
+.ai-settings-modal .modal-head{flex-shrink:0;}
+.ai-settings-modal .t2p-api-modal-top{flex-shrink:0;padding-top:2px;}
+.ai-settings-modal .t2p-api-modal-scroll{
+  flex:1;min-height:0;overflow-y:auto;padding:2px 2px 0;
+  overscroll-behavior:contain;
+}
 .t2p-api-info-card{display:flex;gap:9px;align-items:flex-start;background:rgba(124,58,237,0.08);border-radius:12px;padding:12px 13px;margin-bottom:16px;}
 .t2p-api-info-card-ic{flex-shrink:0;font-size:16px;line-height:1.3;}
 .t2p-api-info-card p{margin:0;font-size:12.5px;line-height:1.6;color:var(--ink);}
@@ -16869,11 +16912,11 @@ html.dark-mode .bd-row-close{
               <input type="checkbox" id="t2pOptSubtitle" checked style="display:none;">
               <span class="t2p-opt-pill-check" aria-hidden="true"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg></span><span>Dialog</span>
             </label>
-            <div class="t2p-lang-switch" id="t2pLangSwitch" title="Bahasa Output Video">
+            <div class="t2p-lang-switch" id="t2pLangSwitch" title="Bahasa suara/dialog yang terdengar di video hasil (ID dan/atau EN)">
               <input type="radio" name="t2pLang" id="t2pLangId" checked style="display:none;">
-              <label class="t2p-lang-switch-opt" for="t2pLangId"><span aria-hidden="true">🇮🇩</span><span>ID</span></label>
+              <label class="t2p-lang-switch-opt" for="t2pLangId">ID</label>
               <input type="radio" name="t2pLang" id="t2pLangEn" style="display:none;">
-              <label class="t2p-lang-switch-opt" for="t2pLangEn"><span aria-hidden="true">🇬🇧</span><span>EN</span></label>
+              <label class="t2p-lang-switch-opt" for="t2pLangEn">EN</label>
               <span class="t2p-lang-switch-thumb" aria-hidden="true"></span>
             </div>
           </div>
@@ -16992,7 +17035,12 @@ html.dark-mode .bd-row-close{
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6 6 18M6 6l12 12"/></svg>
         </button>
       </div>
-      <div class="t2p-api-modal-body">
+      <!-- Bagian ini SENGAJA dipisah dari bagian scroll di bawah &
+           dibikin "menempel" (tidak ikut ke-scroll) -- supaya waktu
+           daftar API key di bawah udah banyak & panjang, pilihan
+           model & form tambah key tetap kelihatan tanpa perlu
+           scroll balik ke atas tiap mau nambah/ganti model. -->
+      <div class="t2p-api-modal-top">
         <div class="t2p-api-section-label">Model Gemini</div>
         <!-- ---- UPDATE MODEL (Sept 2026): 3 pilihan lama (gemini-2.5-flash,
              gemini-2.5-pro, gemini-2.0-flash) diganti karena:
@@ -17022,10 +17070,12 @@ html.dark-mode .bd-row-close{
         <div class="t2p-key-add-row">
           <input type="text" id="t2pKeyInput" placeholder="Tempel API key Gemini di sini">
           <button type="button" class="btn btn-primary" id="t2pKeyAddBtn" style="flex-shrink:0;padding:0 16px;">Tambah</button>
-          <button type="button" class="t2p-upload-btn" id="t2pKeyUploadBtn" aria-label="Unggah dari file .txt, 1 key per baris" title="Unggah dari file .txt (1 key per baris)">📄</button>
+          <button type="button" class="t2p-upload-btn" id="t2pKeyUploadBtn" aria-label="Unggah dari file .txt, 1 key per baris" title="Unggah dari file .txt (1 key per baris)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V4"/><path d="M7 9l5-5 5 5"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg></button>
         </div>
         <input type="file" id="t2pKeyFileInput" accept=".txt" style="display:none;">
+      </div>
 
+      <div class="t2p-api-modal-scroll">
         <div class="t2p-key-section-head">
           <div class="t2p-api-section-label">Daftar Key &amp; Status</div>
           <div class="t2p-key-summary" id="t2pKeySummary"></div>
