@@ -14842,6 +14842,74 @@ html.dark-mode .bd-row-close{
   background:var(--paper) !important;
   border-color:rgba(255,255,255,0.09) !important;
 }
+
+/* ================================================================
+   TOOL "TEXT TO PROMPT" (#t2pOverlay) -- generator prompt video
+   drama (utk model text-to-video/extend-video) dari naskah user.
+   Lihat komentar panjang di markup #t2pOverlay & di script.js
+   (cari komentar "TEXT TO PROMPT") utk alur lengkapnya.
+================================================================ */
+.t2p-section-title{font-size:13.5px;font-weight:700;color:var(--ink);margin:0 0 2px;display:flex;align-items:center;gap:6px;}
+.t2p-section-sub{font-size:11.5px;color:var(--ink-soft);margin:0 0 10px;line-height:1.45;}
+.t2p-section{padding-bottom:14px;margin-bottom:14px;border-bottom:1px dashed var(--line);}
+.t2p-section:last-of-type{border-bottom:none;margin-bottom:0;padding-bottom:0;}
+
+.t2p-char-row{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:8px;}
+.t2p-char-row-top{display:flex;align-items:center;gap:8px;margin-bottom:7px;}
+.t2p-char-row-top input{flex:1;min-width:0;padding:9px 11px;border-radius:9px;border:1px solid var(--line);font-size:15px;background:var(--card);outline:none;font-weight:600;}
+.t2p-char-row-top input:focus{border-color:var(--forest-glow);}
+.t2p-char-remove{flex-shrink:0;width:28px;height:28px;border-radius:50%;border:none;background:rgba(220,38,38,0.12);color:#DC2626;font-size:16px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.t2p-char-desc{width:100%;padding:9px 11px;border-radius:9px;border:1px solid var(--line);font-size:13.5px;background:var(--card);outline:none;resize:vertical;min-height:44px;font-family:inherit;}
+.t2p-char-desc:focus{border-color:var(--forest-glow);}
+.t2p-add-char-btn{width:100%;padding:10px;border-radius:10px;border:1.5px dashed var(--line);background:transparent;color:var(--primary);font-weight:700;font-size:13px;cursor:pointer;}
+
+.t2p-check-row{display:flex;align-items:center;gap:9px;padding:9px 2px;cursor:pointer;}
+.t2p-check-row input{width:17px;height:17px;flex-shrink:0;accent-color:var(--primary);cursor:pointer;}
+.t2p-check-row span{flex:1;font-size:13.5px;font-weight:600;color:var(--ink);}
+.t2p-check-row .t2p-check-sub{display:block;font-size:11px;font-weight:500;color:var(--ink-soft);margin-top:1px;}
+.t2p-check-group{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;padding:2px 10px;background:var(--paper);}
+.t2p-opts-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+
+.t2p-locked-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:#7C3AED;background:rgba(124,58,237,0.1);border-radius:20px;padding:5px 11px;margin-bottom:10px;}
+
+.t2p-generate-btn{width:100%;padding:13px;border-radius:12px;border:none;background:var(--primary);color:#fff;font-weight:700;font-size:14.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;}
+.t2p-generate-btn:disabled{opacity:0.6;cursor:default;}
+.t2p-spin{width:15px;height:15px;border-radius:50%;border:2px solid rgba(255,255,255,0.4);border-top-color:#fff;animation:t2pspin 0.7s linear infinite;display:none;}
+.t2p-generate-btn.loading .t2p-spin{display:inline-block;}
+@keyframes t2pspin{to{transform:rotate(360deg);}}
+
+.t2p-empty-hint{text-align:center;color:var(--ink-soft);font-size:12.5px;padding:18px 8px;}
+
+.t2p-take-card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:10px;}
+.t2p-take-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;flex-wrap:wrap;}
+.t2p-take-badge{font-size:12px;font-weight:800;color:#fff;background:var(--primary);border-radius:20px;padding:4px 11px;}
+.t2p-take-meta{font-size:11.5px;font-weight:600;color:var(--ink-soft);}
+.t2p-take-chars{font-size:11.5px;color:var(--ink-soft);margin-bottom:7px;}
+.t2p-take-chars b{color:var(--ink);}
+.t2p-take-prompt{width:100%;padding:10px 11px;border-radius:10px;border:1px solid var(--line);font-size:13px;line-height:1.5;background:var(--card);outline:none;resize:vertical;min-height:96px;font-family:inherit;margin-bottom:7px;}
+.t2p-take-prompt:focus{border-color:var(--forest-glow);}
+.t2p-take-sub{margin-bottom:7px;}
+.t2p-take-sub label{display:block;font-size:11px;font-weight:700;color:var(--ink-soft);margin-bottom:4px;}
+.t2p-take-sub textarea{width:100%;padding:8px 10px;border-radius:9px;border:1px solid var(--line);font-size:12.5px;background:var(--card);outline:none;resize:vertical;font-family:inherit;}
+.t2p-take-continuity{font-size:11px;color:#0891B2;background:rgba(8,145,178,0.08);border-radius:8px;padding:7px 9px;margin-bottom:8px;line-height:1.4;}
+.t2p-take-actions{display:flex;gap:8px;}
+.t2p-copy-btn{flex:1;padding:9px;border-radius:9px;border:1px solid var(--primary);background:transparent;color:var(--primary);font-weight:700;font-size:12.5px;cursor:pointer;}
+.t2p-copy-btn.copied{background:var(--primary);color:#fff;}
+
+.t2p-showmore-btn{width:100%;padding:11px;border-radius:10px;border:1.5px dashed var(--line);background:transparent;color:var(--ink);font-weight:700;font-size:13px;cursor:pointer;margin-top:2px;}
+
+.t2p-key-list{display:flex;flex-direction:column;gap:7px;margin-bottom:10px;}
+.t2p-key-item{display:flex;align-items:center;gap:8px;background:var(--paper);border:1px solid var(--line);border-radius:9px;padding:8px 10px;}
+.t2p-key-item .t2p-key-label{flex:1;min-width:0;font-size:12.5px;font-family:monospace;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.t2p-key-item .t2p-key-active-tag{flex-shrink:0;font-size:9.5px;font-weight:800;color:#059669;background:rgba(5,150,105,0.12);border-radius:20px;padding:2px 7px;}
+.t2p-key-remove{flex-shrink:0;width:24px;height:24px;border-radius:50%;border:none;background:rgba(220,38,38,0.12);color:#DC2626;font-size:14px;line-height:1;cursor:pointer;}
+.t2p-key-add-row{display:flex;gap:8px;margin-bottom:8px;}
+.t2p-key-add-row input{flex:1;min-width:0;}
+.t2p-upload-btn{width:100%;padding:9px;border-radius:9px;border:1.5px dashed var(--line);background:transparent;color:var(--ink);font-weight:700;font-size:12.5px;cursor:pointer;}
+
+@media (max-width:380px){
+  .t2p-opts-grid{grid-template-columns:1fr;}
+}
 </style>
 </head>
 
@@ -15219,6 +15287,12 @@ html.dark-mode .bd-row-close{
           <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4M22 5h-4M4 17v2M5 18H3"/></svg>
         </span>
         <span class="fm-menu-label">Tool AI</span>
+      </button>
+      <button type="button" class="fm-menu-item" id="fmHomeT2pBtn" data-fmkey="texttoprompt" title="Text to Prompt">
+        <span class="fm-menu-ic" style="--fm-color:#9333EA;">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.5 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8.5z"/><path d="M15.5 3v5.5H21"/><path d="M8 13h8M8 17h5"/></svg>
+        </span>
+        <span class="fm-menu-label">Text to Prompt</span>
       </button>
     </div>
   </section>
@@ -16276,6 +16350,12 @@ html.dark-mode .bd-row-close{
             </span>
             <span class="fm-menu-label">Tool AI</span>
           </button>
+          <button type="button" class="fm-menu-item" id="fmGridT2pBtn" data-fmkey="texttoprompt" title="Text to Prompt">
+            <span class="fm-menu-ic" style="--fm-color:#9333EA;">
+              <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.5 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8.5z"/><path d="M15.5 3v5.5H21"/><path d="M8 13h8M8 17h5"/></svg>
+            </span>
+            <span class="fm-menu-label">Text to Prompt</span>
+          </button>
         </div>
       </div>
 
@@ -16349,6 +16429,163 @@ html.dark-mode .bd-row-close{
     </div>
   </div>
   <!-- ===== /HALAMAN "KALKULATOR" ===== -->
+
+  <!-- ===== HALAMAN "TEXT TO PROMPT" (#t2pOverlay) =====
+       Tool baru: generator PROMPT video (utk model AI text-to-video /
+       extend-video seperti Veo dkk) dari naskah/cerita yang user tempel
+       sendiri (naskahnya sendiri dibuat pakai AI lain, di luar tool ini).
+       Dibuka dari pintasan "Text to Prompt" di kartu Fast Menu Beranda
+       (#fmHomeT2pBtn) maupun grid "Menu Utama" halaman Fast Menu
+       (#fmGridT2pBtn). Struktur luar SAMA PERSIS dgn #kalkulatorOverlay
+       (.detail-page-overlay.lap-filter-overlay > .lap-filter-page >
+       .lap-filter-head + .lap-filter-card).
+
+       Alur: user isi daftar KARAKTER (nama + ciri fisik lengkap -- ini
+       yang dipakai buat "kunci karakter full body" di tiap take, supaya
+       wujud karakter di take manapun konsisten), tempel NASKAH/CERITA,
+       atur OPSI (jumlah take, durasi/take, subtitle, bahasa output --
+       semua dalam bentuk centang/angka spt diminta), lalu klik "Generate
+       Prompt". script.js (cari komentar "TEXT TO PROMPT" di script.js)
+       mengirim SATU instruksi besar ke Gemini API (key disimpan sendiri
+       oleh user lewat modal #t2pApiModalOverlay, bisa >1 key dgn
+       auto-ganti kalau kuota salah satu key habis) yang memaksa modelnya
+       membagi cerita jadi N-take JSON terstruktur, tiap take berisi
+       prompt video siap-pakai yang:
+       - mengulang PERSIS deskripsi fisik lengkap tiap karakter yang
+         muncul di take itu (bukan cuma nama) supaya wujudnya konsisten
+         tiap take/generate (poin "kunci karakter full body").
+       - kasih blocking posisi jelas pas 2 karakter ngobrol (siapa di
+         kiri/kanan, saling berhadapan) supaya lawan bicara tidak
+         nongol aneh di belakang/samping karakter utama.
+       - kasih instruksi eksplisit soal adegan naik kendaraan (arah
+         pintu & posisi masuk yang benar, gerak kendaraan yang wajar,
+         bukan gerak "kebalik"/tidak natural).
+       - kasih catatan "frame awal take ini = frame akhir take
+         sebelumnya" supaya sambungan antar-take/generate mulus.
+       - lokasi disesuaikan otomatis per take mengikuti isi cerita.
+       Hasilnya dirender sbg kartu per-take (t2pRenderTakes di script.js)
+       -- cuma 3 kartu pertama yang tampil, sisanya disembunyikan dulu
+       di balik tombol "Tampilkan Take Berikutnya" (per 3 kartu) biar
+       halaman tidak kepanjangan ke bawah. Tiap kartu prompt-nya bisa
+       diedit langsung (textarea) & ada tombol "Salin" (clipboard). ---->
+  <div class="detail-page-overlay lap-filter-overlay" id="t2pOverlay">
+    <div class="lap-filter-page">
+      <div class="lap-filter-head">
+        <button class="lap-filter-back-btn" id="t2pBackBtn" type="button" aria-label="Tutup Text to Prompt">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <h2>Text to Prompt</h2>
+        <button class="lap-filter-back-btn" id="t2pApiSettingsBtn" type="button" aria-label="Pengaturan API Gemini">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </button>
+      </div>
+
+      <div class="lap-filter-card">
+        <p class="t2p-section-sub">Tempel naskah/cerita drama kamu, isi data karakter, atur opsi take -- tool ini akan membuatkan <b>prompt video per-take</b> yang konsisten (karakter full body terkunci, posisi bicara wajar, adegan kendaraan realistis, & sambungan antar-take mulus) siap ditempel ke tool video-gen kamu.</p>
+
+        <div class="t2p-section">
+          <div class="t2p-section-title">👤 Karakter</div>
+          <p class="t2p-section-sub">Isi ciri fisik SELENGKAP mungkin (tinggi/postur, wajah, rambut, warna kulit, pakaian & warna, aksesoris) -- teks ini akan diulang persis di tiap take supaya wujud karakternya konsisten (kunci karakter full body).</p>
+          <div id="t2pCharList"></div>
+          <button type="button" class="t2p-add-char-btn" id="t2pAddCharBtn">+ Tambah Karakter</button>
+        </div>
+
+        <div class="t2p-section">
+          <div class="t2p-section-title">📝 Naskah / Cerita</div>
+          <div class="form-row" style="margin-bottom:8px;">
+            <textarea id="t2pStoryInput" rows="7" placeholder="Tempel naskah/cerita drama kamu di sini... (adegan, dialog, urutan kejadian, dsb)"></textarea>
+          </div>
+          <div class="form-row" style="margin-bottom:0;">
+            <label for="t2pWorldNote">Catatan Tambahan (opsional)</label>
+            <input type="text" id="t2pWorldNote" placeholder="Genre, mood/nuansa, gaya visual, dsb">
+          </div>
+        </div>
+
+        <div class="t2p-section">
+          <div class="t2p-section-title">⚙️ Opsi Sebelum Generate</div>
+          <div class="t2p-opts-grid">
+            <div class="form-row" style="margin-bottom:0;">
+              <label for="t2pTakeCount">Jumlah Take</label>
+              <input type="number" id="t2pTakeCount" min="1" max="30" step="1" value="6">
+            </div>
+            <div class="form-row" style="margin-bottom:0;">
+              <label for="t2pTakeDuration">Durasi per Take (detik)</label>
+              <input type="number" id="t2pTakeDuration" min="2" max="60" step="1" value="8">
+            </div>
+          </div>
+          <label class="t2p-check-row">
+            <input type="checkbox" id="t2pOptSubtitle" checked>
+            <span>Sertakan Subtitle/Dialog
+              <span class="t2p-check-sub">Teks dialog terpisah per take, siap dipakai utk subtitle</span>
+            </span>
+          </label>
+          <div class="t2p-section-title" style="margin-top:8px;font-size:12.5px;">Bahasa Output Prompt</div>
+          <div class="t2p-check-group">
+            <label class="t2p-check-row"><input type="checkbox" id="t2pLangId" checked><span>Bahasa Indonesia</span></label>
+            <label class="t2p-check-row"><input type="checkbox" id="t2pLangEn"><span>Bahasa Inggris (English)</span></label>
+          </div>
+        </div>
+
+        <div class="t2p-section" style="border-bottom:none;padding-bottom:0;">
+          <span class="t2p-locked-badge">🔒 Karakter full body terkunci &amp; lokasi otomatis per take</span>
+          <button type="button" class="t2p-generate-btn" id="t2pGenerateBtn">
+            <span class="t2p-spin"></span>
+            <span id="t2pGenerateBtnLabel">Generate Prompt</span>
+          </button>
+
+          <div id="t2pResultsWrap" style="margin-top:14px;">
+            <p class="t2p-empty-hint" id="t2pResultsEmpty">Hasil prompt tiap take akan muncul di sini setelah kamu klik Generate Prompt.</p>
+            <div id="t2pResultsList"></div>
+            <button type="button" class="t2p-showmore-btn" id="t2pShowMoreBtn" style="display:none;">Tampilkan Take Berikutnya</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- ===== /HALAMAN "TEXT TO PROMPT" ===== -->
+
+  <!-- ===== MODAL PENGATURAN API GEMINI -- TEXT TO PROMPT
+       (#t2pApiModalOverlay) =====
+       Dibuka dari tombol gir di header #t2pOverlay (#t2pApiSettingsBtn).
+       Simpan >1 API key Gemini (array, di localStorage lewat
+       cloudStorage) -- saat generate, script.js coba key aktif dulu,
+       kalau responsnya kuota habis/invalid (429/403) otomatis pindah
+       & coba key berikutnya di daftar (lihat t2pCallGemini di
+       script.js) -- supaya generate tidak berhenti cuma krn 1 key
+       kehabisan kuota gratis harian. Juga bisa unggah banyak key
+       sekaligus dari file .txt (satu key per baris). ===== -->
+  <div class="modal-overlay" id="t2pApiModalOverlay">
+    <div class="modal ai-settings-modal">
+      <div class="modal-head">
+        <h3>Pengaturan API Gemini</h3>
+        <button class="modal-close" id="t2pApiModalCloseBtn" type="button">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div style="padding:2px 2px 0;">
+        <p class="ai-settings-hint" style="margin-top:0;">Tool ini pakai Gemini API milik kamu sendiri (gratis, dapatkan di <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a>). Bisa tambah lebih dari 1 key -- kalau kuota key yang lagi dipakai habis, otomatis ganti ke key berikutnya di daftar ini. Semua key disimpan hanya di browser ini.</p>
+
+        <div class="form-row">
+          <label for="t2pModelSelect">Model Gemini</label>
+          <select id="t2pModelSelect">
+            <option value="gemini-2.5-flash">gemini-2.5-flash (cepat, disarankan)</option>
+            <option value="gemini-2.5-pro">gemini-2.5-pro (lebih detail, lebih lambat)</option>
+            <option value="gemini-2.0-flash">gemini-2.0-flash</option>
+          </select>
+        </div>
+
+        <div class="t2p-key-add-row">
+          <input type="text" id="t2pKeyInput" placeholder="Tempel API key Gemini di sini">
+          <button type="button" class="btn btn-primary" id="t2pKeyAddBtn" style="flex-shrink:0;padding:0 16px;">Tambah</button>
+        </div>
+        <button type="button" class="t2p-upload-btn" id="t2pKeyUploadBtn">📄 Unggah dari File (.txt, 1 key per baris)</button>
+        <input type="file" id="t2pKeyFileInput" accept=".txt" style="display:none;">
+
+        <div class="t2p-key-list" id="t2pKeyList" style="margin-top:12px;"></div>
+      </div>
+    </div>
+  </div>
+  <!-- ===== /MODAL PENGATURAN API GEMINI -- TEXT TO PROMPT ===== -->
 
   <!-- ===== HALAMAN "UNDUH VIDEO" (#videoDlOverlay) =====
        Halaman baru, dibuka dari pintasan "Unduh Video" di kartu Fast
