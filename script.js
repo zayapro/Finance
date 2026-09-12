@@ -11748,7 +11748,8 @@ function t2pIsTakeEdited(t) {
     || (t.camera_movement || '') !== (orig.camera_movement || '')
     || (t.prompt || '') !== (orig.prompt || '')
     || (t.subtitle || '') !== (orig.subtitle || '')
-    || (t.end_frame_description || '') !== (orig.end_frame_description || '');
+    || (t.end_frame_description || '') !== (orig.end_frame_description || '')
+    || (t.location || '') !== (orig.location || '');
 }
 
 /* ---------- Render kartu take (3 per halaman, tombol "tampilkan
@@ -11794,9 +11795,9 @@ function t2pRenderTakes() {
       <div class="t2p-take-tagsrow">
         <span class="t2p-take-copied-tag" style="display:${copied ? '' : 'none'};">✓ Disalin</span>
         ${t.burnSubtitleWanted ? '<span class="t2p-take-cc-tag" title="Instruksi subtitle burned-in sudah disisipkan ke Prompt Video">CC Subtitle</span>' : ''}
-        <span class="t2p-take-meta"><svg class="t2p-take-meta-icon" width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"></path></svg><span class="t2p-take-meta-text">${(t.location || '-')}</span></span>
       </div>
       ${chars.length ? `<div class="t2p-take-chars"><span class="t2p-take-chars-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.761 0 5-2.239 5-5s-2.239-5-5-5-5 2.239-5 5 2.239 5 5 5zm0 2c-3.333 0-10 1.667-10 5v3h20v-3c0-3.333-6.667-5-10-5z"></path></svg></span><b>Karakter:</b>${charsHtml}</div>` : ''}
+      <div class="t2p-take-sub"><label>Lokasi</label><textarea class="t2p-take-location" rows="2">${t.location || ''}</textarea></div>
       ${t.continuity_note ? `<div class="t2p-take-continuity"><span>\u21b3</span><span>menyambung dari akhir Take ${Math.max(1, t.take - 1)}: ${t.continuity_note}</span></div>` : ''}
       <div class="t2p-take-fieldgrid">
         <div class="t2p-take-sub"><label>Aksi yang Terjadi</label><textarea class="t2p-take-action" rows="4">${t.action || ''}</textarea></div>
@@ -11808,7 +11809,7 @@ function t2pRenderTakes() {
         <div class="t2p-take-sub"><label>Deskripsi Akhir Frame</label><textarea class="t2p-take-endframe" rows="3">${t.end_frame_description || ''}</textarea></div>
       </div>`
         : `<div class="t2p-take-sub"><label>Deskripsi Akhir Frame</label><textarea class="t2p-take-endframe" rows="3">${t.end_frame_description || ''}</textarea></div>`}
-      <div class="t2p-take-tip">📷 Setelah Take ${String(t.take).padStart(2, '0')} selesai di-generate: screenshot frame paling akhir videonya, lalu upload sebagai gambar acuan/awal saat generate Take ${String(t.take + 1).padStart(2, '0')}. Ini jauh lebih kuat untuk konsistensi daripada deskripsi teks saja.</div>
+      <div class="t2p-take-tip"><svg class="t2p-take-tip-ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg><span>Setelah Take ${String(t.take).padStart(2, '0')} selesai - Jika tidak memakai fitur extend pada AI, maka screenshot frame paling akhir videonya, lalu upload sebagai gambar acuan untuk generate berikutnya.</span></div>
       <label class="t2p-take-prompt-label">Prompt Siap Pakai</label>
       <textarea class="t2p-take-prompt" rows="6">${t.prompt || ''}</textarea>
       <div class="t2p-take-actions">
@@ -11819,6 +11820,7 @@ function t2pRenderTakes() {
     const actionTa = card.querySelector('.t2p-take-action');
     const cameraTa = card.querySelector('.t2p-take-camera');
     const endframeTa = card.querySelector('.t2p-take-endframe');
+    const locationTa = card.querySelector('.t2p-take-location');
     const resetBtn = card.querySelector('.t2p-take-resetbtn');
     const delBtn = card.querySelector('.t2p-take-delbtn');
 
@@ -11847,6 +11849,11 @@ function t2pRenderTakes() {
     actionTa?.addEventListener('input', () => { t.action = actionTa.value; markUncopiedIfNeeded(); refreshResetBtn(); });
     cameraTa?.addEventListener('input', () => { t.camera_movement = cameraTa.value; markUncopiedIfNeeded(); refreshResetBtn(); });
     endframeTa?.addEventListener('input', () => { t.end_frame_description = endframeTa.value; markUncopiedIfNeeded(); refreshResetBtn(); });
+    locationTa?.addEventListener('input', () => {
+      t.location = locationTa.value;
+      markUncopiedIfNeeded();
+      refreshResetBtn();
+    });
     promptTa?.addEventListener('input', () => { t.prompt = promptTa.value; markUncopiedIfNeeded(); refreshResetBtn(); });
 
     card.querySelector('.t2p-copy-btn')?.addEventListener('click', function () {
@@ -11881,11 +11888,13 @@ function t2pRenderTakes() {
       t.prompt = orig.prompt;
       t.subtitle = orig.subtitle;
       t.end_frame_description = orig.end_frame_description;
+      t.location = orig.location;
       if (actionTa) actionTa.value = t.action || '';
       if (cameraTa) cameraTa.value = t.camera_movement || '';
       if (promptTa) promptTa.value = t.prompt || '';
       if (dialogTa) dialogTa.value = t.subtitle || '';
       if (endframeTa) endframeTa.value = t.end_frame_description || '';
+      if (locationTa) locationTa.value = t.location || '';
       if (subActionsEl) subActionsEl.style.display = t2pSubtitleTakes().length ? '' : 'none';
       markUncopiedIfNeeded();
       refreshResetBtn();
@@ -12203,7 +12212,7 @@ function t2pRenderCharDock() {
         <textarea rows="3" placeholder="Ciri fisik lengkap (full body) belum diisi...">${escapeHtml(c.desc)}</textarea>
         <div class="t2p-chardock-item-badge">${c.desc ? 'Saran deskripsi dari hasil generate -- boleh diedit' : 'Dari naskah -- belum ada di form Karakter'}</div>
         <div class="t2p-chardock-item-editbar" style="display:none;">
-          <button type="button" class="t2p-chardock-apply-btn">✓ Terapkan</button>
+          <button type="button" class="t2p-chardock-apply-btn"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg> Terapkan</button>
           <button type="button" class="t2p-chardock-cancel-btn">Batal</button>
         </div>
         <p class="t2p-chardock-item-hint">Perubahan dipakai saat kamu generate ulang atau tambah segmen -- TIDAK mengubah take yang sudah jadi sekarang.</p>
@@ -12380,7 +12389,7 @@ document.getElementById('t2pGenerateBtn')?.addEventListener('click', async () =>
       t.burnSubtitleWanted = !!state.burnSubtitle;
       // Simpan salinan asli hasil AI (sebelum sempat diedit user) --
       // dipakai tombol "reset ke hasil AI" per kartu take.
-      t._t2pOriginal = { action: t.action || '', camera_movement: t.camera_movement || '', prompt: t.prompt || '', subtitle: t.subtitle || '', end_frame_description: t.end_frame_description || '' };
+      t._t2pOriginal = { action: t.action || '', camera_movement: t.camera_movement || '', prompt: t.prompt || '', subtitle: t.subtitle || '', end_frame_description: t.end_frame_description || '', location: t.location || '' };
     });
     t2pAllTakes = parsed;
     t2pVisibleCount = Math.min(3, t2pAllTakes.length);
@@ -12441,7 +12450,7 @@ document.getElementById('t2pAddSegmentBtn')?.addEventListener('click', async () 
     parsed.burnSubtitleWanted = !!state.burnSubtitle;
     // Simpan salinan asli hasil AI (sebelum sempat diedit user) --
     // dipakai tombol "reset ke hasil AI" per kartu take.
-    parsed._t2pOriginal = { action: parsed.action || '', camera_movement: parsed.camera_movement || '', prompt: parsed.prompt || '', subtitle: parsed.subtitle || '', end_frame_description: parsed.end_frame_description || '' };
+    parsed._t2pOriginal = { action: parsed.action || '', camera_movement: parsed.camera_movement || '', prompt: parsed.prompt || '', subtitle: parsed.subtitle || '', end_frame_description: parsed.end_frame_description || '', location: parsed.location || '' };
     t2pAllTakes.push(parsed);
     t2pVisibleCount = t2pAllTakes.length;
     t2pRenderTakes();

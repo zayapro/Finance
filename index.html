@@ -13386,9 +13386,9 @@ body.is-scrolling *{
      ikut dikecilkan (tetap ikut aturan global 16px di .form-row) supaya
      Safari iOS tidak auto-zoom saat disentuh. ---- */
   .t2p-auto-card{padding:14px;}
-  .t2p-auto-card-title{font-size:14px;margin-bottom:6px;}
+  .t2p-auto-card-title{font-size:12px;margin-bottom:5px;gap:5px;}
   .t2p-auto-card-desc{font-size:11px;line-height:1.55;margin-bottom:12px;}
-  .t2p-auto-card-label{font-size:10.5px;margin-bottom:6px;}
+  .t2p-auto-card-label{font-size:9px;margin-bottom:6px;}
   .t2p-section-title{font-size:12.5px;gap:5px;}
   .t2p-section-title-ic{width:14px;height:14px;}
 
@@ -14932,11 +14932,13 @@ html.dark-mode .bd-row-close{
   border:1px solid color-mix(in srgb, var(--primary) 22%, var(--line));
   border-radius:16px;padding:16px;
 }
-.t2p-auto-card-title{display:flex;align-items:center;gap:7px;font-size:15px;font-weight:800;line-height:1.3;margin-bottom:8px;color:var(--primary);}
+.t2p-auto-card--plain{background:none;border:none;border-radius:0;padding:0;}
+.t2p-section--merged{border-bottom:none;padding-bottom:0;margin-bottom:14px;}
+.t2p-auto-card-title{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:800;line-height:1.3;margin-bottom:6px;color:var(--primary);}
 .t2p-auto-card-desc{font-size:13.5px;font-weight:500;line-height:1.6;color:var(--ink-faint);margin:0 0 16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .t2p-auto-card-desc b{font-weight:700;color:var(--ink);}
 .t2p-auto-card-highlight{color:var(--primary);font-weight:800;border-bottom:2px dotted var(--primary);cursor:help;}
-.t2p-auto-card-label{display:block;font-size:11px;font-weight:700;letter-spacing:.04em;line-height:1.3;color:var(--ink-faint);margin-bottom:8px;text-transform:uppercase;}
+.t2p-auto-card-label{display:block;font-size:9.5px;font-weight:700;letter-spacing:.04em;line-height:1.3;color:var(--ink-faint);margin-bottom:8px;text-transform:uppercase;}
 .t2p-auto-card .form-row{margin-bottom:0;}
 .t2p-auto-card .form-row textarea,
 .t2p-auto-card .form-row input{background:var(--paper);border:1px solid var(--line);color:var(--ink);line-height:1.5;}
@@ -14992,6 +14994,7 @@ html.dark-mode .bd-row-close{
 }
 
 .t2p-locked-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:#7C3AED;background:rgba(124,58,237,0.1);border-radius:20px;padding:5px 11px;margin-bottom:10px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.t2p-locked-badge-ic{flex-shrink:0;}
 .t2p-locked-badge-short{display:none;}
 
 .t2p-generate-btn{width:100%;padding:13px;border-radius:12px;border:none;background:var(--primary);color:#fff;font-weight:700;font-size:14.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:background-position 0.2s;}
@@ -15018,7 +15021,7 @@ html.dark-mode .bd-row-close{
 .t2p-subtitle-actions .t2p-copy-btn{flex:1;}
 
 .t2p-take-wrap{margin-bottom:14px;}
-.t2p-take-pill{display:inline-flex;align-items:center;flex-shrink:0;padding:7px 16px;border-radius:999px;background:linear-gradient(150deg, var(--primary) 0%, var(--primary-deep) 100%);color:#fff;font-weight:800;font-size:12.5px;letter-spacing:.03em;line-height:1.2;white-space:nowrap;box-shadow:0 5px 12px -6px color-mix(in srgb, var(--primary-deep) 60%, transparent);}
+.t2p-take-pill{display:inline-flex;align-items:center;flex-shrink:0;padding:7px 16px;border-radius:999px;background:linear-gradient(150deg, var(--primary) 0%, var(--primary-deep) 100%);color:#fff;font-weight:600;font-size:12.5px;letter-spacing:.03em;line-height:1.2;white-space:nowrap;box-shadow:0 5px 12px -6px color-mix(in srgb, var(--primary-deep) 60%, transparent);}
 .t2p-take-card{position:relative;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:0;box-shadow:0 2px 10px -6px rgba(15,23,42,0.08);transition:border-color .18s ease, background .18s ease, box-shadow .18s ease;overflow:hidden;}
 .t2p-take-card--copied{border-color:rgba(5,150,105,0.35);background:rgba(5,150,105,0.045);}
 .t2p-take-head{display:flex;align-items:center;gap:8px;margin-bottom:9px;flex-wrap:wrap;}
@@ -15035,17 +15038,18 @@ html.dark-mode .bd-row-close{
 .t2p-take-char-chip:active{background:color-mix(in srgb, var(--primary) 14%, var(--paper));color:var(--primary);}
 .t2p-chardock-item-readonly{font-size:12px;color:var(--ink-soft);line-height:1.55;margin:0 0 6px;word-break:break-word;}
 .t2p-chardock-item-editbar{display:flex;gap:8px;margin:8px 0;}
-.t2p-chardock-apply-btn{flex:1;border:none;background:var(--primary);color:#fff;font-weight:700;font-size:12.5px;padding:9px 4px;border-radius:8px;cursor:pointer;min-height:38px;}
+.t2p-chardock-apply-btn{flex:1;border:none;background:var(--primary);color:#fff;font-weight:700;font-size:12.5px;padding:9px 4px;border-radius:8px;cursor:pointer;min-height:38px;display:inline-flex;align-items:center;justify-content:center;gap:5px;}
 .t2p-chardock-cancel-btn{flex:1;border:1px solid var(--line);background:var(--paper);color:var(--ink-soft);font-weight:700;font-size:12.5px;padding:9px 4px;border-radius:8px;cursor:pointer;min-height:38px;}
 .t2p-take-prompt-label{display:block;font-size:12.5px;font-weight:500;letter-spacing:.1px;text-transform:none;color:var(--ink-soft);margin-bottom:6px;}
 .t2p-take-prompt{width:100%;padding:11px 12px;border-radius:11px;border:1px solid var(--line);font-size:13.5px;line-height:1.6;color:var(--ink);background:var(--paper);outline:none;resize:vertical;min-height:120px;font-family:inherit;margin-bottom:9px;}
 .t2p-take-prompt:focus{border-color:var(--forest-glow);background:var(--card);}
 .t2p-take-sub{margin-bottom:9px;}
-.t2p-take-sub label{display:block;font-size:12.5px;font-weight:500;letter-spacing:.1px;text-transform:none;color:var(--ink-soft);margin-bottom:6px;}
+.t2p-take-sub label{display:block;font-size:12.5px;font-weight:700;letter-spacing:.1px;text-transform:none;color:var(--ink-soft);margin-bottom:6px;}
 .t2p-take-sub textarea{width:100%;padding:9px 11px;border-radius:10px;border:1px solid var(--line);font-size:12.5px;line-height:1.5;color:var(--ink);background:var(--paper);outline:none;resize:vertical;font-family:inherit;}
 .t2p-take-continuity{display:flex;align-items:flex-start;gap:6px;font-size:11.5px;font-weight:500;color:#0891B2;background:rgba(8,145,178,0.08);border-radius:10px;padding:8px 10px;margin-bottom:9px;line-height:1.45;}
 .t2p-take-actions{display:flex;gap:8px;}
 .t2p-copy-btn{flex:1;padding:11px 8px;border-radius:11px;border:1.5px solid var(--primary);background:transparent;color:var(--primary);font-weight:700;font-size:13px;cursor:pointer;transition:background .15s ease,color .15s ease;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.t2p-copy-btn svg{vertical-align:-2px;margin-right:5px;flex-shrink:0;}
 .t2p-copy-btn:hover{background:color-mix(in srgb, var(--primary) 8%, transparent);}
 .t2p-copy-btn.copied{background:var(--primary);color:#fff;border-color:var(--primary);}
 
@@ -15067,9 +15071,10 @@ html.dark-mode .bd-row-close{
 .t2p-take-fieldgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:9px;}
 .t2p-take-fieldgrid .t2p-take-sub{margin-bottom:0;}
 .t2p-take-tip{display:flex;align-items:flex-start;gap:7px;font-size:11.5px;font-weight:500;line-height:1.5;color:#BE185D;background:rgba(219,39,119,0.09);border-left:3px solid #DB2777;border-radius:8px;padding:9px 11px;margin-bottom:12px;}
-.t2p-copy-pill{display:flex;align-items:center;justify-content:center;gap:8px;padding:13px 20px;border-radius:999px;font-size:13.5px;background:linear-gradient(150deg, var(--primary) 0%, var(--primary-deep) 100%);color:#fff;border:2px solid color-mix(in srgb, var(--primary-light) 45%, transparent);box-shadow:0 6px 14px -6px color-mix(in srgb, var(--primary-deep) 60%, transparent);}
+.t2p-take-tip-ic{flex-shrink:0;margin-top:2px;}
+.t2p-copy-pill{display:flex;align-items:center;justify-content:center;gap:8px;padding:13px 20px;border-radius:999px;font-size:13.5px;background:linear-gradient(150deg, var(--primary) 0%, var(--primary-deep) 100%);color:#fff;border:2px solid color-mix(in srgb, var(--primary-light) 45%, transparent);box-shadow:0 6px 14px -6px color-mix(in srgb, var(--primary-deep) 60%, transparent);transition:background .18s ease;}
 .t2p-copy-pill svg{flex-shrink:0;}
-.t2p-copy-pill:hover{filter:brightness(1.06);}
+.t2p-copy-pill:hover{background:linear-gradient(150deg, var(--primary-deep) 0%, color-mix(in srgb, var(--primary-deep) 80%, black) 100%);}
 .t2p-copy-pill.copied{background:#059669;border-color:rgba(5,150,105,0.35);animation:t2pCopyPop .42s cubic-bezier(.34,1.56,.64,1);}
 @keyframes t2pCopyPop{0%{transform:scale(1);}40%{transform:scale(1.09);}65%{transform:scale(0.97);}100%{transform:scale(1);}}
 .t2p-copy-pill.copied .t2p-check-icon{stroke-dasharray:24;stroke-dashoffset:24;animation:t2pCheckDraw .34s ease-out .06s forwards;}
@@ -15080,9 +15085,12 @@ html.dark-mode .bd-row-close{
 @media (max-width:560px){
   .t2p-take-fieldgrid{grid-template-columns:1fr;}
 }
-@media (max-width:380px){
+@media (max-width:480px){
   .t2p-take-headrow{gap:6px;}
-  .t2p-take-headactions{flex-basis:100%;justify-content:flex-start;}
+  .t2p-take-headactions{flex-basis:100%;justify-content:flex-end;}
+  .t2p-take-headbtn{font-size:10.5px;padding:5px 9px;}
+}
+@media (max-width:380px){
   .t2p-take-tagsrow .t2p-take-meta{margin-left:0;flex-basis:100%;}
   .t2p-take-tagsrow .t2p-take-meta-text{white-space:normal;}
 }
@@ -15118,7 +15126,7 @@ html.dark-mode .bd-row-close{
   overscroll-behavior:contain;
 }
 .t2p-api-info-card{display:flex;gap:9px;align-items:flex-start;background:rgba(124,58,237,0.08);border-radius:12px;padding:12px 13px;margin-bottom:16px;}
-.t2p-api-info-card-ic{flex-shrink:0;font-size:16px;line-height:1.3;}
+.t2p-api-info-card-ic{flex-shrink:0;line-height:1.3;color:#7C3AED;display:inline-flex;align-items:center;margin-top:1px;}
 .t2p-api-info-card p{margin:0;font-size:12.5px;line-height:1.6;color:var(--ink);}
 .t2p-api-info-card a{color:#7C3AED;font-weight:700;}
 
@@ -15338,7 +15346,7 @@ html.dark-mode .bd-row-close{
 .t2p-seo-field label{display:block;font-size:10.5px;font-weight:700;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.02em;margin-bottom:4px;}
 .t2p-seo-value-row{display:flex;align-items:flex-start;gap:8px;background:var(--paper);border:1px solid var(--line);border-radius:9px;padding:9px 10px;}
 .t2p-seo-value-row p{flex:1;min-width:0;margin:0;font-size:12.5px;line-height:1.5;color:var(--ink);white-space:pre-wrap;word-break:break-word;}
-.t2p-seo-copy-btn{flex-shrink:0;border:none;background:transparent;cursor:pointer;font-size:14px;padding:2px;line-height:1;}
+.t2p-seo-copy-btn{flex-shrink:0;border:none;background:transparent;cursor:pointer;font-size:14px;padding:2px;line-height:1;display:inline-flex;align-items:center;color:var(--ink-soft);}
 .t2p-seo-copy-btn.copied{transform:scale(1.15);}
 #t2pCharDockScrollArea #t2pAddCharBtn{margin-bottom:4px;}
 
@@ -16928,11 +16936,11 @@ html.dark-mode .bd-row-close{
       </div>
 
       <div class="lap-filter-card t2p-page-body-rest">
-        <div class="t2p-section">
-          <div class="t2p-auto-card">
+        <div class="t2p-section t2p-section--merged">
+          <div class="t2p-auto-card t2p-auto-card--plain">
             <div class="t2p-auto-card-title"><span aria-hidden="true">✦</span> Naskah Otomatis</div>
-            <p class="t2p-auto-card-desc"><b>ZayaPro</b> akan membuatkan urutan <span class="t2p-auto-card-highlight" title="Take dibuat otomatis oleh AI berdasarkan sinopsis di bawah">TAKE <span aria-hidden="true">ⓘ</span></span> dari sinopsis ceritamu.</p>
-            <label class="t2p-auto-card-label" for="t2pStoryInput">Sinopsis / Ide Cerita</label>
+            <p class="t2p-auto-card-desc"><b>Tool</b> akan membuatkan urutan <span class="t2p-auto-card-highlight" title="Take dibuat otomatis oleh AI berdasarkan sinopsis di bawah">TAKE <span aria-hidden="true">ⓘ</span></span> dari sinopsis ceritamu.</p>
+            <label class="t2p-auto-card-label" for="t2pStoryInput">Judul / Sinopsis / Ide Cerita</label>
             <div class="form-row" style="margin-bottom:14px;">
               <textarea id="t2pStoryInput" rows="4" placeholder="cth: seorang pewaris kembali ke mansion keluarga dan menemukan rahasia ibunya..."></textarea>
             </div>
@@ -16956,11 +16964,8 @@ html.dark-mode .bd-row-close{
               <input type="number" id="t2pTakeDuration" min="2" max="60" step="1" value="8" aria-label="Durasi per Take (detik)">
               <span class="t2p-opt-pill-suffix">detik</span>
             </label>
-            <label class="t2p-opt-pill t2p-opt-pill--toggle" title="Sertakan Dialog: teks dialog terpisah per take, siap dipakai utk subtitle">
-              <input type="checkbox" id="t2pOptSubtitle" checked style="display:none;">
-              <span class="t2p-opt-pill-check" aria-hidden="true"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg></span><span>Dialog</span>
-            </label>
-            <label class="t2p-opt-pill t2p-opt-pill--toggle" id="t2pOptBurnSubtitleLabel" title="Video hasil menampilkan teks subtitle (burned-in) di layar sesuai isi Dialog -- butuh Dialog aktif">
+            <input type="checkbox" id="t2pOptSubtitle" checked style="display:none;">
+            <label class="t2p-opt-pill t2p-opt-pill--toggle" id="t2pOptBurnSubtitleLabel" title="Video hasil menampilkan teks subtitle (burned-in) di layar sesuai isi Dialog">
               <input type="checkbox" id="t2pOptBurnSubtitle" style="display:none;">
               <span class="t2p-opt-pill-check" aria-hidden="true"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg></span><span>Subtitle</span>
             </label>
@@ -16975,7 +16980,7 @@ html.dark-mode .bd-row-close{
         </div>
 
         <div class="t2p-section" style="border-bottom:none;padding-bottom:0;">
-          <span class="t2p-locked-badge"><span class="t2p-locked-badge-full">🔒 Karakter full body terkunci &amp; lokasi otomatis per take</span><span class="t2p-locked-badge-short">🔒 Karakter &amp; lokasi otomatis terkunci</span></span>
+          <span class="t2p-locked-badge"><svg class="t2p-locked-badge-ic" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span class="t2p-locked-badge-full">Karakter full body terkunci &amp; lokasi otomatis per take</span><span class="t2p-locked-badge-short">Karakter &amp; lokasi otomatis terkunci</span></span>
           <button type="button" class="t2p-generate-btn" id="t2pGenerateBtn">
             <span class="t2p-dots"><span></span><span></span><span></span></span>
             <span id="t2pGenerateBtnLabel">Generate Prompt</span>
@@ -16985,8 +16990,8 @@ html.dark-mode .bd-row-close{
             <p class="t2p-empty-hint" id="t2pResultsEmpty">Hasil prompt tiap take akan muncul di sini setelah kamu klik Generate Prompt.</p>
             <div class="t2p-copy-progress" id="t2pCopyProgress" style="display:none;"></div>
             <div class="t2p-subtitle-actions" id="t2pSubtitleActions" style="display:none;">
-              <button type="button" class="t2p-copy-btn" id="t2pCopyAllSubBtn">📝 Salin Semua Dialog</button>
-              <button type="button" class="t2p-copy-btn" id="t2pDownloadSrtBtn">⬇️ Download .srt</button>
+              <button type="button" class="t2p-copy-btn" id="t2pCopyAllSubBtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg> Salin Semua Dialog</button>
+              <button type="button" class="t2p-copy-btn" id="t2pDownloadSrtBtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 19h16"/></svg> Download .srt</button>
             </div>
             <div id="t2pResultsList"></div>
             <button type="button" class="t2p-showmore-btn" id="t2pShowMoreBtn" style="display:none;">Tampilkan Take Berikutnya</button>
@@ -17045,21 +17050,21 @@ html.dark-mode .bd-row-close{
               <label>Judul paling SEO</label>
               <div class="t2p-seo-value-row">
                 <p id="t2pSeoTitle"></p>
-                <button type="button" class="t2p-seo-copy-btn" data-target="title" aria-label="Salin judul">📋</button>
+                <button type="button" class="t2p-seo-copy-btn" data-target="title" aria-label="Salin judul"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg></button>
               </div>
             </div>
             <div class="t2p-seo-field">
               <label>Hashtag</label>
               <div class="t2p-seo-value-row">
                 <p id="t2pSeoHashtags"></p>
-                <button type="button" class="t2p-seo-copy-btn" data-target="hashtags" aria-label="Salin hashtag">📋</button>
+                <button type="button" class="t2p-seo-copy-btn" data-target="hashtags" aria-label="Salin hashtag"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg></button>
               </div>
             </div>
             <div class="t2p-seo-field">
               <label>Deskripsi</label>
               <div class="t2p-seo-value-row">
                 <p id="t2pSeoDesc"></p>
-                <button type="button" class="t2p-seo-copy-btn" data-target="description" aria-label="Salin deskripsi">📋</button>
+                <button type="button" class="t2p-seo-copy-btn" data-target="description" aria-label="Salin deskripsi"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg></button>
               </div>
             </div>
           </div>
@@ -17135,7 +17140,7 @@ html.dark-mode .bd-row-close{
         <div class="t2p-key-list" id="t2pKeyList"></div>
 
         <div class="t2p-api-info-card" style="margin-bottom:0;margin-top:16px;">
-          <span class="t2p-api-info-card-ic">✨</span>
+          <span class="t2p-api-info-card-ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l1.8 5.4L19 9l-5.2 1.6L12 16l-1.8-5.4L5 9l5.2-1.6z"/><path d="M19 15l.9 2.6L22 18.5l-2.1.9L19 22l-.9-2.6-2.1-.9 2.1-.9z"/></svg></span>
           <p>Tool ini pakai Gemini API milik kamu sendiri (gratis, dapatkan di <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a>).</p>
         </div>
       </div>
