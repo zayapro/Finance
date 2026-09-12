@@ -11170,13 +11170,18 @@ function t2pAddCharRow(name, desc) {
     }
     row.remove();
     t2pSaveState();
+    t2pRenderCharDock();
   });
-  row.querySelectorAll('input,textarea').forEach((el) => el.addEventListener('change', t2pSaveState));
+  row.querySelectorAll('input,textarea').forEach((el) => el.addEventListener('change', () => {
+    t2pSaveState();
+    t2pRenderCharDock();
+  }));
   list.appendChild(row);
 }
 document.getElementById('t2pAddCharBtn')?.addEventListener('click', () => {
   t2pAddCharRow('', '');
   t2pSaveState();
+  t2pRenderCharDock();
 });
 
 /* ---------- Inisialisasi form saat halaman dibuka (isi ulang dari
@@ -11202,7 +11207,7 @@ function t2pInit() {
     document.getElementById(id)?.addEventListener('change', t2pSaveState);
   });
   t2pRenderKeyList();
-  t2pRenderCharDock(); // dock tersembunyi otomatis krn t2pAllTakes masih kosong di load awal
+  t2pRenderCharDock(); // tab langsung tampil (lihat catatan di t2pRenderCharDock)
 }
 
 /* ---------- Modal Pengaturan API Gemini ---------- */
@@ -11597,24 +11602,30 @@ function t2pFindCharRow(name) {
   }) || null;
 }
 
-function t2pCollectUsedCharacters() {
+function t2pCollectFormCharNames() {
+  return [...document.querySelectorAll('#t2pCharList .t2p-char-row')]
+    .map((row) => (row.querySelector('.t2p-char-name')?.value || '').trim())
+    .filter(Boolean);
+}
+
+// Karakter yang MUNCUL di hasil generate (t2pAllTakes) tapi TIDAK ada
+// di form #t2pCharList -- misal Gemini menemukan/menambah tokoh dari
+// naskah yang belum sempat diisi manual. Karakter yang SUDAH ada di
+// form sengaja tidak dimasukkan sini lagi, karena sudah bisa diedit
+// langsung lewat baris form-nya sendiri (satu tempat, tidak dobel).
+function t2pCollectExtraCharacters() {
+  const formNames = new Set(t2pCollectFormCharNames().map((n) => n.toLowerCase()));
   const seen = new Map(); // key: nama lowercase, value: nama asli (dari take pertama muncul)
   t2pAllTakes.forEach((t) => {
     (Array.isArray(t.characters) ? t.characters : []).forEach((raw) => {
       const name = String(raw || '').trim();
       if (!name) return;
       const key = name.toLowerCase();
-      if (!seen.has(key)) seen.set(key, name);
+      if (formNames.has(key) || seen.has(key)) return;
+      seen.set(key, name);
     });
   });
-  return [...seen.entries()].map(([key, name]) => {
-    const row = t2pFindCharRow(name);
-    const inForm = !!row;
-    const desc = inForm
-      ? (row.querySelector('.t2p-char-desc')?.value || '').trim()
-      : (t2pDockExtraDesc[key] || '');
-    return { key, name, desc, inForm };
-  });
+  return [...seen.entries()].map(([key, name]) => ({ key, name, desc: t2pDockExtraDesc[key] || '' }));
 }
 
 function t2pRenderCharDock() {
@@ -11622,16 +11633,21 @@ function t2pRenderCharDock() {
   const countEl = document.getElementById('t2pCharDockCount');
   const listEl = document.getElementById('t2pCharDockList');
   if (!tab || !listEl) return;
-  const used = t2pCollectUsedCharacters();
-  if (!t2pAllTakes.length || !used.length) {
-    tab.classList.remove('show');
-    t2pCloseCharDock();
-    return;
-  }
+  // Tab SELALU tampil sejak halaman dibuka (form Karakter kini cuma
+  // bisa diisi lewat panel ini, jadi tab-nya tidak boleh disembunyikan
+  // hanya karena belum pernah generate).
   tab.classList.add('show');
-  if (countEl) countEl.textContent = String(used.length);
+  const formNames = t2pCollectFormCharNames();
+  const extra = t2pCollectExtraCharacters();
+  const totalCount = new Set([...formNames.map((n) => n.toLowerCase()), ...extra.map((c) => c.key)]).size;
+  if (countEl) countEl.textContent = String(totalCount);
   listEl.innerHTML = '';
-  used.forEach((c) => {
+  if (!extra.length) return;
+  const heading = document.createElement('p');
+  heading.className = 't2p-chardock-extra-heading';
+  heading.textContent = 'Terdeteksi otomatis dari naskah (belum ada di atas):';
+  listEl.appendChild(heading);
+  extra.forEach((c) => {
     const item = document.createElement('div');
     item.className = 't2p-chardock-item';
     const initial = (c.name.trim()[0] || '?').toUpperCase();
@@ -11639,33 +11655,37 @@ function t2pRenderCharDock() {
       `<div class="t2p-chardock-item-top">
         <span class="t2p-chardock-item-avatar">${initial}</span>
         <span class="t2p-chardock-item-name">${c.name}</span>
-        <svg class="t2p-chardock-item-chevron" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 6l6 6-6 6"/></svg>
       </div>
       <div class="t2p-chardock-item-desc">
         <textarea rows="3" placeholder="Ciri fisik lengkap (full body) belum diisi...">${c.desc}</textarea>
-        ${!c.inForm ? '<div class="t2p-chardock-item-badge">Dari naskah -- belum ada di form Karakter</div>' : ''}
+        <div class="t2p-chardock-item-badge">Dari naskah -- belum ada di form Karakter</div>
         <p class="t2p-chardock-item-hint">Perubahan otomatis tersimpan &amp; dipakai saat kamu generate ulang.</p>
       </div>`;
-    const top = item.querySelector('.t2p-chardock-item-top');
     const textarea = item.querySelector('textarea');
-    top.addEventListener('click', () => {
-      const wasOpen = item.classList.contains('open');
-      listEl.querySelectorAll('.t2p-chardock-item.open').forEach((el) => { if (el !== item) el.classList.remove('open'); });
-      item.classList.toggle('open', !wasOpen);
-    });
     textarea.addEventListener('change', () => {
-      const row = t2pFindCharRow(c.name);
-      if (row) {
-        const descEl = row.querySelector('.t2p-char-desc');
-        if (descEl) descEl.value = textarea.value;
-        t2pSaveState();
-      } else {
-        t2pDockExtraDesc[c.key] = textarea.value;
-      }
+      t2pDockExtraDesc[c.key] = textarea.value;
     });
     listEl.appendChild(item);
   });
 }
+
+// FIX responsivitas: tab & panel dock ini "position:fixed" supaya
+// nempel di layar, tapi markupnya semula ada DI DALAM #t2pOverlay --
+// dan #t2pOverlay punya CSS transform (.lap-filter-overlay, dipakai
+// utk animasi buka/tutup halaman). Elemen manapun yang diberi
+// transform otomatis jadi containing-block baru buat semua turunan
+// position:fixed di dalamnya, jadi tab & panel ini sebenarnya
+// "fixed" relatif ke kotak #t2pOverlay, bukan ke viewport asli --
+// makanya posisi & ukurannya bisa meleset/tidak konsisten di
+// berbagai ukuran layar. Solusinya: pindahkan ketiga elemen ini jadi
+// anak langsung <body> sekali saat load, supaya position:fixed-nya
+// benar-benar relatif ke layar seperti seharusnya.
+(function t2pRelocateCharDockToBody() {
+  ['t2pCharDockTab', 't2pCharDockScrim', 't2pCharDockPanel'].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el && el.parentElement !== document.body) document.body.appendChild(el);
+  });
+})();
 
 function t2pOpenCharDock() {
   document.getElementById('t2pCharDockPanel')?.classList.add('show');

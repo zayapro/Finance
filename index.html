@@ -15058,11 +15058,11 @@ html.dark-mode .bd-row-close{
 .t2p-chardock-item-chevron{flex-shrink:0;color:var(--ink-faint);transition:transform .18s ease;}
 .t2p-chardock-item.open .t2p-chardock-item-chevron{transform:rotate(90deg);}
 .t2p-chardock-item-desc{margin-top:8px;}
-.t2p-chardock-item-desc textarea{display:none;width:100%;padding:9px 10px;border-radius:9px;border:1px solid var(--line);font-size:12.5px;line-height:1.5;background:var(--card);outline:none;resize:vertical;min-height:70px;font-family:inherit;}
-.t2p-chardock-item.open .t2p-chardock-item-desc textarea{display:block;}
-.t2p-chardock-item-hint{display:none;font-size:10.5px;color:var(--ink-faint);margin-top:5px;}
-.t2p-chardock-item.open .t2p-chardock-item-hint{display:block;}
+.t2p-chardock-item-desc textarea{display:block;width:100%;padding:9px 10px;border-radius:9px;border:1px solid var(--line);font-size:12.5px;line-height:1.5;background:var(--card);outline:none;resize:vertical;min-height:70px;font-family:inherit;}
+.t2p-chardock-item-hint{display:block;font-size:10.5px;color:var(--ink-faint);margin-top:5px;}
 .t2p-chardock-item-badge{display:inline-block;margin-top:6px;font-size:9.5px;font-weight:700;color:#B45309;background:rgba(217,119,6,0.12);border-radius:20px;padding:2px 8px;}
+.t2p-chardock-extra-heading{font-size:11px;font-weight:700;color:var(--ink-soft);margin:16px 0 8px;padding-top:14px;border-top:1px dashed var(--line);}
+#t2pCharDockScrollArea #t2pAddCharBtn{margin-bottom:4px;}
 
 @media (max-width:380px){
   .t2p-opts-grid{grid-template-columns:1fr;}
@@ -16643,12 +16643,6 @@ html.dark-mode .bd-row-close{
       <div class="lap-filter-card t2p-page-body-rest">
         <p class="t2p-section-sub" style="margin-top:0;">Tempel naskah/cerita drama kamu, isi data karakter, atur opsi take -- tool ini akan membuatkan <b>prompt video per-take</b> yang konsisten (karakter full body terkunci, posisi bicara wajar, adegan kendaraan realistis, & sambungan antar-take mulus) siap ditempel ke tool video-gen kamu.</p>
 
-        <div class="t2p-section">
-          <div class="t2p-section-title">👤 Karakter</div>
-          <p class="t2p-section-sub">Isi ciri fisik SELENGKAP mungkin (tinggi/postur, wajah, rambut, warna kulit, pakaian & warna, aksesoris) -- teks ini akan diulang persis di tiap take supaya wujud karakternya konsisten (kunci karakter full body).</p>
-          <div id="t2pCharList"></div>
-          <button type="button" class="t2p-add-char-btn" id="t2pAddCharBtn">+ Tambah Karakter</button>
-        </div>
 
         <div class="t2p-section">
           <div class="t2p-section-title">📝 Naskah / Cerita</div>
@@ -16703,18 +16697,18 @@ html.dark-mode .bd-row-close{
       </div>
 
       <!-- ---- Dock "Karakter" -- tab kecil nyelip di pinggir kanan
-           halaman #t2pOverlay, MUNCUL OTOMATIS setelah generate
-           berhasil (t2pAllTakes terisi -- lihat t2pRenderCharDock() &
-           class .show di script.js). Isinya daftar SEMUA karakter yang
-           benar-benar muncul di hasil take (dikumpulkan dari field
-           "characters" tiap take, dicocokkan ke deskripsi full body
-           yang diisi user di form Karakter) supaya user gampang cek
-           konsistensi wujud karakter tanpa scroll balik ke atas.
-           Klik tab -> buka panel #t2pCharDockPanel (nempel dari
-           kanan), tiap karakter bisa diklik utk lihat/edit deskripsi
-           langsung dari situ (tersimpan balik ke form Karakter &
-           localStorage lewat t2pSaveState). ---- -->
-      <button type="button" class="t2p-chardock-tab" id="t2pCharDockTab" aria-label="Lihat karakter pemain video ini">
+           halaman #t2pOverlay, TAMPIL SEJAK AWAL (bukan cuma setelah
+           generate) supaya form isi karakter (nama + ciri fisik full
+           body) tidak makan tempat di halaman utama -- cukup diisi
+           lewat panel #t2pCharDockPanel yang nempel dari kanan. Isi
+           panel = persis form Karakter lama (#t2pCharList,
+           #t2pAddCharBtn) dipindah ke sini oleh t2pInit()/kode di
+           script.js. Setelah generate berhasil, panel ini JUGA
+           menampilkan karakter tambahan yang terdeteksi otomatis dari
+           naskah tapi belum ada di form (lihat t2pRenderCharDock() di
+           script.js) supaya user gampang cek konsistensi wujud
+           karakter tanpa scroll balik ke atas. ---- -->
+      <button type="button" class="t2p-chardock-tab show" id="t2pCharDockTab" aria-label="Isi/lihat karakter video ini">
         <span class="t2p-chardock-tab-ic">👤</span>
         <span class="t2p-chardock-tab-count" id="t2pCharDockCount">0</span>
       </button>
@@ -16722,14 +16716,18 @@ html.dark-mode .bd-row-close{
       <div class="t2p-chardock-panel" id="t2pCharDockPanel">
         <div class="t2p-chardock-head">
           <div>
-            <h4>Karakter di Video Ini</h4>
-            <p>Klik salah satu utk lihat/ubah ciri fisiknya -- perubahan ikut dipakai saat generate ulang.</p>
+            <h4>👤 Karakter</h4>
+            <p>Isi ciri fisik SELENGKAP mungkin -- teks ini diulang persis di tiap take supaya wujud karakternya konsisten (kunci karakter full body).</p>
           </div>
           <button type="button" class="t2p-chardock-close" id="t2pCharDockCloseBtn" aria-label="Tutup panel karakter">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6 6 18M6 6l12 12"/></svg>
           </button>
         </div>
-        <div class="t2p-chardock-list" id="t2pCharDockList"></div>
+        <div class="t2p-chardock-list" id="t2pCharDockScrollArea">
+          <div id="t2pCharList"></div>
+          <button type="button" class="t2p-add-char-btn" id="t2pAddCharBtn">+ Tambah Karakter</button>
+          <div id="t2pCharDockList"></div>
+        </div>
       </div>
     </div>
   </div>
