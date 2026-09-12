@@ -11842,7 +11842,7 @@ function t2pRenderTakes() {
     };
     dialogTa?.addEventListener('input', () => {
       t.subtitle = dialogTa.value;
-      if (subActionsEl) subActionsEl.style.display = t2pSubtitleTakes().length ? '' : 'none';
+      if (subActionsEl) subActionsEl.style.display = t2pAllTakes.length ? '' : 'none';
       markUncopiedIfNeeded();
       refreshResetBtn();
     });
@@ -11895,7 +11895,7 @@ function t2pRenderTakes() {
       if (dialogTa) dialogTa.value = t.subtitle || '';
       if (endframeTa) endframeTa.value = t.end_frame_description || '';
       if (locationTa) locationTa.value = t.location || '';
-      if (subActionsEl) subActionsEl.style.display = t2pSubtitleTakes().length ? '' : 'none';
+      if (subActionsEl) subActionsEl.style.display = t2pAllTakes.length ? '' : 'none';
       markUncopiedIfNeeded();
       refreshResetBtn();
       showToast(`Take ${t.take} dikembalikan ke hasil AI.`);
@@ -11921,61 +11921,41 @@ function t2pRenderTakes() {
   });
   if (moreBtn) moreBtn.style.display = (t2pVisibleCount < t2pAllTakes.length) ? '' : 'none';
   if (addSegBtn) addSegBtn.style.display = ''; // selalu tampil selama sudah ada minimal 1 take
-  if (subActionsEl) subActionsEl.style.display = t2pSubtitleTakes().length ? '' : 'none';
+  if (subActionsEl) subActionsEl.style.display = t2pAllTakes.length ? '' : 'none';
   t2pRenderCopyProgress();
 }
 
-/* ---------- Gabungkan subtitle/dialog dari SELURUH take (bukan cuma
-   yang sedang ditampilkan di layar) jadi satu -- dipakai tombol
-   "Salin Semua Subtitle" (teks polos, dipisah label "Take N") dan
-   tombol "Download .srt" (format SRT asli dgn timestamp).
-   Timestamp SRT dihitung berurutan take 1..N pakai Durasi per Take
-   di form -- take TANPA dialog tetap bikin waktu maju (skip entri
-   SRT-nya saja) supaya timing pas kalau semua take digabung jadi
-   satu video utuh. ---------- */
-function t2pSubtitleTakes() {
-  return t2pAllTakes.filter((t) => (t.subtitle || '').trim());
+/* ---------- Gabungkan Prompt Siap Pakai dari SELURUH take (bukan
+   cuma yang sedang ditampilkan di layar) jadi satu teks rapi --
+   dipakai tombol "Salin Semua Prompt" (ke clipboard) dan tombol
+   "Download Semua Prompt" (jadi file .txt). Tiap take diberi header
+   nomor take + rentang durasinya (mis. "TAKE 01 — 0:00–0:08") biar
+   waktu ditempel/dibaca ulang tetap jelas urutan & durasi tiap
+   segmennya. Isi tiap take SAMA PERSIS dgn logika tombol "Salin
+   Prompt" per-kartu: Prompt Video digabung dgn Dialog (kalau ada &
+   bukan mode burn-in subtitle) supaya hasil salin-semua ini
+   konsisten dgn hasil salin satu-satu. Take tanpa prompt (belum
+   sempat digenerate/isinya dikosongkan manual) tetap disertakan
+   headernya supaya urutan take tidak bolong saat dibaca ulang. ---------- */
+function t2pBuildCombinedPromptText() {
+  const takeDuration = parseInt(document.getElementById('t2pTakeDuration')?.value, 10) || 8;
+  return t2pAllTakes
+    .map((t) => {
+      const promptTxt = (t.prompt || '').trim();
+      const dialogTxt = (t.subtitle || '').trim();
+      const body = (dialogTxt && !t.burnSubtitleWanted) ? `${promptTxt}\n\nDialog: ${dialogTxt}` : promptTxt;
+      const header = `TAKE ${String(t.take).padStart(2, '0')} \u2014 ${t2pTakeTimeRange(t.take, takeDuration)}`;
+      return `${header}\n${body}`;
+    })
+    .join('\n\n---\n\n');
 }
 
-function t2pBuildCombinedSubtitleText() {
-  return t2pSubtitleTakes()
-    .map((t) => `Take ${t.take}\n${(t.subtitle || '').trim()}`)
-    .join('\n\n');
-}
-
-function t2pSrtTimestamp(totalSeconds) {
-  const ms = Math.max(0, Math.round(totalSeconds * 1000));
-  const pad = (n, len) => String(n).padStart(len, '0');
-  const h = Math.floor(ms / 3600000);
-  const m = Math.floor((ms % 3600000) / 60000);
-  const s = Math.floor((ms % 60000) / 1000);
-  const rem = ms % 1000;
-  return `${pad(h, 2)}:${pad(m, 2)}:${pad(s, 2)},${pad(rem, 3)}`;
-}
-
-function t2pBuildSrtContent() {
-  const perTakeDuration = parseInt(document.getElementById('t2pTakeDuration')?.value, 10) || 8;
-  let cursor = 0;
-  let idx = 0;
-  const blocks = [];
-  t2pAllTakes.forEach((t) => {
-    const start = cursor;
-    const end = cursor + perTakeDuration;
-    cursor = end;
-    const text = (t.subtitle || '').trim();
-    if (!text) return;
-    idx += 1;
-    blocks.push(`${idx}\n${t2pSrtTimestamp(start)} --> ${t2pSrtTimestamp(end)}\n${text}`);
-  });
-  return blocks.join('\n\n') + (blocks.length ? '\n' : '');
-}
-
-function t2pDownloadSrt() {
-  const blob = new Blob([t2pBuildSrtContent()], { type: 'text/srt;charset=utf-8' });
+function t2pDownloadCombinedPrompts() {
+  const blob = new Blob([t2pBuildCombinedPromptText()], { type: 'text/plain;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'subtitle-zayapro.srt';
+  a.download = 'prompt-zayapro.txt';
   document.body.appendChild(a);
   a.click();
   a.remove();
@@ -11983,13 +11963,13 @@ function t2pDownloadSrt() {
 }
 
 document.getElementById('t2pCopyAllSubBtn')?.addEventListener('click', function () {
-  if (!t2pSubtitleTakes().length) { showToast('Belum ada dialog utk disalin.', 'err'); return; }
-  const txt = t2pBuildCombinedSubtitleText();
+  if (!t2pAllTakes.length) { showToast('Belum ada prompt utk disalin.', 'err'); return; }
+  const txt = t2pBuildCombinedPromptText();
   navigator.clipboard.writeText(txt).then(() => {
     const original = this.textContent;
     this.classList.add('copied');
     this.textContent = '✓ Tersalin';
-    showToast('Semua dialog disalin, dipisah per take.');
+    showToast('Semua Prompt Siap Pakai disalin, dipisah per take beserta nomor & durasinya.');
     setTimeout(() => {
       this.classList.remove('copied');
       this.textContent = original;
@@ -11998,9 +11978,9 @@ document.getElementById('t2pCopyAllSubBtn')?.addEventListener('click', function 
 });
 
 document.getElementById('t2pDownloadSrtBtn')?.addEventListener('click', () => {
-  if (!t2pSubtitleTakes().length) { showToast('Belum ada dialog utk didownload.', 'err'); return; }
-  t2pDownloadSrt();
-  showToast('File .srt berhasil didownload.');
+  if (!t2pAllTakes.length) { showToast('Belum ada prompt utk didownload.', 'err'); return; }
+  t2pDownloadCombinedPrompts();
+  showToast('File semua prompt berhasil didownload.');
 });
 
 /* ---------- Icon + label tombol "Salin Prompt" (SVG copy/check,

@@ -14983,7 +14983,8 @@ html.dark-mode .bd-row-close{
    opt-pill (take/detik/Dialog/Subtitle) & switch bahasa dirapatkan lagi
    supaya SATU baris penuh muat tanpa ngelipat ke baris ke-2. */
 @media (max-width:480px){
-  .t2p-opts-pillrow{gap:4px;}
+  .t2p-opts-pillrow{gap:4px;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:1px;}
+  .t2p-opts-pillrow::-webkit-scrollbar{display:none;}
   .t2p-opt-pill{padding:5px 8px;font-size:11px;gap:3px;}
   .t2p-opt-pill-ic{font-size:12px;}
   .t2p-opt-pill--num input[type="number"]{width:15px;font-size:11px;}
@@ -15060,7 +15061,8 @@ html.dark-mode .bd-row-close{
    variabel warna yg sama dgn kartu take lama (var(--card),
    var(--primary), dst) supaya tetap ikut tema terang/gelap app
    tanpa perlu warna hardcode baru. ---- */
-.t2p-take-headrow{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:8px;}
+.t2p-take-headrow{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:nowrap;margin-bottom:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+.t2p-take-headrow::-webkit-scrollbar{display:none;}
 .t2p-take-headactions{display:flex;align-items:center;gap:6px;flex-shrink:0;}
 .t2p-take-headbtn{font-size:11px;font-weight:700;padding:6px 10px;border-radius:20px;border:1px solid var(--line);background:var(--paper);color:var(--ink-soft);cursor:pointer;white-space:nowrap;transition:border-color .15s ease,color .15s ease,background .15s ease;}
 .t2p-take-headbtn:hover:not(:disabled){border-color:var(--primary);color:var(--primary);}
@@ -15087,7 +15089,7 @@ html.dark-mode .bd-row-close{
 }
 @media (max-width:480px){
   .t2p-take-headrow{gap:6px;}
-  .t2p-take-headactions{flex-basis:100%;justify-content:flex-end;}
+  .t2p-take-headactions{justify-content:flex-end;}
   .t2p-take-headbtn{font-size:10.5px;padding:5px 9px;}
 }
 @media (max-width:380px){
@@ -15239,9 +15241,9 @@ html.dark-mode .bd-row-close{
    #t2pApiModalOverlay, #userAccountFormModalOverlay = 750) supaya modal
    itu tetap bisa menutupi tab/panel ini kalau kebetulan dibuka bareng. */
 .t2p-chardock-tab{
-  position:fixed;right:max(0px, calc(50vw - 320px));top:64%;transform:translate(0,-50%);
-  z-index:705;display:none;flex-direction:column;align-items:center;gap:6px;
-  padding:10px 8px 11px;border:none;border-radius:16px 0 0 16px;cursor:pointer;
+  position:fixed;right:max(2px, calc(50vw - 320px));top:64%;transform:translate(0,-50%);
+  z-index:705;display:none;flex-direction:column;align-items:center;gap:4px;
+  padding:7px 6px 8px;border:none;border-radius:13px 0 0 13px;cursor:pointer;
   background:linear-gradient(165deg, var(--primary) 0%, var(--primary-deep) 55%, var(--violet) 130%);
   color:#fff;
   box-shadow:-6px 6px 16px -8px rgba(194,65,12,.45), -2px 3px 8px rgba(15,23,42,.18);
@@ -15265,25 +15267,25 @@ html.dark-mode .bd-row-close{
    versi lama) supaya proporsinya tetap wajar dgn kartu 640px yg lebih
    besar drpd HP, tapi tidak sebesar sebelumnya. ---- */
 @media (min-width:821px){
-  .t2p-chardock-tab{padding:12px 9px 13px;gap:7px;}
-  .t2p-chardock-tab-ic{width:19px;height:19px;}
-  .t2p-chardock-tab-label{font-size:11.5px;}
-  .t2p-chardock-tab-count{font-size:10px;padding:2px 7px;}
+  .t2p-chardock-tab{padding:9px 7px 10px;gap:5px;}
+  .t2p-chardock-tab-ic{width:16px;height:16px;}
+  .t2p-chardock-tab-label{font-size:10px;}
+  .t2p-chardock-tab-count{font-size:9px;padding:1.5px 6px;min-width:14px;}
 }
 .t2p-chardock-tab.show{display:flex;animation:t2pDockPop .32s ease;}
 .t2p-chardock-tab:hover,
 .t2p-chardock-tab:focus-visible{transform:translate(-4px,-50%);box-shadow:-8px 8px 20px -8px rgba(194,65,12,.55), -2px 4px 10px rgba(15,23,42,.22);}
 .t2p-chardock-tab:active{transform:translate(-4px,-50%) scale(0.97);}
-.t2p-chardock-tab-ic{width:17px;height:17px;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.t2p-chardock-tab-ic{width:14px;height:14px;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
 .t2p-chardock-tab-ic svg{width:100%;height:100%;display:block;filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.2));}
 .t2p-chardock-tab-label{
   writing-mode:vertical-rl;transform:rotate(180deg);
-  font-size:10.5px;font-weight:800;letter-spacing:.3px;white-space:nowrap;
+  font-size:9px;font-weight:800;letter-spacing:.2px;white-space:nowrap;
   text-shadow:0 1px 2px rgba(0,0,0,.15);
 }
 .t2p-chardock-tab-count{
-  flex-shrink:0;font-size:9.5px;font-weight:800;color:var(--primary-deep);
-  background:#fff;border-radius:20px;padding:1.5px 7px;min-width:15px;text-align:center;
+  flex-shrink:0;font-size:8.5px;font-weight:800;color:var(--primary-deep);
+  background:#fff;border-radius:20px;padding:1px 6px;min-width:13px;text-align:center;
   box-shadow:0 1px 3px rgba(0,0,0,.15);
 }
 @keyframes t2pDockPop{0%{transform:translate(60px,-50%);opacity:0;}100%{transform:translate(0,-50%);opacity:1;}}
@@ -16990,8 +16992,8 @@ html.dark-mode .bd-row-close{
             <p class="t2p-empty-hint" id="t2pResultsEmpty">Hasil prompt tiap take akan muncul di sini setelah kamu klik Generate Prompt.</p>
             <div class="t2p-copy-progress" id="t2pCopyProgress" style="display:none;"></div>
             <div class="t2p-subtitle-actions" id="t2pSubtitleActions" style="display:none;">
-              <button type="button" class="t2p-copy-btn" id="t2pCopyAllSubBtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg> Salin Semua Dialog</button>
-              <button type="button" class="t2p-copy-btn" id="t2pDownloadSrtBtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 19h16"/></svg> Download .srt</button>
+              <button type="button" class="t2p-copy-btn" id="t2pCopyAllSubBtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg> Salin Semua Prompt</button>
+              <button type="button" class="t2p-copy-btn" id="t2pDownloadSrtBtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 19h16"/></svg> Download Semua Prompt</button>
             </div>
             <div id="t2pResultsList"></div>
             <button type="button" class="t2p-showmore-btn" id="t2pShowMoreBtn" style="display:none;">Tampilkan Take Berikutnya</button>
