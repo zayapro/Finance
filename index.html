@@ -14971,6 +14971,7 @@ html.dark-mode .bd-row-close{
 .t2p-opt-pill-check svg{opacity:0;transition:opacity .15s ease;}
 .t2p-opt-pill--toggle:has(input:checked) .t2p-opt-pill-check{background:rgba(255,255,255,.28);border-color:#fff;opacity:1;}
 .t2p-opt-pill--toggle:has(input:checked) .t2p-opt-pill-check svg{opacity:1;}
+.t2p-opt-pill--disabled{opacity:.4;cursor:not-allowed;pointer-events:none;}
 
 /* ---- Switch bahasa output video (ID / EN) di dalam "Opsi Sebelum
    Generate" -- dulu 2 pill terpisah yang bisa aktif berbarengan,
@@ -15016,6 +15017,7 @@ html.dark-mode .bd-row-close{
 .t2p-take-badge-label{font-size:7.5px;font-weight:800;letter-spacing:.14em;color:rgba(255,255,255,.85);line-height:1;margin-bottom:2px;}
 .t2p-take-badge-num{font-size:16px;font-weight:800;color:#fff;line-height:1;}
 .t2p-take-copied-tag{font-size:10.5px;font-weight:700;color:#059669;background:rgba(5,150,105,0.12);border-radius:20px;padding:4px 10px;}
+.t2p-take-cc-tag{font-size:10.5px;font-weight:700;color:#7c3aed;background:rgba(124,58,237,0.12);border-radius:20px;padding:4px 10px;}
 .t2p-take-meta{font-size:12px;font-weight:600;color:var(--ink-soft);margin-left:auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;}
 .t2p-take-chars{display:flex;align-items:center;flex-wrap:wrap;gap:7px;font-size:12px;font-weight:600;color:var(--ink-soft);margin-bottom:10px;padding-bottom:10px;border-bottom:1px dashed var(--line);}
 .t2p-take-chars b{color:var(--ink);font-weight:700;}
@@ -16911,6 +16913,10 @@ html.dark-mode .bd-row-close{
             <label class="t2p-opt-pill t2p-opt-pill--toggle" title="Sertakan Dialog: teks dialog terpisah per take, siap dipakai utk subtitle">
               <input type="checkbox" id="t2pOptSubtitle" checked style="display:none;">
               <span class="t2p-opt-pill-check" aria-hidden="true"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg></span><span>Dialog</span>
+            </label>
+            <label class="t2p-opt-pill t2p-opt-pill--toggle" id="t2pOptBurnSubtitleLabel" title="Video hasil menampilkan teks subtitle (burned-in) di layar sesuai isi Dialog -- butuh Dialog aktif">
+              <input type="checkbox" id="t2pOptBurnSubtitle" style="display:none;">
+              <span class="t2p-opt-pill-check" aria-hidden="true"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg></span><span>Subtitle</span>
             </label>
             <div class="t2p-lang-switch" id="t2pLangSwitch" title="Bahasa suara/dialog yang terdengar di video hasil (ID dan/atau EN)">
               <input type="radio" name="t2pLang" id="t2pLangId" checked style="display:none;">

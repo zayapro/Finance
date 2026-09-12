@@ -11114,7 +11114,7 @@ function t2pLoadState() {
   try {
     const raw = cloudStorage.getItem(T2P_STATE_KEY);
     if (raw) {
-      const state = Object.assign({ characters: [], story: '', worldNote: '', takeCount: 6, takeDuration: 8, subtitle: true, langId: true, langEn: false, dialogDefaultApplied: false }, JSON.parse(raw));
+      const state = Object.assign({ characters: [], story: '', worldNote: '', takeCount: 6, takeDuration: 8, subtitle: true, burnSubtitle: false, langId: true, langEn: false, dialogDefaultApplied: false }, JSON.parse(raw));
       // MIGRASI TOGGLE DIALOG: dulu opsi ini namanya "Subtitle" & default-nya
       // OFF. Sekarang jadi "Dialog" dan HARUS ON secara default tiap
       // generate. User lama yang sempat kesimpan state dgn subtitle:false
@@ -11127,7 +11127,7 @@ function t2pLoadState() {
       return state;
     }
   } catch (e) { /* abaikan, pakai default */ }
-  return { characters: [{ name: '', desc: '' }], story: '', worldNote: '', takeCount: 6, takeDuration: 8, subtitle: true, langId: true, langEn: false, dialogDefaultApplied: true };
+  return { characters: [{ name: '', desc: '' }], story: '', worldNote: '', takeCount: 6, takeDuration: 8, subtitle: true, burnSubtitle: false, langId: true, langEn: false, dialogDefaultApplied: true };
 }
 function t2pSaveState() {
   try {
@@ -11142,6 +11142,13 @@ function t2pSaveState() {
       takeCount: parseInt(document.getElementById('t2pTakeCount')?.value, 10) || 6,
       takeDuration: parseInt(document.getElementById('t2pTakeDuration')?.value, 10) || 8,
       subtitle: !!document.getElementById('t2pOptSubtitle')?.checked,
+      // Subtitle (burned-in ke video) cuma masuk akal kalau Dialog aktif
+      // -- tanpa Dialog, tidak ada teks yang bisa ditampilkan di video.
+      // Dipaksa false di sini sbg jaring pengaman terakhir kalau somehow
+      // checkbox-nya kecentang sementara Dialog mati (mis. race kondisi
+      // toggle), supaya prompt yang dikirim ke Gemini tidak pernah minta
+      // subtitle tanpa ada isi dialog sama sekali.
+      burnSubtitle: !!document.getElementById('t2pOptSubtitle')?.checked && !!document.getElementById('t2pOptBurnSubtitle')?.checked,
       langId: !!document.getElementById('t2pLangId')?.checked,
       langEn: !!document.getElementById('t2pLangEn')?.checked,
       dialogDefaultApplied: true,
@@ -11234,6 +11241,22 @@ function t2pInit() {
   if (document.getElementById('t2pTakeCount')) document.getElementById('t2pTakeCount').value = state.takeCount;
   if (document.getElementById('t2pTakeDuration')) document.getElementById('t2pTakeDuration').value = state.takeDuration;
   if (document.getElementById('t2pOptSubtitle')) document.getElementById('t2pOptSubtitle').checked = state.subtitle;
+  if (document.getElementById('t2pOptBurnSubtitle')) document.getElementById('t2pOptBurnSubtitle').checked = state.burnSubtitle;
+  // Toggle "Subtitle" (burned-in ke video) cuma masuk akal kalau
+  // "Dialog" aktif -- tanpa Dialog tidak ada teks buat ditampilkan.
+  // t2pSyncBurnSubtitleToggle() mengunci/nonaktifkan pill-nya (visual
+  // & fungsional) tiap kali status Dialog berubah, supaya user tidak
+  // bisa nyalakan Subtitle sendirian dalam keadaan tidak masuk akal.
+  const t2pSyncBurnSubtitleToggle = () => {
+    const dialogOn = !!document.getElementById('t2pOptSubtitle')?.checked;
+    const burnInput = document.getElementById('t2pOptBurnSubtitle');
+    const burnLabel = document.getElementById('t2pOptBurnSubtitleLabel');
+    if (!dialogOn && burnInput?.checked) burnInput.checked = false;
+    if (burnInput) burnInput.disabled = !dialogOn;
+    burnLabel?.classList.toggle('t2p-opt-pill--disabled', !dialogOn);
+  };
+  t2pSyncBurnSubtitleToggle();
+  document.getElementById('t2pOptSubtitle')?.addEventListener('change', t2pSyncBurnSubtitleToggle);
   // Switch bahasa output (ID/EN) -- exclusive: EN aktif cuma kalau
   // langEn true DAN langId eksplisit false, selain itu default ID.
   const t2pLangSwitchEl = document.getElementById('t2pLangSwitch');
@@ -11251,7 +11274,7 @@ function t2pInit() {
   ['t2pStoryInput', 't2pWorldNote', 't2pTakeCount', 't2pTakeDuration'].forEach((id) => {
     document.getElementById(id)?.addEventListener('change', t2pSaveState);
   });
-  ['t2pOptSubtitle', 't2pLangId', 't2pLangEn'].forEach((id) => {
+  ['t2pOptSubtitle', 't2pOptBurnSubtitle', 't2pLangId', 't2pLangEn'].forEach((id) => {
     document.getElementById(id)?.addEventListener('change', t2pSaveState);
   });
   t2pRenderKeyList();
@@ -11599,16 +11622,17 @@ ${charBlock}
 ATURAN WAJIB (supaya hasil videonya konsisten & tidak berantakan):
 1. KUNCI IDENTITAS FISIK: setiap kali karakter di atas muncul di suatu take, ulangi PERSIS ciri fisik tubuhnya (wajah, tinggi/postur, warna kulit, model & warna rambut) di DALAM TEKS FIELD "prompt" -- jangan pernah mengubah/menyingkat ciri fisik ini antar take, supaya wujud/identitas karakter identik di semua take. (Field "characters" HANYA berisi nama singkat, bukan deskripsi -- lihat FORMAT OUTPUT.)
 1a. Field "character_descriptions" WAJIB diisi utk SETIAP nama yang ada di "characters" pada take ini -- isinya deskripsi fisik full-body yang PERSIS SAMA (kata demi kata) dengan yang kamu tulis di field "prompt" utk karakter tsb. Ini dipakai aplikasi utk menampilkan ringkasan konsistensi karakter ke user, jadi jangan dikosongkan atau disingkat.
-1b. KOSTUM/PAKAIAN MENGIKUTI NASKAH: pakaian karakter BOLEH berubah kalau naskah memang menceritakan pergantian baju/kostum (mis. pulang kerja -> mandi -> ganti baju rumah/piyama). Begitu sebuah kostum baru dipakai sesuai momen di naskah, kostum itu WAJIB dikunci & diulang identik (warna, model, detail) di take-take berikutnya sampai naskah menyebutkan pergantian lagi. Jangan mengganti kostum tanpa alasan jelas dari naskah, dan jangan biarkan kostum berubah-ubah sendiri secara acak antar take.
+1b. KOSTUM/PAKAIAN MENGIKUTI NASKAH: pakaian karakter BOLEH berubah kalau naskah memang menceritakan pergantian baju/kostum (mis. pulang kerja -> mandi -> ganti baju rumah/piyama). Begitu sebuah kostum baru dipakai sesuai momen di naskah, kostum itu WAJIB dikunci & diulang identik (warna, model, detail) DI DALAM TEKS FIELD "prompt" di take-take berikutnya sampai naskah menyebutkan pergantian lagi. Jangan mengganti kostum tanpa alasan jelas dari naskah, dan jangan biarkan kostum berubah-ubah sendiri secara acak antar take.
 1c. KUNCI GAYA BICARA: tiap karakter WAJIB punya gaya bicara yang konsisten di semua take dia muncul -- tingkat formalitas (baku/santai/kasar), pilihan kata & ciri khas ucapan (mis. suka pakai panggilan tertentu, logat, kebiasaan bicara) tidak boleh berubah-ubah tanpa alasan dari naskah. Kalau naskah tidak menentukan gaya bicara karakter, tentukan sendiri gaya yang wajar & konsisten sejak take pertama dia bicara, lalu pertahankan.
 2. POSISI SAAT BERBICARA: kalau ada 2+ karakter mengobrol dalam satu take, jelaskan blocking spasial secara eksplisit (siapa berdiri/duduk di sisi kiri, siapa di sisi kanan, saling berhadapan, arah pandang, framing kamera medium/close-up) supaya lawan bicara TIDAK muncul aneh di belakang atau di samping tubuh karakter utama -- posisi awal adegan bicara harus jelas dan wajar sejak frame pertama.
 3. ADEGAN KENDARAAN: kalau ada adegan naik/turun mobil atau motor, jelaskan eksplisit arah bukaan pintu yang benar & sisi masuk yang wajar (bukan terbalik), serta gerak kendaraan yang realistis (roda berputar sesuai arah jalan, kecepatan wajar, tidak "meluncur" tidak natural) saat datang maupun pergi.
 4. SAMBUNGAN ANTAR-TAKE: kecuali take pertama, sertakan catatan "continuity_note" yang menjelaskan bahwa FRAME AWAL take ini harus sama persis dengan FRAME AKHIR take sebelumnya (posisi karakter, sudut kamera, pencahayaan, lokasi) supaya saat disambung (extend video) hasilnya mulus tanpa lompatan/bug.
-5. LOKASI: tentukan lokasi/setting tiap take mengikuti alur cerita (boleh sama atau berbeda antar take sesuai naskah), sebutkan eksplisit di field "location".
-5b. KUNCI DESKRIPSI LOKASI: begitu sebuah lokasi (mis. "kamar tidur Rani", "gang belakang toko") pertama kali dideskripsikan detail (warna dinding/tembok, pencahayaan, perabotan/elemen jalan, cuaca, waktu), deskripsi detail itu WAJIB diulang persis sama setiap kali lokasi yang SAMA muncul lagi di take lain -- jangan menulis ulang dengan detail berbeda (mis. warna dinding berubah, pencahayaan berubah tanpa alasan cerita). Kalau ceritanya memang berpindah ke lokasi BARU, baru boleh mendeskripsikan tempat baru dengan detail baru; kalau kembali lagi ke lokasi lama, pakai deskripsi lama yang sudah dikunci.
+5. LOKASI: tentukan lokasi/setting tiap take mengikuti alur cerita (boleh sama atau berbeda antar take sesuai naskah), sebutkan eksplisit di field "location" DAN WAJIB tuliskan juga deskripsi lokasi/setting tsb (tempat, warna dinding/tembok, pencahayaan, perabotan/elemen jalan, cuaca, waktu) DI DALAM TEKS FIELD "prompt" -- field "location" saja TIDAK CUKUP karena itu cuma label singkat yang ditampilkan di kartu, sedangkan field "prompt" itulah yang ditempel ke tool video-gen, jadi setting-nya harus jelas kebaca di teks prompt.
+5b. KUNCI DESKRIPSI LOKASI: begitu sebuah lokasi (mis. "kamar tidur Rani", "gang belakang toko") pertama kali dideskripsikan detail (warna dinding/tembok, pencahayaan, perabotan/elemen jalan, cuaca, waktu) di dalam field "prompt", deskripsi detail itu WAJIB diulang persis sama di dalam field "prompt" setiap kali lokasi yang SAMA muncul lagi di take lain -- jangan menulis ulang dengan detail berbeda (mis. warna dinding berubah, pencahayaan berubah tanpa alasan cerita). Kalau ceritanya memang berpindah ke lokasi BARU, baru boleh mendeskripsikan tempat baru dengan detail baru; kalau kembali lagi ke lokasi lama, pakai deskripsi lama yang sudah dikunci.
 6. Jangan menambah tokoh baru yang tidak ada hubungannya dengan naskah kecuali benar-benar diperlukan alur cerita.
 ${state.subtitle ? '7. Sertakan juga field "subtitle" berisi dialog/narasi take tsb (siap dipakai sbg teks subtitle), dalam bahasa yang sama dgn prompt.' : '7. Field "subtitle" boleh dikosongkan ("").'}
 7b. FORMAT DIALOG: kalau dalam satu take ada 2+ karakter yang bicara, tulis field "subtitle" per baris dengan format "Nama: ucapan" (satu baris per giliran bicara, urut sesuai adegan) supaya jelas siapa ngomong apa -- jangan digabung jadi satu paragraf tanpa label nama. Kalau cuma 1 karakter bicara atau isinya narasi (bukan dialog), boleh tanpa label nama.
+${state.burnSubtitle ? `7c. SUBTITLE TERBAKAR DI VIDEO: user mengaktifkan opsi "Subtitle" -- artinya video hasil generate WAJIB menampilkan teks subtitle di layar (burned-in/hardcoded), bukan cuma disimpan sbg data terpisah. Kalau field "subtitle" take ini berisi teks, WAJIB tambahkan instruksi eksplisit DI DALAM TEKS FIELD "prompt" yang menyuruh video-gen menampilkan teks subtitle itu PERSIS SAMA (kata demi kata dgn field "subtitle") di bagian bawah frame (lower-third), dengan font jelas terbaca, kontras cukup (mis. teks putih + outline/shadow gelap), tanpa mengubah/menyingkat kata-katanya. Kalau field "subtitle" take ini kosong, tidak perlu tambahan instruksi subtitle di prompt.` : ''}
 
 CATATAN TAMBAHAN DARI USER: ${state.worldNote || '(tidak ada)'}
 
@@ -11618,7 +11642,7 @@ ${state.story || '(kosong -- kalau naskah kosong, karang cerita drama pendek yan
 """
 
 FORMAT OUTPUT: balas HANYA dengan JSON valid (tanpa markdown/backtick/teks lain), berbentuk array dengan TEPAT ${state.takeCount} elemen, tiap elemen berstruktur persis:
-{"take": <nomor take, mulai 1>, "location": "<lokasi/setting take ini>", "characters": ["<nama karakter yang muncul di take ini>"], "character_descriptions": [{"name": "<nama, cocok dgn salah satu di characters>", "description": "<deskripsi fisik full-body persis sama dgn di prompt>"}], "prompt": "<prompt video lengkap & detail siap pakai, termasuk deskripsi full body tiap karakter yang muncul, blocking posisi, gerak kamera, aksi, pencahayaan>", "continuity_note": "<catatan sambungan dari take sebelumnya, kosongkan string untuk take 1>", "subtitle": "<dialog/narasi take ini, sesuai aturan no.7>"}`;
+{"take": <nomor take, mulai 1>, "location": "<lokasi/setting take ini>", "characters": ["<nama karakter yang muncul di take ini>"], "character_descriptions": [{"name": "<nama, cocok dgn salah satu di characters>", "description": "<deskripsi fisik full-body persis sama dgn di prompt>"}], "prompt": "<prompt video lengkap & detail siap pakai, WAJIB diawali/mengandung deskripsi lokasi & setting take ini, lalu deskripsi full body tiap karakter yang muncul, blocking posisi, gerak kamera, aksi, pencahayaan>", "continuity_note": "<catatan sambungan dari take sebelumnya, kosongkan string untuk take 1>", "subtitle": "<dialog/narasi take ini, sesuai aturan no.7>"}`;
 }
 
 /* ---------- Prompt utk fitur "+ Segmen Berikutnya" -- beda dari
@@ -11660,19 +11684,20 @@ CATATAN TAMBAHAN DARI USER: ${state.worldNote || '(tidak ada)'}
 ATURAN WAJIB (sama seperti take-take sebelumnya):
 1. KUNCI IDENTITAS FISIK: ulangi PERSIS ciri fisik tubuh (wajah, tinggi/postur, warna kulit, model & warna rambut) tiap karakter yang muncul di take baru ini di DALAM TEKS FIELD "prompt" -- harus identik dgn take-take sebelumnya. (Field "characters" HANYA nama singkat, bukan deskripsi.)
 1a. Field "character_descriptions" WAJIB diisi utk SETIAP nama di "characters" take ini, isinya deskripsi fisik full-body PERSIS SAMA dgn yang kamu tulis di field "prompt" -- jangan dikosongkan.
-1b. KOSTUM/PAKAIAN MENGIKUTI NASKAH: cek TAKE TERAKHIR di bawah -- kalau di take baru ini karakter masih dalam adegan/momen yang sama (belum ada momen ganti baju di naskah), pakai kostum yang SAMA PERSIS seperti take terakhir. Kalau naskah memang menceritakan pergantian baju di titik ini (mis. selesai mandi, ganti seragam, dll), baru boleh ganti kostum sesuai naskah -- lalu kostum baru itu jadi acuan yang harus dikunci lagi di take-take setelahnya.
+1b. KOSTUM/PAKAIAN MENGIKUTI NASKAH: cek TAKE TERAKHIR di bawah -- kalau di take baru ini karakter masih dalam adegan/momen yang sama (belum ada momen ganti baju di naskah), pakai kostum yang SAMA PERSIS seperti take terakhir, DAN tuliskan kostum itu DI DALAM TEKS FIELD "prompt". Kalau naskah memang menceritakan pergantian baju di titik ini (mis. selesai mandi, ganti seragam, dll), baru boleh ganti kostum sesuai naskah -- lalu kostum baru itu jadi acuan yang harus dikunci lagi di take-take setelahnya.
 1c. KUNCI GAYA BICARA: lanjutkan gaya bicara tiap karakter (tingkat formalitas, ciri khas ucapan) SAMA seperti terlihat di "Dialog/subtitle take itu" pada TAKE TERAKHIR -- jangan berubah nada/gaya tanpa alasan dari naskah.
 2. POSISI SAAT BERBICARA: kalau ada 2+ karakter mengobrol, jelaskan blocking spasial eksplisit (kiri/kanan, saling berhadapan, framing kamera).
 3. ADEGAN KENDARAAN: kalau ada adegan naik/turun mobil/motor, jelaskan arah pintu & sisi masuk yang benar, gerak kendaraan realistis.
 4. SAMBUNGAN ANTAR-TAKE: WAJIB isi "continuity_note" yang menjelaskan FRAME AWAL take baru ini SAMA PERSIS dengan FRAME AKHIR take sebelumnya (posisi karakter, sudut kamera, pencahayaan, lokasi) supaya nyambung mulus.
-5. LOKASI: tentukan di field "location" (boleh sama/berbeda dari take sebelumnya sesuai alur).
-5b. KUNCI DESKRIPSI LOKASI: kalau take baru ini masih di lokasi yang SAMA dengan take terakhir di atas (atau lokasi yang pernah muncul sebelumnya di cerita), pakai deskripsi detail lokasi yang SAMA PERSIS seperti sebelumnya (warna dinding/tembok, pencahayaan, perabotan/elemen jalan, cuaca, waktu) -- jangan mengubah/menulis ulang detailnya. Kalau memang pindah ke lokasi baru sesuai alur, baru boleh deskripsi baru.
+5. LOKASI: tentukan di field "location" (boleh sama/berbeda dari take sebelumnya sesuai alur) DAN WAJIB tuliskan juga deskripsi lokasi/setting tsb DI DALAM TEKS FIELD "prompt" -- field "location" saja TIDAK CUKUP karena itu cuma label singkat di kartu, sedangkan field "prompt" itulah yang ditempel ke tool video-gen.
+5b. KUNCI DESKRIPSI LOKASI: kalau take baru ini masih di lokasi yang SAMA dengan take terakhir di atas (atau lokasi yang pernah muncul sebelumnya di cerita), pakai deskripsi detail lokasi yang SAMA PERSIS seperti sebelumnya (warna dinding/tembok, pencahayaan, perabotan/elemen jalan, cuaca, waktu) di dalam field "prompt" -- jangan mengubah/menulis ulang detailnya. Kalau memang pindah ke lokasi baru sesuai alur, baru boleh deskripsi baru.
 6. Jangan menambah tokoh baru yang tidak perlu.
 ${state.subtitle ? '7. Sertakan field "subtitle" berisi dialog/narasi take ini.' : '7. Field "subtitle" boleh dikosongkan ("").'}
 7b. FORMAT DIALOG: kalau 2+ karakter bicara di take ini, tulis "subtitle" per baris format "Nama: ucapan" (satu baris per giliran bicara) -- jangan digabung jadi satu paragraf tanpa label nama.
+${state.burnSubtitle ? `7c. SUBTITLE TERBAKAR DI VIDEO: user mengaktifkan opsi "Subtitle" -- video hasil generate WAJIB menampilkan teks subtitle di layar (burned-in/hardcoded). Kalau field "subtitle" take ini berisi teks, WAJIB tambahkan instruksi eksplisit DI DALAM TEKS FIELD "prompt" yang menyuruh video-gen menampilkan teks subtitle itu PERSIS SAMA (kata demi kata) di bagian bawah frame (lower-third), font jelas terbaca, kontras cukup. Kalau field "subtitle" kosong, tidak perlu instruksi tambahan.` : ''}
 
 FORMAT OUTPUT: balas HANYA dengan JSON valid (tanpa markdown/backtick/teks lain), berupa SATU OBJEK (bukan array) berstruktur persis:
-{"take": ${nextTakeNum}, "location": "<lokasi take ini>", "characters": ["<nama karakter yang muncul>"], "character_descriptions": [{"name": "<nama, cocok dgn salah satu di characters>", "description": "<deskripsi fisik full-body persis sama dgn di prompt>"}], "prompt": "<prompt video lengkap & detail siap pakai>", "continuity_note": "<catatan sambungan dari take sebelumnya>", "subtitle": "<dialog/narasi take ini>"}`;
+{"take": ${nextTakeNum}, "location": "<lokasi take ini>", "characters": ["<nama karakter yang muncul>"], "character_descriptions": [{"name": "<nama, cocok dgn salah satu di characters>", "description": "<deskripsi fisik full-body persis sama dgn di prompt>"}], "prompt": "<prompt video lengkap & detail siap pakai, WAJIB diawali/mengandung deskripsi lokasi & setting take ini>", "continuity_note": "<catatan sambungan dari take sebelumnya>", "subtitle": "<dialog/narasi take ini>"}`;
 }
 
 /* ---------- Render kartu take (3 per halaman, tombol "tampilkan
@@ -11706,12 +11731,13 @@ function t2pRenderTakes() {
       `<div class="t2p-take-head">
         <span class="t2p-take-badge" aria-label="Take ${t.take}"><span class="t2p-take-badge-label">TAKE</span><span class="t2p-take-badge-num">${t.take}</span></span>
         <span class="t2p-take-copied-tag" style="display:${copied ? '' : 'none'};">✓ Disalin</span>
+        ${t.burnSubtitleWanted ? '<span class="t2p-take-cc-tag" title="Instruksi subtitle burned-in sudah disisipkan ke Prompt Video">CC Subtitle</span>' : ''}
         <span class="t2p-take-meta">📍 ${(t.location || '-')} &middot; ${document.getElementById('t2pTakeDuration')?.value || ''}s</span>
       </div>
       ${chars.length ? `<div class="t2p-take-chars">👤 Karakter: ${charsHtml}</div>` : ''}
       <label class="t2p-take-prompt-label">Prompt Video</label>
       <textarea class="t2p-take-prompt" rows="6">${t.prompt || ''}</textarea>
-      ${t.dialogWanted ? `<div class="t2p-take-sub"><label>Dialog</label><textarea rows="3" placeholder="Belum ada dialog di take ini.">${t.subtitle || ''}</textarea></div>` : ''}
+      ${t.dialogWanted ? `<div class="t2p-take-sub"><label>${t.burnSubtitleWanted ? 'Dialog (sudah burned-in di Prompt Video)' : 'Dialog'}</label><textarea rows="3" placeholder="Belum ada dialog di take ini.">${t.subtitle || ''}</textarea></div>` : ''}
       ${t.continuity_note ? `<div class="t2p-take-continuity"><span>🔗</span><span>${t.continuity_note}</span></div>` : ''}
       <div class="t2p-take-actions">
         <button type="button" class="t2p-copy-btn ${copied ? 'copied' : ''}">${copied ? '✓ Tersalin' : '📋 Salin Prompt'}</button>
@@ -11735,11 +11761,15 @@ function t2pRenderTakes() {
     card.querySelector('.t2p-copy-btn')?.addEventListener('click', function () {
       // Gabungkan Prompt Video + Dialog jadi SATU teks supaya user
       // cukup sekali klik "Salin Prompt" lalu tempel langsung ke tool
-      // video-gen -- sebelumnya dialog tidak ikut ter-copy sama
-      // sekali, jadi harus disalin manual terpisah (2 potong teks).
+      // video-gen. KECUALI kalau take ini digenerate dengan opsi
+      // "Subtitle" (burn-in) aktif -- saat itu Gemini SUDAH menyisipkan
+      // instruksi tampilkan-subtitle & isi dialognya sendiri DI DALAM
+      // teks prompt (lihat rule 7c di t2pBuildMasterPrompt), jadi
+      // menambahkan baris "Dialog: ..." lagi di sini cuma bikin isi
+      // dialognya dobel/mubazir di teks yang ditempel ke video-gen.
       const promptTxt = (promptTa?.value || '').trim();
       const dialogTxt = (dialogTa?.value || '').trim();
-      const txt = dialogTxt ? `${promptTxt}\n\nDialog: ${dialogTxt}` : promptTxt;
+      const txt = (dialogTxt && !t.burnSubtitleWanted) ? `${promptTxt}\n\nDialog: ${dialogTxt}` : promptTxt;
       navigator.clipboard.writeText(txt).then(() => {
         t._t2pCopied = true;
         t2pMarkCardCopied(card, true);
@@ -12205,7 +12235,7 @@ document.getElementById('t2pGenerateBtn')?.addEventListener('click', async () =>
       else throw new Error('Gagal membaca hasil dari Gemini (bukan JSON valid).');
     }
     if (!Array.isArray(parsed) || !parsed.length) throw new Error('Hasil dari Gemini kosong/tidak sesuai format.');
-    parsed.forEach((t) => { t.dialogWanted = !!state.subtitle; });
+    parsed.forEach((t) => { t.dialogWanted = !!state.subtitle; t.burnSubtitleWanted = !!state.burnSubtitle; });
     t2pAllTakes = parsed;
     t2pVisibleCount = Math.min(3, t2pAllTakes.length);
     t2pDockExtraDesc = {};
@@ -12262,6 +12292,7 @@ document.getElementById('t2pAddSegmentBtn')?.addEventListener('click', async () 
     if (!parsed || typeof parsed !== 'object') throw new Error('Hasil dari Gemini kosong/tidak sesuai format.');
     parsed.take = lastTake.take + 1; // paksa nomor urut lanjut, jangan percaya nomor dari model
     parsed.dialogWanted = !!state.subtitle;
+    parsed.burnSubtitleWanted = !!state.burnSubtitle;
     t2pAllTakes.push(parsed);
     t2pVisibleCount = t2pAllTakes.length;
     t2pRenderTakes();
