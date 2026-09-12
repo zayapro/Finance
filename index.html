@@ -14912,10 +14912,16 @@ html.dark-mode .bd-row-close{
 
 .t2p-empty-hint{text-align:center;color:var(--ink-soft);font-size:12.5px;padding:18px 8px;}
 
-.t2p-take-card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:10px;}
+.t2p-copy-progress{font-size:11.5px;font-weight:700;color:#B45309;background:rgba(217,119,6,0.1);border-radius:10px;padding:8px 11px;margin-bottom:10px;line-height:1.4;}
+.t2p-copy-progress b{text-decoration:underline;}
+.t2p-copy-progress--done{color:#059669;background:rgba(5,150,105,0.1);}
+
+.t2p-take-card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:10px;transition:border-color .18s ease, background .18s ease;}
+.t2p-take-card--copied{border-color:rgba(5,150,105,0.35);background:rgba(5,150,105,0.045);}
 .t2p-take-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;flex-wrap:wrap;}
 .t2p-take-badge{font-size:12px;font-weight:800;color:#fff;background:var(--primary);border-radius:20px;padding:4px 11px;}
-.t2p-take-meta{font-size:11.5px;font-weight:600;color:var(--ink-soft);}
+.t2p-take-copied-tag{font-size:10.5px;font-weight:800;color:#059669;background:rgba(5,150,105,0.12);border-radius:20px;padding:3px 9px;}
+.t2p-take-meta{font-size:11.5px;font-weight:600;color:var(--ink-soft);margin-left:auto;}
 .t2p-take-chars{font-size:11.5px;color:var(--ink-soft);margin-bottom:7px;}
 .t2p-take-chars b{color:var(--ink);}
 .t2p-take-prompt{width:100%;padding:10px 11px;border-radius:10px;border:1px solid var(--line);font-size:13px;line-height:1.5;background:var(--card);outline:none;resize:vertical;min-height:96px;font-family:inherit;margin-bottom:7px;}
@@ -14930,14 +14936,133 @@ html.dark-mode .bd-row-close{
 
 .t2p-showmore-btn{width:100%;padding:11px;border-radius:10px;border:1.5px dashed var(--line);background:transparent;color:var(--ink);font-weight:700;font-size:13px;cursor:pointer;margin-top:2px;}
 
-.t2p-key-list{display:flex;flex-direction:column;gap:7px;margin-bottom:10px;}
-.t2p-key-item{display:flex;align-items:center;gap:8px;background:var(--paper);border:1px solid var(--line);border-radius:9px;padding:8px 10px;}
-.t2p-key-item .t2p-key-label{flex:1;min-width:0;font-size:12.5px;font-family:monospace;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.t2p-key-item .t2p-key-active-tag{flex-shrink:0;font-size:9.5px;font-weight:800;color:#059669;background:rgba(5,150,105,0.12);border-radius:20px;padding:2px 7px;}
-.t2p-key-remove{flex-shrink:0;width:24px;height:24px;border-radius:50%;border:none;background:rgba(220,38,38,0.12);color:#DC2626;font-size:14px;line-height:1;cursor:pointer;}
+/* ---- Modal "Pengaturan API Gemini" (#t2pApiModalOverlay) --
+   didesain ulang: kartu info ringkas, model dipilih lewat pil
+   segmented (bukan <select> polos), & tiap key ditampilkan sbg kartu
+   dgn titik status berwarna + label teks (Aktif/Siap/Kuota
+   habis/Tidak valid/Belum diuji) supaya user tahu persis kondisi
+   tiap key tanpa perlu generate dulu buat ketahuan -- ada tombol
+   "Tes" per key utk cek status kapan saja (panggilan ringan ke
+   endpoint list model, TIDAK makan kuota generate), & tombol "Pakai"
+   utk pindah key aktif secara manual. ---- */
+.t2p-api-modal-body{padding:2px 2px 0;}
+.t2p-api-info-card{display:flex;gap:9px;align-items:flex-start;background:rgba(124,58,237,0.08);border-radius:12px;padding:11px 12px;margin-bottom:16px;}
+.t2p-api-info-card-ic{flex-shrink:0;font-size:16px;line-height:1.3;}
+.t2p-api-info-card p{margin:0;font-size:11.5px;line-height:1.5;color:var(--ink-soft);}
+.t2p-api-info-card a{color:#7C3AED;font-weight:700;}
+
+.t2p-api-section-label{font-size:11.5px;font-weight:800;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.03em;margin:0 0 8px;}
+
+.t2p-model-pills{display:flex;gap:5px;background:var(--paper);border-radius:14px;padding:4px;margin-bottom:16px;}
+.t2p-model-pill{flex:1;min-width:0;padding:9px 6px;border-radius:11px;border:none;background:transparent;cursor:pointer;text-align:center;line-height:1.3;transition:background .18s ease, box-shadow .18s ease;}
+.t2p-model-pill-name{display:block;font-size:12px;font-weight:800;color:var(--ink-soft);}
+.t2p-model-pill-sub{display:block;font-size:9.5px;font-weight:600;color:var(--ink-faint);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.t2p-model-pill.active{background:#fff;box-shadow:0 2px 8px -2px rgba(15,23,42,0.18);}
+.t2p-model-pill.active .t2p-model-pill-name{color:#7C3AED;}
+.t2p-model-pill.active .t2p-model-pill-sub{color:#7C3AED;opacity:.8;}
+
 .t2p-key-add-row{display:flex;gap:8px;margin-bottom:8px;}
 .t2p-key-add-row input{flex:1;min-width:0;}
 .t2p-upload-btn{width:100%;padding:9px;border-radius:9px;border:1.5px dashed var(--line);background:transparent;color:var(--ink);font-weight:700;font-size:12.5px;cursor:pointer;}
+
+.t2p-key-section-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:18px;margin-bottom:8px;flex-wrap:wrap;}
+.t2p-key-section-head .t2p-api-section-label{margin:0;}
+.t2p-key-summary{display:flex;gap:5px;flex-wrap:wrap;}
+.t2p-key-chip{font-size:9.5px;font-weight:800;border-radius:20px;padding:2px 8px;white-space:nowrap;}
+.t2p-key-chip--ok{color:#059669;background:rgba(5,150,105,0.12);}
+.t2p-key-chip--quota{color:#B45309;background:rgba(217,119,6,0.12);}
+.t2p-key-chip--invalid,
+.t2p-key-chip--error{color:#DC2626;background:rgba(220,38,38,0.12);}
+.t2p-key-chip--unknown{color:var(--ink-soft);background:var(--paper);}
+
+.t2p-key-list{display:flex;flex-direction:column;gap:8px;margin-bottom:4px;}
+.t2p-key-item{display:flex;align-items:center;gap:9px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:10px 11px;}
+.t2p-key-item.is-active{border-color:rgba(124,58,237,0.35);background:rgba(124,58,237,0.05);}
+.t2p-key-status-dot{flex-shrink:0;width:9px;height:9px;border-radius:50%;margin-top:2px;}
+.t2p-key-status-dot--ok{background:#059669;}
+.t2p-key-status-dot--quota{background:#D97706;}
+.t2p-key-status-dot--invalid,
+.t2p-key-status-dot--error{background:#DC2626;}
+.t2p-key-status-dot--unknown{background:var(--ink-faint);}
+.t2p-key-status-dot--testing{background:#7C3AED;animation:t2pKeyPulse 0.9s ease-in-out infinite;}
+@keyframes t2pKeyPulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.4;transform:scale(0.7);}}
+.t2p-key-item-main{flex:1;min-width:0;}
+.t2p-key-item-top{display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
+.t2p-key-item .t2p-key-label{font-size:12.5px;font-family:monospace;color:var(--ink);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.t2p-key-item .t2p-key-active-tag{flex-shrink:0;font-size:9.5px;font-weight:800;color:#7C3AED;background:rgba(124,58,237,0.12);border-radius:20px;padding:2px 7px;}
+.t2p-key-status-text{display:block;font-size:10.5px;font-weight:600;color:var(--ink-soft);margin-top:2px;}
+.t2p-key-status-text--ok{color:#059669;}
+.t2p-key-status-text--quota{color:#B45309;}
+.t2p-key-status-text--invalid,
+.t2p-key-status-text--error{color:#DC2626;}
+.t2p-key-item-actions{flex-shrink:0;display:flex;align-items:center;gap:5px;}
+.t2p-key-test-btn,
+.t2p-key-use-btn{flex-shrink:0;font-size:10.5px;font-weight:700;padding:6px 9px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;white-space:nowrap;}
+.t2p-key-test-btn:disabled{opacity:.55;cursor:default;}
+.t2p-key-use-btn{border-color:rgba(124,58,237,0.4);color:#7C3AED;}
+.t2p-key-remove{flex-shrink:0;width:26px;height:26px;border-radius:50%;border:none;background:rgba(220,38,38,0.12);color:#DC2626;font-size:14px;line-height:1;cursor:pointer;}
+
+@media (max-width:380px){
+  .t2p-key-item-actions{flex-wrap:wrap;justify-content:flex-end;}
+}
+
+/* ---- Dock "Karakter di Video Ini" -- tab nyelip di pinggir kanan
+   #t2pOverlay, cuma tampil (.show) setelah generate berhasil punya
+   >=1 take (lihat t2pRenderCharDock() di script.js). Ditaruh
+   position:fixed relatif ke #t2pOverlay yang sudah fullscreen, jadi
+   posisinya konsisten walau isi halaman panjang & discroll. Separuh
+   badan tab sengaja "kepotong"/nempel ke tepi kanan layar (translateX
+   sebagian) khas tab index buku, lalu geser penuh masuk pas disentuh
+   supaya kelihatan gampang dipencet tapi tidak menutupi konten. ---- */
+.t2p-chardock-tab{
+  position:fixed;right:0;top:64%;transform:translate(38%,-50%);
+  z-index:30;display:none;flex-direction:column;align-items:center;gap:3px;
+  padding:10px 8px 10px 12px;border:none;border-radius:16px 0 0 16px;cursor:pointer;
+  background:linear-gradient(145deg, var(--forest-glow), var(--violet));
+  color:#fff;box-shadow:0 10px 26px -8px rgba(124,58,237,0.55), 0 4px 12px rgba(15,23,42,0.18);
+  transition:transform .22s ease, box-shadow .18s ease;
+}
+.t2p-chardock-tab.show{display:flex;animation:t2pDockPop .32s ease;}
+.t2p-chardock-tab:hover,
+.t2p-chardock-tab:focus-visible{transform:translate(6%,-50%);}
+.t2p-chardock-tab:active{transform:translate(6%,-50%) scale(0.96);}
+.t2p-chardock-tab-ic{font-size:18px;line-height:1;filter:drop-shadow(0 1px 1px rgba(0,0,0,0.15));}
+.t2p-chardock-tab-count{font-size:10.5px;font-weight:800;background:rgba(255,255,255,0.28);border-radius:20px;padding:1px 7px;min-width:16px;text-align:center;}
+@keyframes t2pDockPop{0%{transform:translate(100%,-50%);opacity:0;}100%{transform:translate(38%,-50%);opacity:1;}}
+
+.t2p-chardock-scrim{
+  position:fixed;inset:0;z-index:39;background:rgba(11,29,22,0.45);
+  opacity:0;pointer-events:none;transition:opacity .2s ease;
+}
+.t2p-chardock-scrim.show{opacity:1;pointer-events:auto;}
+
+.t2p-chardock-panel{
+  position:fixed;right:0;top:0;bottom:0;z-index:40;width:min(84vw,340px);
+  background:var(--card);box-shadow:-12px 0 30px -10px rgba(15,23,42,0.35);
+  transform:translateX(100%);transition:transform .26s ease;
+  display:flex;flex-direction:column;padding:18px 16px;
+  padding-top:calc(18px + env(safe-area-inset-top, 0px));
+  padding-bottom:calc(18px + env(safe-area-inset-bottom, 0px));
+}
+.t2p-chardock-panel.show{transform:translateX(0);}
+.t2p-chardock-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:12px;padding-bottom:12px;border-bottom:1px dashed var(--line);}
+.t2p-chardock-head h4{font-size:15px;font-weight:800;color:var(--ink);margin:0 0 3px;}
+.t2p-chardock-head p{font-size:11px;color:var(--ink-soft);margin:0;line-height:1.4;}
+.t2p-chardock-close{flex-shrink:0;width:28px;height:28px;border-radius:50%;border:none;background:var(--paper);color:var(--ink-soft);display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.t2p-chardock-list{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:10px;}
+
+.t2p-chardock-item{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:11px;cursor:pointer;}
+.t2p-chardock-item-top{display:flex;align-items:center;gap:8px;}
+.t2p-chardock-item-avatar{flex-shrink:0;width:30px;height:30px;border-radius:50%;background:linear-gradient(145deg, var(--forest-glow), var(--violet));color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12.5px;}
+.t2p-chardock-item-name{flex:1;min-width:0;font-weight:700;font-size:13.5px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.t2p-chardock-item-chevron{flex-shrink:0;color:var(--ink-faint);transition:transform .18s ease;}
+.t2p-chardock-item.open .t2p-chardock-item-chevron{transform:rotate(90deg);}
+.t2p-chardock-item-desc{margin-top:8px;}
+.t2p-chardock-item-desc textarea{display:none;width:100%;padding:9px 10px;border-radius:9px;border:1px solid var(--line);font-size:12.5px;line-height:1.5;background:var(--card);outline:none;resize:vertical;min-height:70px;font-family:inherit;}
+.t2p-chardock-item.open .t2p-chardock-item-desc textarea{display:block;}
+.t2p-chardock-item-hint{display:none;font-size:10.5px;color:var(--ink-faint);margin-top:5px;}
+.t2p-chardock-item.open .t2p-chardock-item-hint{display:block;}
+.t2p-chardock-item-badge{display:inline-block;margin-top:6px;font-size:9.5px;font-weight:700;color:#B45309;background:rgba(217,119,6,0.12);border-radius:20px;padding:2px 8px;}
 
 @media (max-width:380px){
   .t2p-opts-grid{grid-template-columns:1fr;}
@@ -16570,10 +16695,41 @@ html.dark-mode .bd-row-close{
 
           <div id="t2pResultsWrap" style="margin-top:14px;">
             <p class="t2p-empty-hint" id="t2pResultsEmpty">Hasil prompt tiap take akan muncul di sini setelah kamu klik Generate Prompt.</p>
+            <div class="t2p-copy-progress" id="t2pCopyProgress" style="display:none;"></div>
             <div id="t2pResultsList"></div>
             <button type="button" class="t2p-showmore-btn" id="t2pShowMoreBtn" style="display:none;">Tampilkan Take Berikutnya</button>
           </div>
         </div>
+      </div>
+
+      <!-- ---- Dock "Karakter" -- tab kecil nyelip di pinggir kanan
+           halaman #t2pOverlay, MUNCUL OTOMATIS setelah generate
+           berhasil (t2pAllTakes terisi -- lihat t2pRenderCharDock() &
+           class .show di script.js). Isinya daftar SEMUA karakter yang
+           benar-benar muncul di hasil take (dikumpulkan dari field
+           "characters" tiap take, dicocokkan ke deskripsi full body
+           yang diisi user di form Karakter) supaya user gampang cek
+           konsistensi wujud karakter tanpa scroll balik ke atas.
+           Klik tab -> buka panel #t2pCharDockPanel (nempel dari
+           kanan), tiap karakter bisa diklik utk lihat/edit deskripsi
+           langsung dari situ (tersimpan balik ke form Karakter &
+           localStorage lewat t2pSaveState). ---- -->
+      <button type="button" class="t2p-chardock-tab" id="t2pCharDockTab" aria-label="Lihat karakter pemain video ini">
+        <span class="t2p-chardock-tab-ic">👤</span>
+        <span class="t2p-chardock-tab-count" id="t2pCharDockCount">0</span>
+      </button>
+      <div class="t2p-chardock-scrim" id="t2pCharDockScrim"></div>
+      <div class="t2p-chardock-panel" id="t2pCharDockPanel">
+        <div class="t2p-chardock-head">
+          <div>
+            <h4>Karakter di Video Ini</h4>
+            <p>Klik salah satu utk lihat/ubah ciri fisiknya -- perubahan ikut dipakai saat generate ulang.</p>
+          </div>
+          <button type="button" class="t2p-chardock-close" id="t2pCharDockCloseBtn" aria-label="Tutup panel karakter">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+        <div class="t2p-chardock-list" id="t2pCharDockList"></div>
       </div>
     </div>
   </div>
@@ -16597,18 +16753,29 @@ html.dark-mode .bd-row-close{
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6 6 18M6 6l12 12"/></svg>
         </button>
       </div>
-      <div style="padding:2px 2px 0;">
-        <p class="ai-settings-hint" style="margin-top:0;">Tool ini pakai Gemini API milik kamu sendiri (gratis, dapatkan di <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a>). Bisa tambah lebih dari 1 key -- kalau kuota key yang lagi dipakai habis, otomatis ganti ke key berikutnya di daftar ini. Semua key disimpan hanya di browser ini.</p>
-
-        <div class="form-row">
-          <label for="t2pModelSelect">Model Gemini</label>
-          <select id="t2pModelSelect">
-            <option value="gemini-2.5-flash">gemini-2.5-flash (cepat, disarankan)</option>
-            <option value="gemini-2.5-pro">gemini-2.5-pro (lebih detail, lebih lambat)</option>
-            <option value="gemini-2.0-flash">gemini-2.0-flash</option>
-          </select>
+      <div class="t2p-api-modal-body">
+        <div class="t2p-api-info-card">
+          <span class="t2p-api-info-card-ic">✨</span>
+          <p>Tool ini pakai Gemini API milik kamu sendiri (gratis, dapatkan di <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a>). Simpan lebih dari 1 key -- kalau kuota key yang aktif habis, otomatis ganti ke key berikutnya. Semua key disimpan hanya di browser ini.</p>
         </div>
 
+        <div class="t2p-api-section-label">Model Gemini</div>
+        <div class="t2p-model-pills" id="t2pModelPills">
+          <button type="button" class="t2p-model-pill" data-model="gemini-2.5-flash">
+            <span class="t2p-model-pill-name">2.5 Flash</span>
+            <span class="t2p-model-pill-sub">Cepat, disarankan</span>
+          </button>
+          <button type="button" class="t2p-model-pill" data-model="gemini-2.5-pro">
+            <span class="t2p-model-pill-name">2.5 Pro</span>
+            <span class="t2p-model-pill-sub">Lebih detail</span>
+          </button>
+          <button type="button" class="t2p-model-pill" data-model="gemini-2.0-flash">
+            <span class="t2p-model-pill-name">2.0 Flash</span>
+            <span class="t2p-model-pill-sub">Alternatif</span>
+          </button>
+        </div>
+
+        <div class="t2p-api-section-label">Tambah API Key</div>
         <div class="t2p-key-add-row">
           <input type="text" id="t2pKeyInput" placeholder="Tempel API key Gemini di sini">
           <button type="button" class="btn btn-primary" id="t2pKeyAddBtn" style="flex-shrink:0;padding:0 16px;">Tambah</button>
@@ -16616,7 +16783,11 @@ html.dark-mode .bd-row-close{
         <button type="button" class="t2p-upload-btn" id="t2pKeyUploadBtn">📄 Unggah dari File (.txt, 1 key per baris)</button>
         <input type="file" id="t2pKeyFileInput" accept=".txt" style="display:none;">
 
-        <div class="t2p-key-list" id="t2pKeyList" style="margin-top:12px;"></div>
+        <div class="t2p-key-section-head">
+          <div class="t2p-api-section-label">Daftar Key &amp; Status</div>
+          <div class="t2p-key-summary" id="t2pKeySummary"></div>
+        </div>
+        <div class="t2p-key-list" id="t2pKeyList"></div>
       </div>
     </div>
   </div>

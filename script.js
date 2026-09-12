@@ -11080,6 +11080,7 @@ function openT2pOverlay() {
 function closeT2pOverlay() {
   document.getElementById('t2pOverlay')?.classList.remove('open');
   unlockBodyScroll();
+  t2pCloseCharDock();
 }
 document.getElementById('t2pBackBtn')?.addEventListener('click', closeT2pOverlay);
 document.getElementById('fmHomeT2pBtn')?.addEventListener('click', () => {
@@ -11132,8 +11133,17 @@ function t2pSaveState() {
 function t2pLoadKeys() {
   try {
     const raw = JSON.parse(cloudStorage.getItem(T2P_KEYS_KEY) || '{}');
-    return { keys: Array.isArray(raw.keys) ? raw.keys : [], activeIdx: raw.activeIdx || 0, model: raw.model || 'gemini-2.5-flash' };
-  } catch (e) { return { keys: [], activeIdx: 0, model: 'gemini-2.5-flash' }; }
+    return {
+      keys: Array.isArray(raw.keys) ? raw.keys : [],
+      activeIdx: raw.activeIdx || 0,
+      model: raw.model || 'gemini-2.5-flash',
+      // status: peta "key string" -> 'ok' | 'quota' | 'invalid' | 'error'
+      // (belum ada entri = belum pernah diuji). Diisi otomatis tiap
+      // key dicoba lewat generate (t2pCallGemini) ATAU lewat tombol
+      // "Tes" manual di modal (t2pTestKey) -- lihat t2pRenderKeyList.
+      status: (raw.status && typeof raw.status === 'object') ? raw.status : {},
+    };
+  } catch (e) { return { keys: [], activeIdx: 0, model: 'gemini-2.5-flash', status: {} }; }
 }
 function t2pSaveKeys(data) {
   try { cloudStorage.setItem(T2P_KEYS_KEY, JSON.stringify(data)); } catch (e) { /* abaikan */ }
@@ -11192,14 +11202,57 @@ function t2pInit() {
     document.getElementById(id)?.addEventListener('change', t2pSaveState);
   });
   t2pRenderKeyList();
+  t2pRenderCharDock(); // dock tersembunyi otomatis krn t2pAllTakes masih kosong di load awal
 }
 
 /* ---------- Modal Pengaturan API Gemini ---------- */
+// Metadata tampilan per status key -- dipakai utk titik warna, label
+// teks di tiap kartu key, & chip ringkasan di atas daftar.
+const T2P_KEY_STATUS_META = {
+  ok: { label: 'Siap dipakai', chip: 'Siap' },
+  quota: { label: 'Kuota harian habis', chip: 'Kuota habis' },
+  invalid: { label: 'Key tidak valid', chip: 'Tidak valid' },
+  error: { label: 'Gagal dites (jaringan/lainnya)', chip: 'Error' },
+  unknown: { label: 'Belum pernah diuji', chip: 'Belum diuji' },
+};
+
+function t2pKeyStatusOf(data, key) {
+  return data.status && data.status[key] ? data.status[key] : 'unknown';
+}
+
+// Panggilan RINGAN cuma utk cek apakah sebuah key valid & masih ada
+// kuota -- pakai endpoint list model (metadata), BUKAN generateContent,
+// supaya tombol "Tes" tidak ikut makan kuota generate harian user.
+async function t2pTestKey(key) {
+  try {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(key)}`);
+    if (res.status === 429) return 'quota';
+    if (res.status === 400 || res.status === 401 || res.status === 403) return 'invalid';
+    if (!res.ok) return 'error';
+    return 'ok';
+  } catch (e) { return 'error'; }
+}
+
+function t2pRenderKeySummary(data) {
+  const el = document.getElementById('t2pKeySummary');
+  if (!el) return;
+  if (!data.keys.length) { el.innerHTML = ''; return; }
+  const counts = { ok: 0, quota: 0, invalid: 0, error: 0, unknown: 0 };
+  data.keys.forEach((k) => { counts[t2pKeyStatusOf(data, k)]++; });
+  el.innerHTML = Object.entries(counts)
+    .filter(([, n]) => n > 0)
+    .map(([status, n]) => `<span class="t2p-key-chip t2p-key-chip--${status}">${n} ${T2P_KEY_STATUS_META[status].chip.toLowerCase()}</span>`)
+    .join('');
+}
+
 function t2pRenderKeyList() {
   const wrap = document.getElementById('t2pKeyList');
   if (!wrap) return;
   const data = t2pLoadKeys();
-  if (document.getElementById('t2pModelSelect')) document.getElementById('t2pModelSelect').value = data.model;
+  document.querySelectorAll('#t2pModelPills .t2p-model-pill').forEach((btn) => {
+    btn.classList.toggle('active', btn.dataset.model === data.model);
+  });
+  t2pRenderKeySummary(data);
   wrap.innerHTML = '';
   if (!data.keys.length) {
     wrap.innerHTML = '<p class="t2p-empty-hint" style="padding:8px;">Belum ada API key Gemini. Tambahkan minimal 1 key di atas.</p>';
@@ -11207,15 +11260,49 @@ function t2pRenderKeyList() {
   }
   data.keys.forEach((key, i) => {
     const masked = key.length > 8 ? `${key.slice(0, 4)}••••${key.slice(-4)}` : '••••••••';
+    const isActive = i === data.activeIdx;
+    const status = t2pKeyStatusOf(data, key);
+    const meta = T2P_KEY_STATUS_META[status];
     const item = document.createElement('div');
-    item.className = 't2p-key-item';
+    item.className = 't2p-key-item' + (isActive ? ' is-active' : '');
     item.innerHTML =
-      `<span class="t2p-key-label">${masked}</span>` +
-      (i === data.activeIdx ? '<span class="t2p-key-active-tag">AKTIF</span>' : '') +
-      `<button type="button" class="t2p-key-remove" aria-label="Hapus key">×</button>`;
+      `<span class="t2p-key-status-dot t2p-key-status-dot--${status}"></span>
+      <div class="t2p-key-item-main">
+        <div class="t2p-key-item-top">
+          <span class="t2p-key-label">${masked}</span>
+          ${isActive ? '<span class="t2p-key-active-tag">AKTIF</span>' : ''}
+        </div>
+        <span class="t2p-key-status-text t2p-key-status-text--${status}">${meta.label}</span>
+      </div>
+      <div class="t2p-key-item-actions">
+        <button type="button" class="t2p-key-test-btn">Tes</button>
+        ${isActive ? '' : '<button type="button" class="t2p-key-use-btn">Pakai</button>'}
+        <button type="button" class="t2p-key-remove" aria-label="Hapus key">×</button>
+      </div>`;
+    item.querySelector('.t2p-key-test-btn').addEventListener('click', async function () {
+      const dot = item.querySelector('.t2p-key-status-dot');
+      this.disabled = true;
+      this.textContent = '...';
+      dot.className = 't2p-key-status-dot t2p-key-status-dot--testing';
+      const result = await t2pTestKey(key);
+      const d = t2pLoadKeys();
+      d.status[key] = result;
+      t2pSaveKeys(d);
+      t2pRenderKeyList();
+      const resultMeta = T2P_KEY_STATUS_META[result];
+      showToast(`Key #${i + 1}: ${resultMeta.label}.`, result === 'ok' ? undefined : 'err');
+    });
+    item.querySelector('.t2p-key-use-btn')?.addEventListener('click', () => {
+      const d = t2pLoadKeys();
+      d.activeIdx = i;
+      t2pSaveKeys(d);
+      t2pRenderKeyList();
+      showToast(`Key #${i + 1} dijadikan key aktif.`);
+    });
     item.querySelector('.t2p-key-remove').addEventListener('click', () => {
       const d = t2pLoadKeys();
       d.keys.splice(i, 1);
+      delete d.status[key];
       if (d.activeIdx >= d.keys.length) d.activeIdx = 0;
       t2pSaveKeys(d);
       t2pRenderKeyList();
@@ -11232,10 +11319,13 @@ document.getElementById('t2pApiModalCloseBtn')?.addEventListener('click', () => 
 document.getElementById('t2pApiModalOverlay')?.addEventListener('click', (e) => {
   if (e.target.id === 't2pApiModalOverlay') closeModal(document.getElementById('t2pApiModalOverlay'));
 });
-document.getElementById('t2pModelSelect')?.addEventListener('change', (e) => {
+document.getElementById('t2pModelPills')?.addEventListener('click', (e) => {
+  const btn = e.target.closest('.t2p-model-pill');
+  if (!btn) return;
   const d = t2pLoadKeys();
-  d.model = e.target.value;
+  d.model = btn.dataset.model;
   t2pSaveKeys(d);
+  t2pRenderKeyList();
 });
 document.getElementById('t2pKeyAddBtn')?.addEventListener('click', () => {
   const input = document.getElementById('t2pKeyInput');
@@ -11284,10 +11374,14 @@ async function t2pCallGemini(promptText) {
   }
   const model = data.model || 'gemini-2.5-flash';
   let lastErr = null;
+  let statusChanged = false;
   // Mulai dari key aktif tersimpan, lalu muter ke seluruh daftar
   // sekali putaran penuh -- key yang berhasil dipakai jadi key aktif
   // baru (disimpan) supaya panggilan berikutnya langsung mulai dari
   // situ, bukan mengulang key yang barusan gagal dari awal lagi.
+  // Status tiap key yang dicoba (ok/kuota habis/invalid/error) ikut
+  // dicatat ke data.status supaya langsung kelihatan di modal
+  // Pengaturan API tanpa user perlu klik "Tes" manual satu-satu.
   for (let step = 0; step < data.keys.length; step++) {
     const idx = (data.activeIdx + step) % data.keys.length;
     const key = data.keys[idx];
@@ -11304,24 +11398,38 @@ async function t2pCallGemini(promptText) {
         // Kuota habis / key invalid / diblokir -- catat lalu coba key
         // berikutnya di daftar, jangan langsung menyerah.
         const body = await res.text().catch(() => '');
+        data.status[key] = (res.status === 429) ? 'quota' : 'invalid';
+        statusChanged = true;
         lastErr = new Error(`Key #${idx + 1} gagal (HTTP ${res.status}): ${body.slice(0, 200)}`);
         continue;
       }
       if (!res.ok) {
+        data.status[key] = 'error';
+        statusChanged = true;
         lastErr = new Error(`HTTP ${res.status}`);
         continue;
       }
       const json = await res.json();
       const text = json?.candidates?.[0]?.content?.parts?.map((p) => p.text || '').join('') || '';
-      if (!text) { lastErr = new Error('Respons kosong dari Gemini.'); continue; }
+      if (!text) {
+        data.status[key] = 'error';
+        statusChanged = true;
+        lastErr = new Error('Respons kosong dari Gemini.');
+        continue;
+      }
       // Key ini berhasil -- jadikan key aktif utk panggilan berikutnya.
-      if (data.activeIdx !== idx) { data.activeIdx = idx; t2pSaveKeys(data); }
+      data.status[key] = 'ok';
+      if (data.activeIdx !== idx) data.activeIdx = idx;
+      t2pSaveKeys(data);
       return text;
     } catch (e) {
+      data.status[key] = 'error';
+      statusChanged = true;
       lastErr = e;
       continue;
     }
   }
+  if (statusChanged) t2pSaveKeys(data);
   throw lastErr || new Error('Semua API key gagal dipakai.');
 }
 
@@ -11374,18 +11482,21 @@ function t2pRenderTakes() {
     listEl.innerHTML = '';
     if (emptyEl) emptyEl.style.display = '';
     if (moreBtn) moreBtn.style.display = 'none';
+    t2pRenderCopyProgress();
     return;
   }
   if (emptyEl) emptyEl.style.display = 'none';
   listEl.innerHTML = '';
   const shown = t2pAllTakes.slice(0, t2pVisibleCount);
   shown.forEach((t) => {
+    const copied = !!t._t2pCopied;
     const card = document.createElement('div');
-    card.className = 't2p-take-card';
+    card.className = 't2p-take-card' + (copied ? ' t2p-take-card--copied' : '');
     const chars = Array.isArray(t.characters) ? t.characters.join(', ') : '';
     card.innerHTML =
       `<div class="t2p-take-head">
         <span class="t2p-take-badge">Take ${t.take}</span>
+        <span class="t2p-take-copied-tag" style="display:${copied ? '' : 'none'};">✓ Disalin</span>
         <span class="t2p-take-meta">${(t.location || '-')} &middot; ${document.getElementById('t2pTakeDuration')?.value || ''}s</span>
       </div>
       ${chars ? `<div class="t2p-take-chars">Karakter: <b>${chars}</b></div>` : ''}
@@ -11393,25 +11504,180 @@ function t2pRenderTakes() {
       ${t.subtitle ? `<div class="t2p-take-sub"><label>Subtitle</label><textarea rows="2">${t.subtitle}</textarea></div>` : ''}
       ${t.continuity_note ? `<div class="t2p-take-continuity">🔗 ${t.continuity_note}</div>` : ''}
       <div class="t2p-take-actions">
-        <button type="button" class="t2p-copy-btn">Salin Prompt</button>
+        <button type="button" class="t2p-copy-btn ${copied ? 'copied' : ''}">${copied ? '✓ Tersalin' : 'Salin Prompt'}</button>
       </div>`;
+    const promptTa = card.querySelector('.t2p-take-prompt');
     card.querySelector('.t2p-copy-btn')?.addEventListener('click', function () {
-      const txt = card.querySelector('.t2p-take-prompt')?.value || '';
+      const txt = promptTa?.value || '';
       navigator.clipboard.writeText(txt).then(() => {
-        this.textContent = 'Tersalin!';
-        this.classList.add('copied');
-        showToast('Prompt disalin.');
-        setTimeout(() => { this.textContent = 'Salin Prompt'; this.classList.remove('copied'); }, 1600);
+        t._t2pCopied = true;
+        t2pMarkCardCopied(card, true);
+        showToast(`Prompt Take ${t.take} disalin.`);
+        t2pRenderCopyProgress();
       }).catch(() => showToast('Gagal menyalin, salin manual dari kotak teks.', 'err'));
+    });
+    // Kalau prompt diedit LAGI setelah sempat disalin, tandai balik
+    // sebagai "belum disalin" -- supaya user tidak salah kira sudah
+    // menempel versi terbaru padahal yang tersalin ke clipboard masih
+    // versi lama sebelum diedit.
+    promptTa?.addEventListener('input', () => {
+      if (t._t2pCopied) {
+        t._t2pCopied = false;
+        t2pMarkCardCopied(card, false);
+        t2pRenderCopyProgress();
+      }
     });
     listEl.appendChild(card);
   });
   if (moreBtn) moreBtn.style.display = (t2pVisibleCount < t2pAllTakes.length) ? '' : 'none';
+  t2pRenderCopyProgress();
+}
+
+/* ---------- Tandai satu kartu take sudah/belum disalin tanpa perlu
+   render ulang semua kartu (biar tidak kedip & tidak ganggu kartu
+   lain yang sedang diedit). ---------- */
+function t2pMarkCardCopied(card, copied) {
+  card.classList.toggle('t2p-take-card--copied', copied);
+  const btn = card.querySelector('.t2p-copy-btn');
+  if (btn) {
+    btn.classList.toggle('copied', copied);
+    btn.textContent = copied ? '✓ Tersalin' : 'Salin Prompt';
+  }
+  const tag = card.querySelector('.t2p-take-copied-tag');
+  if (tag) tag.style.display = copied ? '' : 'none';
+}
+
+/* ---------- Ringkasan "sudah disalin berapa dari berapa take" di
+   atas daftar hasil -- biar user yang generate banyak take sekaligus
+   gampang lihat sekilas mana yang KELEWATAN belum ditempel ke
+   tool video-gen, tanpa harus scroll cek satu-satu. ---------- */
+function t2pRenderCopyProgress() {
+  const el = document.getElementById('t2pCopyProgress');
+  if (!el) return;
+  if (!t2pAllTakes.length) { el.style.display = 'none'; return; }
+  const copiedCount = t2pAllTakes.filter((t) => t._t2pCopied).length;
+  const total = t2pAllTakes.length;
+  el.style.display = '';
+  el.classList.toggle('t2p-copy-progress--done', copiedCount === total);
+  el.innerHTML = copiedCount === total
+    ? `✓ Semua ${total} take sudah disalin`
+    : `📋 ${copiedCount}/${total} take sudah disalin -- sisanya ditandai <b>belum disalin</b>`;
 }
 document.getElementById('t2pShowMoreBtn')?.addEventListener('click', () => {
   t2pVisibleCount = Math.min(t2pVisibleCount + 3, t2pAllTakes.length);
   t2pRenderTakes();
 });
+
+/* ---------- Dock "Karakter di Video Ini" (tab nyelip di pinggir,
+   muncul OTOMATIS setelah generate selesai) ----------
+   Tujuan: sekali generate berhasil, user langsung bisa lihat SEMUA
+   karakter yang benar-benar muncul di hasil take (bukan cuma yang
+   diketik di form atas) -- termasuk kalau Gemini mendeteksi/menambah
+   tokoh dari naskah yang tidak sempat diisi manual -- supaya gampang
+   dicek konsistensi wujudnya. Diambil dari field "characters" tiap
+   elemen t2pAllTakes, dicocokkan ke deskripsi lengkap di
+   #t2pCharList (case-insensitive, oleh t2pFindCharDesc). Klik satu
+   nama -> baris itu expand jadi textarea, isinya bisa diedit
+   langsung dari panel ini; kalau namanya cocok dgn salah satu baris
+   form Karakter, editan disini ditulis balik ke baris itu (via
+   t2pSaveState) supaya generate ulang berikutnya ikut pakai versi
+   terbaru. Kalau namanya BUKAN dari form (tokoh temuan AI), editan
+   cuma disimpan di dock ini sendiri (t2pDockExtraDesc) & dikasih
+   label "dari naskah, belum ada di form Karakter" supaya user sadar
+   kalau mau dikunci permanen sebaiknya ditambahkan lewat "+ Tambah
+   Karakter" di atas. */
+let t2pDockExtraDesc = {}; // nama(lowercase) -> deskripsi, utk karakter yg tak ada di form
+
+function t2pFindCharRow(name) {
+  const target = (name || '').trim().toLowerCase();
+  if (!target) return null;
+  return [...document.querySelectorAll('#t2pCharList .t2p-char-row')].find((row) => {
+    const rowName = (row.querySelector('.t2p-char-name')?.value || '').trim().toLowerCase();
+    return rowName === target;
+  }) || null;
+}
+
+function t2pCollectUsedCharacters() {
+  const seen = new Map(); // key: nama lowercase, value: nama asli (dari take pertama muncul)
+  t2pAllTakes.forEach((t) => {
+    (Array.isArray(t.characters) ? t.characters : []).forEach((raw) => {
+      const name = String(raw || '').trim();
+      if (!name) return;
+      const key = name.toLowerCase();
+      if (!seen.has(key)) seen.set(key, name);
+    });
+  });
+  return [...seen.entries()].map(([key, name]) => {
+    const row = t2pFindCharRow(name);
+    const inForm = !!row;
+    const desc = inForm
+      ? (row.querySelector('.t2p-char-desc')?.value || '').trim()
+      : (t2pDockExtraDesc[key] || '');
+    return { key, name, desc, inForm };
+  });
+}
+
+function t2pRenderCharDock() {
+  const tab = document.getElementById('t2pCharDockTab');
+  const countEl = document.getElementById('t2pCharDockCount');
+  const listEl = document.getElementById('t2pCharDockList');
+  if (!tab || !listEl) return;
+  const used = t2pCollectUsedCharacters();
+  if (!t2pAllTakes.length || !used.length) {
+    tab.classList.remove('show');
+    t2pCloseCharDock();
+    return;
+  }
+  tab.classList.add('show');
+  if (countEl) countEl.textContent = String(used.length);
+  listEl.innerHTML = '';
+  used.forEach((c) => {
+    const item = document.createElement('div');
+    item.className = 't2p-chardock-item';
+    const initial = (c.name.trim()[0] || '?').toUpperCase();
+    item.innerHTML =
+      `<div class="t2p-chardock-item-top">
+        <span class="t2p-chardock-item-avatar">${initial}</span>
+        <span class="t2p-chardock-item-name">${c.name}</span>
+        <svg class="t2p-chardock-item-chevron" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 6l6 6-6 6"/></svg>
+      </div>
+      <div class="t2p-chardock-item-desc">
+        <textarea rows="3" placeholder="Ciri fisik lengkap (full body) belum diisi...">${c.desc}</textarea>
+        ${!c.inForm ? '<div class="t2p-chardock-item-badge">Dari naskah -- belum ada di form Karakter</div>' : ''}
+        <p class="t2p-chardock-item-hint">Perubahan otomatis tersimpan &amp; dipakai saat kamu generate ulang.</p>
+      </div>`;
+    const top = item.querySelector('.t2p-chardock-item-top');
+    const textarea = item.querySelector('textarea');
+    top.addEventListener('click', () => {
+      const wasOpen = item.classList.contains('open');
+      listEl.querySelectorAll('.t2p-chardock-item.open').forEach((el) => { if (el !== item) el.classList.remove('open'); });
+      item.classList.toggle('open', !wasOpen);
+    });
+    textarea.addEventListener('change', () => {
+      const row = t2pFindCharRow(c.name);
+      if (row) {
+        const descEl = row.querySelector('.t2p-char-desc');
+        if (descEl) descEl.value = textarea.value;
+        t2pSaveState();
+      } else {
+        t2pDockExtraDesc[c.key] = textarea.value;
+      }
+    });
+    listEl.appendChild(item);
+  });
+}
+
+function t2pOpenCharDock() {
+  document.getElementById('t2pCharDockPanel')?.classList.add('show');
+  document.getElementById('t2pCharDockScrim')?.classList.add('show');
+}
+function t2pCloseCharDock() {
+  document.getElementById('t2pCharDockPanel')?.classList.remove('show');
+  document.getElementById('t2pCharDockScrim')?.classList.remove('show');
+}
+document.getElementById('t2pCharDockTab')?.addEventListener('click', t2pOpenCharDock);
+document.getElementById('t2pCharDockCloseBtn')?.addEventListener('click', t2pCloseCharDock);
+document.getElementById('t2pCharDockScrim')?.addEventListener('click', t2pCloseCharDock);
 
 function t2pSetGenerating(on) {
   const btn = document.getElementById('t2pGenerateBtn');
@@ -11454,7 +11720,9 @@ document.getElementById('t2pGenerateBtn')?.addEventListener('click', async () =>
     if (!Array.isArray(parsed) || !parsed.length) throw new Error('Hasil dari Gemini kosong/tidak sesuai format.');
     t2pAllTakes = parsed;
     t2pVisibleCount = Math.min(3, t2pAllTakes.length);
+    t2pDockExtraDesc = {};
     t2pRenderTakes();
+    t2pRenderCharDock();
     showToast(`${t2pAllTakes.length} take berhasil dibuat.`);
   } catch (e) {
     if (e && e.message === 'NOKEY') {
