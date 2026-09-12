@@ -11783,9 +11783,9 @@ function t2pRenderTakes() {
     const charsHtml = chars.map((n) => `<button type="button" class="t2p-take-char-chip" onclick="t2pOpenCharDock()">${n}</button>`).join('');
     const edited = t2pIsTakeEdited(t);
     const timeRange = t2pTakeTimeRange(t.take, takeDuration);
-    wrap.innerHTML = `<span class="t2p-take-pill" aria-label="Take ${t.take}">TAKE ${String(t.take).padStart(2, '0')} &mdash; ${timeRange}</span>`;
     card.innerHTML =
       `<div class="t2p-take-headrow">
+        <span class="t2p-take-pill" aria-label="Take ${t.take}">TAKE ${String(t.take).padStart(2, '0')} &mdash; ${timeRange}</span>
         <div class="t2p-take-headactions">
           <button type="button" class="t2p-take-headbtn t2p-take-resetbtn" ${edited ? '' : 'disabled'} title="Kembalikan semua kotak di take ini ke hasil AI semula">\u21ba reset ke hasil AI</button>
           <button type="button" class="t2p-take-headbtn t2p-take-headbtn--danger t2p-take-delbtn" title="Hapus take ini">hapus</button>
@@ -11804,10 +11804,10 @@ function t2pRenderTakes() {
       </div>
       ${t.dialogWanted
         ? `<div class="t2p-take-fieldgrid">
-        <div class="t2p-take-sub"><label>${t.burnSubtitleWanted ? 'Dialog (sudah burned-in di Prompt Video)' : 'Dialog (Opsional)'}</label><textarea class="t2p-take-dialog" rows="3" placeholder="Belum ada dialog di take ini.">${t.subtitle || ''}</textarea></div>
-        <div class="t2p-take-sub"><label>Deskripsi Akhir Frame (untuk sambungan ke take berikutnya)</label><textarea class="t2p-take-endframe" rows="3">${t.end_frame_description || ''}</textarea></div>
+        <div class="t2p-take-sub"><label>${t.burnSubtitleWanted ? 'Dialog (sudah burned-in di Prompt Video)' : 'Dialog'}</label><textarea class="t2p-take-dialog" rows="3" placeholder="Belum ada dialog di take ini.">${t.subtitle || ''}</textarea></div>
+        <div class="t2p-take-sub"><label>Deskripsi Akhir Frame</label><textarea class="t2p-take-endframe" rows="3">${t.end_frame_description || ''}</textarea></div>
       </div>`
-        : `<div class="t2p-take-sub"><label>Deskripsi Akhir Frame (untuk sambungan ke take berikutnya)</label><textarea class="t2p-take-endframe" rows="3">${t.end_frame_description || ''}</textarea></div>`}
+        : `<div class="t2p-take-sub"><label>Deskripsi Akhir Frame</label><textarea class="t2p-take-endframe" rows="3">${t.end_frame_description || ''}</textarea></div>`}
       <div class="t2p-take-tip">📷 Setelah Take ${String(t.take).padStart(2, '0')} selesai di-generate: screenshot frame paling akhir videonya, lalu upload sebagai gambar acuan/awal saat generate Take ${String(t.take + 1).padStart(2, '0')}. Ini jauh lebih kuat untuk konsistensi daripada deskripsi teks saja.</div>
       <label class="t2p-take-prompt-label">Prompt Siap Pakai</label>
       <textarea class="t2p-take-prompt" rows="6">${t.prompt || ''}</textarea>
