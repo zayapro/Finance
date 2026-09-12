@@ -11518,6 +11518,7 @@ ${charBlock}
 ATURAN WAJIB (supaya hasil videonya konsisten & tidak berantakan):
 1. KUNCI IDENTITAS FISIK: setiap kali karakter di atas muncul di suatu take, ulangi PERSIS ciri fisik tubuhnya (wajah, tinggi/postur, warna kulit, model & warna rambut) di DALAM TEKS FIELD "prompt" -- jangan pernah mengubah/menyingkat ciri fisik ini antar take, supaya wujud/identitas karakter identik di semua take. (Field "characters" HANYA berisi nama singkat, bukan deskripsi -- lihat FORMAT OUTPUT.)
 1b. KOSTUM/PAKAIAN MENGIKUTI NASKAH: pakaian karakter BOLEH berubah kalau naskah memang menceritakan pergantian baju/kostum (mis. pulang kerja -> mandi -> ganti baju rumah/piyama). Begitu sebuah kostum baru dipakai sesuai momen di naskah, kostum itu WAJIB dikunci & diulang identik (warna, model, detail) di take-take berikutnya sampai naskah menyebutkan pergantian lagi. Jangan mengganti kostum tanpa alasan jelas dari naskah, dan jangan biarkan kostum berubah-ubah sendiri secara acak antar take.
+1c. KUNCI GAYA BICARA: tiap karakter WAJIB punya gaya bicara yang konsisten di semua take dia muncul -- tingkat formalitas (baku/santai/kasar), pilihan kata & ciri khas ucapan (mis. suka pakai panggilan tertentu, logat, kebiasaan bicara) tidak boleh berubah-ubah tanpa alasan dari naskah. Kalau naskah tidak menentukan gaya bicara karakter, tentukan sendiri gaya yang wajar & konsisten sejak take pertama dia bicara, lalu pertahankan.
 2. POSISI SAAT BERBICARA: kalau ada 2+ karakter mengobrol dalam satu take, jelaskan blocking spasial secara eksplisit (siapa berdiri/duduk di sisi kiri, siapa di sisi kanan, saling berhadapan, arah pandang, framing kamera medium/close-up) supaya lawan bicara TIDAK muncul aneh di belakang atau di samping tubuh karakter utama -- posisi awal adegan bicara harus jelas dan wajar sejak frame pertama.
 3. ADEGAN KENDARAAN: kalau ada adegan naik/turun mobil atau motor, jelaskan eksplisit arah bukaan pintu yang benar & sisi masuk yang wajar (bukan terbalik), serta gerak kendaraan yang realistis (roda berputar sesuai arah jalan, kecepatan wajar, tidak "meluncur" tidak natural) saat datang maupun pergi.
 4. SAMBUNGAN ANTAR-TAKE: kecuali take pertama, sertakan catatan "continuity_note" yang menjelaskan bahwa FRAME AWAL take ini harus sama persis dengan FRAME AKHIR take sebelumnya (posisi karakter, sudut kamera, pencahayaan, lokasi) supaya saat disambung (extend video) hasilnya mulus tanpa lompatan/bug.
@@ -11525,6 +11526,7 @@ ATURAN WAJIB (supaya hasil videonya konsisten & tidak berantakan):
 5b. KUNCI DESKRIPSI LOKASI: begitu sebuah lokasi (mis. "kamar tidur Rani", "gang belakang toko") pertama kali dideskripsikan detail (warna dinding/tembok, pencahayaan, perabotan/elemen jalan, cuaca, waktu), deskripsi detail itu WAJIB diulang persis sama setiap kali lokasi yang SAMA muncul lagi di take lain -- jangan menulis ulang dengan detail berbeda (mis. warna dinding berubah, pencahayaan berubah tanpa alasan cerita). Kalau ceritanya memang berpindah ke lokasi BARU, baru boleh mendeskripsikan tempat baru dengan detail baru; kalau kembali lagi ke lokasi lama, pakai deskripsi lama yang sudah dikunci.
 6. Jangan menambah tokoh baru yang tidak ada hubungannya dengan naskah kecuali benar-benar diperlukan alur cerita.
 ${state.subtitle ? '7. Sertakan juga field "subtitle" berisi dialog/narasi take tsb (siap dipakai sbg teks subtitle), dalam bahasa yang sama dgn prompt.' : '7. Field "subtitle" boleh dikosongkan ("").'}
+7b. FORMAT DIALOG: kalau dalam satu take ada 2+ karakter yang bicara, tulis field "subtitle" per baris dengan format "Nama: ucapan" (satu baris per giliran bicara, urut sesuai adegan) supaya jelas siapa ngomong apa -- jangan digabung jadi satu paragraf tanpa label nama. Kalau cuma 1 karakter bicara atau isinya narasi (bukan dialog), boleh tanpa label nama.
 
 CATATAN TAMBAHAN DARI USER: ${state.worldNote || '(tidak ada)'}
 
@@ -11563,6 +11565,7 @@ TAKE TERAKHIR YANG SUDAH ADA (take ${lastTake.take}, jadikan acuan sambungan):
 - Lokasi: ${lastTake.location || '-'}
 - Karakter yang muncul: ${(Array.isArray(lastTake.characters) ? lastTake.characters.join(', ') : '') || '-'}
 - Isi prompt take itu: ${lastTake.prompt || '-'}
+- Dialog/subtitle take itu: ${lastTake.subtitle || '(tidak ada dialog)'}
 - Catatan sambungan take itu: ${lastTake.continuity_note || '(tidak ada)'}
 
 NASKAH/CERITA ASLI (acuan alur -- kalau ceritanya sudah habis di sini, kembangkan kelanjutan yang wajar & masuk akal):
@@ -11575,6 +11578,7 @@ CATATAN TAMBAHAN DARI USER: ${state.worldNote || '(tidak ada)'}
 ATURAN WAJIB (sama seperti take-take sebelumnya):
 1. KUNCI IDENTITAS FISIK: ulangi PERSIS ciri fisik tubuh (wajah, tinggi/postur, warna kulit, model & warna rambut) tiap karakter yang muncul di take baru ini di DALAM TEKS FIELD "prompt" -- harus identik dgn take-take sebelumnya. (Field "characters" HANYA nama singkat, bukan deskripsi.)
 1b. KOSTUM/PAKAIAN MENGIKUTI NASKAH: cek TAKE TERAKHIR di bawah -- kalau di take baru ini karakter masih dalam adegan/momen yang sama (belum ada momen ganti baju di naskah), pakai kostum yang SAMA PERSIS seperti take terakhir. Kalau naskah memang menceritakan pergantian baju di titik ini (mis. selesai mandi, ganti seragam, dll), baru boleh ganti kostum sesuai naskah -- lalu kostum baru itu jadi acuan yang harus dikunci lagi di take-take setelahnya.
+1c. KUNCI GAYA BICARA: lanjutkan gaya bicara tiap karakter (tingkat formalitas, ciri khas ucapan) SAMA seperti terlihat di "Dialog/subtitle take itu" pada TAKE TERAKHIR -- jangan berubah nada/gaya tanpa alasan dari naskah.
 2. POSISI SAAT BERBICARA: kalau ada 2+ karakter mengobrol, jelaskan blocking spasial eksplisit (kiri/kanan, saling berhadapan, framing kamera).
 3. ADEGAN KENDARAAN: kalau ada adegan naik/turun mobil/motor, jelaskan arah pintu & sisi masuk yang benar, gerak kendaraan realistis.
 4. SAMBUNGAN ANTAR-TAKE: WAJIB isi "continuity_note" yang menjelaskan FRAME AWAL take baru ini SAMA PERSIS dengan FRAME AKHIR take sebelumnya (posisi karakter, sudut kamera, pencahayaan, lokasi) supaya nyambung mulus.
@@ -11582,6 +11586,7 @@ ATURAN WAJIB (sama seperti take-take sebelumnya):
 5b. KUNCI DESKRIPSI LOKASI: kalau take baru ini masih di lokasi yang SAMA dengan take terakhir di atas (atau lokasi yang pernah muncul sebelumnya di cerita), pakai deskripsi detail lokasi yang SAMA PERSIS seperti sebelumnya (warna dinding/tembok, pencahayaan, perabotan/elemen jalan, cuaca, waktu) -- jangan mengubah/menulis ulang detailnya. Kalau memang pindah ke lokasi baru sesuai alur, baru boleh deskripsi baru.
 6. Jangan menambah tokoh baru yang tidak perlu.
 ${state.subtitle ? '7. Sertakan field "subtitle" berisi dialog/narasi take ini.' : '7. Field "subtitle" boleh dikosongkan ("").'}
+7b. FORMAT DIALOG: kalau 2+ karakter bicara di take ini, tulis "subtitle" per baris format "Nama: ucapan" (satu baris per giliran bicara) -- jangan digabung jadi satu paragraf tanpa label nama.
 
 FORMAT OUTPUT: balas HANYA dengan JSON valid (tanpa markdown/backtick/teks lain), berupa SATU OBJEK (bukan array) berstruktur persis:
 {"take": ${nextTakeNum}, "location": "<lokasi take ini>", "characters": ["<nama karakter yang muncul>"], "prompt": "<prompt video lengkap & detail siap pakai>", "continuity_note": "<catatan sambungan dari take sebelumnya>", "subtitle": "<dialog/narasi take ini>"}`;
@@ -11621,7 +11626,7 @@ function t2pRenderTakes() {
       ${chars.length ? `<div class="t2p-take-chars">👤 Karakter: ${charsHtml}</div>` : ''}
       <label class="t2p-take-prompt-label">Prompt Video</label>
       <textarea class="t2p-take-prompt" rows="6">${t.prompt || ''}</textarea>
-      ${t.subtitle ? `<div class="t2p-take-sub"><label>Subtitle</label><textarea rows="2">${t.subtitle}</textarea></div>` : ''}
+      ${t.subtitle ? `<div class="t2p-take-sub"><label>Subtitle</label><textarea rows="3">${t.subtitle}</textarea></div>` : ''}
       ${t.continuity_note ? `<div class="t2p-take-continuity"><span>🔗</span><span>${t.continuity_note}</span></div>` : ''}
       <div class="t2p-take-actions">
         <button type="button" class="t2p-copy-btn ${copied ? 'copied' : ''}">${copied ? '✓ Tersalin' : '📋 Salin Prompt'}</button>

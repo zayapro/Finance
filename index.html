@@ -14906,7 +14906,8 @@ html.dark-mode .bd-row-close{
 .t2p-opts-grid .form-row label{margin-bottom:4px;font-size:12px;}
 .t2p-opts-grid .form-row input{padding:8px 10px;}
 
-.t2p-locked-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:#7C3AED;background:rgba(124,58,237,0.1);border-radius:20px;padding:5px 11px;margin-bottom:10px;}
+.t2p-locked-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:#7C3AED;background:rgba(124,58,237,0.1);border-radius:20px;padding:5px 11px;margin-bottom:10px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.t2p-locked-badge-short{display:none;}
 
 .t2p-generate-btn{width:100%;padding:13px;border-radius:12px;border:none;background:var(--primary);color:#fff;font-weight:700;font-size:14.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:background-position 0.2s;}
 .t2p-generate-btn:disabled{cursor:default;}
@@ -14932,15 +14933,16 @@ html.dark-mode .bd-row-close{
 .t2p-take-head{display:flex;align-items:center;gap:8px;margin-bottom:9px;flex-wrap:wrap;}
 .t2p-take-badge{font-size:12px;font-weight:800;letter-spacing:.2px;color:#fff;background:var(--primary);border-radius:20px;padding:5px 12px;}
 .t2p-take-copied-tag{font-size:10.5px;font-weight:700;color:#059669;background:rgba(5,150,105,0.12);border-radius:20px;padding:4px 10px;}
-.t2p-take-meta{font-size:12px;font-weight:600;color:var(--ink-soft);margin-left:auto;white-space:nowrap;}
-.t2p-take-chars{display:flex;align-items:center;flex-wrap:wrap;gap:6px;font-size:12px;font-weight:600;color:var(--ink-soft);margin-bottom:10px;padding-bottom:10px;border-bottom:1px dashed var(--line);}
+.t2p-take-meta{font-size:12px;font-weight:600;color:var(--ink-soft);margin-left:auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;}
+.t2p-take-chars{display:flex;align-items:center;flex-wrap:wrap;gap:7px;font-size:12px;font-weight:600;color:var(--ink-soft);margin-bottom:10px;padding-bottom:10px;border-bottom:1px dashed var(--line);}
 .t2p-take-chars b{color:var(--ink);font-weight:700;}
-.t2p-take-char-chip{border:1px solid var(--line);background:var(--paper);color:var(--ink);font-weight:700;font-size:12px;padding:3px 10px;border-radius:20px;cursor:pointer;}
-.t2p-take-char-chip:hover{border-color:var(--primary);color:var(--primary);}
-.t2p-chardock-item-readonly{font-size:12px;color:var(--ink-soft);line-height:1.5;margin:0 0 6px;}
+.t2p-take-char-chip{border:1px solid var(--line);background:var(--paper);color:var(--ink);font-weight:700;font-size:12.5px;padding:6px 13px;border-radius:20px;cursor:pointer;min-height:30px;line-height:1.35;-webkit-tap-highlight-color:transparent;}
+.t2p-take-char-chip:hover,
+.t2p-take-char-chip:active{border-color:var(--primary);color:var(--primary);}
+.t2p-chardock-item-readonly{font-size:12px;color:var(--ink-soft);line-height:1.55;margin:0 0 6px;word-break:break-word;}
 .t2p-chardock-item-editbar{display:flex;gap:8px;margin:8px 0;}
-.t2p-chardock-apply-btn{flex:1;border:none;background:var(--primary);color:#fff;font-weight:700;font-size:12px;padding:7px 0;border-radius:8px;cursor:pointer;}
-.t2p-chardock-cancel-btn{flex:1;border:1px solid var(--line);background:var(--paper);color:var(--ink-soft);font-weight:700;font-size:12px;padding:7px 0;border-radius:8px;cursor:pointer;}
+.t2p-chardock-apply-btn{flex:1;border:none;background:var(--primary);color:#fff;font-weight:700;font-size:12.5px;padding:9px 4px;border-radius:8px;cursor:pointer;min-height:38px;}
+.t2p-chardock-cancel-btn{flex:1;border:1px solid var(--line);background:var(--paper);color:var(--ink-soft);font-weight:700;font-size:12.5px;padding:9px 4px;border-radius:8px;cursor:pointer;min-height:38px;}
 .t2p-take-prompt-label{display:block;font-size:10.5px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;color:var(--ink-faint);margin-bottom:5px;}
 .t2p-take-prompt{width:100%;padding:11px 12px;border-radius:11px;border:1px solid var(--line);font-size:13.5px;line-height:1.6;color:var(--ink);background:var(--paper);outline:none;resize:vertical;min-height:120px;font-family:inherit;margin-bottom:9px;}
 .t2p-take-prompt:focus{border-color:var(--forest-glow);background:var(--card);}
@@ -14967,20 +14969,20 @@ html.dark-mode .bd-row-close{
    endpoint list model, TIDAK makan kuota generate), & tombol "Pakai"
    utk pindah key aktif secara manual. ---- */
 .t2p-api-modal-body{padding:2px 2px 0;}
-.t2p-api-info-card{display:flex;gap:9px;align-items:flex-start;background:rgba(124,58,237,0.08);border-radius:12px;padding:11px 12px;margin-bottom:16px;}
+.t2p-api-info-card{display:flex;gap:9px;align-items:flex-start;background:rgba(124,58,237,0.08);border-radius:12px;padding:12px 13px;margin-bottom:16px;}
 .t2p-api-info-card-ic{flex-shrink:0;font-size:16px;line-height:1.3;}
-.t2p-api-info-card p{margin:0;font-size:11.5px;line-height:1.5;color:var(--ink-soft);}
+.t2p-api-info-card p{margin:0;font-size:12.5px;line-height:1.6;color:var(--ink);}
 .t2p-api-info-card a{color:#7C3AED;font-weight:700;}
 
-.t2p-api-section-label{font-size:11.5px;font-weight:800;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.03em;margin:0 0 8px;}
+.t2p-api-section-label{font-size:12.5px;font-weight:700;color:var(--ink);text-transform:uppercase;letter-spacing:.02em;margin:0 0 9px;}
 
 .t2p-model-pills{display:flex;gap:5px;background:var(--paper);border-radius:14px;padding:4px;margin-bottom:16px;}
-.t2p-model-pill{flex:1;min-width:0;padding:9px 6px;border-radius:11px;border:none;background:transparent;cursor:pointer;text-align:center;line-height:1.3;transition:background .18s ease, box-shadow .18s ease;}
-.t2p-model-pill-name{display:block;font-size:12px;font-weight:800;color:var(--ink-soft);}
-.t2p-model-pill-sub{display:block;font-size:9.5px;font-weight:600;color:var(--ink-faint);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.t2p-model-pill{flex:1;min-width:0;padding:10px 6px;border-radius:11px;border:none;background:transparent;cursor:pointer;text-align:center;line-height:1.35;transition:background .18s ease, box-shadow .18s ease;}
+.t2p-model-pill-name{display:block;font-size:13px;font-weight:700;color:var(--ink);}
+.t2p-model-pill-sub{display:block;font-size:11px;font-weight:500;color:var(--ink-soft);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .t2p-model-pill.active{background:#fff;box-shadow:0 2px 8px -2px rgba(15,23,42,0.18);}
 .t2p-model-pill.active .t2p-model-pill-name{color:#7C3AED;}
-.t2p-model-pill.active .t2p-model-pill-sub{color:#7C3AED;opacity:.8;}
+.t2p-model-pill.active .t2p-model-pill-sub{color:#7C3AED;opacity:.85;}
 
 .t2p-key-add-row{display:flex;gap:8px;margin-bottom:8px;}
 .t2p-key-add-row input{flex:1;min-width:0;}
@@ -14988,8 +14990,8 @@ html.dark-mode .bd-row-close{
 
 .t2p-key-section-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:18px;margin-bottom:8px;flex-wrap:wrap;}
 .t2p-key-section-head .t2p-api-section-label{margin:0;}
-.t2p-key-summary{display:flex;gap:5px;flex-wrap:wrap;}
-.t2p-key-chip{font-size:9.5px;font-weight:800;border-radius:20px;padding:2px 8px;white-space:nowrap;}
+.t2p-key-summary{display:flex;gap:6px;flex-wrap:wrap;}
+.t2p-key-chip{font-size:10.5px;font-weight:700;border-radius:20px;padding:3px 9px;white-space:nowrap;}
 .t2p-key-chip--ok{color:#059669;background:rgba(5,150,105,0.12);}
 .t2p-key-chip--quota{color:#B45309;background:rgba(217,119,6,0.12);}
 .t2p-key-chip--invalid,
@@ -14997,8 +14999,8 @@ html.dark-mode .bd-row-close{
 .t2p-key-chip--unknown{color:var(--ink-soft);background:var(--paper);}
 
 .t2p-key-list{display:flex;flex-direction:column;gap:8px;margin-bottom:4px;}
-.t2p-key-item{display:flex;align-items:center;gap:9px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:10px 11px;}
-.t2p-key-item.is-active{border-color:rgba(124,58,237,0.35);background:rgba(124,58,237,0.05);}
+.t2p-key-item{display:flex;align-items:center;gap:9px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:11px;}
+.t2p-key-item.is-active{border-color:rgba(124,58,237,0.35);background:rgba(124,58,237,0.06);}
 .t2p-key-status-dot{flex-shrink:0;width:9px;height:9px;border-radius:50%;margin-top:2px;}
 .t2p-key-status-dot--ok{background:#059669;}
 .t2p-key-status-dot--quota{background:#D97706;}
@@ -15009,22 +15011,37 @@ html.dark-mode .bd-row-close{
 @keyframes t2pKeyPulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.4;transform:scale(0.7);}}
 .t2p-key-item-main{flex:1;min-width:0;}
 .t2p-key-item-top{display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
-.t2p-key-item .t2p-key-label{font-size:12.5px;font-family:monospace;color:var(--ink);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.t2p-key-item .t2p-key-active-tag{flex-shrink:0;font-size:9.5px;font-weight:800;color:#7C3AED;background:rgba(124,58,237,0.12);border-radius:20px;padding:2px 7px;}
-.t2p-key-status-text{display:block;font-size:10.5px;font-weight:600;color:var(--ink-soft);margin-top:2px;}
+.t2p-key-item .t2p-key-label{font-size:13px;font-family:monospace;color:var(--ink);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.t2p-key-item .t2p-key-active-tag{flex-shrink:0;font-size:10px;font-weight:700;color:#7C3AED;background:rgba(124,58,237,0.12);border-radius:20px;padding:2px 8px;}
+.t2p-key-status-text{display:block;font-size:11.5px;font-weight:600;color:var(--ink-soft);margin-top:3px;}
 .t2p-key-status-text--ok{color:#059669;}
 .t2p-key-status-text--quota{color:#B45309;}
 .t2p-key-status-text--invalid,
 .t2p-key-status-text--error{color:#DC2626;}
 .t2p-key-item-actions{flex-shrink:0;display:flex;align-items:center;gap:5px;}
 .t2p-key-test-btn,
-.t2p-key-use-btn{flex-shrink:0;font-size:10.5px;font-weight:700;padding:6px 9px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;white-space:nowrap;}
+.t2p-key-use-btn{flex-shrink:0;font-size:11px;font-weight:600;padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;white-space:nowrap;}
 .t2p-key-test-btn:disabled{opacity:.55;cursor:default;}
-.t2p-key-use-btn{border-color:rgba(124,58,237,0.4);color:#7C3AED;}
+.t2p-key-use-btn{border-color:rgba(124,58,237,0.4);color:#7C3AED;font-weight:700;}
 .t2p-key-remove{flex-shrink:0;width:26px;height:26px;border-radius:50%;border:none;background:rgba(220,38,38,0.12);color:#DC2626;font-size:14px;line-height:1;cursor:pointer;}
 
 @media (max-width:380px){
   .t2p-key-item-actions{flex-wrap:wrap;justify-content:flex-end;}
+}
+
+/* Penyesuaian layar sempit (HP kecil <380px) khusus fitur Text to
+   Prompt: badge lokasi/durasi pindah baris sendiri drpd kepotong,
+   chip nama karakter & tombol Terapkan/Batal sedikit lebih ringkas,
+   panel dock melebar hampir penuh layar supaya teks tidak sempit. */
+@media (max-width:380px){
+  .t2p-take-head{gap:6px;}
+  .t2p-take-meta{margin-left:0;flex-basis:100%;white-space:normal;}
+  .t2p-take-char-chip{font-size:12px;padding:5px 11px;}
+  .t2p-chardock-panel{width:92vw;padding:16px 13px;}
+  .t2p-chardock-item{padding:10px;}
+  .t2p-chardock-apply-btn,
+  .t2p-chardock-cancel-btn{font-size:12px;padding:9px 2px;}
+  .t2p-generate-btn{font-size:13.5px;padding:12px;}
 }
 
 /* ---- Dock "Karakter di Video Ini" -- tab nyelip di pinggir kanan
@@ -15046,14 +15063,48 @@ html.dark-mode .bd-row-close{
    disederhanakan: SELALU full terlihat (tidak lagi setengah
    disembunyikan di balik tepi layar), geser dikit ke kiri + bayangan
    membesar saat hover/tap sbg umpan balik. ---- */
+/* ---- FIX "tidak muncul di halaman Text to Prompt": tab ini dipindah
+   jadi anak langsung <body> oleh t2pRelocateCharDockToBody() (lihat
+   script.js) supaya position:fixed-nya benar relatif ke viewport asli
+   (bukan relatif ke #t2pOverlay yang punya CSS transform). TAPI begitu
+   jadi anak <body>, tab ini jadi SEJAJAR (sibling) dengan #t2pOverlay
+   dalam stacking context yang sama -- dan #t2pOverlay (class
+   .lap-filter-overlay) di-set z-index:700 supaya menutupi .bottom-nav.
+   z-index lama di sini (30/39/40) jauh di bawah 700, jadi tab & panel
+   ini SELALU KETUTUP halaman Text to Prompt begitu halamannya dibuka --
+   itulah kenapa "Kunci Konsistensi" seperti tidak pernah muncul.
+   FIX: naikkan z-index ketiganya sedikit di atas 700, tapi tetap di
+   bawah modal2 yang juga sengaja dinaikkan melebihi 700 (mis.
+   #t2pApiModalOverlay, #userAccountFormModalOverlay = 750) supaya modal
+   itu tetap bisa menutupi tab/panel ini kalau kebetulan dibuka bareng. */
 .t2p-chardock-tab{
-  position:fixed;right:0;top:64%;transform:translate(0,-50%);
-  z-index:30;display:none;flex-direction:column;align-items:center;gap:9px;
+  position:fixed;right:max(0px, calc(50vw - 320px));top:64%;transform:translate(0,-50%);
+  z-index:705;display:none;flex-direction:column;align-items:center;gap:9px;
   padding:14px 11px 15px;border:none;border-radius:18px 0 0 18px;cursor:pointer;
   background:linear-gradient(165deg, var(--primary) 0%, var(--primary-deep) 55%, var(--violet) 130%);
   color:#fff;
   box-shadow:-8px 8px 22px -8px rgba(194,65,12,.45), -2px 4px 10px rgba(15,23,42,.18);
-  transition:transform .22s ease, box-shadow .22s ease;
+  transition:transform .22s ease, box-shadow .22s ease, right .2s ease;
+}
+/* ---- Ukuran & posisi mobile vs desktop: di HP, tab nempel pas di
+   tepi kanan layar (right:0, lihat rumus di atas -- utk viewport
+   <=640px, calc(50vw-320px) selalu negatif jadi max() membulatkannya
+   ke 0). Di layar lebar (tablet/desktop), halaman #t2pOverlay TETAP
+   dibatasi max-width:640px & ditengahkan (.lap-filter-page), jadi
+   kalau tab dibiarkan nempel di tepi BENAR layar (mis. monitor lebar),
+   dia akan "mengambang" jauh terpisah dari kartu halaman yg cuma
+   selebar 640px di tengah. Rumus right:max(0px, calc(50vw - 320px))
+   otomatis menggeser tab supaya tetap nempel di tepi kanan KARTU
+   640px itu (320px = separuh dari 640px), bukan di tepi kanan
+   monitor -- terlihat menyatu di ukuran layar manapun. Tab & panel
+   juga dibuat sedikit lebih besar/lega di layar lebar (>820px) supaya
+   proporsinya pas dgn kartu 640px yang lebih besar drpd di HP, tidak
+   kelihatan mungil sendirian di tengah area kosong. ---- */
+@media (min-width:821px){
+  .t2p-chardock-tab{padding:17px 13px 18px;gap:10px;}
+  .t2p-chardock-tab-ic{width:25px;height:25px;}
+  .t2p-chardock-tab-label{font-size:13.5px;}
+  .t2p-chardock-tab-count{font-size:11.5px;padding:3px 9px;}
 }
 .t2p-chardock-tab.show{display:flex;animation:t2pDockPop .32s ease;}
 .t2p-chardock-tab:hover,
@@ -15074,19 +15125,29 @@ html.dark-mode .bd-row-close{
 @keyframes t2pDockPop{0%{transform:translate(60px,-50%);opacity:0;}100%{transform:translate(0,-50%);opacity:1;}}
 
 .t2p-chardock-scrim{
-  position:fixed;inset:0;z-index:39;background:rgba(11,29,22,0.45);
+  position:fixed;inset:0;z-index:706;background:rgba(11,29,22,0.45);
   opacity:0;pointer-events:none;transition:opacity .2s ease;
 }
 .t2p-chardock-scrim.show{opacity:1;pointer-events:auto;}
 
 .t2p-chardock-panel{
-  position:fixed;right:0;top:0;bottom:0;z-index:40;width:min(84vw,340px);
+  /* right SENGAJA tetap 0 (bukan pakai rumus calc(50vw-320px) spt tab
+     di atas) -- panel ini disembunyikan lewat transform:translateX(100%)
+     yang cuma menggeser sejauh LEBAR KOTAKNYA SENDIRI. Kalau "right"
+     digeser masuk (spt di layar desktop), translateX(100%) jadi tidak
+     cukup jauh utk membawanya keluar viewport sepenuhnya -- sisa
+     sepotong panel akan nongol permanen di tepi kanan layar walau
+     lagi "tertutup". Jadi utk panel (drawer penuh tinggi layar) tetap
+     nempel ke tepi ASLI layar spt drawer pada umumnya; yang disesuaikan
+     ke tepi kartu 640px cukup tab kecilnya saja di atas. */
+  position:fixed;right:0;top:0;bottom:0;z-index:707;width:min(84vw,340px);
   background:var(--card);box-shadow:-12px 0 30px -10px rgba(15,23,42,0.35);
   transform:translateX(100%);transition:transform .26s ease;
   display:flex;flex-direction:column;padding:18px 16px;
   padding-top:calc(18px + env(safe-area-inset-top, 0px));
   padding-bottom:calc(18px + env(safe-area-inset-bottom, 0px));
 }
+@media (min-width:821px){.t2p-chardock-panel{width:380px;padding:22px 20px;}}
 .t2p-chardock-panel.show{transform:translateX(0);}
 .t2p-chardock-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:12px;padding-bottom:12px;border-bottom:1px dashed var(--line);}
 .t2p-chardock-head h4{font-size:15px;font-weight:800;color:var(--ink);margin:0 0 3px;}
@@ -15108,7 +15169,16 @@ html.dark-mode .bd-row-close{
 #t2pCharDockScrollArea #t2pAddCharBtn{margin-bottom:4px;}
 
 @media (max-width:380px){
-  .t2p-opts-grid{grid-template-columns:1fr;}
+  .t2p-opts-grid{gap:8px;}
+  .t2p-opts-grid .form-row label{font-size:11px;}
+  .t2p-opts-grid .form-row input{padding:7px 8px;font-size:13px;}
+  .t2p-locked-badge-full{display:none;}
+  .t2p-locked-badge-short{display:inline;}
+  .t2p-copy-progress{font-size:11px;padding:9px 10px;line-height:1.5;}
+}
+@media (max-width:340px){
+  .t2p-locked-badge{font-size:10px;padding:5px 9px;}
+  .t2p-copy-progress{font-size:10.5px;padding:8px 9px;}
 }
 </style>
 </head>
@@ -16724,7 +16794,7 @@ html.dark-mode .bd-row-close{
         </div>
 
         <div class="t2p-section" style="border-bottom:none;padding-bottom:0;">
-          <span class="t2p-locked-badge">🔒 Karakter full body terkunci &amp; lokasi otomatis per take</span>
+          <span class="t2p-locked-badge"><span class="t2p-locked-badge-full">🔒 Karakter full body terkunci &amp; lokasi otomatis per take</span><span class="t2p-locked-badge-short">🔒 Karakter &amp; lokasi otomatis terkunci</span></span>
           <button type="button" class="t2p-generate-btn" id="t2pGenerateBtn">
             <span class="t2p-dots"><span></span><span></span><span></span></span>
             <span id="t2pGenerateBtnLabel">Generate Prompt</span>
