@@ -1341,6 +1341,30 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
   isolation:isolate;
 }
 .lap-filter-card.fastmenu-page-body-rest{margin-top:0;border-radius:0;}
+/* ---- Banner sticky halaman "Text to Prompt" (#t2pOverlay) -- pola
+   SAMA PERSIS dgn .fastmenu-sticky-head/.fastmenu-page-body-cap di
+   atas, cuma diberi nama scoped sendiri. Dipakai supaya header oren +
+   tombol Kembali/gir Pengaturan API tetap menempel di atas layar
+   selagi isi halaman (form karakter/naskah/opsi/hasil take yang
+   panjang) discroll -- SAMA PERSIS spt halaman Fast Menu/Notifikasi/
+   Unduh Video lain, bukan ikut discroll ke atas & hilang. ---- */
+.t2p-sticky-head{
+  position:sticky;top:0;z-index:6;
+  transform:translateZ(0);-webkit-transform:translateZ(0);
+  backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  isolation:isolate;
+}
+.t2p-sticky-head .lap-filter-head{position:relative;z-index:1;}
+.t2p-page-body-cap{
+  position:relative;z-index:2;
+  background:var(--card);
+  margin:-24px 0 0;height:24px;
+  border-radius:28px 28px 0 0;
+  transform:translateZ(0);-webkit-transform:translateZ(0);
+  backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  isolation:isolate;
+}
+.lap-filter-card.t2p-page-body-rest{margin-top:0;border-radius:0;}
 /* ---- Banner sticky halaman "Unduh Video" (#videoDlOverlay) -- pola
    SAMA PERSIS dgn .fastmenu-sticky-head/.fastmenu-page-body-cap tepat
    di atas (halaman Fast Menu): banner + "topi" lengkung kosong
@@ -12248,6 +12272,14 @@ select#categoryFilter[hidden]{display:none;}
    Account (z-index 700) masih terbuka -- tanpa override ini,
    popupnya kebuka tapi ketutup total di belakang halaman itu. */
 #confirmOverlay{z-index:750;}
+/* FIX SAMA PERSIS -- #t2pApiModalOverlay (Pengaturan API Gemini di
+   tool Text to Prompt) dibuka SAAT halaman #t2pOverlay (.lap-filter-overlay,
+   z-index 700) masih terbuka. Tanpa override ini, cuma ikut
+   z-index:var(--z-modal) generik (200) -> modalnya kebuka (class
+   "open" ke-add) tapi ketutup total di BELAKANG halaman Text to
+   Prompt -- keliatannya spt tombol gir "Pengaturan API" tidak
+   merespons sama sekali walau sebenarnya sudah kebuka. */
+#t2pApiModalOverlay{z-index:750;}
 /* FIX SAMA PERSIS -- modal "Pengaturan Tanya AI" (#aiSettingsModalOverlay)
    sekarang juga bisa dibuka lewat tombol gear di halaman "Tool AI"
    (#atkPanel, REDESIGN jadi halaman penuh class .lap-filter-overlay,
@@ -16470,18 +16502,21 @@ html.dark-mode .bd-row-close{
        diedit langsung (textarea) & ada tombol "Salin" (clipboard). ---->
   <div class="detail-page-overlay lap-filter-overlay" id="t2pOverlay">
     <div class="lap-filter-page">
-      <div class="lap-filter-head">
-        <button class="lap-filter-back-btn" id="t2pBackBtn" type="button" aria-label="Tutup Text to Prompt">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
-        </button>
-        <h2>Text to Prompt</h2>
-        <button class="lap-filter-back-btn" id="t2pApiSettingsBtn" type="button" aria-label="Pengaturan API Gemini">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-        </button>
+      <div class="t2p-sticky-head">
+        <div class="lap-filter-head">
+          <button class="lap-filter-back-btn" id="t2pBackBtn" type="button" aria-label="Tutup Text to Prompt">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <h2>Text to Prompt</h2>
+          <button class="lap-filter-back-btn" id="t2pApiSettingsBtn" type="button" aria-label="Pengaturan API Gemini">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          </button>
+        </div>
+        <div class="t2p-page-body-cap" aria-hidden="true"></div>
       </div>
 
-      <div class="lap-filter-card">
-        <p class="t2p-section-sub">Tempel naskah/cerita drama kamu, isi data karakter, atur opsi take -- tool ini akan membuatkan <b>prompt video per-take</b> yang konsisten (karakter full body terkunci, posisi bicara wajar, adegan kendaraan realistis, & sambungan antar-take mulus) siap ditempel ke tool video-gen kamu.</p>
+      <div class="lap-filter-card t2p-page-body-rest">
+        <p class="t2p-section-sub" style="margin-top:0;">Tempel naskah/cerita drama kamu, isi data karakter, atur opsi take -- tool ini akan membuatkan <b>prompt video per-take</b> yang konsisten (karakter full body terkunci, posisi bicara wajar, adegan kendaraan realistis, & sambungan antar-take mulus) siap ditempel ke tool video-gen kamu.</p>
 
         <div class="t2p-section">
           <div class="t2p-section-title">👤 Karakter</div>
