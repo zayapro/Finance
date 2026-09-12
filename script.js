@@ -11775,15 +11775,17 @@ function t2pRenderTakes() {
   const shown = t2pAllTakes.slice(0, t2pVisibleCount);
   shown.forEach((t) => {
     const copied = !!t._t2pCopied;
+    const wrap = document.createElement('div');
+    wrap.className = 't2p-take-wrap';
     const card = document.createElement('div');
     card.className = 't2p-take-card' + (copied ? ' t2p-take-card--copied' : '');
     const chars = Array.isArray(t.characters) ? t.characters : [];
     const charsHtml = chars.map((n) => `<button type="button" class="t2p-take-char-chip" onclick="t2pOpenCharDock()">${n}</button>`).join('');
     const edited = t2pIsTakeEdited(t);
     const timeRange = t2pTakeTimeRange(t.take, takeDuration);
+    wrap.innerHTML = `<span class="t2p-take-pill" aria-label="Take ${t.take}">TAKE ${String(t.take).padStart(2, '0')} &mdash; ${timeRange}</span>`;
     card.innerHTML =
-      `<span class="t2p-take-cornerbadge" aria-label="Take ${t.take}">Take ${String(t.take).padStart(2, '0')}</span>
-      <div class="t2p-take-headrow">
+      `<div class="t2p-take-headrow">
         <div class="t2p-take-headactions">
           <button type="button" class="t2p-take-headbtn t2p-take-resetbtn" ${edited ? '' : 'disabled'} title="Kembalikan semua kotak di take ini ke hasil AI semula">\u21ba reset ke hasil AI</button>
           <button type="button" class="t2p-take-headbtn t2p-take-headbtn--danger t2p-take-delbtn" title="Hapus take ini">hapus</button>
@@ -11792,21 +11794,25 @@ function t2pRenderTakes() {
       <div class="t2p-take-tagsrow">
         <span class="t2p-take-copied-tag" style="display:${copied ? '' : 'none'};">✓ Disalin</span>
         ${t.burnSubtitleWanted ? '<span class="t2p-take-cc-tag" title="Instruksi subtitle burned-in sudah disisipkan ke Prompt Video">CC Subtitle</span>' : ''}
-        <span class="t2p-take-meta">📍 ${(t.location || '-')} &middot; ${timeRange}</span>
+        <span class="t2p-take-meta"><svg class="t2p-take-meta-icon" width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"></path></svg><span class="t2p-take-meta-text">${(t.location || '-')}</span></span>
       </div>
-      ${chars.length ? `<div class="t2p-take-chars">👤 Karakter: ${charsHtml}</div>` : ''}
+      ${chars.length ? `<div class="t2p-take-chars"><span class="t2p-take-chars-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.761 0 5-2.239 5-5s-2.239-5-5-5-5 2.239-5 5 2.239 5 5 5zm0 2c-3.333 0-10 1.667-10 5v3h20v-3c0-3.333-6.667-5-10-5z"></path></svg></span><b>Karakter:</b>${charsHtml}</div>` : ''}
       ${t.continuity_note ? `<div class="t2p-take-continuity"><span>\u21b3</span><span>menyambung dari akhir Take ${Math.max(1, t.take - 1)}: ${t.continuity_note}</span></div>` : ''}
       <div class="t2p-take-fieldgrid">
         <div class="t2p-take-sub"><label>Aksi yang Terjadi</label><textarea class="t2p-take-action" rows="4">${t.action || ''}</textarea></div>
         <div class="t2p-take-sub"><label>Gerakan Kamera</label><textarea class="t2p-take-camera" rows="4">${t.camera_movement || ''}</textarea></div>
       </div>
-      ${t.dialogWanted ? `<div class="t2p-take-sub"><label>${t.burnSubtitleWanted ? 'Dialog (sudah burned-in di Prompt Video)' : 'Dialog (Opsional)'}</label><textarea class="t2p-take-dialog" rows="3" placeholder="Belum ada dialog di take ini.">${t.subtitle || ''}</textarea></div>` : ''}
-      <div class="t2p-take-sub"><label>Deskripsi Akhir Frame (untuk sambungan ke take berikutnya)</label><textarea class="t2p-take-endframe" rows="3">${t.end_frame_description || ''}</textarea></div>
+      ${t.dialogWanted
+        ? `<div class="t2p-take-fieldgrid">
+        <div class="t2p-take-sub"><label>${t.burnSubtitleWanted ? 'Dialog (sudah burned-in di Prompt Video)' : 'Dialog (Opsional)'}</label><textarea class="t2p-take-dialog" rows="3" placeholder="Belum ada dialog di take ini.">${t.subtitle || ''}</textarea></div>
+        <div class="t2p-take-sub"><label>Deskripsi Akhir Frame (untuk sambungan ke take berikutnya)</label><textarea class="t2p-take-endframe" rows="3">${t.end_frame_description || ''}</textarea></div>
+      </div>`
+        : `<div class="t2p-take-sub"><label>Deskripsi Akhir Frame (untuk sambungan ke take berikutnya)</label><textarea class="t2p-take-endframe" rows="3">${t.end_frame_description || ''}</textarea></div>`}
       <div class="t2p-take-tip">📷 Setelah Take ${String(t.take).padStart(2, '0')} selesai di-generate: screenshot frame paling akhir videonya, lalu upload sebagai gambar acuan/awal saat generate Take ${String(t.take + 1).padStart(2, '0')}. Ini jauh lebih kuat untuk konsistensi daripada deskripsi teks saja.</div>
       <label class="t2p-take-prompt-label">Prompt Siap Pakai</label>
       <textarea class="t2p-take-prompt" rows="6">${t.prompt || ''}</textarea>
       <div class="t2p-take-actions">
-        <button type="button" class="t2p-copy-btn t2p-copy-fab ${copied ? 'copied' : ''}" title="${copied ? 'Sudah disalin' : 'Salin Prompt'}" aria-label="Salin Prompt Take ${t.take}">${copied ? '✓' : '📋'}</button>
+        <button type="button" class="t2p-copy-btn t2p-copy-pill ${copied ? 'copied' : ''}" title="${copied ? 'Sudah disalin' : 'Salin Prompt'}" aria-label="Salin Prompt Take ${t.take}">${t2pCopyBtnInnerHTML(copied)}</button>
       </div>`;
     const promptTa = card.querySelector('.t2p-take-prompt');
     const dialogTa = card.querySelector('.t2p-take-dialog');
@@ -11841,7 +11847,7 @@ function t2pRenderTakes() {
     actionTa?.addEventListener('input', () => { t.action = actionTa.value; markUncopiedIfNeeded(); refreshResetBtn(); });
     cameraTa?.addEventListener('input', () => { t.camera_movement = cameraTa.value; markUncopiedIfNeeded(); refreshResetBtn(); });
     endframeTa?.addEventListener('input', () => { t.end_frame_description = endframeTa.value; markUncopiedIfNeeded(); refreshResetBtn(); });
-    promptTa?.addEventListener('input', () => { markUncopiedIfNeeded(); refreshResetBtn(); });
+    promptTa?.addEventListener('input', () => { t.prompt = promptTa.value; markUncopiedIfNeeded(); refreshResetBtn(); });
 
     card.querySelector('.t2p-copy-btn')?.addEventListener('click', function () {
       // Gabungkan Prompt Video + Dialog jadi SATU teks supaya user
@@ -11901,7 +11907,8 @@ function t2pRenderTakes() {
       showToast(`Take ${t.take} dihapus.`);
     });
 
-    listEl.appendChild(card);
+    wrap.appendChild(card);
+    listEl.appendChild(wrap);
   });
   if (moreBtn) moreBtn.style.display = (t2pVisibleCount < t2pAllTakes.length) ? '' : 'none';
   if (addSegBtn) addSegBtn.style.display = ''; // selalu tampil selama sudah ada minimal 1 take
@@ -11987,6 +11994,17 @@ document.getElementById('t2pDownloadSrtBtn')?.addEventListener('click', () => {
   showToast('File .srt berhasil didownload.');
 });
 
+/* ---------- Icon + label tombol "Salin Prompt" (SVG copy/check,
+   dipakai saat render awal & saat toggle status disalin lewat
+   t2pMarkCardCopied, supaya konsisten satu sumber). ---------- */
+function t2pCopyBtnInnerHTML(copied) {
+  const icon = copied
+    ? '<svg class="t2p-check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>'
+    : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
+  const label = copied ? 'Disalin' : 'Salin Prompt';
+  return `${icon}<span class="t2p-copy-label">${label}</span>`;
+}
+
 /* ---------- Tandai satu kartu take sudah/belum disalin tanpa perlu
    render ulang semua kartu (biar tidak kedip & tidak ganggu kartu
    lain yang sedang diedit). ---------- */
@@ -11995,11 +12013,12 @@ function t2pMarkCardCopied(card, copied) {
   const btn = card.querySelector('.t2p-copy-btn');
   if (btn) {
     btn.classList.toggle('copied', copied);
-    btn.textContent = copied ? '✓' : '📋';
+    btn.innerHTML = t2pCopyBtnInnerHTML(copied);
     btn.title = copied ? 'Sudah disalin' : 'Salin Prompt';
   }
   const tag = card.querySelector('.t2p-take-copied-tag');
   if (tag) tag.style.display = copied ? '' : 'none';
+
 }
 
 /* ---------- Ringkasan "sudah disalin berapa dari berapa take" di
@@ -12014,9 +12033,11 @@ function t2pRenderCopyProgress() {
   const total = t2pAllTakes.length;
   el.style.display = '';
   el.classList.toggle('t2p-copy-progress--done', copiedCount === total);
+  const iconClipboard = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"></path><rect x="9" y="3" width="6" height="4" rx="1" ry="1"></rect><line x1="9" y1="12" x2="15" y2="12"></line><line x1="9" y1="16" x2="13" y2="16"></line></svg>';
+  const iconCheckCircle = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>';
   el.innerHTML = copiedCount === total
-    ? `✓ Semua ${total} take sudah disalin`
-    : `📋 ${copiedCount}/${total} take sudah disalin -- sisanya ditandai <b>belum disalin</b>`;
+    ? `${iconCheckCircle}<span>Semua ${total} take sudah disalin</span>`
+    : `${iconClipboard}<span>${copiedCount}/${total} take sudah disalin -- sisanya ditandai <b>belum disalin</b></span>`;
 }
 document.getElementById('t2pShowMoreBtn')?.addEventListener('click', () => {
   t2pVisibleCount = Math.min(t2pVisibleCount + 3, t2pAllTakes.length);
