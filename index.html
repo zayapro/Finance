@@ -14895,12 +14895,16 @@ html.dark-mode .bd-row-close{
 .t2p-char-desc:focus{border-color:var(--forest-glow);}
 .t2p-add-char-btn{width:100%;padding:10px;border-radius:10px;border:1.5px dashed var(--line);background:transparent;color:var(--primary);font-weight:700;font-size:13px;cursor:pointer;}
 
-.t2p-check-row{display:flex;align-items:center;gap:9px;padding:9px 2px;cursor:pointer;}
+.t2p-check-row{display:flex;align-items:center;gap:9px;padding:6px 2px;cursor:pointer;}
 .t2p-check-row input{width:17px;height:17px;flex-shrink:0;accent-color:var(--primary);cursor:pointer;}
 .t2p-check-row span{flex:1;font-size:13.5px;font-weight:600;color:var(--ink);}
 .t2p-check-row .t2p-check-sub{display:block;font-size:11px;font-weight:500;color:var(--ink-soft);margin-top:1px;}
-.t2p-check-group{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;padding:2px 10px;background:var(--paper);}
-.t2p-opts-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+.t2p-check-group{display:flex;gap:8px;}
+.t2p-check-group .t2p-check-row{flex:1;min-width:0;border:1px solid var(--line);border-radius:10px;background:var(--paper);padding:8px 10px;gap:7px;}
+.t2p-check-group .t2p-check-row span{font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.t2p-opts-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:4px;}
+.t2p-opts-grid .form-row label{margin-bottom:4px;font-size:12px;}
+.t2p-opts-grid .form-row input{padding:8px 10px;}
 
 .t2p-locked-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:#7C3AED;background:rgba(124,58,237,0.1);border-radius:20px;padding:5px 11px;margin-bottom:10px;}
 
@@ -14912,29 +14916,33 @@ html.dark-mode .bd-row-close{
 
 .t2p-empty-hint{text-align:center;color:var(--ink-soft);font-size:12.5px;padding:18px 8px;}
 
-.t2p-copy-progress{font-size:11.5px;font-weight:700;color:#B45309;background:rgba(217,119,6,0.1);border-radius:10px;padding:8px 11px;margin-bottom:10px;line-height:1.4;}
-.t2p-copy-progress b{text-decoration:underline;}
+.t2p-copy-progress{font-size:12px;font-weight:700;color:#B45309;background:rgba(217,119,6,0.1);border-radius:12px;padding:10px 12px;margin-bottom:12px;line-height:1.45;}
+.t2p-copy-progress b{text-decoration:underline;text-underline-offset:2px;}
 .t2p-copy-progress--done{color:#059669;background:rgba(5,150,105,0.1);}
 
-.t2p-take-card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:10px;transition:border-color .18s ease, background .18s ease;}
+.t2p-take-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px;box-shadow:0 2px 10px -6px rgba(15,23,42,0.08);transition:border-color .18s ease, background .18s ease, box-shadow .18s ease;}
 .t2p-take-card--copied{border-color:rgba(5,150,105,0.35);background:rgba(5,150,105,0.045);}
-.t2p-take-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;flex-wrap:wrap;}
-.t2p-take-badge{font-size:12px;font-weight:800;color:#fff;background:var(--primary);border-radius:20px;padding:4px 11px;}
-.t2p-take-copied-tag{font-size:10.5px;font-weight:800;color:#059669;background:rgba(5,150,105,0.12);border-radius:20px;padding:3px 9px;}
-.t2p-take-meta{font-size:11.5px;font-weight:600;color:var(--ink-soft);margin-left:auto;}
-.t2p-take-chars{font-size:11.5px;color:var(--ink-soft);margin-bottom:7px;}
-.t2p-take-chars b{color:var(--ink);}
-.t2p-take-prompt{width:100%;padding:10px 11px;border-radius:10px;border:1px solid var(--line);font-size:13px;line-height:1.5;background:var(--card);outline:none;resize:vertical;min-height:96px;font-family:inherit;margin-bottom:7px;}
-.t2p-take-prompt:focus{border-color:var(--forest-glow);}
-.t2p-take-sub{margin-bottom:7px;}
-.t2p-take-sub label{display:block;font-size:11px;font-weight:700;color:var(--ink-soft);margin-bottom:4px;}
-.t2p-take-sub textarea{width:100%;padding:8px 10px;border-radius:9px;border:1px solid var(--line);font-size:12.5px;background:var(--card);outline:none;resize:vertical;font-family:inherit;}
-.t2p-take-continuity{font-size:11px;color:#0891B2;background:rgba(8,145,178,0.08);border-radius:8px;padding:7px 9px;margin-bottom:8px;line-height:1.4;}
+.t2p-take-head{display:flex;align-items:center;gap:8px;margin-bottom:9px;flex-wrap:wrap;}
+.t2p-take-badge{font-size:12px;font-weight:800;letter-spacing:.2px;color:#fff;background:var(--primary);border-radius:20px;padding:5px 12px;}
+.t2p-take-copied-tag{font-size:10.5px;font-weight:700;color:#059669;background:rgba(5,150,105,0.12);border-radius:20px;padding:4px 10px;}
+.t2p-take-meta{font-size:12px;font-weight:600;color:var(--ink-soft);margin-left:auto;white-space:nowrap;}
+.t2p-take-chars{display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--ink-soft);margin-bottom:10px;padding-bottom:10px;border-bottom:1px dashed var(--line);}
+.t2p-take-chars b{color:var(--ink);font-weight:700;}
+.t2p-take-prompt-label{display:block;font-size:10.5px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;color:var(--ink-faint);margin-bottom:5px;}
+.t2p-take-prompt{width:100%;padding:11px 12px;border-radius:11px;border:1px solid var(--line);font-size:13.5px;line-height:1.6;color:var(--ink);background:var(--paper);outline:none;resize:vertical;min-height:120px;font-family:inherit;margin-bottom:9px;}
+.t2p-take-prompt:focus{border-color:var(--forest-glow);background:var(--card);}
+.t2p-take-sub{margin-bottom:9px;}
+.t2p-take-sub label{display:block;font-size:10.5px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;color:var(--ink-faint);margin-bottom:5px;}
+.t2p-take-sub textarea{width:100%;padding:9px 11px;border-radius:10px;border:1px solid var(--line);font-size:12.5px;line-height:1.5;color:var(--ink);background:var(--paper);outline:none;resize:vertical;font-family:inherit;}
+.t2p-take-continuity{display:flex;align-items:flex-start;gap:6px;font-size:11.5px;font-weight:500;color:#0891B2;background:rgba(8,145,178,0.08);border-radius:10px;padding:8px 10px;margin-bottom:9px;line-height:1.45;}
 .t2p-take-actions{display:flex;gap:8px;}
-.t2p-copy-btn{flex:1;padding:9px;border-radius:9px;border:1px solid var(--primary);background:transparent;color:var(--primary);font-weight:700;font-size:12.5px;cursor:pointer;}
-.t2p-copy-btn.copied{background:var(--primary);color:#fff;}
+.t2p-copy-btn{flex:1;padding:11px;border-radius:11px;border:1.5px solid var(--primary);background:transparent;color:var(--primary);font-weight:700;font-size:13px;cursor:pointer;transition:background .15s ease,color .15s ease;}
+.t2p-copy-btn:hover{background:color-mix(in srgb, var(--primary) 8%, transparent);}
+.t2p-copy-btn.copied{background:var(--primary);color:#fff;border-color:var(--primary);}
 
 .t2p-showmore-btn{width:100%;padding:11px;border-radius:10px;border:1.5px dashed var(--line);background:transparent;color:var(--ink);font-weight:700;font-size:13px;cursor:pointer;margin-top:2px;}
+.t2p-addsegment-btn{width:100%;padding:11px;border-radius:10px;border:1.5px dashed var(--primary);background:color-mix(in srgb, var(--primary) 6%, transparent);color:var(--primary);font-weight:700;font-size:13px;cursor:pointer;margin-top:8px;}
+.t2p-addsegment-btn:disabled{opacity:0.6;cursor:default;}
 
 /* ---- Modal "Pengaturan API Gemini" (#t2pApiModalOverlay) --
    didesain ulang: kartu info ringkas, model dipilih lewat pil
@@ -14963,7 +14971,7 @@ html.dark-mode .bd-row-close{
 
 .t2p-key-add-row{display:flex;gap:8px;margin-bottom:8px;}
 .t2p-key-add-row input{flex:1;min-width:0;}
-.t2p-upload-btn{width:100%;padding:9px;border-radius:9px;border:1.5px dashed var(--line);background:transparent;color:var(--ink);font-weight:700;font-size:12.5px;cursor:pointer;}
+.t2p-upload-btn{flex-shrink:0;width:38px;height:38px;padding:0;border-radius:9px;border:1.5px dashed var(--line);background:transparent;color:var(--ink);font-weight:700;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
 
 .t2p-key-section-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:18px;margin-bottom:8px;flex-wrap:wrap;}
 .t2p-key-section-head .t2p-api-section-label{margin:0;}
@@ -15010,25 +15018,47 @@ html.dark-mode .bd-row-close{
    #t2pOverlay, cuma tampil (.show) setelah generate berhasil punya
    >=1 take (lihat t2pRenderCharDock() di script.js). Ditaruh
    position:fixed relatif ke #t2pOverlay yang sudah fullscreen, jadi
-   posisinya konsisten walau isi halaman panjang & discroll. Separuh
-   badan tab sengaja "kepotong"/nempel ke tepi kanan layar (translateX
-   sebagian) khas tab index buku, lalu geser penuh masuk pas disentuh
-   supaya kelihatan gampang dipencet tapi tidak menutupi konten. ---- */
+   posisinya konsisten walau isi halaman panjang & discroll.
+   ---- REDESAIN: dulu cuma pil kecil ikon+angka yang gampang
+   kelihatan "kepotong" (emoji 👤 sering ke-clip beda-beda tinggi
+   antar device krn line-height font emoji tidak presisi). Sekarang
+   jadi ribbon vertikal flush ke tepi kanan layar: ikon SVG (bukan
+   emoji, supaya selalu tajam & tidak kepotong di device manapun),
+   label teks berdiri (writing-mode:vertical-rl) "Kunci Konsistensi"
+   supaya fungsinya langsung kebaca tanpa perlu tap dulu, lalu badge
+   jumlah karakter di bawahnya. Warnanya dipakai dari var(--primary)
+   (oranye brand utama app ini) ke var(--violet) (aksen ungu yang
+   sama dipakai di badge2 fitur AI lain, mis. .t2p-locked-badge) --
+   supaya senada dgn identitas app, bukan warna asing. Interaksinya
+   disederhanakan: SELALU full terlihat (tidak lagi setengah
+   disembunyikan di balik tepi layar), geser dikit ke kiri + bayangan
+   membesar saat hover/tap sbg umpan balik. ---- */
 .t2p-chardock-tab{
-  position:fixed;right:0;top:64%;transform:translate(38%,-50%);
-  z-index:30;display:none;flex-direction:column;align-items:center;gap:3px;
-  padding:10px 8px 10px 12px;border:none;border-radius:16px 0 0 16px;cursor:pointer;
-  background:linear-gradient(145deg, var(--forest-glow), var(--violet));
-  color:#fff;box-shadow:0 10px 26px -8px rgba(124,58,237,0.55), 0 4px 12px rgba(15,23,42,0.18);
-  transition:transform .22s ease, box-shadow .18s ease;
+  position:fixed;right:0;top:64%;transform:translate(0,-50%);
+  z-index:30;display:none;flex-direction:column;align-items:center;gap:9px;
+  padding:14px 11px 15px;border:none;border-radius:18px 0 0 18px;cursor:pointer;
+  background:linear-gradient(165deg, var(--primary) 0%, var(--primary-deep) 55%, var(--violet) 130%);
+  color:#fff;
+  box-shadow:-8px 8px 22px -8px rgba(194,65,12,.45), -2px 4px 10px rgba(15,23,42,.18);
+  transition:transform .22s ease, box-shadow .22s ease;
 }
 .t2p-chardock-tab.show{display:flex;animation:t2pDockPop .32s ease;}
 .t2p-chardock-tab:hover,
-.t2p-chardock-tab:focus-visible{transform:translate(6%,-50%);}
-.t2p-chardock-tab:active{transform:translate(6%,-50%) scale(0.96);}
-.t2p-chardock-tab-ic{font-size:18px;line-height:1;filter:drop-shadow(0 1px 1px rgba(0,0,0,0.15));}
-.t2p-chardock-tab-count{font-size:10.5px;font-weight:800;background:rgba(255,255,255,0.28);border-radius:20px;padding:1px 7px;min-width:16px;text-align:center;}
-@keyframes t2pDockPop{0%{transform:translate(100%,-50%);opacity:0;}100%{transform:translate(38%,-50%);opacity:1;}}
+.t2p-chardock-tab:focus-visible{transform:translate(-4px,-50%);box-shadow:-10px 10px 26px -8px rgba(194,65,12,.55), -2px 4px 12px rgba(15,23,42,.22);}
+.t2p-chardock-tab:active{transform:translate(-4px,-50%) scale(0.97);}
+.t2p-chardock-tab-ic{width:22px;height:22px;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.t2p-chardock-tab-ic svg{width:100%;height:100%;display:block;filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.2));}
+.t2p-chardock-tab-label{
+  writing-mode:vertical-rl;transform:rotate(180deg);
+  font-size:12px;font-weight:800;letter-spacing:.5px;white-space:nowrap;
+  text-shadow:0 1px 2px rgba(0,0,0,.15);
+}
+.t2p-chardock-tab-count{
+  flex-shrink:0;font-size:10.5px;font-weight:800;color:var(--primary-deep);
+  background:#fff;border-radius:20px;padding:2px 8px;min-width:18px;text-align:center;
+  box-shadow:0 1px 3px rgba(0,0,0,.15);
+}
+@keyframes t2pDockPop{0%{transform:translate(60px,-50%);opacity:0;}100%{transform:translate(0,-50%);opacity:1;}}
 
 .t2p-chardock-scrim{
   position:fixed;inset:0;z-index:39;background:rgba(11,29,22,0.45);
@@ -16641,11 +16671,11 @@ html.dark-mode .bd-row-close{
       </div>
 
       <div class="lap-filter-card t2p-page-body-rest">
-        <p class="t2p-section-sub" style="margin-top:0;">Tempel naskah/cerita drama kamu, isi data karakter, atur opsi take -- tool ini akan membuatkan <b>prompt video per-take</b> yang konsisten (karakter full body terkunci, posisi bicara wajar, adegan kendaraan realistis, & sambungan antar-take mulus) siap ditempel ke tool video-gen kamu.</p>
+        <p class="t2p-section-sub" style="margin-top:0;">Tempelkan naskah cerita Anda, lengkapi data karakter, lalu atur opsi take. Tool ini akan menyusun <b>prompt video per-take</b> secara konsisten -- karakter full body terkunci, posisi bicara natural, adegan kendaraan realistis, dan transisi antar-take yang mulus -- sehingga siap langsung digunakan pada tool video-gen pilihan Anda.</p>
 
 
         <div class="t2p-section">
-          <div class="t2p-section-title">📝 Naskah / Cerita</div>
+          <div class="t2p-section-title">📜 Naskah / Cerita</div>
           <div class="form-row" style="margin-bottom:8px;">
             <textarea id="t2pStoryInput" rows="7" placeholder="Tempel naskah/cerita drama kamu di sini... (adegan, dialog, urutan kejadian, dsb)"></textarea>
           </div>
@@ -16673,10 +16703,10 @@ html.dark-mode .bd-row-close{
               <span class="t2p-check-sub">Teks dialog terpisah per take, siap dipakai utk subtitle</span>
             </span>
           </label>
-          <div class="t2p-section-title" style="margin-top:8px;font-size:12.5px;">Bahasa Output Prompt</div>
+          <div class="t2p-section-title" style="margin-top:4px;margin-bottom:6px;font-size:12.5px;">Bahasa Output Prompt</div>
           <div class="t2p-check-group">
             <label class="t2p-check-row"><input type="checkbox" id="t2pLangId" checked><span>Bahasa Indonesia</span></label>
-            <label class="t2p-check-row"><input type="checkbox" id="t2pLangEn"><span>Bahasa Inggris (English)</span></label>
+            <label class="t2p-check-row"><input type="checkbox" id="t2pLangEn"><span>Bahasa Inggris</span></label>
           </div>
         </div>
 
@@ -16692,6 +16722,7 @@ html.dark-mode .bd-row-close{
             <div class="t2p-copy-progress" id="t2pCopyProgress" style="display:none;"></div>
             <div id="t2pResultsList"></div>
             <button type="button" class="t2p-showmore-btn" id="t2pShowMoreBtn" style="display:none;">Tampilkan Take Berikutnya</button>
+            <button type="button" class="t2p-addsegment-btn" id="t2pAddSegmentBtn" style="display:none;">+ Segmen Berikutnya</button>
           </div>
         </div>
       </div>
@@ -16709,7 +16740,10 @@ html.dark-mode .bd-row-close{
            script.js) supaya user gampang cek konsistensi wujud
            karakter tanpa scroll balik ke atas. ---- -->
       <button type="button" class="t2p-chardock-tab show" id="t2pCharDockTab" aria-label="Isi/lihat karakter video ini">
-        <span class="t2p-chardock-tab-ic">👤</span>
+        <span class="t2p-chardock-tab-ic">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="9" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </span>
+        <span class="t2p-chardock-tab-label">Kunci Konsistensi</span>
         <span class="t2p-chardock-tab-count" id="t2pCharDockCount">0</span>
       </button>
       <div class="t2p-chardock-scrim" id="t2pCharDockScrim"></div>
@@ -16752,11 +16786,6 @@ html.dark-mode .bd-row-close{
         </button>
       </div>
       <div class="t2p-api-modal-body">
-        <div class="t2p-api-info-card">
-          <span class="t2p-api-info-card-ic">✨</span>
-          <p>Tool ini pakai Gemini API milik kamu sendiri (gratis, dapatkan di <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a>). Simpan lebih dari 1 key -- kalau kuota key yang aktif habis, otomatis ganti ke key berikutnya. Semua key disimpan hanya di browser ini.</p>
-        </div>
-
         <div class="t2p-api-section-label">Model Gemini</div>
         <div class="t2p-model-pills" id="t2pModelPills">
           <button type="button" class="t2p-model-pill" data-model="gemini-2.5-flash">
@@ -16777,8 +16806,8 @@ html.dark-mode .bd-row-close{
         <div class="t2p-key-add-row">
           <input type="text" id="t2pKeyInput" placeholder="Tempel API key Gemini di sini">
           <button type="button" class="btn btn-primary" id="t2pKeyAddBtn" style="flex-shrink:0;padding:0 16px;">Tambah</button>
+          <button type="button" class="t2p-upload-btn" id="t2pKeyUploadBtn" aria-label="Unggah dari file .txt, 1 key per baris" title="Unggah dari file .txt (1 key per baris)">📄</button>
         </div>
-        <button type="button" class="t2p-upload-btn" id="t2pKeyUploadBtn">📄 Unggah dari File (.txt, 1 key per baris)</button>
         <input type="file" id="t2pKeyFileInput" accept=".txt" style="display:none;">
 
         <div class="t2p-key-section-head">
@@ -16786,6 +16815,11 @@ html.dark-mode .bd-row-close{
           <div class="t2p-key-summary" id="t2pKeySummary"></div>
         </div>
         <div class="t2p-key-list" id="t2pKeyList"></div>
+
+        <div class="t2p-api-info-card" style="margin-bottom:0;margin-top:16px;">
+          <span class="t2p-api-info-card-ic">✨</span>
+          <p>Tool ini pakai Gemini API milik kamu sendiri (gratis, dapatkan di <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a>).</p>
+        </div>
       </div>
     </div>
   </div>

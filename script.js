@@ -11396,7 +11396,16 @@ async function t2pCallGemini(promptText) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{ role: 'user', parts: [{ text: promptText }] }],
-          generationConfig: { temperature: 0.9, responseMimeType: 'application/json' },
+          // FIX BUG KONSISTENSI: temperature lama (0.9) terlalu tinggi
+          // utk task yang butuh Gemini MENGIKUTI INSTRUKSI SECARA
+          // LITERAL (mengulang persis deskripsi fisik karakter &
+          // continuity_note antar take) -- makin tinggi temperature,
+          // makin besar kecenderungan model memparafrase/improvisasi
+          // ketimbang patuh ke instruksi "PERSIS SAMA". Diturunkan ke
+          // 0.35 supaya keluarannya jauh lebih taat/konsisten, tapi
+          // masih cukup longgar utk variasi aksi & framing tiap take
+          // (bukan 0 yang bisa bikin hasil kaku/repetitif).
+          generationConfig: { temperature: 0.35, responseMimeType: 'application/json' },
         }),
       });
       if (res.status === 429 || res.status === 403 || res.status === 400) {
@@ -11439,15 +11448,42 @@ async function t2pCallGemini(promptText) {
 }
 
 /* ---------- Menyusun instruksi besar ke Gemini ---------- */
+// FIX BUG KONSISTENSI: dulu charBlock cuma diambil dari state.characters
+// (murni isi form "+ Tambah Karakter"), padahal panel dock "Karakter"
+// (t2p-chardock-panel) juga membolehkan user mengisi ciri fisik utk
+// tokoh yang DITEMUKAN OTOMATIS dari naskah/hasil generate sebelumnya
+// (belum ada di form) -- deskripsi itu tersimpan di t2pDockExtraDesc
+// via t2pCollectExtraCharacters(), TAPI sebelumnya tidak pernah ikut
+// dikirim ke Gemini sama sekali (baik di sini maupun di
+// t2pBuildContinuationPrompt), padahal hint di panelnya sendiri sudah
+// menjanjikan "dipakai saat kamu generate ulang". Akibatnya wujud
+// tokoh pendukung sering berubah-ubah antar take krn Gemini terpaksa
+// mengarang ulang deskripsinya dari nol tiap kali. Sekarang keduanya
+// digabung lewat t2pBuildCharBlock() supaya dipakai konsisten di
+// SEMUA pemanggilan prompt (generate awal maupun continuation).
+function t2pBuildCharBlock(state, emptyFallback) {
+  const formChars = state.characters
+    .filter((c) => c.name.trim())
+    .map((c) => ({ name: c.name.trim(), desc: c.desc.trim() }));
+  // Cuma tokoh dock yang SUDAH diisi deskripsinya yang ikut dikunci --
+  // yang masih kosong tetap dibiarkan diimprovisasi Gemini spt biasa
+  // (tidak ada info baru yang bisa dikunci utk tokoh itu).
+  const extraChars = t2pCollectExtraCharacters()
+    .filter((c) => c.desc.trim())
+    .map((c) => ({ name: c.name, desc: c.desc.trim() }));
+  const allChars = [...formChars, ...extraChars];
+  if (!allChars.length) return emptyFallback;
+  return allChars
+    .map((c) => `- ${c.name}: ${c.desc || '(deskripsi fisik belum diisi user -- karang deskripsi full body yang masuk akal & detail sendiri, lalu PAKAI DESKRIPSI YANG SAMA di tiap take)'}`)
+    .join('\n');
+}
+
 function t2pBuildMasterPrompt(state) {
   const langs = [];
   if (state.langId) langs.push('Bahasa Indonesia');
   if (state.langEn) langs.push('English');
   if (!langs.length) langs.push('Bahasa Indonesia');
-  const charBlock = state.characters
-    .filter((c) => c.name.trim())
-    .map((c) => `- ${c.name.trim()}: ${c.desc.trim() || '(deskripsi fisik belum diisi user -- karang deskripsi full body yang masuk akal & detail sendiri, lalu PAKAI DESKRIPSI YANG SAMA di tiap take)'}`)
-    .join('\n') || '(user belum mengisi karakter -- deteksi sendiri tokoh dari naskah & buatkan deskripsi full body lengkap utk masing-masing)';
+  const charBlock = t2pBuildCharBlock(state, '(user belum mengisi karakter -- deteksi sendiri tokoh dari naskah & buatkan deskripsi full body lengkap utk masing-masing)');
 
   return `Kamu adalah AI PENYUSUN PROMPT VIDEO profesional untuk model AI text-to-video / extend-video (mis. Veo, Kling, dsb) yang dipakai membuat video drama bersambung take demi take.
 
@@ -11476,17 +11512,67 @@ FORMAT OUTPUT: balas HANYA dengan JSON valid (tanpa markdown/backtick/teks lain)
 {"take": <nomor take, mulai 1>, "location": "<lokasi/setting take ini>", "characters": ["<nama karakter yang muncul di take ini>"], "prompt": "<prompt video lengkap & detail siap pakai, termasuk deskripsi full body tiap karakter yang muncul, blocking posisi, gerak kamera, aksi, pencahayaan>", "continuity_note": "<catatan sambungan dari take sebelumnya, kosongkan string untuk take 1>", "subtitle": "<dialog/narasi take ini, sesuai aturan no.7>"}`;
 }
 
+/* ---------- Prompt utk fitur "+ Segmen Berikutnya" -- beda dari
+   t2pBuildMasterPrompt di atas (yang minta N take SEKALIGUS dari
+   naskah baru), fungsi ini minta Gemini membuatkan SATU take BARU
+   sebagai sambungan take TERAKHIR yang sudah ada, dipakai saat user
+   mau memperpanjang cerita melebihi jumlah take awal tanpa generate
+   ulang dari nol (take-take lama yang sudah ada/sudah disalin tidak
+   ikut berubah). Outputnya SATU OBJEK JSON (bukan array) dgn skema
+   field yang sama persis spy bisa langsung didorong ke t2pAllTakes. */
+function t2pBuildContinuationPrompt(state, lastTake) {
+  const langs = [];
+  if (state.langId) langs.push('Bahasa Indonesia');
+  if (state.langEn) langs.push('English');
+  if (!langs.length) langs.push('Bahasa Indonesia');
+  const charBlock = t2pBuildCharBlock(state, '(user belum mengisi karakter -- lanjutkan pakai tokoh & deskripsi full body yang SAMA seperti take sebelumnya)');
+  const nextTakeNum = (lastTake.take || 0) + 1;
+  return `Kamu adalah AI PENYUSUN PROMPT VIDEO profesional untuk model AI text-to-video/extend-video (mis. Veo, Kling, dsb) yang dipakai membuat video drama bersambung take demi take.
+
+TUGAS: buatkan SATU take/adegan BARU (take nomor ${nextTakeNum}), berdurasi sekitar ${state.takeDuration} detik, sebagai KELANJUTAN LOGIS dari take sebelumnya di bawah -- bukan mengulang isinya, dan bukan menyusun ulang take-take lama. Balas dalam bahasa: ${langs.join(' dan ')}.
+
+DAFTAR KARAKTER (WAJIB DIKUNCI FULL BODY, deskripsi HARUS identik dgn take-take sebelumnya):
+${charBlock}
+
+TAKE TERAKHIR YANG SUDAH ADA (take ${lastTake.take}, jadikan acuan sambungan):
+- Lokasi: ${lastTake.location || '-'}
+- Karakter yang muncul: ${(Array.isArray(lastTake.characters) ? lastTake.characters.join(', ') : '') || '-'}
+- Isi prompt take itu: ${lastTake.prompt || '-'}
+- Catatan sambungan take itu: ${lastTake.continuity_note || '(tidak ada)'}
+
+NASKAH/CERITA ASLI (acuan alur -- kalau ceritanya sudah habis di sini, kembangkan kelanjutan yang wajar & masuk akal):
+"""
+${state.story || '(kosong -- lanjutkan alur secara wajar berdasarkan karakter & take sebelumnya)'}
+"""
+
+CATATAN TAMBAHAN DARI USER: ${state.worldNote || '(tidak ada)'}
+
+ATURAN WAJIB (sama seperti take-take sebelumnya):
+1. KUNCI KARAKTER FULL BODY: ulangi PERSIS deskripsi fisik lengkap tiap karakter yang muncul di take baru ini.
+2. POSISI SAAT BERBICARA: kalau ada 2+ karakter mengobrol, jelaskan blocking spasial eksplisit (kiri/kanan, saling berhadapan, framing kamera).
+3. ADEGAN KENDARAAN: kalau ada adegan naik/turun mobil/motor, jelaskan arah pintu & sisi masuk yang benar, gerak kendaraan realistis.
+4. SAMBUNGAN ANTAR-TAKE: WAJIB isi "continuity_note" yang menjelaskan FRAME AWAL take baru ini SAMA PERSIS dengan FRAME AKHIR take sebelumnya (posisi karakter, sudut kamera, pencahayaan, lokasi) supaya nyambung mulus.
+5. LOKASI: tentukan di field "location" (boleh sama/berbeda dari take sebelumnya sesuai alur).
+6. Jangan menambah tokoh baru yang tidak perlu.
+${state.subtitle ? '7. Sertakan field "subtitle" berisi dialog/narasi take ini.' : '7. Field "subtitle" boleh dikosongkan ("").'}
+
+FORMAT OUTPUT: balas HANYA dengan JSON valid (tanpa markdown/backtick/teks lain), berupa SATU OBJEK (bukan array) berstruktur persis:
+{"take": ${nextTakeNum}, "location": "<lokasi take ini>", "characters": ["<nama karakter yang muncul>"], "prompt": "<prompt video lengkap & detail siap pakai>", "continuity_note": "<catatan sambungan dari take sebelumnya>", "subtitle": "<dialog/narasi take ini>"}`;
+}
+
 /* ---------- Render kartu take (3 per halaman, tombol "tampilkan
    berikutnya" utk sisanya) ---------- */
 function t2pRenderTakes() {
   const listEl = document.getElementById('t2pResultsList');
   const emptyEl = document.getElementById('t2pResultsEmpty');
   const moreBtn = document.getElementById('t2pShowMoreBtn');
+  const addSegBtn = document.getElementById('t2pAddSegmentBtn');
   if (!listEl) return;
   if (!t2pAllTakes.length) {
     listEl.innerHTML = '';
     if (emptyEl) emptyEl.style.display = '';
     if (moreBtn) moreBtn.style.display = 'none';
+    if (addSegBtn) addSegBtn.style.display = 'none';
     t2pRenderCopyProgress();
     return;
   }
@@ -11502,14 +11588,15 @@ function t2pRenderTakes() {
       `<div class="t2p-take-head">
         <span class="t2p-take-badge">Take ${t.take}</span>
         <span class="t2p-take-copied-tag" style="display:${copied ? '' : 'none'};">✓ Disalin</span>
-        <span class="t2p-take-meta">${(t.location || '-')} &middot; ${document.getElementById('t2pTakeDuration')?.value || ''}s</span>
+        <span class="t2p-take-meta">📍 ${(t.location || '-')} &middot; ${document.getElementById('t2pTakeDuration')?.value || ''}s</span>
       </div>
-      ${chars ? `<div class="t2p-take-chars">Karakter: <b>${chars}</b></div>` : ''}
+      ${chars ? `<div class="t2p-take-chars">👤 Karakter: <b>${chars}</b></div>` : ''}
+      <label class="t2p-take-prompt-label">Prompt Video</label>
       <textarea class="t2p-take-prompt" rows="6">${t.prompt || ''}</textarea>
       ${t.subtitle ? `<div class="t2p-take-sub"><label>Subtitle</label><textarea rows="2">${t.subtitle}</textarea></div>` : ''}
-      ${t.continuity_note ? `<div class="t2p-take-continuity">🔗 ${t.continuity_note}</div>` : ''}
+      ${t.continuity_note ? `<div class="t2p-take-continuity"><span>🔗</span><span>${t.continuity_note}</span></div>` : ''}
       <div class="t2p-take-actions">
-        <button type="button" class="t2p-copy-btn ${copied ? 'copied' : ''}">${copied ? '✓ Tersalin' : 'Salin Prompt'}</button>
+        <button type="button" class="t2p-copy-btn ${copied ? 'copied' : ''}">${copied ? '✓ Tersalin' : '📋 Salin Prompt'}</button>
       </div>`;
     const promptTa = card.querySelector('.t2p-take-prompt');
     card.querySelector('.t2p-copy-btn')?.addEventListener('click', function () {
@@ -11535,6 +11622,7 @@ function t2pRenderTakes() {
     listEl.appendChild(card);
   });
   if (moreBtn) moreBtn.style.display = (t2pVisibleCount < t2pAllTakes.length) ? '' : 'none';
+  if (addSegBtn) addSegBtn.style.display = ''; // selalu tampil selama sudah ada minimal 1 take
   t2pRenderCopyProgress();
 }
 
@@ -11546,7 +11634,7 @@ function t2pMarkCardCopied(card, copied) {
   const btn = card.querySelector('.t2p-copy-btn');
   if (btn) {
     btn.classList.toggle('copied', copied);
-    btn.textContent = copied ? '✓ Tersalin' : 'Salin Prompt';
+    btn.textContent = copied ? '✓ Tersalin' : '📋 Salin Prompt';
   }
   const tag = card.querySelector('.t2p-take-copied-tag');
   if (tag) tag.style.display = copied ? '' : 'none';
@@ -11753,6 +11841,58 @@ document.getElementById('t2pGenerateBtn')?.addEventListener('click', async () =>
     }
   } finally {
     t2pSetGenerating(false);
+  }
+});
+
+/* ---------- Tombol "+ Segmen Berikutnya" -- generate SATU take
+   tambahan sbg sambungan take terakhir, tanpa mengubah/menghapus
+   take-take yang sudah ada (lihat catatan di t2pBuildContinuationPrompt
+   di atas). Take baru langsung ditambahkan ke t2pAllTakes & otomatis
+   ikut ditampilkan (t2pVisibleCount ikut nambah 1). ---------- */
+document.getElementById('t2pAddSegmentBtn')?.addEventListener('click', async () => {
+  if (!t2pAllTakes.length) return;
+  t2pSaveState();
+  const state = t2pLoadState();
+  const keysData = t2pLoadKeys();
+  if (!keysData.keys.length) {
+    showToast('Tambahkan API key Gemini dulu lewat tombol gir di pojok kanan atas.', 'err');
+    openModal(document.getElementById('t2pApiModalOverlay'));
+    t2pRenderKeyList();
+    return;
+  }
+  const addBtn = document.getElementById('t2pAddSegmentBtn');
+  const lastTake = t2pAllTakes[t2pAllTakes.length - 1];
+  if (addBtn) { addBtn.disabled = true; addBtn.textContent = 'Menyusun segmen...'; }
+  try {
+    const contPrompt = t2pBuildContinuationPrompt(state, lastTake);
+    const rawText = await t2pCallGemini(contPrompt);
+    let cleaned = rawText.trim().replace(/^```json/i, '').replace(/^```/, '').replace(/```$/, '').trim();
+    let parsed;
+    try { parsed = JSON.parse(cleaned); }
+    catch (e) {
+      // Jaga-jaga kalau model tetap menyisipkan teks di luar JSON --
+      // ambil objek {...} pertama yg ketemu.
+      const match = cleaned.match(/\{[\s\S]*\}/);
+      if (match) parsed = JSON.parse(match[0]);
+      else throw new Error('Gagal membaca hasil dari Gemini (bukan JSON valid).');
+    }
+    if (Array.isArray(parsed)) parsed = parsed[0]; // jaga-jaga kalau model tetap balas array
+    if (!parsed || typeof parsed !== 'object') throw new Error('Hasil dari Gemini kosong/tidak sesuai format.');
+    parsed.take = lastTake.take + 1; // paksa nomor urut lanjut, jangan percaya nomor dari model
+    t2pAllTakes.push(parsed);
+    t2pVisibleCount = t2pAllTakes.length;
+    t2pRenderTakes();
+    t2pRenderCharDock();
+    showToast(`Segmen/take ${parsed.take} berhasil ditambahkan.`);
+  } catch (e) {
+    if (e && e.message === 'NOKEY') {
+      showToast('Tambahkan API key Gemini dulu.', 'err');
+      openModal(document.getElementById('t2pApiModalOverlay'));
+    } else {
+      showToast('Gagal menambah segmen: ' + (e?.message || 'terjadi kesalahan.'), 'err');
+    }
+  } finally {
+    if (addBtn) { addBtn.disabled = false; addBtn.textContent = '+ Segmen Berikutnya'; }
   }
 });
 
