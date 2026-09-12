@@ -14905,6 +14905,29 @@ html.dark-mode .bd-row-close{
 .t2p-opts-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:4px;}
 .t2p-opts-grid .form-row label{margin-bottom:4px;font-size:12px;}
 .t2p-opts-grid .form-row input{padding:8px 10px;}
+.t2p-auto-card{background:linear-gradient(160deg, #0B1220 0%, #141b2e 45%, #1c1233 100%);border-radius:16px;padding:16px;}
+.t2p-auto-card-title{display:flex;align-items:center;gap:7px;font-size:16px;font-weight:800;color:#EC4899;margin-bottom:8px;}
+.t2p-auto-card-desc{font-size:13px;line-height:1.6;color:#C7CBD9;margin:0 0 16px;}
+.t2p-auto-card-desc b{color:#fff;}
+.t2p-auto-card-highlight{color:var(--primary);font-weight:800;border-bottom:2px dotted var(--primary);cursor:help;}
+.t2p-auto-card-label{display:block;font-size:11px;font-weight:800;letter-spacing:.04em;color:#8A90A6;margin-bottom:8px;text-transform:uppercase;}
+.t2p-auto-card .form-row{margin-bottom:0;}
+.t2p-auto-card .form-row textarea,
+.t2p-auto-card .form-row input{background:#0B1220;border:1px solid #263047;color:#E7E9F1;}
+.t2p-auto-card .form-row textarea::placeholder,
+.t2p-auto-card .form-row input::placeholder{color:#5B6178;}
+.t2p-auto-card .form-row textarea:focus,
+.t2p-auto-card .form-row input:focus{border-color:var(--primary);}
+.t2p-opts-pillrow{display:flex;flex-wrap:wrap;gap:8px;}
+.t2p-opt-pill{display:flex;align-items:center;gap:5px;background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:7px 11px;font-size:12.5px;font-weight:700;color:var(--ink);cursor:pointer;user-select:none;flex-shrink:0;transition:background .15s ease,color .15s ease,border-color .15s ease;}
+.t2p-opt-pill-ic{font-size:14px;line-height:1;}
+.t2p-opt-pill-suffix{color:var(--ink-faint);font-weight:600;}
+.t2p-opt-pill--num input[type="number"]{width:22px;border:none;background:transparent;padding:0;font-size:12.5px;font-weight:700;color:var(--ink);text-align:center;-moz-appearance:textfield;}
+.t2p-opt-pill--num input[type="number"]::-webkit-outer-spin-button,
+.t2p-opt-pill--num input[type="number"]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+.t2p-opt-pill--num input[type="number"]:focus{outline:none;}
+.t2p-opt-pill--toggle{color:var(--ink-faint);}
+.t2p-opt-pill--toggle:has(input:checked){background:var(--primary);border-color:var(--primary);color:#fff;}
 
 .t2p-locked-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:#7C3AED;background:rgba(124,58,237,0.1);border-radius:20px;padding:5px 11px;margin-bottom:10px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .t2p-locked-badge-short{display:none;}
@@ -14927,6 +14950,8 @@ html.dark-mode .bd-row-close{
 .t2p-copy-progress{font-size:12px;font-weight:700;color:#B45309;background:rgba(217,119,6,0.1);border-radius:12px;padding:10px 12px;margin-bottom:12px;line-height:1.45;}
 .t2p-copy-progress b{text-decoration:underline;text-underline-offset:2px;}
 .t2p-copy-progress--done{color:#059669;background:rgba(5,150,105,0.1);}
+.t2p-subtitle-actions{display:flex;gap:8px;margin-bottom:12px;}
+.t2p-subtitle-actions .t2p-copy-btn{flex:1;}
 
 .t2p-take-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px;box-shadow:0 2px 10px -6px rgba(15,23,42,0.08);transition:border-color .18s ease, background .18s ease, box-shadow .18s ease;}
 .t2p-take-card--copied{border-color:rgba(5,150,105,0.35);background:rgba(5,150,105,0.045);}
@@ -15169,6 +15194,13 @@ html.dark-mode .bd-row-close{
 .t2p-chardock-item-hint{display:block;font-size:10.5px;color:var(--ink-faint);margin-top:5px;}
 .t2p-chardock-item-badge{display:inline-block;margin-top:6px;font-size:9.5px;font-weight:700;color:#B45309;background:rgba(217,119,6,0.12);border-radius:20px;padding:2px 8px;}
 .t2p-chardock-extra-heading{font-size:11px;font-weight:700;color:var(--ink-soft);margin:16px 0 8px;padding-top:14px;border-top:1px dashed var(--line);}
+.t2p-seo-box{margin-top:4px;}
+.t2p-seo-field{margin-bottom:12px;}
+.t2p-seo-field label{display:block;font-size:10.5px;font-weight:700;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.02em;margin-bottom:4px;}
+.t2p-seo-value-row{display:flex;align-items:flex-start;gap:8px;background:var(--paper);border:1px solid var(--line);border-radius:9px;padding:9px 10px;}
+.t2p-seo-value-row p{flex:1;min-width:0;margin:0;font-size:12.5px;line-height:1.5;color:var(--ink);white-space:pre-wrap;word-break:break-word;}
+.t2p-seo-copy-btn{flex-shrink:0;border:none;background:transparent;cursor:pointer;font-size:14px;padding:2px;line-height:1;}
+.t2p-seo-copy-btn.copied{transform:scale(1.15);}
 #t2pCharDockScrollArea #t2pAddCharBtn{margin-bottom:4px;}
 
 @media (max-width:380px){
@@ -16761,38 +16793,45 @@ html.dark-mode .bd-row-close{
 
 
         <div class="t2p-section">
-          <div class="t2p-section-title">📜 Naskah / Cerita</div>
-          <div class="form-row" style="margin-bottom:8px;">
-            <textarea id="t2pStoryInput" rows="7" placeholder="Tempel naskah/cerita drama kamu di sini... (adegan, dialog, urutan kejadian, dsb)"></textarea>
-          </div>
-          <div class="form-row" style="margin-bottom:0;">
-            <label for="t2pWorldNote">Catatan Tambahan (opsional)</label>
-            <input type="text" id="t2pWorldNote" placeholder="Genre, mood/nuansa, gaya visual, dsb">
+          <div class="t2p-auto-card">
+            <div class="t2p-auto-card-title"><span aria-hidden="true">✦</span> Naskah Otomatis</div>
+            <p class="t2p-auto-card-desc"><b>ZayaPro</b> akan membuatkan urutan <span class="t2p-auto-card-highlight" title="Take dibuat otomatis oleh AI berdasarkan sinopsis di bawah">TAKE <span aria-hidden="true">ⓘ</span></span> dari sinopsis ceritamu.</p>
+            <label class="t2p-auto-card-label" for="t2pStoryInput">Sinopsis / Ide Cerita</label>
+            <div class="form-row" style="margin-bottom:14px;">
+              <textarea id="t2pStoryInput" rows="7" placeholder="cth: seorang pewaris kembali ke mansion keluarga dan menemukan rahasia ibunya..."></textarea>
+            </div>
+            <label class="t2p-auto-card-label" for="t2pWorldNote">Catatan Tambahan (Opsional)</label>
+            <div class="form-row" style="margin-bottom:0;">
+              <input type="text" id="t2pWorldNote" placeholder="cth: genre, mood/nuansa, gaya visual, dsb">
+            </div>
           </div>
         </div>
 
         <div class="t2p-section">
           <div class="t2p-section-title">⚙️ Opsi Sebelum Generate</div>
-          <div class="t2p-opts-grid">
-            <div class="form-row" style="margin-bottom:0;">
-              <label for="t2pTakeCount">Jumlah Take</label>
-              <input type="number" id="t2pTakeCount" min="1" max="30" step="1" value="6">
-            </div>
-            <div class="form-row" style="margin-bottom:0;">
-              <label for="t2pTakeDuration">Durasi per Take (detik)</label>
-              <input type="number" id="t2pTakeDuration" min="2" max="60" step="1" value="8">
-            </div>
-          </div>
-          <label class="t2p-check-row">
-            <input type="checkbox" id="t2pOptSubtitle" checked>
-            <span>Sertakan Subtitle/Dialog
-              <span class="t2p-check-sub">Teks dialog terpisah per take, siap dipakai utk subtitle</span>
-            </span>
-          </label>
-          <div class="t2p-section-title" style="margin-top:4px;margin-bottom:6px;font-size:12.5px;">Bahasa Output Prompt</div>
-          <div class="t2p-check-group">
-            <label class="t2p-check-row"><input type="checkbox" id="t2pLangId" checked><span>Bahasa Indonesia</span></label>
-            <label class="t2p-check-row"><input type="checkbox" id="t2pLangEn"><span>Bahasa Inggris</span></label>
+          <div class="t2p-opts-pillrow" id="t2pOptsPillRow">
+            <label class="t2p-opt-pill t2p-opt-pill--num">
+              <span class="t2p-opt-pill-ic" aria-hidden="true">🎬</span>
+              <input type="number" id="t2pTakeCount" min="1" max="30" step="1" value="6" aria-label="Jumlah Take">
+              <span class="t2p-opt-pill-suffix">take</span>
+            </label>
+            <label class="t2p-opt-pill t2p-opt-pill--num">
+              <span class="t2p-opt-pill-ic" aria-hidden="true">⏱️</span>
+              <input type="number" id="t2pTakeDuration" min="2" max="60" step="1" value="8" aria-label="Durasi per Take (detik)">
+              <span class="t2p-opt-pill-suffix">detik</span>
+            </label>
+            <label class="t2p-opt-pill t2p-opt-pill--toggle" title="Sertakan Dialog: teks dialog terpisah per take, siap dipakai utk subtitle">
+              <input type="checkbox" id="t2pOptSubtitle" checked style="display:none;">
+              <span class="t2p-opt-pill-ic" aria-hidden="true">💬</span><span>Dialog</span>
+            </label>
+            <label class="t2p-opt-pill t2p-opt-pill--toggle" title="Bahasa Indonesia">
+              <input type="checkbox" id="t2pLangId" checked style="display:none;">
+              <span class="t2p-opt-pill-ic" aria-hidden="true">🇮🇩</span><span>ID</span>
+            </label>
+            <label class="t2p-opt-pill t2p-opt-pill--toggle" title="Bahasa Inggris">
+              <input type="checkbox" id="t2pLangEn" style="display:none;">
+              <span class="t2p-opt-pill-ic" aria-hidden="true">🇬🇧</span><span>EN</span>
+            </label>
           </div>
         </div>
 
@@ -16806,6 +16845,10 @@ html.dark-mode .bd-row-close{
           <div id="t2pResultsWrap" style="margin-top:14px;">
             <p class="t2p-empty-hint" id="t2pResultsEmpty">Hasil prompt tiap take akan muncul di sini setelah kamu klik Generate Prompt.</p>
             <div class="t2p-copy-progress" id="t2pCopyProgress" style="display:none;"></div>
+            <div class="t2p-subtitle-actions" id="t2pSubtitleActions" style="display:none;">
+              <button type="button" class="t2p-copy-btn" id="t2pCopyAllSubBtn">📝 Salin Semua Dialog</button>
+              <button type="button" class="t2p-copy-btn" id="t2pDownloadSrtBtn">⬇️ Download .srt</button>
+            </div>
             <div id="t2pResultsList"></div>
             <button type="button" class="t2p-showmore-btn" id="t2pShowMoreBtn" style="display:none;">Tampilkan Take Berikutnya</button>
             <button type="button" class="t2p-addsegment-btn" id="t2pAddSegmentBtn" style="display:none;">+ Segmen Berikutnya</button>
@@ -16857,6 +16900,30 @@ html.dark-mode .bd-row-close{
           <div id="t2pCharList"></div>
           <button type="button" class="t2p-add-char-btn" id="t2pAddCharBtn">+ Tambah Karakter</button>
           <div id="t2pCharDockList"></div>
+          <div class="t2p-seo-box" id="t2pSeoBox" style="display:none;">
+            <p class="t2p-chardock-extra-heading">Judul, Hashtag &amp; Deskripsi (SEO)</p>
+            <div class="t2p-seo-field">
+              <label>Judul paling SEO</label>
+              <div class="t2p-seo-value-row">
+                <p id="t2pSeoTitle"></p>
+                <button type="button" class="t2p-seo-copy-btn" data-target="title" aria-label="Salin judul">📋</button>
+              </div>
+            </div>
+            <div class="t2p-seo-field">
+              <label>Hashtag</label>
+              <div class="t2p-seo-value-row">
+                <p id="t2pSeoHashtags"></p>
+                <button type="button" class="t2p-seo-copy-btn" data-target="hashtags" aria-label="Salin hashtag">📋</button>
+              </div>
+            </div>
+            <div class="t2p-seo-field">
+              <label>Deskripsi</label>
+              <div class="t2p-seo-value-row">
+                <p id="t2pSeoDesc"></p>
+                <button type="button" class="t2p-seo-copy-btn" data-target="description" aria-label="Salin deskripsi">📋</button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

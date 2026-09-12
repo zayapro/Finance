@@ -11106,6 +11106,7 @@ const T2P_STATE_KEY = 'zayapro_t2p_state_v1';
 const T2P_KEYS_KEY = 'zayapro_t2p_gemini_keys_v1';
 let t2pInited = false;
 let t2pAllTakes = [];      // seluruh take hasil generate terakhir
+let t2pSeoData = null;     // {title, hashtags[], description} hasil generate SEO, null = belum ada
 let t2pVisibleCount = 0;   // berapa kartu take yang sudah ditampilkan
 let t2pCharIdxSeq = 0;
 
@@ -11437,6 +11438,15 @@ const T2P_TAKE_PROPS = {
 const T2P_TAKE_REQUIRED = ['take', 'location', 'characters', 'character_descriptions', 'prompt', 'continuity_note', 'subtitle'];
 const T2P_ARRAY_SCHEMA = { type: 'array', items: { type: 'object', properties: T2P_TAKE_PROPS, required: T2P_TAKE_REQUIRED } };
 const T2P_OBJECT_SCHEMA = { type: 'object', properties: T2P_TAKE_PROPS, required: T2P_TAKE_REQUIRED };
+const T2P_SEO_SCHEMA = {
+  type: 'object',
+  properties: {
+    title: { type: 'string' },
+    hashtags: { type: 'array', items: { type: 'string' } },
+    description: { type: 'string' },
+  },
+  required: ['title', 'hashtags', 'description'],
+};
 
 async function t2pCallGemini(promptText, responseSchema) {
   const data = t2pLoadKeys();
@@ -11647,12 +11657,14 @@ function t2pRenderTakes() {
   const emptyEl = document.getElementById('t2pResultsEmpty');
   const moreBtn = document.getElementById('t2pShowMoreBtn');
   const addSegBtn = document.getElementById('t2pAddSegmentBtn');
+  const subActionsEl = document.getElementById('t2pSubtitleActions');
   if (!listEl) return;
   if (!t2pAllTakes.length) {
     listEl.innerHTML = '';
     if (emptyEl) emptyEl.style.display = '';
     if (moreBtn) moreBtn.style.display = 'none';
     if (addSegBtn) addSegBtn.style.display = 'none';
+    if (subActionsEl) subActionsEl.style.display = 'none';
     t2pRenderCopyProgress();
     return;
   }
@@ -11674,12 +11686,17 @@ function t2pRenderTakes() {
       ${chars.length ? `<div class="t2p-take-chars">👤 Karakter: ${charsHtml}</div>` : ''}
       <label class="t2p-take-prompt-label">Prompt Video</label>
       <textarea class="t2p-take-prompt" rows="6">${t.prompt || ''}</textarea>
-      ${t.subtitle ? `<div class="t2p-take-sub"><label>Subtitle</label><textarea rows="3">${t.subtitle}</textarea></div>` : ''}
+      ${t.dialogWanted ? `<div class="t2p-take-sub"><label>Dialog</label><textarea rows="3" placeholder="Belum ada dialog di take ini.">${t.subtitle || ''}</textarea></div>` : ''}
       ${t.continuity_note ? `<div class="t2p-take-continuity"><span>🔗</span><span>${t.continuity_note}</span></div>` : ''}
       <div class="t2p-take-actions">
         <button type="button" class="t2p-copy-btn ${copied ? 'copied' : ''}">${copied ? '✓ Tersalin' : '📋 Salin Prompt'}</button>
       </div>`;
     const promptTa = card.querySelector('.t2p-take-prompt');
+    const dialogTa = card.querySelector('.t2p-take-sub textarea');
+    dialogTa?.addEventListener('input', () => {
+      t.subtitle = dialogTa.value;
+      if (subActionsEl) subActionsEl.style.display = t2pSubtitleTakes().length ? '' : 'none';
+    });
     card.querySelector('.t2p-copy-btn')?.addEventListener('click', function () {
       const txt = promptTa?.value || '';
       navigator.clipboard.writeText(txt).then(() => {
@@ -11704,8 +11721,87 @@ function t2pRenderTakes() {
   });
   if (moreBtn) moreBtn.style.display = (t2pVisibleCount < t2pAllTakes.length) ? '' : 'none';
   if (addSegBtn) addSegBtn.style.display = ''; // selalu tampil selama sudah ada minimal 1 take
+  if (subActionsEl) subActionsEl.style.display = t2pSubtitleTakes().length ? '' : 'none';
   t2pRenderCopyProgress();
 }
+
+/* ---------- Gabungkan subtitle/dialog dari SELURUH take (bukan cuma
+   yang sedang ditampilkan di layar) jadi satu -- dipakai tombol
+   "Salin Semua Subtitle" (teks polos, dipisah label "Take N") dan
+   tombol "Download .srt" (format SRT asli dgn timestamp).
+   Timestamp SRT dihitung berurutan take 1..N pakai Durasi per Take
+   di form -- take TANPA dialog tetap bikin waktu maju (skip entri
+   SRT-nya saja) supaya timing pas kalau semua take digabung jadi
+   satu video utuh. ---------- */
+function t2pSubtitleTakes() {
+  return t2pAllTakes.filter((t) => (t.subtitle || '').trim());
+}
+
+function t2pBuildCombinedSubtitleText() {
+  return t2pSubtitleTakes()
+    .map((t) => `Take ${t.take}\n${(t.subtitle || '').trim()}`)
+    .join('\n\n');
+}
+
+function t2pSrtTimestamp(totalSeconds) {
+  const ms = Math.max(0, Math.round(totalSeconds * 1000));
+  const pad = (n, len) => String(n).padStart(len, '0');
+  const h = Math.floor(ms / 3600000);
+  const m = Math.floor((ms % 3600000) / 60000);
+  const s = Math.floor((ms % 60000) / 1000);
+  const rem = ms % 1000;
+  return `${pad(h, 2)}:${pad(m, 2)}:${pad(s, 2)},${pad(rem, 3)}`;
+}
+
+function t2pBuildSrtContent() {
+  const perTakeDuration = parseInt(document.getElementById('t2pTakeDuration')?.value, 10) || 8;
+  let cursor = 0;
+  let idx = 0;
+  const blocks = [];
+  t2pAllTakes.forEach((t) => {
+    const start = cursor;
+    const end = cursor + perTakeDuration;
+    cursor = end;
+    const text = (t.subtitle || '').trim();
+    if (!text) return;
+    idx += 1;
+    blocks.push(`${idx}\n${t2pSrtTimestamp(start)} --> ${t2pSrtTimestamp(end)}\n${text}`);
+  });
+  return blocks.join('\n\n') + (blocks.length ? '\n' : '');
+}
+
+function t2pDownloadSrt() {
+  const blob = new Blob([t2pBuildSrtContent()], { type: 'text/srt;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'subtitle-zayapro.srt';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+document.getElementById('t2pCopyAllSubBtn')?.addEventListener('click', function () {
+  if (!t2pSubtitleTakes().length) { showToast('Belum ada dialog utk disalin.', 'err'); return; }
+  const txt = t2pBuildCombinedSubtitleText();
+  navigator.clipboard.writeText(txt).then(() => {
+    const original = this.textContent;
+    this.classList.add('copied');
+    this.textContent = '✓ Tersalin';
+    showToast('Semua dialog disalin, dipisah per take.');
+    setTimeout(() => {
+      this.classList.remove('copied');
+      this.textContent = original;
+    }, 1800);
+  }).catch(() => showToast('Gagal menyalin, coba lagi.', 'err'));
+});
+
+document.getElementById('t2pDownloadSrtBtn')?.addEventListener('click', () => {
+  if (!t2pSubtitleTakes().length) { showToast('Belum ada dialog utk didownload.', 'err'); return; }
+  t2pDownloadSrt();
+  showToast('File .srt berhasil didownload.');
+});
 
 /* ---------- Tandai satu kartu take sudah/belum disalin tanpa perlu
    render ulang semua kartu (biar tidak kedip & tidak ganggu kartu
@@ -11927,6 +12023,83 @@ function t2pRenderCharDock() {
   });
 }
 
+/* ---------- Judul/Hashtag/Deskripsi (SEO) -- dibuat OTOMATIS lewat
+   panggilan Gemini terpisah, jalan tepat setelah Generate Prompt
+   utama sukses (lihat pemanggilannya di listener #t2pGenerateBtn).
+   Gagal generate SEO TIDAK boleh mengganggu hasil take yang sudah
+   jadi -- makanya dibungkus try/catch sendiri & ditampilkan sbg
+   boks terpisah di bagian bawah panel dock "Karakter". ---------- */
+function t2pBuildSeoPrompt(state) {
+  const charNames = state.characters.map((c) => c.name.trim()).filter(Boolean).join(', ');
+  return `Kamu adalah ahli SEO & copywriting media sosial (YouTube/TikTok/Instagram Reels).
+Berdasarkan naskah/cerita drama pendek berikut, buatkan metadata siap-pakai utk upload videonya.
+
+NASKAH:
+"""${state.story || '(tidak ada naskah, pakai nama karakter sbg konteks)'}"""
+${charNames ? `Karakter: ${charNames}` : ''}
+
+Balas HANYA dalam format JSON valid (tanpa markdown/backtick), dgn field:
+- "title": SATU judul video paling SEO-friendly & clickable, bahasa Indonesia, maksimal 60 karakter, tanpa tanda kutip di dalamnya.
+- "hashtags": array 8-12 hashtag relevan (setiap item sudah diawali "#", tanpa spasi di dalam satu hashtag, campuran hashtag niche & broad).
+- "description": deskripsi caption 2-4 kalimat yang mengundang orang nonton sampai habis, bahasa Indonesia, natural (bukan daftar kata kunci).`;
+}
+
+async function t2pGenerateSeo(state) {
+  const box = document.getElementById('t2pSeoBox');
+  if (box) {
+    box.style.display = '';
+    box.querySelectorAll('.t2p-seo-value-row p').forEach((p) => { p.textContent = 'Menyusun...'; });
+  }
+  try {
+    const rawText = await t2pCallGemini(t2pBuildSeoPrompt(state), T2P_SEO_SCHEMA);
+    const cleaned = rawText.trim().replace(/^```json/i, '').replace(/^```/, '').replace(/```$/, '').trim();
+    let parsed;
+    try { parsed = JSON.parse(cleaned); }
+    catch (e) {
+      const match = cleaned.match(/\{[\s\S]*\}/);
+      if (match) parsed = JSON.parse(match[0]);
+      else throw new Error('parse-fail');
+    }
+    if (!parsed || typeof parsed.title !== 'string') throw new Error('parse-fail');
+    t2pSeoData = {
+      title: parsed.title.trim(),
+      hashtags: Array.isArray(parsed.hashtags) ? parsed.hashtags.map((h) => String(h).trim()).filter(Boolean) : [],
+      description: String(parsed.description || '').trim(),
+    };
+  } catch (e) {
+    t2pSeoData = null;
+    if (box) box.style.display = 'none';
+    return;
+  }
+  t2pRenderSeoBox();
+}
+
+function t2pRenderSeoBox() {
+  const box = document.getElementById('t2pSeoBox');
+  if (!box) return;
+  if (!t2pSeoData) { box.style.display = 'none'; return; }
+  box.style.display = '';
+  const titleEl = document.getElementById('t2pSeoTitle');
+  const hashtagsEl = document.getElementById('t2pSeoHashtags');
+  const descEl = document.getElementById('t2pSeoDesc');
+  if (titleEl) titleEl.textContent = t2pSeoData.title;
+  if (hashtagsEl) hashtagsEl.textContent = t2pSeoData.hashtags.join(' ');
+  if (descEl) descEl.textContent = t2pSeoData.description;
+}
+
+document.getElementById('t2pSeoBox')?.addEventListener('click', (e) => {
+  const btn = e.target.closest('.t2p-seo-copy-btn');
+  if (!btn || !t2pSeoData) return;
+  const target = btn.dataset.target;
+  const text = target === 'hashtags' ? t2pSeoData.hashtags.join(' ') : (t2pSeoData[target] || '');
+  if (!text) return;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.classList.add('copied');
+    showToast(target === 'title' ? 'Judul disalin.' : target === 'hashtags' ? 'Hashtag disalin.' : 'Deskripsi disalin.');
+    setTimeout(() => btn.classList.remove('copied'), 400);
+  }).catch(() => showToast('Gagal menyalin, coba lagi.', 'err'));
+});
+
 // FIX responsivitas: tab & panel dock ini "position:fixed" supaya
 // nempel di layar, tapi markupnya semula ada DI DALAM #t2pOverlay --
 // dan #t2pOverlay punya CSS transform (.lap-filter-overlay, dipakai
@@ -11996,12 +12169,15 @@ document.getElementById('t2pGenerateBtn')?.addEventListener('click', async () =>
       else throw new Error('Gagal membaca hasil dari Gemini (bukan JSON valid).');
     }
     if (!Array.isArray(parsed) || !parsed.length) throw new Error('Hasil dari Gemini kosong/tidak sesuai format.');
+    parsed.forEach((t) => { t.dialogWanted = !!state.subtitle; });
     t2pAllTakes = parsed;
     t2pVisibleCount = Math.min(3, t2pAllTakes.length);
     t2pDockExtraDesc = {};
+    t2pSeoData = null;
     t2pRenderTakes();
     t2pRenderCharDock();
     showToast(`${t2pAllTakes.length} take berhasil dibuat.`);
+    t2pGenerateSeo(state);
   } catch (e) {
     if (e && e.message === 'NOKEY') {
       showToast('Tambahkan API key Gemini dulu.', 'err');
@@ -12049,6 +12225,7 @@ document.getElementById('t2pAddSegmentBtn')?.addEventListener('click', async () 
     if (Array.isArray(parsed)) parsed = parsed[0]; // jaga-jaga kalau model tetap balas array
     if (!parsed || typeof parsed !== 'object') throw new Error('Hasil dari Gemini kosong/tidak sesuai format.');
     parsed.take = lastTake.take + 1; // paksa nomor urut lanjut, jangan percaya nomor dari model
+    parsed.dialogWanted = !!state.subtitle;
     t2pAllTakes.push(parsed);
     t2pVisibleCount = t2pAllTakes.length;
     t2pRenderTakes();
