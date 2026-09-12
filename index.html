@@ -16880,18 +16880,27 @@ html.dark-mode .bd-row-close{
       </div>
       <div class="t2p-api-modal-body">
         <div class="t2p-api-section-label">Model Gemini</div>
+        <!-- ---- UPDATE MODEL (Sept 2026): 3 pilihan lama (gemini-2.5-flash,
+             gemini-2.5-pro, gemini-2.0-flash) diganti karena:
+             - gemini-2.0-flash SUDAH DIMATIKAN TOTAL sejak 1 Juni 2026 --
+               kalau ini yang aktif dipakai, generate PASTI gagal HTTP 404.
+             - gemini-2.5-flash & gemini-2.5-pro masih jalan per hari ini,
+               TAPI Google sudah umumkan keduanya dimatikan 16 Okt 2026.
+             Diganti ke lineup Gemini 3.x yang stabil/GA saat ini supaya
+             tidak langsung 404 lagi & tidak perlu diganti²
+             lagi dalam waktu dekat. ---- -->
         <div class="t2p-model-pills" id="t2pModelPills">
-          <button type="button" class="t2p-model-pill" data-model="gemini-2.5-flash">
-            <span class="t2p-model-pill-name">2.5 Flash</span>
+          <button type="button" class="t2p-model-pill" data-model="gemini-3.6-flash">
+            <span class="t2p-model-pill-name">3.6 Flash</span>
             <span class="t2p-model-pill-sub">Cepat, disarankan</span>
           </button>
-          <button type="button" class="t2p-model-pill" data-model="gemini-2.5-pro">
-            <span class="t2p-model-pill-name">2.5 Pro</span>
+          <button type="button" class="t2p-model-pill" data-model="gemini-3.5-flash">
+            <span class="t2p-model-pill-name">3.5 Flash</span>
             <span class="t2p-model-pill-sub">Lebih detail</span>
           </button>
-          <button type="button" class="t2p-model-pill" data-model="gemini-2.0-flash">
-            <span class="t2p-model-pill-name">2.0 Flash</span>
-            <span class="t2p-model-pill-sub">Alternatif</span>
+          <button type="button" class="t2p-model-pill" data-model="gemini-3.1-flash-lite">
+            <span class="t2p-model-pill-name">3.1 Flash-Lite</span>
+            <span class="t2p-model-pill-sub">Alternatif hemat</span>
           </button>
         </div>
 

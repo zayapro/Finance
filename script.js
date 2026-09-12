@@ -11139,17 +11139,33 @@ function t2pSaveState() {
 function t2pLoadKeys() {
   try {
     const raw = JSON.parse(cloudStorage.getItem(T2P_KEYS_KEY) || '{}');
+    // MIGRASI MODEL LAMA: user yang sebelumnya sudah pernah pilih salah
+    // satu dari 3 model lama (gemini-2.5-flash/2.5-pro/2.0-flash) akan
+    // punya "model" tersimpan persis nama itu di penyimpanannya --
+    // walau pilihan di UI sudah diganti ke lineup 3.x, nilai LAMA yang
+    // tersimpan ini tetap dipakai selamanya kalau tidak dipetakan ulang
+    // di sini (gemini-2.0-flash malah sudah 404 sejak 1 Juni 2026, dan
+    // 2.5-flash/2.5-pro menyusul mati 16 Okt 2026) -- makanya tiap kali
+    // key data dimuat, nama model lama otomatis "diupgrade" ke
+    // padanannya di lineup 3.x yang masih aktif, TANPA user perlu buka
+    // Pengaturan API & pilih ulang manual.
+    const T2P_MODEL_MIGRATE = {
+      'gemini-2.0-flash': 'gemini-3.1-flash-lite',
+      'gemini-2.5-flash': 'gemini-3.6-flash',
+      'gemini-2.5-pro': 'gemini-3.5-flash',
+    };
+    const savedModel = raw.model || 'gemini-3.6-flash';
     return {
       keys: Array.isArray(raw.keys) ? raw.keys : [],
       activeIdx: raw.activeIdx || 0,
-      model: raw.model || 'gemini-2.5-flash',
+      model: T2P_MODEL_MIGRATE[savedModel] || savedModel,
       // status: peta "key string" -> 'ok' | 'quota' | 'invalid' | 'error'
       // (belum ada entri = belum pernah diuji). Diisi otomatis tiap
       // key dicoba lewat generate (t2pCallGemini) ATAU lewat tombol
       // "Tes" manual di modal (t2pTestKey) -- lihat t2pRenderKeyList.
       status: (raw.status && typeof raw.status === 'object') ? raw.status : {},
     };
-  } catch (e) { return { keys: [], activeIdx: 0, model: 'gemini-2.5-flash', status: {} }; }
+  } catch (e) { return { keys: [], activeIdx: 0, model: 'gemini-3.6-flash', status: {} }; }
 }
 function t2pSaveKeys(data) {
   try { cloudStorage.setItem(T2P_KEYS_KEY, JSON.stringify(data)); } catch (e) { /* abaikan */ }
@@ -11403,7 +11419,7 @@ async function t2pCallGemini(promptText, responseSchema) {
   if (!data.keys.length) {
     throw new Error('NOKEY');
   }
-  const model = data.model || 'gemini-2.5-flash';
+  const model = data.model || 'gemini-3.6-flash';
   let lastErr = null;
   let statusChanged = false;
   // Mulai dari key aktif tersimpan, lalu muter ke seluruh daftar
