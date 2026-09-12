@@ -15010,7 +15010,7 @@ html.dark-mode .bd-row-close{
 .t2p-subtitle-actions{display:flex;gap:8px;margin-bottom:12px;}
 .t2p-subtitle-actions .t2p-copy-btn{flex:1;}
 
-.t2p-take-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px;box-shadow:0 2px 10px -6px rgba(15,23,42,0.08);transition:border-color .18s ease, background .18s ease, box-shadow .18s ease;}
+.t2p-take-card{position:relative;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:34px 14px 14px;margin-bottom:12px;box-shadow:0 2px 10px -6px rgba(15,23,42,0.08);transition:border-color .18s ease, background .18s ease, box-shadow .18s ease;overflow:hidden;}
 .t2p-take-card--copied{border-color:rgba(5,150,105,0.35);background:rgba(5,150,105,0.045);}
 .t2p-take-head{display:flex;align-items:center;gap:8px;margin-bottom:9px;flex-wrap:wrap;}
 .t2p-take-badge{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;width:44px;height:44px;border-radius:50%;background:linear-gradient(150deg, var(--primary) 0%, var(--primary-deep) 100%);box-shadow:0 6px 14px -6px color-mix(in srgb, var(--primary-deep) 60%, transparent), inset 0 1px 0 rgba(255,255,255,.28);border:2px solid color-mix(in srgb, var(--primary-light) 45%, transparent);}
@@ -15039,6 +15039,40 @@ html.dark-mode .bd-row-close{
 .t2p-copy-btn{flex:1;padding:11px;border-radius:11px;border:1.5px solid var(--primary);background:transparent;color:var(--primary);font-weight:700;font-size:13px;cursor:pointer;transition:background .15s ease,color .15s ease;}
 .t2p-copy-btn:hover{background:color-mix(in srgb, var(--primary) 8%, transparent);}
 .t2p-copy-btn.copied{background:var(--primary);color:#fff;border-color:var(--primary);}
+
+/* ---- Kartu take versi "dipecah per kotak" (Aksi/Gerakan
+   Kamera/Dialog/Deskripsi Akhir Frame + Prompt Siap Pakai
+   terpisah), badge TAKE+rentang waktu, & tombol reset/hapus per
+   kartu -- lihat t2pRenderTakes() di script.js. Semua pakai
+   variabel warna yg sama dgn kartu take lama (var(--card),
+   var(--primary), dst) supaya tetap ikut tema terang/gelap app
+   tanpa perlu warna hardcode baru. ---- */
+.t2p-take-headrow{display:flex;align-items:flex-start;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-bottom:8px;}
+.t2p-take-headtitle{display:flex;align-items:center;gap:9px;flex-wrap:wrap;}
+.t2p-take-timerange{font-size:12.5px;font-weight:800;color:var(--primary);background:color-mix(in srgb, var(--primary) 12%, transparent);border-radius:20px;padding:5px 11px;white-space:nowrap;}
+.t2p-take-cornerbadge{position:absolute;top:0;left:0;padding:8px 18px 8px 16px;border-radius:16px 0 12px 0;background:linear-gradient(150deg, var(--primary) 0%, var(--primary-deep) 100%);color:#fff;font-weight:800;font-size:13px;letter-spacing:.02em;line-height:1.3;z-index:1;}
+.t2p-take-headactions{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+.t2p-take-headbtn{font-size:11px;font-weight:700;padding:6px 10px;border-radius:20px;border:1px solid var(--line);background:var(--paper);color:var(--ink-soft);cursor:pointer;white-space:nowrap;transition:border-color .15s ease,color .15s ease,background .15s ease;}
+.t2p-take-headbtn:hover:not(:disabled){border-color:var(--primary);color:var(--primary);}
+.t2p-take-headbtn:disabled{opacity:.45;cursor:default;}
+.t2p-take-headbtn--danger:hover:not(:disabled){border-color:#DC2626;color:#DC2626;background:rgba(220,38,38,0.08);}
+.t2p-take-tagsrow{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:9px;}
+.t2p-take-tagsrow .t2p-take-meta{margin-left:auto;}
+.t2p-take-fieldgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:9px;}
+.t2p-take-fieldgrid .t2p-take-sub{margin-bottom:0;}
+.t2p-take-tip{display:flex;align-items:flex-start;gap:7px;font-size:11.5px;font-weight:500;line-height:1.5;color:#BE185D;background:rgba(219,39,119,0.09);border-left:3px solid #DB2777;border-radius:8px;padding:9px 11px;margin-bottom:12px;}
+.t2p-copy-fab{flex:0 0 auto;width:48px;height:48px;padding:0;border-radius:50%;font-size:18px;line-height:1;display:flex;align-items:center;justify-content:center;background:linear-gradient(150deg, var(--primary) 0%, var(--primary-deep) 100%);color:#fff;border:2px solid color-mix(in srgb, var(--primary-light) 45%, transparent);box-shadow:0 6px 14px -6px color-mix(in srgb, var(--primary-deep) 60%, transparent);}
+.t2p-copy-fab:hover{filter:brightness(1.06);}
+.t2p-copy-fab.copied{background:#059669;border-color:rgba(5,150,105,0.35);}
+
+@media (max-width:560px){
+  .t2p-take-fieldgrid{grid-template-columns:1fr;}
+}
+@media (max-width:380px){
+  .t2p-take-headrow{gap:6px;}
+  .t2p-take-headactions{flex-basis:100%;justify-content:flex-start;}
+  .t2p-take-tagsrow .t2p-take-meta{margin-left:0;flex-basis:100%;white-space:normal;}
+}
 
 .t2p-showmore-btn{width:100%;padding:11px;border-radius:10px;border:1.5px dashed var(--line);background:transparent;color:var(--ink);font-weight:700;font-size:13px;cursor:pointer;margin-top:2px;}
 .t2p-addsegment-btn{width:100%;padding:11px;border-radius:10px;border:1.5px dashed var(--primary);background:color-mix(in srgb, var(--primary) 6%, transparent);color:var(--primary);font-weight:700;font-size:13px;cursor:pointer;margin-top:8px;}

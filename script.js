@@ -11482,8 +11482,17 @@ const T2P_TAKE_PROPS = {
   prompt: { type: 'string' },
   continuity_note: { type: 'string' },
   subtitle: { type: 'string' },
+  // FIELD BARU (kartu take dipecah jadi kotak terpisah spy lebih
+  // enak dibaca/diedit user, bukan cuma satu textarea besar):
+  // "action", "camera_movement", "end_frame_description" masing2
+  // WAJIB konsisten (tidak boleh bertentangan) dgn isi teks "prompt"
+  // -- 3 field ini murni ringkasan/pecahan utk ditampilkan di kartu,
+  // field "prompt" tetap yang lengkap & yang disalin ke tool video-gen.
+  action: { type: 'string', description: 'Ringkasan aksi/kejadian utama di take ini (gerakan & perbuatan karakter), 2-4 kalimat, HARUS konsisten dgn isi field "prompt".' },
+  camera_movement: { type: 'string', description: 'Deskripsi gerak & framing kamera di take ini (mis. "medium shot handheld mengikuti gerak tubuh Ryan, lalu geser ke..."), HARUS konsisten dgn isi field "prompt".' },
+  end_frame_description: { type: 'string', description: 'Deskripsi visual FRAME PALING AKHIR take ini (posisi akhir karakter, ekspresi, sudut kamera, pencahayaan) -- dipakai user sbg acuan screenshot utk generate take berikutnya, jadi WAJIB sangat spesifik & konkret, bukan kalimat umum.' },
 };
-const T2P_TAKE_REQUIRED = ['take', 'location', 'characters', 'character_descriptions', 'prompt', 'continuity_note', 'subtitle'];
+const T2P_TAKE_REQUIRED = ['take', 'location', 'characters', 'character_descriptions', 'prompt', 'continuity_note', 'subtitle', 'action', 'camera_movement', 'end_frame_description'];
 const T2P_ARRAY_SCHEMA = { type: 'array', items: { type: 'object', properties: T2P_TAKE_PROPS, required: T2P_TAKE_REQUIRED } };
 const T2P_OBJECT_SCHEMA = { type: 'object', properties: T2P_TAKE_PROPS, required: T2P_TAKE_REQUIRED };
 const T2P_SEO_SCHEMA = {
@@ -11633,6 +11642,10 @@ ATURAN WAJIB (supaya hasil videonya konsisten & tidak berantakan):
 ${state.subtitle ? '7. Sertakan juga field "subtitle" berisi dialog/narasi take tsb (siap dipakai sbg teks subtitle), dalam bahasa yang sama dgn prompt.' : '7. Field "subtitle" boleh dikosongkan ("").'}
 7b. FORMAT DIALOG: kalau dalam satu take ada 2+ karakter yang bicara, tulis field "subtitle" per baris dengan format "Nama: ucapan" (satu baris per giliran bicara, urut sesuai adegan) supaya jelas siapa ngomong apa -- jangan digabung jadi satu paragraf tanpa label nama. Kalau cuma 1 karakter bicara atau isinya narasi (bukan dialog), boleh tanpa label nama.
 ${state.burnSubtitle ? `7c. SUBTITLE TERBAKAR DI VIDEO: user mengaktifkan opsi "Subtitle" -- artinya video hasil generate WAJIB menampilkan teks subtitle di layar (burned-in/hardcoded), bukan cuma disimpan sbg data terpisah. Kalau field "subtitle" take ini berisi teks, WAJIB tambahkan instruksi eksplisit DI DALAM TEKS FIELD "prompt" yang menyuruh video-gen menampilkan teks subtitle itu PERSIS SAMA (kata demi kata dgn field "subtitle") di bagian bawah frame (lower-third), dengan font jelas terbaca, kontras cukup (mis. teks putih + outline/shadow gelap), tanpa mengubah/menyingkat kata-katanya. Kalau field "subtitle" take ini kosong, tidak perlu tambahan instruksi subtitle di prompt.` : ''}
+8. FIELD RINGKASAN UTK TAMPILAN KARTU (selain "prompt" yang lengkap, isi juga 3 field ringkas berikut -- WAJIB konsisten/tidak bertentangan dgn isi "prompt", jangan kosongkan):
+   - "action": ringkasan aksi/kejadian utama take ini (gerakan & perbuatan karakter), 2-4 kalimat.
+   - "camera_movement": deskripsi gerak & framing kamera take ini.
+   - "end_frame_description": deskripsi visual FRAME PALING AKHIR take ini (posisi akhir karakter, ekspresi, sudut kamera, pencahayaan) -- ditampilkan ke user sbg acuan screenshot utk generate take berikutnya, jadi WAJIB sangat spesifik & konkret.
 
 CATATAN TAMBAHAN DARI USER: ${state.worldNote || '(tidak ada)'}
 
@@ -11642,7 +11655,7 @@ ${state.story || '(kosong -- kalau naskah kosong, karang cerita drama pendek yan
 """
 
 FORMAT OUTPUT: balas HANYA dengan JSON valid (tanpa markdown/backtick/teks lain), berbentuk array dengan TEPAT ${state.takeCount} elemen, tiap elemen berstruktur persis:
-{"take": <nomor take, mulai 1>, "location": "<lokasi/setting take ini>", "characters": ["<nama karakter yang muncul di take ini>"], "character_descriptions": [{"name": "<nama, cocok dgn salah satu di characters>", "description": "<deskripsi fisik full-body persis sama dgn di prompt>"}], "prompt": "<prompt video lengkap & detail siap pakai, WAJIB diawali/mengandung deskripsi lokasi & setting take ini, lalu deskripsi full body tiap karakter yang muncul, blocking posisi, gerak kamera, aksi, pencahayaan>", "continuity_note": "<catatan sambungan dari take sebelumnya, kosongkan string untuk take 1>", "subtitle": "<dialog/narasi take ini, sesuai aturan no.7>"}`;
+{"take": <nomor take, mulai 1>, "location": "<lokasi/setting take ini>", "characters": ["<nama karakter yang muncul di take ini>"], "character_descriptions": [{"name": "<nama, cocok dgn salah satu di characters>", "description": "<deskripsi fisik full-body persis sama dgn di prompt>"}], "prompt": "<prompt video lengkap & detail siap pakai, WAJIB diawali/mengandung deskripsi lokasi & setting take ini, lalu deskripsi full body tiap karakter yang muncul, blocking posisi, gerak kamera, aksi, pencahayaan>", "continuity_note": "<catatan sambungan dari take sebelumnya, kosongkan string untuk take 1>", "subtitle": "<dialog/narasi take ini, sesuai aturan no.7>", "action": "<ringkasan aksi take ini, sesuai aturan no.8>", "camera_movement": "<deskripsi gerak kamera take ini, sesuai aturan no.8>", "end_frame_description": "<deskripsi frame akhir take ini, sesuai aturan no.8>"}`;
 }
 
 /* ---------- Prompt utk fitur "+ Segmen Berikutnya" -- beda dari
@@ -11673,6 +11686,7 @@ TAKE TERAKHIR YANG SUDAH ADA (take ${lastTake.take}, jadikan acuan sambungan):
 - Isi prompt take itu: ${lastTake.prompt || '-'}
 - Dialog/subtitle take itu: ${lastTake.subtitle || '(tidak ada dialog)'}
 - Catatan sambungan take itu: ${lastTake.continuity_note || '(tidak ada)'}
+- Deskripsi frame akhir take itu: ${lastTake.end_frame_description || '(tidak ada)'}
 
 NASKAH/CERITA ASLI (acuan alur -- kalau ceritanya sudah habis di sini, kembangkan kelanjutan yang wajar & masuk akal):
 """
@@ -11695,9 +11709,46 @@ ATURAN WAJIB (sama seperti take-take sebelumnya):
 ${state.subtitle ? '7. Sertakan field "subtitle" berisi dialog/narasi take ini.' : '7. Field "subtitle" boleh dikosongkan ("").'}
 7b. FORMAT DIALOG: kalau 2+ karakter bicara di take ini, tulis "subtitle" per baris format "Nama: ucapan" (satu baris per giliran bicara) -- jangan digabung jadi satu paragraf tanpa label nama.
 ${state.burnSubtitle ? `7c. SUBTITLE TERBAKAR DI VIDEO: user mengaktifkan opsi "Subtitle" -- video hasil generate WAJIB menampilkan teks subtitle di layar (burned-in/hardcoded). Kalau field "subtitle" take ini berisi teks, WAJIB tambahkan instruksi eksplisit DI DALAM TEKS FIELD "prompt" yang menyuruh video-gen menampilkan teks subtitle itu PERSIS SAMA (kata demi kata) di bagian bawah frame (lower-third), font jelas terbaca, kontras cukup. Kalau field "subtitle" kosong, tidak perlu instruksi tambahan.` : ''}
+8. FIELD RINGKASAN UTK TAMPILAN KARTU (selain "prompt" yang lengkap, isi juga 3 field ringkas berikut -- WAJIB konsisten/tidak bertentangan dgn isi "prompt", jangan kosongkan):
+   - "action": ringkasan aksi/kejadian utama take ini (gerakan & perbuatan karakter), 2-4 kalimat.
+   - "camera_movement": deskripsi gerak & framing kamera take ini.
+   - "end_frame_description": deskripsi visual FRAME PALING AKHIR take ini (posisi akhir karakter, ekspresi, sudut kamera, pencahayaan) -- ditampilkan ke user sbg acuan screenshot utk generate take berikutnya, jadi WAJIB sangat spesifik & konkret.
 
 FORMAT OUTPUT: balas HANYA dengan JSON valid (tanpa markdown/backtick/teks lain), berupa SATU OBJEK (bukan array) berstruktur persis:
-{"take": ${nextTakeNum}, "location": "<lokasi take ini>", "characters": ["<nama karakter yang muncul>"], "character_descriptions": [{"name": "<nama, cocok dgn salah satu di characters>", "description": "<deskripsi fisik full-body persis sama dgn di prompt>"}], "prompt": "<prompt video lengkap & detail siap pakai, WAJIB diawali/mengandung deskripsi lokasi & setting take ini>", "continuity_note": "<catatan sambungan dari take sebelumnya>", "subtitle": "<dialog/narasi take ini>"}`;
+{"take": ${nextTakeNum}, "location": "<lokasi take ini>", "characters": ["<nama karakter yang muncul>"], "character_descriptions": [{"name": "<nama, cocok dgn salah satu di characters>", "description": "<deskripsi fisik full-body persis sama dgn di prompt>"}], "prompt": "<prompt video lengkap & detail siap pakai, WAJIB diawali/mengandung deskripsi lokasi & setting take ini>", "continuity_note": "<catatan sambungan dari take sebelumnya>", "subtitle": "<dialog/narasi take ini>", "action": "<ringkasan aksi take ini, sesuai aturan no.8>", "camera_movement": "<deskripsi gerak kamera take ini, sesuai aturan no.8>", "end_frame_description": "<deskripsi frame akhir take ini, sesuai aturan no.8>"}`;
+}
+
+/* ---------- Helper format rentang waktu "0:00-0:10" per take,
+   dihitung dari nomor take & Durasi per Take di form (dibaca live
+   spy ikut update kalau user ganti durasi setelah generate, sama
+   spt t2p-take-meta yang sudah ada). ---------- */
+function t2pFormatMMSS(totalSeconds) {
+  const s = Math.max(0, Math.round(totalSeconds));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  const mm = h > 0 ? String(m).padStart(2, '0') : String(m);
+  const ss = String(sec).padStart(2, '0');
+  return h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
+}
+function t2pTakeTimeRange(takeNum, durationSec) {
+  const dur = durationSec || 0;
+  const start = Math.max(0, (takeNum - 1)) * dur;
+  const end = takeNum * dur;
+  return `${t2pFormatMMSS(start)}\u2013${t2pFormatMMSS(end)}`;
+}
+
+/* ---------- Cek apakah kartu take ini sudah diedit user dari hasil
+   AI aslinya (dipakai utk aktif/nonaktifkan tombol "reset ke hasil
+   AI") ---------- */
+function t2pIsTakeEdited(t) {
+  const orig = t._t2pOriginal;
+  if (!orig) return false;
+  return (t.action || '') !== (orig.action || '')
+    || (t.camera_movement || '') !== (orig.camera_movement || '')
+    || (t.prompt || '') !== (orig.prompt || '')
+    || (t.subtitle || '') !== (orig.subtitle || '')
+    || (t.end_frame_description || '') !== (orig.end_frame_description || '');
 }
 
 /* ---------- Render kartu take (3 per halaman, tombol "tampilkan
@@ -11720,6 +11771,7 @@ function t2pRenderTakes() {
   }
   if (emptyEl) emptyEl.style.display = 'none';
   listEl.innerHTML = '';
+  const takeDuration = parseInt(document.getElementById('t2pTakeDuration')?.value, 10) || 0;
   const shown = t2pAllTakes.slice(0, t2pVisibleCount);
   shown.forEach((t) => {
     const copied = !!t._t2pCopied;
@@ -11727,30 +11779,52 @@ function t2pRenderTakes() {
     card.className = 't2p-take-card' + (copied ? ' t2p-take-card--copied' : '');
     const chars = Array.isArray(t.characters) ? t.characters : [];
     const charsHtml = chars.map((n) => `<button type="button" class="t2p-take-char-chip" onclick="t2pOpenCharDock()">${n}</button>`).join('');
+    const edited = t2pIsTakeEdited(t);
+    const timeRange = t2pTakeTimeRange(t.take, takeDuration);
     card.innerHTML =
-      `<div class="t2p-take-head">
-        <span class="t2p-take-badge" aria-label="Take ${t.take}"><span class="t2p-take-badge-label">TAKE</span><span class="t2p-take-badge-num">${t.take}</span></span>
+      `<span class="t2p-take-cornerbadge" aria-label="Take ${t.take}">Take ${String(t.take).padStart(2, '0')}</span>
+      <div class="t2p-take-headrow">
+        <div class="t2p-take-headactions">
+          <button type="button" class="t2p-take-headbtn t2p-take-resetbtn" ${edited ? '' : 'disabled'} title="Kembalikan semua kotak di take ini ke hasil AI semula">\u21ba reset ke hasil AI</button>
+          <button type="button" class="t2p-take-headbtn t2p-take-headbtn--danger t2p-take-delbtn" title="Hapus take ini">hapus</button>
+        </div>
+      </div>
+      <div class="t2p-take-tagsrow">
         <span class="t2p-take-copied-tag" style="display:${copied ? '' : 'none'};">✓ Disalin</span>
         ${t.burnSubtitleWanted ? '<span class="t2p-take-cc-tag" title="Instruksi subtitle burned-in sudah disisipkan ke Prompt Video">CC Subtitle</span>' : ''}
-        <span class="t2p-take-meta">📍 ${(t.location || '-')} &middot; ${document.getElementById('t2pTakeDuration')?.value || ''}s</span>
+        <span class="t2p-take-meta">📍 ${(t.location || '-')} &middot; ${timeRange}</span>
       </div>
       ${chars.length ? `<div class="t2p-take-chars">👤 Karakter: ${charsHtml}</div>` : ''}
-      <label class="t2p-take-prompt-label">Prompt Video</label>
+      ${t.continuity_note ? `<div class="t2p-take-continuity"><span>\u21b3</span><span>menyambung dari akhir Take ${Math.max(1, t.take - 1)}: ${t.continuity_note}</span></div>` : ''}
+      <div class="t2p-take-fieldgrid">
+        <div class="t2p-take-sub"><label>Aksi yang Terjadi</label><textarea class="t2p-take-action" rows="4">${t.action || ''}</textarea></div>
+        <div class="t2p-take-sub"><label>Gerakan Kamera</label><textarea class="t2p-take-camera" rows="4">${t.camera_movement || ''}</textarea></div>
+      </div>
+      ${t.dialogWanted ? `<div class="t2p-take-sub"><label>${t.burnSubtitleWanted ? 'Dialog (sudah burned-in di Prompt Video)' : 'Dialog (Opsional)'}</label><textarea class="t2p-take-dialog" rows="3" placeholder="Belum ada dialog di take ini.">${t.subtitle || ''}</textarea></div>` : ''}
+      <div class="t2p-take-sub"><label>Deskripsi Akhir Frame (untuk sambungan ke take berikutnya)</label><textarea class="t2p-take-endframe" rows="3">${t.end_frame_description || ''}</textarea></div>
+      <div class="t2p-take-tip">📷 Setelah Take ${String(t.take).padStart(2, '0')} selesai di-generate: screenshot frame paling akhir videonya, lalu upload sebagai gambar acuan/awal saat generate Take ${String(t.take + 1).padStart(2, '0')}. Ini jauh lebih kuat untuk konsistensi daripada deskripsi teks saja.</div>
+      <label class="t2p-take-prompt-label">Prompt Siap Pakai</label>
       <textarea class="t2p-take-prompt" rows="6">${t.prompt || ''}</textarea>
-      ${t.dialogWanted ? `<div class="t2p-take-sub"><label>${t.burnSubtitleWanted ? 'Dialog (sudah burned-in di Prompt Video)' : 'Dialog'}</label><textarea rows="3" placeholder="Belum ada dialog di take ini.">${t.subtitle || ''}</textarea></div>` : ''}
-      ${t.continuity_note ? `<div class="t2p-take-continuity"><span>🔗</span><span>${t.continuity_note}</span></div>` : ''}
       <div class="t2p-take-actions">
-        <button type="button" class="t2p-copy-btn ${copied ? 'copied' : ''}">${copied ? '✓ Tersalin' : '📋 Salin Prompt'}</button>
+        <button type="button" class="t2p-copy-btn t2p-copy-fab ${copied ? 'copied' : ''}" title="${copied ? 'Sudah disalin' : 'Salin Prompt'}" aria-label="Salin Prompt Take ${t.take}">${copied ? '✓' : '📋'}</button>
       </div>`;
     const promptTa = card.querySelector('.t2p-take-prompt');
-    const dialogTa = card.querySelector('.t2p-take-sub textarea');
-    dialogTa?.addEventListener('input', () => {
-      t.subtitle = dialogTa.value;
-      if (subActionsEl) subActionsEl.style.display = t2pSubtitleTakes().length ? '' : 'none';
-    });
-    // Tandai "belum disalin" lagi kalau prompt ATAU dialog diedit
-    // setelah sempat disalin -- dipakai juga oleh listener dialogTa
-    // di bawah, supaya keduanya konsisten memicu status yang sama.
+    const dialogTa = card.querySelector('.t2p-take-dialog');
+    const actionTa = card.querySelector('.t2p-take-action');
+    const cameraTa = card.querySelector('.t2p-take-camera');
+    const endframeTa = card.querySelector('.t2p-take-endframe');
+    const resetBtn = card.querySelector('.t2p-take-resetbtn');
+    const delBtn = card.querySelector('.t2p-take-delbtn');
+
+    // Update tombol "reset ke hasil AI" (aktif/nonaktif) tiap kali
+    // salah satu kotak yang bisa diedit berubah isinya.
+    const refreshResetBtn = () => {
+      if (resetBtn) resetBtn.disabled = !t2pIsTakeEdited(t);
+    };
+    // Tandai "belum disalin" lagi kalau field manapun (prompt, dialog,
+    // aksi, kamera, deskripsi akhir frame) diedit setelah sempat
+    // disalin -- dipakai semua listener input di bawah supaya
+    // konsisten memicu status yang sama.
     const markUncopiedIfNeeded = () => {
       if (t._t2pCopied) {
         t._t2pCopied = false;
@@ -11758,6 +11832,17 @@ function t2pRenderTakes() {
         t2pRenderCopyProgress();
       }
     };
+    dialogTa?.addEventListener('input', () => {
+      t.subtitle = dialogTa.value;
+      if (subActionsEl) subActionsEl.style.display = t2pSubtitleTakes().length ? '' : 'none';
+      markUncopiedIfNeeded();
+      refreshResetBtn();
+    });
+    actionTa?.addEventListener('input', () => { t.action = actionTa.value; markUncopiedIfNeeded(); refreshResetBtn(); });
+    cameraTa?.addEventListener('input', () => { t.camera_movement = cameraTa.value; markUncopiedIfNeeded(); refreshResetBtn(); });
+    endframeTa?.addEventListener('input', () => { t.end_frame_description = endframeTa.value; markUncopiedIfNeeded(); refreshResetBtn(); });
+    promptTa?.addEventListener('input', () => { markUncopiedIfNeeded(); refreshResetBtn(); });
+
     card.querySelector('.t2p-copy-btn')?.addEventListener('click', function () {
       // Gabungkan Prompt Video + Dialog jadi SATU teks supaya user
       // cukup sekali klik "Salin Prompt" lalu tempel langsung ke tool
@@ -11777,12 +11862,45 @@ function t2pRenderTakes() {
         t2pRenderCopyProgress();
       }).catch(() => showToast('Gagal menyalin, salin manual dari kotak teks.', 'err'));
     });
-    // Kalau prompt ATAU dialog diedit LAGI setelah sempat disalin,
-    // tandai balik sebagai "belum disalin" -- supaya user tidak salah
-    // kira sudah menempel versi terbaru padahal yang tersalin ke
-    // clipboard masih versi lama sebelum diedit.
-    promptTa?.addEventListener('input', markUncopiedIfNeeded);
-    dialogTa?.addEventListener('input', markUncopiedIfNeeded);
+
+    // Tombol "reset ke hasil AI" -- balikkan kotak Aksi/Gerakan
+    // Kamera/Dialog/Deskripsi Akhir Frame/Prompt Siap Pakai ke isi
+    // asli hasil generate Gemini (sebelum sempat diedit user), tanpa
+    // perlu generate ulang lewat API.
+    resetBtn?.addEventListener('click', () => {
+      const orig = t._t2pOriginal;
+      if (!orig) return;
+      t.action = orig.action;
+      t.camera_movement = orig.camera_movement;
+      t.prompt = orig.prompt;
+      t.subtitle = orig.subtitle;
+      t.end_frame_description = orig.end_frame_description;
+      if (actionTa) actionTa.value = t.action || '';
+      if (cameraTa) cameraTa.value = t.camera_movement || '';
+      if (promptTa) promptTa.value = t.prompt || '';
+      if (dialogTa) dialogTa.value = t.subtitle || '';
+      if (endframeTa) endframeTa.value = t.end_frame_description || '';
+      if (subActionsEl) subActionsEl.style.display = t2pSubtitleTakes().length ? '' : 'none';
+      markUncopiedIfNeeded();
+      refreshResetBtn();
+      showToast(`Take ${t.take} dikembalikan ke hasil AI.`);
+    });
+
+    // Tombol "hapus" -- hilangkan take ini dari daftar (tidak
+    // memengaruhi take lain, nomor take yang tersisa tidak diubah
+    // supaya continuity_note/prompt yang sudah menyebut nomor take
+    // tertentu tetap akurat).
+    delBtn?.addEventListener('click', () => {
+      if (!confirm(`Hapus Take ${t.take}? Tindakan ini tidak bisa dibatalkan.`)) return;
+      const idx = t2pAllTakes.indexOf(t);
+      if (idx === -1) return;
+      t2pAllTakes.splice(idx, 1);
+      t2pVisibleCount = Math.max(0, Math.min(t2pVisibleCount - 1, t2pAllTakes.length));
+      t2pRenderTakes();
+      t2pRenderCharDock();
+      showToast(`Take ${t.take} dihapus.`);
+    });
+
     listEl.appendChild(card);
   });
   if (moreBtn) moreBtn.style.display = (t2pVisibleCount < t2pAllTakes.length) ? '' : 'none';
@@ -11877,7 +11995,8 @@ function t2pMarkCardCopied(card, copied) {
   const btn = card.querySelector('.t2p-copy-btn');
   if (btn) {
     btn.classList.toggle('copied', copied);
-    btn.textContent = copied ? '✓ Tersalin' : '📋 Salin Prompt';
+    btn.textContent = copied ? '✓' : '📋';
+    btn.title = copied ? 'Sudah disalin' : 'Salin Prompt';
   }
   const tag = card.querySelector('.t2p-take-copied-tag');
   if (tag) tag.style.display = copied ? '' : 'none';
@@ -12235,7 +12354,13 @@ document.getElementById('t2pGenerateBtn')?.addEventListener('click', async () =>
       else throw new Error('Gagal membaca hasil dari Gemini (bukan JSON valid).');
     }
     if (!Array.isArray(parsed) || !parsed.length) throw new Error('Hasil dari Gemini kosong/tidak sesuai format.');
-    parsed.forEach((t) => { t.dialogWanted = !!state.subtitle; t.burnSubtitleWanted = !!state.burnSubtitle; });
+    parsed.forEach((t) => {
+      t.dialogWanted = !!state.subtitle;
+      t.burnSubtitleWanted = !!state.burnSubtitle;
+      // Simpan salinan asli hasil AI (sebelum sempat diedit user) --
+      // dipakai tombol "reset ke hasil AI" per kartu take.
+      t._t2pOriginal = { action: t.action || '', camera_movement: t.camera_movement || '', prompt: t.prompt || '', subtitle: t.subtitle || '', end_frame_description: t.end_frame_description || '' };
+    });
     t2pAllTakes = parsed;
     t2pVisibleCount = Math.min(3, t2pAllTakes.length);
     t2pDockExtraDesc = {};
@@ -12293,6 +12418,9 @@ document.getElementById('t2pAddSegmentBtn')?.addEventListener('click', async () 
     parsed.take = lastTake.take + 1; // paksa nomor urut lanjut, jangan percaya nomor dari model
     parsed.dialogWanted = !!state.subtitle;
     parsed.burnSubtitleWanted = !!state.burnSubtitle;
+    // Simpan salinan asli hasil AI (sebelum sempat diedit user) --
+    // dipakai tombol "reset ke hasil AI" per kartu take.
+    parsed._t2pOriginal = { action: parsed.action || '', camera_movement: parsed.camera_movement || '', prompt: parsed.prompt || '', subtitle: parsed.subtitle || '', end_frame_description: parsed.end_frame_description || '' };
     t2pAllTakes.push(parsed);
     t2pVisibleCount = t2pAllTakes.length;
     t2pRenderTakes();
