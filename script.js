@@ -11081,6 +11081,12 @@ function closeT2pOverlay() {
   document.getElementById('t2pOverlay')?.classList.remove('open');
   unlockBodyScroll();
   t2pCloseCharDock();
+  // FIX "tab Kunci Konsistensi nongol di semua halaman": tab ini anak
+  // langsung <body> (lihat t2pRelocateCharDockToBody()), jadi begitu
+  // halaman Text to Prompt ditutup, tab-nya HARUS ikut disembunyikan
+  // manual di sini -- kalau tidak, dia tetap kelihatan menimpa
+  // halaman lain (Beranda, dsb) walau #t2pOverlay sudah tertutup.
+  document.getElementById('t2pCharDockTab')?.classList.remove('show');
 }
 document.getElementById('t2pBackBtn')?.addEventListener('click', closeT2pOverlay);
 document.getElementById('fmHomeT2pBtn')?.addEventListener('click', () => {
@@ -11767,10 +11773,18 @@ function t2pRenderCharDock() {
   const countEl = document.getElementById('t2pCharDockCount');
   const listEl = document.getElementById('t2pCharDockList');
   if (!tab || !listEl) return;
-  // Tab SELALU tampil sejak halaman dibuka (form Karakter kini cuma
-  // bisa diisi lewat panel ini, jadi tab-nya tidak boleh disembunyikan
-  // hanya karena belum pernah generate).
-  tab.classList.add('show');
+  // PERMINTAAN TERBARU: tab ini HANYA boleh muncul setelah user
+  // berhasil generate (bukan lagi tampil dari awal begitu halaman
+  // Text to Prompt dibuka) -- jadi kondisinya diikat ke isi
+  // t2pAllTakes (array hasil generate terakhir, diisi di listener
+  // klik #t2pGenerateBtn setelah parsing hasil Gemini berhasil).
+  // Selama t2pAllTakes masih kosong (belum pernah generate / baru
+  // dibuka & belum klik tombol Generate), tab TETAP disembunyikan,
+  // walau fungsi ini dipanggil berkali-kali (mis. saat isi form
+  // karakter). Begitu t2pAllTakes terisi (>=1 take), tab langsung
+  // ditampilkan -- dan tetap tampil selama halaman ini masih terbuka
+  // (termasuk kalau user tambah/kurangi karakter setelah generate).
+  tab.classList.toggle('show', t2pAllTakes.length > 0);
   const formChars = t2pCollectFormCharsWithDesc();
   const formNames = formChars.map((c) => c.name);
   const extra = t2pCollectExtraCharacters();

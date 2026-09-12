@@ -16811,18 +16811,28 @@ html.dark-mode .bd-row-close{
       </div>
 
       <!-- ---- Dock "Karakter" -- tab kecil nyelip di pinggir kanan
-           halaman #t2pOverlay, TAMPIL SEJAK AWAL (bukan cuma setelah
-           generate) supaya form isi karakter (nama + ciri fisik full
-           body) tidak makan tempat di halaman utama -- cukup diisi
-           lewat panel #t2pCharDockPanel yang nempel dari kanan. Isi
-           panel = persis form Karakter lama (#t2pCharList,
-           #t2pAddCharBtn) dipindah ke sini oleh t2pInit()/kode di
-           script.js. Setelah generate berhasil, panel ini JUGA
-           menampilkan karakter tambahan yang terdeteksi otomatis dari
-           naskah tapi belum ada di form (lihat t2pRenderCharDock() di
-           script.js) supaya user gampang cek konsistensi wujud
-           karakter tanpa scroll balik ke atas. ---- -->
-      <button type="button" class="t2p-chardock-tab show" id="t2pCharDockTab" aria-label="Isi/lihat karakter video ini">
+           halaman #t2pOverlay. PERMINTAAN TERBARU: tab ini HANYA
+           tampil SETELAH generate berhasil (bukan lagi sejak halaman
+           dibuka) -- lihat t2pRenderCharDock() di script.js, yang
+           men-toggle class "show" berdasarkan isi t2pAllTakes (kosong
+           = belum generate = tab disembunyikan). Isi panel
+           #t2pCharDockPanel = form Karakter (#t2pCharList,
+           #t2pAddCharBtn) yang dipindah ke sini oleh t2pInit(), lalu
+           setelah generate berhasil panel ini JUGA menampilkan
+           karakter tambahan yang terdeteksi otomatis dari naskah tapi
+           belum ada di form, supaya user gampang cek konsistensi
+           wujud karakter tanpa scroll balik ke atas.
+           PENTING: class "show" SENGAJA TIDAK ditaruh di markup ini --
+           karena tab ini dipindah jadi anak langsung <body> oleh
+           t2pRelocateCharDockToBody() (lihat script.js), kalau
+           default-nya sudah "show" di sini, tombol ini akan permanen
+           tampil MENIMPA SEMUA HALAMAN APLIKASI (Beranda, dsb), bukan
+           cuma saat halaman Text to Prompt dibuka & sudah generate.
+           Visibility-nya MURNI dikontrol lewat JS: di-toggle tiap kali
+           t2pRenderCharDock() jalan (termasuk sesudah generate), dan
+           dipaksa dilepas lagi saat closeT2pOverlay() (lihat
+           script.js). ---- -->
+      <button type="button" class="t2p-chardock-tab" id="t2pCharDockTab" aria-label="Isi/lihat karakter video ini">
         <span class="t2p-chardock-tab-ic">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="9" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
         </span>
