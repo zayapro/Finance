@@ -11722,8 +11722,24 @@ function t2pRenderTakes() {
       t.subtitle = dialogTa.value;
       if (subActionsEl) subActionsEl.style.display = t2pSubtitleTakes().length ? '' : 'none';
     });
+    // Tandai "belum disalin" lagi kalau prompt ATAU dialog diedit
+    // setelah sempat disalin -- dipakai juga oleh listener dialogTa
+    // di bawah, supaya keduanya konsisten memicu status yang sama.
+    const markUncopiedIfNeeded = () => {
+      if (t._t2pCopied) {
+        t._t2pCopied = false;
+        t2pMarkCardCopied(card, false);
+        t2pRenderCopyProgress();
+      }
+    };
     card.querySelector('.t2p-copy-btn')?.addEventListener('click', function () {
-      const txt = promptTa?.value || '';
+      // Gabungkan Prompt Video + Dialog jadi SATU teks supaya user
+      // cukup sekali klik "Salin Prompt" lalu tempel langsung ke tool
+      // video-gen -- sebelumnya dialog tidak ikut ter-copy sama
+      // sekali, jadi harus disalin manual terpisah (2 potong teks).
+      const promptTxt = (promptTa?.value || '').trim();
+      const dialogTxt = (dialogTa?.value || '').trim();
+      const txt = dialogTxt ? `${promptTxt}\n\nDialog: ${dialogTxt}` : promptTxt;
       navigator.clipboard.writeText(txt).then(() => {
         t._t2pCopied = true;
         t2pMarkCardCopied(card, true);
@@ -11731,17 +11747,12 @@ function t2pRenderTakes() {
         t2pRenderCopyProgress();
       }).catch(() => showToast('Gagal menyalin, salin manual dari kotak teks.', 'err'));
     });
-    // Kalau prompt diedit LAGI setelah sempat disalin, tandai balik
-    // sebagai "belum disalin" -- supaya user tidak salah kira sudah
-    // menempel versi terbaru padahal yang tersalin ke clipboard masih
-    // versi lama sebelum diedit.
-    promptTa?.addEventListener('input', () => {
-      if (t._t2pCopied) {
-        t._t2pCopied = false;
-        t2pMarkCardCopied(card, false);
-        t2pRenderCopyProgress();
-      }
-    });
+    // Kalau prompt ATAU dialog diedit LAGI setelah sempat disalin,
+    // tandai balik sebagai "belum disalin" -- supaya user tidak salah
+    // kira sudah menempel versi terbaru padahal yang tersalin ke
+    // clipboard masih versi lama sebelum diedit.
+    promptTa?.addEventListener('input', markUncopiedIfNeeded);
+    dialogTa?.addEventListener('input', markUncopiedIfNeeded);
     listEl.appendChild(card);
   });
   if (moreBtn) moreBtn.style.display = (t2pVisibleCount < t2pAllTakes.length) ? '' : 'none';
