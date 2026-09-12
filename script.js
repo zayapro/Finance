@@ -11221,8 +11221,20 @@ function t2pInit() {
   if (document.getElementById('t2pTakeCount')) document.getElementById('t2pTakeCount').value = state.takeCount;
   if (document.getElementById('t2pTakeDuration')) document.getElementById('t2pTakeDuration').value = state.takeDuration;
   if (document.getElementById('t2pOptSubtitle')) document.getElementById('t2pOptSubtitle').checked = state.subtitle;
-  if (document.getElementById('t2pLangId')) document.getElementById('t2pLangId').checked = state.langId;
-  if (document.getElementById('t2pLangEn')) document.getElementById('t2pLangEn').checked = state.langEn;
+  // Switch bahasa output (ID/EN) -- exclusive: EN aktif cuma kalau
+  // langEn true DAN langId eksplisit false, selain itu default ID.
+  const t2pLangSwitchEl = document.getElementById('t2pLangSwitch');
+  const t2pLangIdInput = document.getElementById('t2pLangId');
+  const t2pLangEnInput = document.getElementById('t2pLangEn');
+  const t2pEnActive = !!state.langEn && !state.langId;
+  if (t2pLangIdInput) t2pLangIdInput.checked = !t2pEnActive;
+  if (t2pLangEnInput) t2pLangEnInput.checked = t2pEnActive;
+  t2pLangSwitchEl?.classList.toggle('lang-en', t2pEnActive);
+  [t2pLangIdInput, t2pLangEnInput].forEach((el) => {
+    el?.addEventListener('change', () => {
+      t2pLangSwitchEl?.classList.toggle('lang-en', !!t2pLangEnInput?.checked);
+    });
+  });
   ['t2pStoryInput', 't2pWorldNote', 't2pTakeCount', 't2pTakeDuration'].forEach((id) => {
     document.getElementById(id)?.addEventListener('change', t2pSaveState);
   });

@@ -14882,18 +14882,25 @@ html.dark-mode .bd-row-close{
    (cari komentar "TEXT TO PROMPT") utk alur lengkapnya.
 ================================================================ */
 .t2p-section-title{font-size:13.5px;font-weight:700;color:var(--ink);margin:0 0 2px;display:flex;align-items:center;gap:6px;}
+.t2p-section-title-ic{color:var(--violet);flex-shrink:0;}
 .t2p-section-sub{font-size:11.5px;color:var(--ink-soft);margin:0 0 10px;line-height:1.45;}
 .t2p-section{padding-bottom:14px;margin-bottom:14px;border-bottom:1px dashed var(--line);}
 .t2p-section:last-of-type{border-bottom:none;margin-bottom:0;padding-bottom:0;}
 
-.t2p-char-row{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:8px;}
-.t2p-char-row-top{display:flex;align-items:center;gap:8px;margin-bottom:7px;}
-.t2p-char-row-top input{flex:1;min-width:0;padding:9px 11px;border-radius:9px;border:1px solid var(--line);font-size:15px;background:var(--card);outline:none;font-weight:600;}
-.t2p-char-row-top input:focus{border-color:var(--forest-glow);}
-.t2p-char-remove{flex-shrink:0;width:28px;height:28px;border-radius:50%;border:none;background:rgba(220,38,38,0.12);color:#DC2626;font-size:16px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;}
-.t2p-char-desc{width:100%;padding:9px 11px;border-radius:9px;border:1px solid var(--line);font-size:13.5px;background:var(--card);outline:none;resize:vertical;min-height:44px;font-family:inherit;}
-.t2p-char-desc:focus{border-color:var(--forest-glow);}
-.t2p-add-char-btn{width:100%;padding:10px;border-radius:10px;border:1.5px dashed var(--line);background:transparent;color:var(--primary);font-weight:700;font-size:13px;cursor:pointer;}
+.t2p-char-row{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:8px;transition:border-color .15s ease;}
+.t2p-char-row-top{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.t2p-char-row-top input{flex:1;min-width:0;padding:10px 12px;border-radius:9px;border:1.5px solid var(--line);font-size:14.5px;background:var(--card);outline:none;font-weight:600;color:var(--ink);transition:border-color .15s ease,box-shadow .15s ease;}
+.t2p-char-row-top input:focus{border-color:var(--primary);box-shadow:0 0 0 3px color-mix(in srgb, var(--primary) 14%, transparent);}
+.t2p-char-remove{flex-shrink:0;width:30px;height:30px;border-radius:50%;border:none;background:rgba(220,38,38,0.1);color:#DC2626;font-size:15px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s ease,transform .15s ease;}
+.t2p-char-remove:hover{background:rgba(220,38,38,0.18);transform:scale(1.05);}
+.t2p-char-desc{width:100%;padding:10px 12px;border-radius:9px;border:1.5px solid var(--line);font-size:13.5px;line-height:1.55;background:var(--card);outline:none;resize:vertical;min-height:64px;font-family:inherit;color:var(--ink);transition:border-color .15s ease,box-shadow .15s ease;scrollbar-width:thin;}
+.t2p-char-desc:focus{border-color:var(--primary);box-shadow:0 0 0 3px color-mix(in srgb, var(--primary) 14%, transparent);}
+.t2p-char-desc::-webkit-scrollbar{width:6px;}
+.t2p-char-desc::-webkit-scrollbar-track{background:transparent;}
+.t2p-char-desc::-webkit-scrollbar-thumb{background:var(--line);border-radius:10px;}
+.t2p-add-char-btn{width:100%;padding:11px;border-radius:10px;border:1.5px dashed var(--primary);background:color-mix(in srgb, var(--primary) 5%, transparent);color:var(--primary);font-weight:700;font-size:13px;cursor:pointer;transition:background .15s ease,transform .15s ease;}
+.t2p-add-char-btn:hover{background:color-mix(in srgb, var(--primary) 10%, transparent);}
+.t2p-add-char-btn:active{transform:scale(0.98);}
 
 .t2p-check-row{display:flex;align-items:center;gap:9px;padding:6px 2px;cursor:pointer;}
 .t2p-check-row input{width:17px;height:17px;flex-shrink:0;accent-color:var(--primary);cursor:pointer;}
@@ -14906,7 +14913,7 @@ html.dark-mode .bd-row-close{
 .t2p-opts-grid .form-row label{margin-bottom:4px;font-size:12px;}
 .t2p-opts-grid .form-row input{padding:8px 10px;}
 .t2p-auto-card{background:linear-gradient(160deg, #0B1220 0%, #141b2e 45%, #1c1233 100%);border-radius:16px;padding:16px;}
-.t2p-auto-card-title{display:flex;align-items:center;gap:7px;font-size:16px;font-weight:800;color:#EC4899;margin-bottom:8px;}
+.t2p-auto-card-title{display:flex;align-items:center;gap:7px;font-size:16px;font-weight:800;color:var(--primary);margin-bottom:8px;}
 .t2p-auto-card-desc{font-size:13px;line-height:1.6;color:#C7CBD9;margin:0 0 16px;}
 .t2p-auto-card-desc b{color:#fff;}
 .t2p-auto-card-highlight{color:var(--primary);font-weight:800;border-bottom:2px dotted var(--primary);cursor:help;}
@@ -14920,7 +14927,8 @@ html.dark-mode .bd-row-close{
 .t2p-auto-card .form-row input:focus{border-color:var(--primary);}
 .t2p-opts-pillrow{display:flex;flex-wrap:wrap;gap:8px;}
 .t2p-opt-pill{display:flex;align-items:center;gap:5px;background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:7px 11px;font-size:12.5px;font-weight:700;color:var(--ink);cursor:pointer;user-select:none;flex-shrink:0;transition:background .15s ease,color .15s ease,border-color .15s ease;}
-.t2p-opt-pill-ic{font-size:14px;line-height:1;}
+.t2p-opt-pill-ic{font-size:14px;line-height:1;display:flex;align-items:center;color:var(--primary);flex-shrink:0;}
+.t2p-opt-pill-ic svg{display:block;}
 .t2p-opt-pill-suffix{color:var(--ink-faint);font-weight:600;}
 .t2p-opt-pill--num input[type="number"]{width:22px;border:none;background:transparent;padding:0;font-size:12.5px;font-weight:700;color:var(--ink);text-align:center;-moz-appearance:textfield;}
 .t2p-opt-pill--num input[type="number"]::-webkit-outer-spin-button,
@@ -14928,6 +14936,27 @@ html.dark-mode .bd-row-close{
 .t2p-opt-pill--num input[type="number"]:focus{outline:none;}
 .t2p-opt-pill--toggle{color:var(--ink-faint);}
 .t2p-opt-pill--toggle:has(input:checked){background:var(--primary);border-color:var(--primary);color:#fff;}
+/* Kotak centang di dalam pill "Dialog" -- kosong (outline) saat
+   tidak dicentang, isi putih transparan + tanda centang muncul
+   saat dicentang, biar kelihatan jelas ini opsi centang/toggle. */
+.t2p-opt-pill-check{width:16px;height:16px;border-radius:5px;border:1.6px solid currentColor;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:inherit;opacity:.55;}
+.t2p-opt-pill-check svg{opacity:0;transition:opacity .15s ease;}
+.t2p-opt-pill--toggle:has(input:checked) .t2p-opt-pill-check{background:rgba(255,255,255,.28);border-color:#fff;opacity:1;}
+.t2p-opt-pill--toggle:has(input:checked) .t2p-opt-pill-check svg{opacity:1;}
+
+/* ---- Switch bahasa output video (ID / EN) di dalam "Opsi Sebelum
+   Generate" -- dulu 2 pill terpisah yang bisa aktif berbarengan,
+   sekarang 1 kontrol switch (radio ID/EN, exclusive) berbentuk pill
+   dgn "thumb" yg geser ke sisi yg aktif, biar jelas cuma 1 bahasa
+   output yg dipilih. Warna thumb ikut var(--primary) spy konsisten
+   dgn aksen tema. Lebar thumb 50% track & geser translateX(100%)
+   pas opsi EN aktif (class "lang-en" di-toggle via JS di t2pInit). */
+.t2p-lang-switch{position:relative;display:flex;background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:3px;width:118px;flex-shrink:0;}
+.t2p-lang-switch-thumb{position:absolute;top:3px;left:3px;width:calc(50% - 3px);height:calc(100% - 6px);background:var(--primary);border-radius:999px;transition:transform .2s ease;z-index:0;}
+.t2p-lang-switch.lang-en .t2p-lang-switch-thumb{transform:translateX(100%);}
+.t2p-lang-switch-opt{position:relative;z-index:1;flex:1;display:flex;align-items:center;justify-content:center;gap:4px;padding:7px 0;font-size:12.5px;font-weight:700;color:var(--ink-faint);cursor:pointer;user-select:none;transition:color .15s ease;}
+.t2p-lang-switch-opt span[aria-hidden]{font-size:14px;line-height:1;}
+.t2p-lang-switch input:checked + .t2p-lang-switch-opt{color:#fff;}
 
 .t2p-locked-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:#7C3AED;background:rgba(124,58,237,0.1);border-radius:20px;padding:5px 11px;margin-bottom:10px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .t2p-locked-badge-short{display:none;}
@@ -15067,6 +15096,12 @@ html.dark-mode .bd-row-close{
   .t2p-chardock-apply-btn,
   .t2p-chardock-cancel-btn{font-size:12px;padding:9px 2px;}
   .t2p-generate-btn{font-size:13.5px;padding:12px;}
+  /* Layar HP sempit: opt-pill (take/detik/Dialog) & switch bahasa
+     dirapatkan dikit spy tetap muat wrap 2 pill per baris, tidak
+     kepotong/kegencet. */
+  .t2p-opt-pill{padding:6px 9px;font-size:12px;}
+  .t2p-lang-switch{width:104px;}
+  .t2p-lang-switch-opt{font-size:11.5px;padding:6px 0;}
 }
 
 /* ---- Dock "Karakter di Video Ini" -- tab nyelip di pinggir kanan
@@ -15177,23 +15212,34 @@ html.dark-mode .bd-row-close{
 }
 @media (min-width:821px){.t2p-chardock-panel{width:380px;padding:22px 20px;}}
 .t2p-chardock-panel.show{transform:translateX(0);}
-.t2p-chardock-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:12px;padding-bottom:12px;border-bottom:1px dashed var(--line);}
-.t2p-chardock-head h4{font-size:15px;font-weight:800;color:var(--ink);margin:0 0 3px;}
-.t2p-chardock-head p{font-size:11px;color:var(--ink-soft);margin:0;line-height:1.4;}
-.t2p-chardock-close{flex-shrink:0;width:28px;height:28px;border-radius:50%;border:none;background:var(--paper);color:var(--ink-soft);display:flex;align-items:center;justify-content:center;cursor:pointer;}
-.t2p-chardock-list{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:10px;}
+.t2p-chardock-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:14px;padding-bottom:14px;border-bottom:1px dashed var(--line);}
+.t2p-chardock-head h4{font-size:16px;font-weight:800;color:var(--ink);margin:0 0 4px;display:flex;align-items:center;gap:7px;}
+.t2p-chardock-head-ic{flex-shrink:0;width:22px;height:22px;border-radius:50%;background:linear-gradient(145deg, var(--forest-glow), var(--violet));color:#fff;display:flex;align-items:center;justify-content:center;}
+.t2p-chardock-head-ic svg{width:13px;height:13px;}
+.t2p-chardock-head p{font-size:12px;color:var(--ink-soft);margin:0;line-height:1.55;}
+.t2p-chardock-close{flex-shrink:0;width:30px;height:30px;border-radius:50%;border:none;background:var(--paper);color:var(--ink-soft);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s ease,color .15s ease;}
+.t2p-chardock-close:hover{background:var(--line);color:var(--ink);}
+.t2p-chardock-list{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:10px;scrollbar-width:thin;}
+.t2p-chardock-list::-webkit-scrollbar{width:6px;}
+.t2p-chardock-list::-webkit-scrollbar-track{background:transparent;}
+.t2p-chardock-list::-webkit-scrollbar-thumb{background:var(--line);border-radius:10px;}
 
-.t2p-chardock-item{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:11px;cursor:pointer;}
-.t2p-chardock-item-top{display:flex;align-items:center;gap:8px;}
-.t2p-chardock-item-avatar{flex-shrink:0;width:30px;height:30px;border-radius:50%;background:linear-gradient(145deg, var(--forest-glow), var(--violet));color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12.5px;}
-.t2p-chardock-item-name{flex:1;min-width:0;font-weight:700;font-size:13.5px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.t2p-chardock-item{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:13px;cursor:pointer;transition:border-color .15s ease,box-shadow .15s ease;}
+.t2p-chardock-item:hover{border-color:color-mix(in srgb, var(--primary) 35%, var(--line));box-shadow:0 6px 16px -8px color-mix(in srgb, var(--primary) 25%, transparent);}
+.t2p-chardock-item-top{display:flex;align-items:center;gap:10px;}
+.t2p-chardock-item-avatar{flex-shrink:0;width:32px;height:32px;border-radius:50%;background:linear-gradient(145deg, var(--forest-glow), var(--violet));color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;box-shadow:0 4px 10px -4px color-mix(in srgb, var(--violet) 55%, transparent);}
+.t2p-chardock-item-name{flex:1;min-width:0;font-weight:700;font-size:14px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .t2p-chardock-item-chevron{flex-shrink:0;color:var(--ink-faint);transition:transform .18s ease;}
 .t2p-chardock-item.open .t2p-chardock-item-chevron{transform:rotate(90deg);}
-.t2p-chardock-item-desc{margin-top:8px;}
-.t2p-chardock-item-desc textarea{display:block;width:100%;padding:9px 10px;border-radius:9px;border:1px solid var(--line);font-size:12.5px;line-height:1.5;background:var(--card);outline:none;resize:vertical;min-height:70px;font-family:inherit;}
-.t2p-chardock-item-hint{display:block;font-size:10.5px;color:var(--ink-faint);margin-top:5px;}
-.t2p-chardock-item-badge{display:inline-block;margin-top:6px;font-size:9.5px;font-weight:700;color:#B45309;background:rgba(217,119,6,0.12);border-radius:20px;padding:2px 8px;}
-.t2p-chardock-extra-heading{font-size:11px;font-weight:700;color:var(--ink-soft);margin:16px 0 8px;padding-top:14px;border-top:1px dashed var(--line);}
+.t2p-chardock-item-desc{margin-top:10px;}
+.t2p-chardock-item-desc textarea{display:block;width:100%;padding:10px 11px;border-radius:10px;border:1.5px solid var(--line);font-size:12.5px;line-height:1.6;background:var(--card);outline:none;resize:vertical;min-height:76px;font-family:inherit;color:var(--ink);transition:border-color .15s ease,box-shadow .15s ease;scrollbar-width:thin;}
+.t2p-chardock-item-desc textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px color-mix(in srgb, var(--primary) 14%, transparent);}
+.t2p-chardock-item-desc textarea::-webkit-scrollbar{width:6px;}
+.t2p-chardock-item-desc textarea::-webkit-scrollbar-track{background:transparent;}
+.t2p-chardock-item-desc textarea::-webkit-scrollbar-thumb{background:var(--line);border-radius:10px;}
+.t2p-chardock-item-hint{display:block;font-size:11px;color:var(--ink-faint);margin-top:7px;line-height:1.5;}
+.t2p-chardock-item-badge{display:inline-block;margin-top:8px;font-size:10px;font-weight:700;color:#B45309;background:rgba(217,119,6,0.12);border-radius:20px;padding:3px 9px;}
+.t2p-chardock-extra-heading{font-size:11.5px;font-weight:700;color:var(--ink-soft);margin:18px 0 9px;padding-top:16px;border-top:1px dashed var(--line);}
 .t2p-seo-box{margin-top:4px;}
 .t2p-seo-field{margin-bottom:12px;}
 .t2p-seo-field label{display:block;font-size:10.5px;font-weight:700;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.02em;margin-bottom:4px;}
@@ -16789,9 +16835,6 @@ html.dark-mode .bd-row-close{
       </div>
 
       <div class="lap-filter-card t2p-page-body-rest">
-        <p class="t2p-section-sub" style="margin-top:0;">Tempelkan naskah cerita Anda, lengkapi data karakter, lalu atur opsi take. Tool ini akan menyusun <b>prompt video per-take</b> secara konsisten -- karakter full body terkunci, posisi bicara natural, adegan kendaraan realistis, dan transisi antar-take yang mulus -- sehingga siap langsung digunakan pada tool video-gen pilihan Anda.</p>
-
-
         <div class="t2p-section">
           <div class="t2p-auto-card">
             <div class="t2p-auto-card-title"><span aria-hidden="true">✦</span> Naskah Otomatis</div>
@@ -16808,30 +16851,29 @@ html.dark-mode .bd-row-close{
         </div>
 
         <div class="t2p-section">
-          <div class="t2p-section-title">⚙️ Opsi Sebelum Generate</div>
+          <div class="t2p-section-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="t2p-section-title-ic" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> Opsi Sebelum Generate</div>
           <div class="t2p-opts-pillrow" id="t2pOptsPillRow">
             <label class="t2p-opt-pill t2p-opt-pill--num">
-              <span class="t2p-opt-pill-ic" aria-hidden="true">🎬</span>
+              <span class="t2p-opt-pill-ic" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5V19a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V8.5H3Z"/><path d="M3 8.5 4.4 4h3.2L6.2 8.5"/><path d="M9.8 8.5 11.2 4h3.2l-1.4 4.5"/><path d="M16.6 8.5 18 4h2a1 1 0 0 1 1 1v3.5"/></svg></span>
               <input type="number" id="t2pTakeCount" min="1" max="30" step="1" value="6" aria-label="Jumlah Take">
               <span class="t2p-opt-pill-suffix">take</span>
             </label>
             <label class="t2p-opt-pill t2p-opt-pill--num">
-              <span class="t2p-opt-pill-ic" aria-hidden="true">⏱️</span>
+              <span class="t2p-opt-pill-ic" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5"/><path d="M9 2h6"/><path d="M12 2v3"/></svg></span>
               <input type="number" id="t2pTakeDuration" min="2" max="60" step="1" value="8" aria-label="Durasi per Take (detik)">
               <span class="t2p-opt-pill-suffix">detik</span>
             </label>
             <label class="t2p-opt-pill t2p-opt-pill--toggle" title="Sertakan Dialog: teks dialog terpisah per take, siap dipakai utk subtitle">
               <input type="checkbox" id="t2pOptSubtitle" checked style="display:none;">
-              <span class="t2p-opt-pill-ic" aria-hidden="true">💬</span><span>Dialog</span>
+              <span class="t2p-opt-pill-check" aria-hidden="true"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg></span><span>Dialog</span>
             </label>
-            <label class="t2p-opt-pill t2p-opt-pill--toggle" title="Bahasa Indonesia">
-              <input type="checkbox" id="t2pLangId" checked style="display:none;">
-              <span class="t2p-opt-pill-ic" aria-hidden="true">🇮🇩</span><span>ID</span>
-            </label>
-            <label class="t2p-opt-pill t2p-opt-pill--toggle" title="Bahasa Inggris">
-              <input type="checkbox" id="t2pLangEn" style="display:none;">
-              <span class="t2p-opt-pill-ic" aria-hidden="true">🇬🇧</span><span>EN</span>
-            </label>
+            <div class="t2p-lang-switch" id="t2pLangSwitch" title="Bahasa Output Video">
+              <input type="radio" name="t2pLang" id="t2pLangId" checked style="display:none;">
+              <label class="t2p-lang-switch-opt" for="t2pLangId"><span aria-hidden="true">🇮🇩</span><span>ID</span></label>
+              <input type="radio" name="t2pLang" id="t2pLangEn" style="display:none;">
+              <label class="t2p-lang-switch-opt" for="t2pLangEn"><span aria-hidden="true">🇬🇧</span><span>EN</span></label>
+              <span class="t2p-lang-switch-thumb" aria-hidden="true"></span>
+            </div>
           </div>
         </div>
 
@@ -16889,7 +16931,7 @@ html.dark-mode .bd-row-close{
       <div class="t2p-chardock-panel" id="t2pCharDockPanel">
         <div class="t2p-chardock-head">
           <div>
-            <h4>👤 Karakter</h4>
+            <h4><span class="t2p-chardock-head-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg></span> Karakter</h4>
             <p>Isi ciri fisik SELENGKAP mungkin -- teks ini diulang persis di tiap take supaya wujud karakternya konsisten (kunci karakter full body).</p>
           </div>
           <button type="button" class="t2p-chardock-close" id="t2pCharDockCloseBtn" aria-label="Tutup panel karakter">
