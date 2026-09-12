@@ -11383,7 +11383,7 @@ document.getElementById('t2pKeyFileInput')?.addEventListener('change', (e) => {
 const T2P_TAKE_PROPS = {
   take: { type: 'integer' },
   location: { type: 'string' },
-  characters: { type: 'array', items: { type: 'string' } },
+  characters: { type: 'array', items: { type: 'string' }, description: 'HANYA nama singkat tiap karakter yang muncul di take ini (mis. "Bram", "Sari") -- JANGAN sertakan deskripsi fisik, pakaian, atau narasi apapun di sini, itu semua taruh di field prompt.' },
   prompt: { type: 'string' },
   continuity_note: { type: 'string' },
   subtitle: { type: 'string' },
@@ -11516,7 +11516,7 @@ DAFTAR KARAKTER (WAJIB DIKUNCI FULL BODY):
 ${charBlock}
 
 ATURAN WAJIB (supaya hasil videonya konsisten & tidak berantakan):
-1. KUNCI IDENTITAS FISIK: setiap kali karakter di atas muncul di suatu take, ulangi PERSIS ciri fisik tubuhnya (wajah, tinggi/postur, warna kulit, model & warna rambut) -- jangan pernah mengubah/menyingkat ciri fisik ini antar take, supaya wujud/identitas karakter identik di semua take.
+1. KUNCI IDENTITAS FISIK: setiap kali karakter di atas muncul di suatu take, ulangi PERSIS ciri fisik tubuhnya (wajah, tinggi/postur, warna kulit, model & warna rambut) di DALAM TEKS FIELD "prompt" -- jangan pernah mengubah/menyingkat ciri fisik ini antar take, supaya wujud/identitas karakter identik di semua take. (Field "characters" HANYA berisi nama singkat, bukan deskripsi -- lihat FORMAT OUTPUT.)
 1b. KOSTUM/PAKAIAN MENGIKUTI NASKAH: pakaian karakter BOLEH berubah kalau naskah memang menceritakan pergantian baju/kostum (mis. pulang kerja -> mandi -> ganti baju rumah/piyama). Begitu sebuah kostum baru dipakai sesuai momen di naskah, kostum itu WAJIB dikunci & diulang identik (warna, model, detail) di take-take berikutnya sampai naskah menyebutkan pergantian lagi. Jangan mengganti kostum tanpa alasan jelas dari naskah, dan jangan biarkan kostum berubah-ubah sendiri secara acak antar take.
 2. POSISI SAAT BERBICARA: kalau ada 2+ karakter mengobrol dalam satu take, jelaskan blocking spasial secara eksplisit (siapa berdiri/duduk di sisi kiri, siapa di sisi kanan, saling berhadapan, arah pandang, framing kamera medium/close-up) supaya lawan bicara TIDAK muncul aneh di belakang atau di samping tubuh karakter utama -- posisi awal adegan bicara harus jelas dan wajar sejak frame pertama.
 3. ADEGAN KENDARAAN: kalau ada adegan naik/turun mobil atau motor, jelaskan eksplisit arah bukaan pintu yang benar & sisi masuk yang wajar (bukan terbalik), serta gerak kendaraan yang realistis (roda berputar sesuai arah jalan, kecepatan wajar, tidak "meluncur" tidak natural) saat datang maupun pergi.
@@ -11573,7 +11573,7 @@ ${state.story || '(kosong -- lanjutkan alur secara wajar berdasarkan karakter & 
 CATATAN TAMBAHAN DARI USER: ${state.worldNote || '(tidak ada)'}
 
 ATURAN WAJIB (sama seperti take-take sebelumnya):
-1. KUNCI IDENTITAS FISIK: ulangi PERSIS ciri fisik tubuh (wajah, tinggi/postur, warna kulit, model & warna rambut) tiap karakter yang muncul di take baru ini -- harus identik dgn take-take sebelumnya.
+1. KUNCI IDENTITAS FISIK: ulangi PERSIS ciri fisik tubuh (wajah, tinggi/postur, warna kulit, model & warna rambut) tiap karakter yang muncul di take baru ini di DALAM TEKS FIELD "prompt" -- harus identik dgn take-take sebelumnya. (Field "characters" HANYA nama singkat, bukan deskripsi.)
 1b. KOSTUM/PAKAIAN MENGIKUTI NASKAH: cek TAKE TERAKHIR di bawah -- kalau di take baru ini karakter masih dalam adegan/momen yang sama (belum ada momen ganti baju di naskah), pakai kostum yang SAMA PERSIS seperti take terakhir. Kalau naskah memang menceritakan pergantian baju di titik ini (mis. selesai mandi, ganti seragam, dll), baru boleh ganti kostum sesuai naskah -- lalu kostum baru itu jadi acuan yang harus dikunci lagi di take-take setelahnya.
 2. POSISI SAAT BERBICARA: kalau ada 2+ karakter mengobrol, jelaskan blocking spasial eksplisit (kiri/kanan, saling berhadapan, framing kamera).
 3. ADEGAN KENDARAAN: kalau ada adegan naik/turun mobil/motor, jelaskan arah pintu & sisi masuk yang benar, gerak kendaraan realistis.
@@ -11610,14 +11610,15 @@ function t2pRenderTakes() {
     const copied = !!t._t2pCopied;
     const card = document.createElement('div');
     card.className = 't2p-take-card' + (copied ? ' t2p-take-card--copied' : '');
-    const chars = Array.isArray(t.characters) ? t.characters.join(', ') : '';
+    const chars = Array.isArray(t.characters) ? t.characters : [];
+    const charsHtml = chars.map((n) => `<button type="button" class="t2p-take-char-chip" onclick="t2pOpenCharDock()">${n}</button>`).join('');
     card.innerHTML =
       `<div class="t2p-take-head">
         <span class="t2p-take-badge">Take ${t.take}</span>
         <span class="t2p-take-copied-tag" style="display:${copied ? '' : 'none'};">✓ Disalin</span>
         <span class="t2p-take-meta">📍 ${(t.location || '-')} &middot; ${document.getElementById('t2pTakeDuration')?.value || ''}s</span>
       </div>
-      ${chars ? `<div class="t2p-take-chars">👤 Karakter: <b>${chars}</b></div>` : ''}
+      ${chars.length ? `<div class="t2p-take-chars">👤 Karakter: ${charsHtml}</div>` : ''}
       <label class="t2p-take-prompt-label">Prompt Video</label>
       <textarea class="t2p-take-prompt" rows="6">${t.prompt || ''}</textarea>
       ${t.subtitle ? `<div class="t2p-take-sub"><label>Subtitle</label><textarea rows="2">${t.subtitle}</textarea></div>` : ''}
@@ -11723,6 +11724,19 @@ function t2pCollectFormCharNames() {
     .filter(Boolean);
 }
 
+// Sama seperti t2pCollectFormCharNames tapi ikut ambil deskripsinya --
+// dipakai supaya panel dock bisa menampilkan SEMUA karakter (form +
+// temuan otomatis) sebagai referensi cepat, bukan cuma yang belum
+// ada di form.
+function t2pCollectFormCharsWithDesc() {
+  return [...document.querySelectorAll('#t2pCharList .t2p-char-row')]
+    .map((row) => ({
+      name: (row.querySelector('.t2p-char-name')?.value || '').trim(),
+      desc: (row.querySelector('.t2p-char-desc')?.value || '').trim(),
+    }))
+    .filter((c) => c.name);
+}
+
 // Karakter yang MUNCUL di hasil generate (t2pAllTakes) tapi TIDAK ada
 // di form #t2pCharList -- misal Gemini menemukan/menambah tokoh dari
 // naskah yang belum sempat diisi manual. Karakter yang SUDAH ada di
@@ -11752,11 +11766,38 @@ function t2pRenderCharDock() {
   // bisa diisi lewat panel ini, jadi tab-nya tidak boleh disembunyikan
   // hanya karena belum pernah generate).
   tab.classList.add('show');
-  const formNames = t2pCollectFormCharNames();
+  const formChars = t2pCollectFormCharsWithDesc();
+  const formNames = formChars.map((c) => c.name);
   const extra = t2pCollectExtraCharacters();
   const totalCount = new Set([...formNames.map((n) => n.toLowerCase()), ...extra.map((c) => c.key)]).size;
   if (countEl) countEl.textContent = String(totalCount);
   listEl.innerHTML = '';
+  if (!formChars.length && !extra.length) return;
+  // Karakter yang sudah diisi lewat form "+ Tambah Karakter" --
+  // ditampilkan sbg referensi cepat (baca saja) di panel ini juga,
+  // supaya klik nama karakter di kartu take manapun SELALU membawa ke
+  // info lengkap, bukan cuma utk tokoh temuan otomatis.
+  if (formChars.length) {
+    const headingForm = document.createElement('p');
+    headingForm.className = 't2p-chardock-extra-heading';
+    headingForm.textContent = 'Dari form Karakter:';
+    listEl.appendChild(headingForm);
+    formChars.forEach((c) => {
+      const item = document.createElement('div');
+      item.className = 't2p-chardock-item';
+      const initial = (c.name.trim()[0] || '?').toUpperCase();
+      item.innerHTML =
+        `<div class="t2p-chardock-item-top">
+          <span class="t2p-chardock-item-avatar">${initial}</span>
+          <span class="t2p-chardock-item-name">${c.name}</span>
+        </div>
+        <div class="t2p-chardock-item-desc">
+          <p class="t2p-chardock-item-readonly">${c.desc || '(deskripsi belum diisi -- lengkapi lewat form Karakter di atas)'}</p>
+          <p class="t2p-chardock-item-hint">Diisi lewat form Karakter -- edit langsung di sana, bukan di sini.</p>
+        </div>`;
+      listEl.appendChild(item);
+    });
+  }
   if (!extra.length) return;
   const heading = document.createElement('p');
   heading.className = 't2p-chardock-extra-heading';
@@ -11774,11 +11815,28 @@ function t2pRenderCharDock() {
       <div class="t2p-chardock-item-desc">
         <textarea rows="3" placeholder="Ciri fisik lengkap (full body) belum diisi...">${c.desc}</textarea>
         <div class="t2p-chardock-item-badge">Dari naskah -- belum ada di form Karakter</div>
-        <p class="t2p-chardock-item-hint">Perubahan otomatis tersimpan &amp; dipakai saat kamu generate ulang.</p>
+        <div class="t2p-chardock-item-editbar" style="display:none;">
+          <button type="button" class="t2p-chardock-apply-btn">✓ Terapkan</button>
+          <button type="button" class="t2p-chardock-cancel-btn">Batal</button>
+        </div>
+        <p class="t2p-chardock-item-hint">Perubahan dipakai saat kamu generate ulang atau tambah segmen -- TIDAK mengubah take yang sudah jadi sekarang.</p>
       </div>`;
     const textarea = item.querySelector('textarea');
-    textarea.addEventListener('change', () => {
+    const editbar = item.querySelector('.t2p-chardock-item-editbar');
+    const applyBtn = item.querySelector('.t2p-chardock-apply-btn');
+    const cancelBtn = item.querySelector('.t2p-chardock-cancel-btn');
+    const original = c.desc;
+    textarea.addEventListener('input', () => {
+      editbar.style.display = (textarea.value !== (t2pDockExtraDesc[c.key] || original)) ? 'flex' : 'none';
+    });
+    applyBtn.addEventListener('click', () => {
       t2pDockExtraDesc[c.key] = textarea.value;
+      editbar.style.display = 'none';
+      showToast('Deskripsi tersimpan -- dipakai saat generate ulang / tambah segmen berikutnya.');
+    });
+    cancelBtn.addEventListener('click', () => {
+      textarea.value = t2pDockExtraDesc[c.key] || original;
+      editbar.style.display = 'none';
     });
     listEl.appendChild(item);
   });

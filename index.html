@@ -14908,11 +14908,18 @@ html.dark-mode .bd-row-close{
 
 .t2p-locked-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:#7C3AED;background:rgba(124,58,237,0.1);border-radius:20px;padding:5px 11px;margin-bottom:10px;}
 
-.t2p-generate-btn{width:100%;padding:13px;border-radius:12px;border:none;background:var(--primary);color:#fff;font-weight:700;font-size:14.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;}
-.t2p-generate-btn:disabled{opacity:0.6;cursor:default;}
-.t2p-spin{width:15px;height:15px;border-radius:50%;border:2px solid rgba(255,255,255,0.4);border-top-color:#fff;animation:t2pspin 0.7s linear infinite;display:none;}
-.t2p-generate-btn.loading .t2p-spin{display:inline-block;}
-@keyframes t2pspin{to{transform:rotate(360deg);}}
+.t2p-generate-btn{width:100%;padding:13px;border-radius:12px;border:none;background:var(--primary);color:#fff;font-weight:700;font-size:14.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:background-position 0.2s;}
+.t2p-generate-btn:disabled{cursor:default;}
+.t2p-generate-btn.loading{background:linear-gradient(100deg,var(--primary) 0%,var(--primary) 35%,#8fe0b8 50%,var(--primary) 65%,var(--primary) 100%);background-size:220% 100%;animation:t2pshimmer 1.6s ease-in-out infinite;}
+.t2p-dots{display:none;align-items:center;gap:5px;}
+.t2p-generate-btn.loading .t2p-dots{display:inline-flex;}
+.t2p-dots span{width:6px;height:6px;border-radius:50%;background:#fff;animation:t2pbounce 1.1s ease-in-out infinite;}
+.t2p-dots span:nth-child(2){animation-delay:0.15s;}
+.t2p-dots span:nth-child(3){animation-delay:0.3s;}
+@keyframes t2pbounce{0%,60%,100%{transform:scale(0.55);opacity:0.35;}30%{transform:scale(1);opacity:1;}}
+@keyframes t2pshimmer{0%{background-position:0% 50%;}100%{background-position:-220% 50%;}}
+.t2p-generate-btn.loading #t2pGenerateBtnLabel{animation:t2pfade 1.6s ease-in-out infinite;}
+@keyframes t2pfade{0%,100%{opacity:0.7;}50%{opacity:1;}}
 
 .t2p-empty-hint{text-align:center;color:var(--ink-soft);font-size:12.5px;padding:18px 8px;}
 
@@ -14926,8 +14933,14 @@ html.dark-mode .bd-row-close{
 .t2p-take-badge{font-size:12px;font-weight:800;letter-spacing:.2px;color:#fff;background:var(--primary);border-radius:20px;padding:5px 12px;}
 .t2p-take-copied-tag{font-size:10.5px;font-weight:700;color:#059669;background:rgba(5,150,105,0.12);border-radius:20px;padding:4px 10px;}
 .t2p-take-meta{font-size:12px;font-weight:600;color:var(--ink-soft);margin-left:auto;white-space:nowrap;}
-.t2p-take-chars{display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--ink-soft);margin-bottom:10px;padding-bottom:10px;border-bottom:1px dashed var(--line);}
+.t2p-take-chars{display:flex;align-items:center;flex-wrap:wrap;gap:6px;font-size:12px;font-weight:600;color:var(--ink-soft);margin-bottom:10px;padding-bottom:10px;border-bottom:1px dashed var(--line);}
 .t2p-take-chars b{color:var(--ink);font-weight:700;}
+.t2p-take-char-chip{border:1px solid var(--line);background:var(--paper);color:var(--ink);font-weight:700;font-size:12px;padding:3px 10px;border-radius:20px;cursor:pointer;}
+.t2p-take-char-chip:hover{border-color:var(--primary);color:var(--primary);}
+.t2p-chardock-item-readonly{font-size:12px;color:var(--ink-soft);line-height:1.5;margin:0 0 6px;}
+.t2p-chardock-item-editbar{display:flex;gap:8px;margin:8px 0;}
+.t2p-chardock-apply-btn{flex:1;border:none;background:var(--primary);color:#fff;font-weight:700;font-size:12px;padding:7px 0;border-radius:8px;cursor:pointer;}
+.t2p-chardock-cancel-btn{flex:1;border:1px solid var(--line);background:var(--paper);color:var(--ink-soft);font-weight:700;font-size:12px;padding:7px 0;border-radius:8px;cursor:pointer;}
 .t2p-take-prompt-label{display:block;font-size:10.5px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;color:var(--ink-faint);margin-bottom:5px;}
 .t2p-take-prompt{width:100%;padding:11px 12px;border-radius:11px;border:1px solid var(--line);font-size:13.5px;line-height:1.6;color:var(--ink);background:var(--paper);outline:none;resize:vertical;min-height:120px;font-family:inherit;margin-bottom:9px;}
 .t2p-take-prompt:focus{border-color:var(--forest-glow);background:var(--card);}
@@ -16713,7 +16726,7 @@ html.dark-mode .bd-row-close{
         <div class="t2p-section" style="border-bottom:none;padding-bottom:0;">
           <span class="t2p-locked-badge">🔒 Karakter full body terkunci &amp; lokasi otomatis per take</span>
           <button type="button" class="t2p-generate-btn" id="t2pGenerateBtn">
-            <span class="t2p-spin"></span>
+            <span class="t2p-dots"><span></span><span></span><span></span></span>
             <span id="t2pGenerateBtnLabel">Generate Prompt</span>
           </button>
 
