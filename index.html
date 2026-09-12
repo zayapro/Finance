@@ -15079,11 +15079,11 @@ html.dark-mode .bd-row-close{
    itu tetap bisa menutupi tab/panel ini kalau kebetulan dibuka bareng. */
 .t2p-chardock-tab{
   position:fixed;right:max(0px, calc(50vw - 320px));top:64%;transform:translate(0,-50%);
-  z-index:705;display:none;flex-direction:column;align-items:center;gap:9px;
-  padding:14px 11px 15px;border:none;border-radius:18px 0 0 18px;cursor:pointer;
+  z-index:705;display:none;flex-direction:column;align-items:center;gap:6px;
+  padding:10px 8px 11px;border:none;border-radius:16px 0 0 16px;cursor:pointer;
   background:linear-gradient(165deg, var(--primary) 0%, var(--primary-deep) 55%, var(--violet) 130%);
   color:#fff;
-  box-shadow:-8px 8px 22px -8px rgba(194,65,12,.45), -2px 4px 10px rgba(15,23,42,.18);
+  box-shadow:-6px 6px 16px -8px rgba(194,65,12,.45), -2px 3px 8px rgba(15,23,42,.18);
   transition:transform .22s ease, box-shadow .22s ease, right .2s ease;
 }
 /* ---- Ukuran & posisi mobile vs desktop: di HP, tab nempel pas di
@@ -15096,30 +15096,33 @@ html.dark-mode .bd-row-close{
    selebar 640px di tengah. Rumus right:max(0px, calc(50vw - 320px))
    otomatis menggeser tab supaya tetap nempel di tepi kanan KARTU
    640px itu (320px = separuh dari 640px), bukan di tepi kanan
-   monitor -- terlihat menyatu di ukuran layar manapun. Tab & panel
-   juga dibuat sedikit lebih besar/lega di layar lebar (>820px) supaya
-   proporsinya pas dgn kartu 640px yang lebih besar drpd di HP, tidak
-   kelihatan mungil sendirian di tengah area kosong. ---- */
+   monitor -- terlihat menyatu di ukuran layar manapun.
+   UKURAN: PERMINTAAN TERBARU -- tab dibuat lebih RAMPING/kecil drpd
+   versi sebelumnya (padding, ikon, font semua diciutkan) supaya lebih
+   pas & tidak kebesaran/mendominasi tepi layar di HP. Di layar lebar
+   (>820px) tetap dinaikkan sedikit drpd versi HP-nya (bukan sebesar
+   versi lama) supaya proporsinya tetap wajar dgn kartu 640px yg lebih
+   besar drpd HP, tapi tidak sebesar sebelumnya. ---- */
 @media (min-width:821px){
-  .t2p-chardock-tab{padding:17px 13px 18px;gap:10px;}
-  .t2p-chardock-tab-ic{width:25px;height:25px;}
-  .t2p-chardock-tab-label{font-size:13.5px;}
-  .t2p-chardock-tab-count{font-size:11.5px;padding:3px 9px;}
+  .t2p-chardock-tab{padding:12px 9px 13px;gap:7px;}
+  .t2p-chardock-tab-ic{width:19px;height:19px;}
+  .t2p-chardock-tab-label{font-size:11.5px;}
+  .t2p-chardock-tab-count{font-size:10px;padding:2px 7px;}
 }
 .t2p-chardock-tab.show{display:flex;animation:t2pDockPop .32s ease;}
 .t2p-chardock-tab:hover,
-.t2p-chardock-tab:focus-visible{transform:translate(-4px,-50%);box-shadow:-10px 10px 26px -8px rgba(194,65,12,.55), -2px 4px 12px rgba(15,23,42,.22);}
+.t2p-chardock-tab:focus-visible{transform:translate(-4px,-50%);box-shadow:-8px 8px 20px -8px rgba(194,65,12,.55), -2px 4px 10px rgba(15,23,42,.22);}
 .t2p-chardock-tab:active{transform:translate(-4px,-50%) scale(0.97);}
-.t2p-chardock-tab-ic{width:22px;height:22px;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.t2p-chardock-tab-ic{width:17px;height:17px;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
 .t2p-chardock-tab-ic svg{width:100%;height:100%;display:block;filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.2));}
 .t2p-chardock-tab-label{
   writing-mode:vertical-rl;transform:rotate(180deg);
-  font-size:12px;font-weight:800;letter-spacing:.5px;white-space:nowrap;
+  font-size:10.5px;font-weight:800;letter-spacing:.3px;white-space:nowrap;
   text-shadow:0 1px 2px rgba(0,0,0,.15);
 }
 .t2p-chardock-tab-count{
-  flex-shrink:0;font-size:10.5px;font-weight:800;color:var(--primary-deep);
-  background:#fff;border-radius:20px;padding:2px 8px;min-width:18px;text-align:center;
+  flex-shrink:0;font-size:9.5px;font-weight:800;color:var(--primary-deep);
+  background:#fff;border-radius:20px;padding:1.5px 7px;min-width:15px;text-align:center;
   box-shadow:0 1px 3px rgba(0,0,0,.15);
 }
 @keyframes t2pDockPop{0%{transform:translate(60px,-50%);opacity:0;}100%{transform:translate(0,-50%);opacity:1;}}

@@ -11406,11 +11406,35 @@ const T2P_TAKE_PROPS = {
   take: { type: 'integer' },
   location: { type: 'string' },
   characters: { type: 'array', items: { type: 'string' }, description: 'HANYA nama singkat tiap karakter yang muncul di take ini (mis. "Bram", "Sari") -- JANGAN sertakan deskripsi fisik, pakaian, atau narasi apapun di sini, itu semua taruh di field prompt.' },
+  // FIX "kotak deskripsi karakter di panel Kunci Konsistensi selalu
+  // kosong": sebelumnya field "characters" di atas SENGAJA cuma nama
+  // singkat (tanpa deskripsi), jadi panel #t2pCharDockPanel tidak
+  // punya sumber data apapun utk mengisi otomatis kotak deskripsi
+  // karakter yang terdeteksi dari naskah (yg belum ada di form
+  // Karakter) -- makanya selalu kosong nunggu diisi manual. Field
+  // BARU ini isinya deskripsi full-body PERSIS SAMA seperti yang
+  // dipakai Gemini di teks "prompt" take ini (lihat aturan wajib no.1)
+  // utk SETIAP nama yang ada di "characters" -- termasuk karakter yg
+  // sudah didefinisikan user (nilainya akan sama dgn input) MAUPUN yg
+  // baru ditemukan Gemini sendiri dari naskah. Dipakai t2pCollectExtraCharacters()
+  // utk auto-isi kotak deskripsi (masih bisa diedit manual oleh user).
+  character_descriptions: {
+    type: 'array',
+    items: {
+      type: 'object',
+      properties: {
+        name: { type: 'string' },
+        description: { type: 'string' },
+      },
+      required: ['name', 'description'],
+    },
+    description: 'Utk SETIAP nama di field "characters" di atas, sertakan satu entri {name, description} di sini -- "description" WAJIB diisi deskripsi fisik full-body PERSIS SAMA (kata demi kata) dengan yang kamu tulis di dalam field "prompt" utk karakter tsb (wajah, tinggi/postur, warna kulit, model & warna rambut, pakaian saat ini). Jangan dikosongkan.',
+  },
   prompt: { type: 'string' },
   continuity_note: { type: 'string' },
   subtitle: { type: 'string' },
 };
-const T2P_TAKE_REQUIRED = ['take', 'location', 'characters', 'prompt', 'continuity_note', 'subtitle'];
+const T2P_TAKE_REQUIRED = ['take', 'location', 'characters', 'character_descriptions', 'prompt', 'continuity_note', 'subtitle'];
 const T2P_ARRAY_SCHEMA = { type: 'array', items: { type: 'object', properties: T2P_TAKE_PROPS, required: T2P_TAKE_REQUIRED } };
 const T2P_OBJECT_SCHEMA = { type: 'object', properties: T2P_TAKE_PROPS, required: T2P_TAKE_REQUIRED };
 
@@ -11539,6 +11563,7 @@ ${charBlock}
 
 ATURAN WAJIB (supaya hasil videonya konsisten & tidak berantakan):
 1. KUNCI IDENTITAS FISIK: setiap kali karakter di atas muncul di suatu take, ulangi PERSIS ciri fisik tubuhnya (wajah, tinggi/postur, warna kulit, model & warna rambut) di DALAM TEKS FIELD "prompt" -- jangan pernah mengubah/menyingkat ciri fisik ini antar take, supaya wujud/identitas karakter identik di semua take. (Field "characters" HANYA berisi nama singkat, bukan deskripsi -- lihat FORMAT OUTPUT.)
+1a. Field "character_descriptions" WAJIB diisi utk SETIAP nama yang ada di "characters" pada take ini -- isinya deskripsi fisik full-body yang PERSIS SAMA (kata demi kata) dengan yang kamu tulis di field "prompt" utk karakter tsb. Ini dipakai aplikasi utk menampilkan ringkasan konsistensi karakter ke user, jadi jangan dikosongkan atau disingkat.
 1b. KOSTUM/PAKAIAN MENGIKUTI NASKAH: pakaian karakter BOLEH berubah kalau naskah memang menceritakan pergantian baju/kostum (mis. pulang kerja -> mandi -> ganti baju rumah/piyama). Begitu sebuah kostum baru dipakai sesuai momen di naskah, kostum itu WAJIB dikunci & diulang identik (warna, model, detail) di take-take berikutnya sampai naskah menyebutkan pergantian lagi. Jangan mengganti kostum tanpa alasan jelas dari naskah, dan jangan biarkan kostum berubah-ubah sendiri secara acak antar take.
 1c. KUNCI GAYA BICARA: tiap karakter WAJIB punya gaya bicara yang konsisten di semua take dia muncul -- tingkat formalitas (baku/santai/kasar), pilihan kata & ciri khas ucapan (mis. suka pakai panggilan tertentu, logat, kebiasaan bicara) tidak boleh berubah-ubah tanpa alasan dari naskah. Kalau naskah tidak menentukan gaya bicara karakter, tentukan sendiri gaya yang wajar & konsisten sejak take pertama dia bicara, lalu pertahankan.
 2. POSISI SAAT BERBICARA: kalau ada 2+ karakter mengobrol dalam satu take, jelaskan blocking spasial secara eksplisit (siapa berdiri/duduk di sisi kiri, siapa di sisi kanan, saling berhadapan, arah pandang, framing kamera medium/close-up) supaya lawan bicara TIDAK muncul aneh di belakang atau di samping tubuh karakter utama -- posisi awal adegan bicara harus jelas dan wajar sejak frame pertama.
@@ -11558,7 +11583,7 @@ ${state.story || '(kosong -- kalau naskah kosong, karang cerita drama pendek yan
 """
 
 FORMAT OUTPUT: balas HANYA dengan JSON valid (tanpa markdown/backtick/teks lain), berbentuk array dengan TEPAT ${state.takeCount} elemen, tiap elemen berstruktur persis:
-{"take": <nomor take, mulai 1>, "location": "<lokasi/setting take ini>", "characters": ["<nama karakter yang muncul di take ini>"], "prompt": "<prompt video lengkap & detail siap pakai, termasuk deskripsi full body tiap karakter yang muncul, blocking posisi, gerak kamera, aksi, pencahayaan>", "continuity_note": "<catatan sambungan dari take sebelumnya, kosongkan string untuk take 1>", "subtitle": "<dialog/narasi take ini, sesuai aturan no.7>"}`;
+{"take": <nomor take, mulai 1>, "location": "<lokasi/setting take ini>", "characters": ["<nama karakter yang muncul di take ini>"], "character_descriptions": [{"name": "<nama, cocok dgn salah satu di characters>", "description": "<deskripsi fisik full-body persis sama dgn di prompt>"}], "prompt": "<prompt video lengkap & detail siap pakai, termasuk deskripsi full body tiap karakter yang muncul, blocking posisi, gerak kamera, aksi, pencahayaan>", "continuity_note": "<catatan sambungan dari take sebelumnya, kosongkan string untuk take 1>", "subtitle": "<dialog/narasi take ini, sesuai aturan no.7>"}`;
 }
 
 /* ---------- Prompt utk fitur "+ Segmen Berikutnya" -- beda dari
@@ -11599,6 +11624,7 @@ CATATAN TAMBAHAN DARI USER: ${state.worldNote || '(tidak ada)'}
 
 ATURAN WAJIB (sama seperti take-take sebelumnya):
 1. KUNCI IDENTITAS FISIK: ulangi PERSIS ciri fisik tubuh (wajah, tinggi/postur, warna kulit, model & warna rambut) tiap karakter yang muncul di take baru ini di DALAM TEKS FIELD "prompt" -- harus identik dgn take-take sebelumnya. (Field "characters" HANYA nama singkat, bukan deskripsi.)
+1a. Field "character_descriptions" WAJIB diisi utk SETIAP nama di "characters" take ini, isinya deskripsi fisik full-body PERSIS SAMA dgn yang kamu tulis di field "prompt" -- jangan dikosongkan.
 1b. KOSTUM/PAKAIAN MENGIKUTI NASKAH: cek TAKE TERAKHIR di bawah -- kalau di take baru ini karakter masih dalam adegan/momen yang sama (belum ada momen ganti baju di naskah), pakai kostum yang SAMA PERSIS seperti take terakhir. Kalau naskah memang menceritakan pergantian baju di titik ini (mis. selesai mandi, ganti seragam, dll), baru boleh ganti kostum sesuai naskah -- lalu kostum baru itu jadi acuan yang harus dikunci lagi di take-take setelahnya.
 1c. KUNCI GAYA BICARA: lanjutkan gaya bicara tiap karakter (tingkat formalitas, ciri khas ucapan) SAMA seperti terlihat di "Dialog/subtitle take itu" pada TAKE TERAKHIR -- jangan berubah nada/gaya tanpa alasan dari naskah.
 2. POSISI SAAT BERBICARA: kalau ada 2+ karakter mengobrol, jelaskan blocking spasial eksplisit (kiri/kanan, saling berhadapan, framing kamera).
@@ -11611,7 +11637,7 @@ ${state.subtitle ? '7. Sertakan field "subtitle" berisi dialog/narasi take ini.'
 7b. FORMAT DIALOG: kalau 2+ karakter bicara di take ini, tulis "subtitle" per baris format "Nama: ucapan" (satu baris per giliran bicara) -- jangan digabung jadi satu paragraf tanpa label nama.
 
 FORMAT OUTPUT: balas HANYA dengan JSON valid (tanpa markdown/backtick/teks lain), berupa SATU OBJEK (bukan array) berstruktur persis:
-{"take": ${nextTakeNum}, "location": "<lokasi take ini>", "characters": ["<nama karakter yang muncul>"], "prompt": "<prompt video lengkap & detail siap pakai>", "continuity_note": "<catatan sambungan dari take sebelumnya>", "subtitle": "<dialog/narasi take ini>"}`;
+{"take": ${nextTakeNum}, "location": "<lokasi take ini>", "characters": ["<nama karakter yang muncul>"], "character_descriptions": [{"name": "<nama, cocok dgn salah satu di characters>", "description": "<deskripsi fisik full-body persis sama dgn di prompt>"}], "prompt": "<prompt video lengkap & detail siap pakai>", "continuity_note": "<catatan sambungan dari take sebelumnya>", "subtitle": "<dialog/narasi take ini>"}`;
 }
 
 /* ---------- Render kartu take (3 per halaman, tombol "tampilkan
@@ -11772,6 +11798,23 @@ function t2pCollectFormCharsWithDesc() {
 function t2pCollectExtraCharacters() {
   const formNames = new Set(t2pCollectFormCharNames().map((n) => n.toLowerCase()));
   const seen = new Map(); // key: nama lowercase, value: nama asli (dari take pertama muncul)
+  // FIX "kotak deskripsi selalu kosong": ambil deskripsi full-body yg
+  // Gemini kirim lewat field "character_descriptions" (lihat
+  // T2P_TAKE_PROPS) -- diambil dari kemunculan PERTAMA nama tsb yang
+  // sudah punya deskripsi tidak kosong, di take manapun. Kalau Gemini
+  // kebetulan tidak mengisi field ini (respons lama / model lain yg
+  // tidak taat skema), otomatis jatuh balik ke string kosong seperti
+  // sebelumnya -- tidak error.
+  const aiDesc = new Map(); // key: nama lowercase -> deskripsi dari AI
+  t2pAllTakes.forEach((t) => {
+    (Array.isArray(t.character_descriptions) ? t.character_descriptions : []).forEach((cd) => {
+      const name = String(cd?.name || '').trim();
+      const desc = String(cd?.description || '').trim();
+      if (!name || !desc) return;
+      const key = name.toLowerCase();
+      if (!aiDesc.has(key)) aiDesc.set(key, desc);
+    });
+  });
   t2pAllTakes.forEach((t) => {
     (Array.isArray(t.characters) ? t.characters : []).forEach((raw) => {
       const name = String(raw || '').trim();
@@ -11781,7 +11824,14 @@ function t2pCollectExtraCharacters() {
       seen.set(key, name);
     });
   });
-  return [...seen.entries()].map(([key, name]) => ({ key, name, desc: t2pDockExtraDesc[key] || '' }));
+  // Urutan prioritas isi kotak deskripsi: editan manual user di panel
+  // ini (t2pDockExtraDesc, kalau sudah pernah diisi/diubah) > saran
+  // deskripsi dari AI (aiDesc) > kosong (fallback lama).
+  return [...seen.entries()].map(([key, name]) => ({
+    key,
+    name,
+    desc: (key in t2pDockExtraDesc) ? t2pDockExtraDesc[key] : (aiDesc.get(key) || ''),
+  }));
 }
 
 function t2pRenderCharDock() {
@@ -11848,8 +11898,8 @@ function t2pRenderCharDock() {
         <span class="t2p-chardock-item-name">${c.name}</span>
       </div>
       <div class="t2p-chardock-item-desc">
-        <textarea rows="3" placeholder="Ciri fisik lengkap (full body) belum diisi...">${c.desc}</textarea>
-        <div class="t2p-chardock-item-badge">Dari naskah -- belum ada di form Karakter</div>
+        <textarea rows="3" placeholder="Ciri fisik lengkap (full body) belum diisi...">${escapeHtml(c.desc)}</textarea>
+        <div class="t2p-chardock-item-badge">${c.desc ? 'Saran deskripsi dari hasil generate -- boleh diedit' : 'Dari naskah -- belum ada di form Karakter'}</div>
         <div class="t2p-chardock-item-editbar" style="display:none;">
           <button type="button" class="t2p-chardock-apply-btn">✓ Terapkan</button>
           <button type="button" class="t2p-chardock-cancel-btn">Batal</button>
