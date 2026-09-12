@@ -11372,7 +11372,27 @@ document.getElementById('t2pKeyFileInput')?.addEventListener('change', (e) => {
 });
 
 /* ---------- Panggilan ke Gemini API dgn auto-ganti key ---------- */
-async function t2pCallGemini(promptText) {
+// FIX BUG "CONTINUITY NOTE TIDAK MUNCUL": sebelumnya panggilan Gemini
+// cuma pakai responseMimeType:'application/json' TANPA responseSchema,
+// jadi walau instruksi teks bilang field continuity_note "wajib
+// diisi", Gemini kadang tetap mengosongkan/skip field itu karena
+// tidak ada validasi struktur yang memaksa. responseSchema di bawah
+// memaksa API mengembalikan SEMUA field ini di tiap objek take,
+// termasuk continuity_note (boleh string kosong "" utk take 1, tapi
+// field-nya harus tetap ada & diisi kalau bukan take 1).
+const T2P_TAKE_PROPS = {
+  take: { type: 'integer' },
+  location: { type: 'string' },
+  characters: { type: 'array', items: { type: 'string' } },
+  prompt: { type: 'string' },
+  continuity_note: { type: 'string' },
+  subtitle: { type: 'string' },
+};
+const T2P_TAKE_REQUIRED = ['take', 'location', 'characters', 'prompt', 'continuity_note', 'subtitle'];
+const T2P_ARRAY_SCHEMA = { type: 'array', items: { type: 'object', properties: T2P_TAKE_PROPS, required: T2P_TAKE_REQUIRED } };
+const T2P_OBJECT_SCHEMA = { type: 'object', properties: T2P_TAKE_PROPS, required: T2P_TAKE_REQUIRED };
+
+async function t2pCallGemini(promptText, responseSchema) {
   const data = t2pLoadKeys();
   if (!data.keys.length) {
     throw new Error('NOKEY');
@@ -11405,7 +11425,10 @@ async function t2pCallGemini(promptText) {
           // 0.35 supaya keluarannya jauh lebih taat/konsisten, tapi
           // masih cukup longgar utk variasi aksi & framing tiap take
           // (bukan 0 yang bisa bikin hasil kaku/repetitif).
-          generationConfig: { temperature: 0.35, responseMimeType: 'application/json' },
+          generationConfig: Object.assign(
+            { temperature: 0.35, responseMimeType: 'application/json' },
+            responseSchema ? { responseSchema } : {}
+          ),
         }),
       });
       if (res.status === 429 || res.status === 403 || res.status === 400) {
@@ -11493,11 +11516,13 @@ DAFTAR KARAKTER (WAJIB DIKUNCI FULL BODY):
 ${charBlock}
 
 ATURAN WAJIB (supaya hasil videonya konsisten & tidak berantakan):
-1. KUNCI KARAKTER FULL BODY: setiap kali karakter di atas muncul di suatu take, ulangi PERSIS deskripsi fisik lengkapnya (bukan cuma nama) di dalam teks prompt take itu -- jangan pernah mengubah/menyingkat deskripsinya antar take, supaya wujud karakter identik di semua take.
+1. KUNCI IDENTITAS FISIK: setiap kali karakter di atas muncul di suatu take, ulangi PERSIS ciri fisik tubuhnya (wajah, tinggi/postur, warna kulit, model & warna rambut) -- jangan pernah mengubah/menyingkat ciri fisik ini antar take, supaya wujud/identitas karakter identik di semua take.
+1b. KOSTUM/PAKAIAN MENGIKUTI NASKAH: pakaian karakter BOLEH berubah kalau naskah memang menceritakan pergantian baju/kostum (mis. pulang kerja -> mandi -> ganti baju rumah/piyama). Begitu sebuah kostum baru dipakai sesuai momen di naskah, kostum itu WAJIB dikunci & diulang identik (warna, model, detail) di take-take berikutnya sampai naskah menyebutkan pergantian lagi. Jangan mengganti kostum tanpa alasan jelas dari naskah, dan jangan biarkan kostum berubah-ubah sendiri secara acak antar take.
 2. POSISI SAAT BERBICARA: kalau ada 2+ karakter mengobrol dalam satu take, jelaskan blocking spasial secara eksplisit (siapa berdiri/duduk di sisi kiri, siapa di sisi kanan, saling berhadapan, arah pandang, framing kamera medium/close-up) supaya lawan bicara TIDAK muncul aneh di belakang atau di samping tubuh karakter utama -- posisi awal adegan bicara harus jelas dan wajar sejak frame pertama.
 3. ADEGAN KENDARAAN: kalau ada adegan naik/turun mobil atau motor, jelaskan eksplisit arah bukaan pintu yang benar & sisi masuk yang wajar (bukan terbalik), serta gerak kendaraan yang realistis (roda berputar sesuai arah jalan, kecepatan wajar, tidak "meluncur" tidak natural) saat datang maupun pergi.
 4. SAMBUNGAN ANTAR-TAKE: kecuali take pertama, sertakan catatan "continuity_note" yang menjelaskan bahwa FRAME AWAL take ini harus sama persis dengan FRAME AKHIR take sebelumnya (posisi karakter, sudut kamera, pencahayaan, lokasi) supaya saat disambung (extend video) hasilnya mulus tanpa lompatan/bug.
 5. LOKASI: tentukan lokasi/setting tiap take mengikuti alur cerita (boleh sama atau berbeda antar take sesuai naskah), sebutkan eksplisit di field "location".
+5b. KUNCI DESKRIPSI LOKASI: begitu sebuah lokasi (mis. "kamar tidur Rani", "gang belakang toko") pertama kali dideskripsikan detail (warna dinding/tembok, pencahayaan, perabotan/elemen jalan, cuaca, waktu), deskripsi detail itu WAJIB diulang persis sama setiap kali lokasi yang SAMA muncul lagi di take lain -- jangan menulis ulang dengan detail berbeda (mis. warna dinding berubah, pencahayaan berubah tanpa alasan cerita). Kalau ceritanya memang berpindah ke lokasi BARU, baru boleh mendeskripsikan tempat baru dengan detail baru; kalau kembali lagi ke lokasi lama, pakai deskripsi lama yang sudah dikunci.
 6. Jangan menambah tokoh baru yang tidak ada hubungannya dengan naskah kecuali benar-benar diperlukan alur cerita.
 ${state.subtitle ? '7. Sertakan juga field "subtitle" berisi dialog/narasi take tsb (siap dipakai sbg teks subtitle), dalam bahasa yang sama dgn prompt.' : '7. Field "subtitle" boleh dikosongkan ("").'}
 
@@ -11548,11 +11573,13 @@ ${state.story || '(kosong -- lanjutkan alur secara wajar berdasarkan karakter & 
 CATATAN TAMBAHAN DARI USER: ${state.worldNote || '(tidak ada)'}
 
 ATURAN WAJIB (sama seperti take-take sebelumnya):
-1. KUNCI KARAKTER FULL BODY: ulangi PERSIS deskripsi fisik lengkap tiap karakter yang muncul di take baru ini.
+1. KUNCI IDENTITAS FISIK: ulangi PERSIS ciri fisik tubuh (wajah, tinggi/postur, warna kulit, model & warna rambut) tiap karakter yang muncul di take baru ini -- harus identik dgn take-take sebelumnya.
+1b. KOSTUM/PAKAIAN MENGIKUTI NASKAH: cek TAKE TERAKHIR di bawah -- kalau di take baru ini karakter masih dalam adegan/momen yang sama (belum ada momen ganti baju di naskah), pakai kostum yang SAMA PERSIS seperti take terakhir. Kalau naskah memang menceritakan pergantian baju di titik ini (mis. selesai mandi, ganti seragam, dll), baru boleh ganti kostum sesuai naskah -- lalu kostum baru itu jadi acuan yang harus dikunci lagi di take-take setelahnya.
 2. POSISI SAAT BERBICARA: kalau ada 2+ karakter mengobrol, jelaskan blocking spasial eksplisit (kiri/kanan, saling berhadapan, framing kamera).
 3. ADEGAN KENDARAAN: kalau ada adegan naik/turun mobil/motor, jelaskan arah pintu & sisi masuk yang benar, gerak kendaraan realistis.
 4. SAMBUNGAN ANTAR-TAKE: WAJIB isi "continuity_note" yang menjelaskan FRAME AWAL take baru ini SAMA PERSIS dengan FRAME AKHIR take sebelumnya (posisi karakter, sudut kamera, pencahayaan, lokasi) supaya nyambung mulus.
 5. LOKASI: tentukan di field "location" (boleh sama/berbeda dari take sebelumnya sesuai alur).
+5b. KUNCI DESKRIPSI LOKASI: kalau take baru ini masih di lokasi yang SAMA dengan take terakhir di atas (atau lokasi yang pernah muncul sebelumnya di cerita), pakai deskripsi detail lokasi yang SAMA PERSIS seperti sebelumnya (warna dinding/tembok, pencahayaan, perabotan/elemen jalan, cuaca, waktu) -- jangan mengubah/menulis ulang detailnya. Kalau memang pindah ke lokasi baru sesuai alur, baru boleh deskripsi baru.
 6. Jangan menambah tokoh baru yang tidak perlu.
 ${state.subtitle ? '7. Sertakan field "subtitle" berisi dialog/narasi take ini.' : '7. Field "subtitle" boleh dikosongkan ("").'}
 
@@ -11814,7 +11841,7 @@ document.getElementById('t2pGenerateBtn')?.addEventListener('click', async () =>
   t2pSetGenerating(true);
   try {
     const masterPrompt = t2pBuildMasterPrompt(state);
-    const rawText = await t2pCallGemini(masterPrompt);
+    const rawText = await t2pCallGemini(masterPrompt, T2P_ARRAY_SCHEMA);
     let cleaned = rawText.trim().replace(/^```json/i, '').replace(/^```/, '').replace(/```$/, '').trim();
     let parsed;
     try { parsed = JSON.parse(cleaned); }
@@ -11865,7 +11892,7 @@ document.getElementById('t2pAddSegmentBtn')?.addEventListener('click', async () 
   if (addBtn) { addBtn.disabled = true; addBtn.textContent = 'Menyusun segmen...'; }
   try {
     const contPrompt = t2pBuildContinuationPrompt(state, lastTake);
-    const rawText = await t2pCallGemini(contPrompt);
+    const rawText = await t2pCallGemini(contPrompt, T2P_OBJECT_SCHEMA);
     let cleaned = rawText.trim().replace(/^```json/i, '').replace(/^```/, '').replace(/```$/, '').trim();
     let parsed;
     try { parsed = JSON.parse(cleaned); }
