@@ -11691,7 +11691,7 @@ function t2pRenderTakes() {
     const charsHtml = chars.map((n) => `<button type="button" class="t2p-take-char-chip" onclick="t2pOpenCharDock()">${n}</button>`).join('');
     card.innerHTML =
       `<div class="t2p-take-head">
-        <span class="t2p-take-badge">Take ${t.take}</span>
+        <span class="t2p-take-badge" aria-label="Take ${t.take}"><span class="t2p-take-badge-label">TAKE</span><span class="t2p-take-badge-num">${t.take}</span></span>
         <span class="t2p-take-copied-tag" style="display:${copied ? '' : 'none'};">✓ Disalin</span>
         <span class="t2p-take-meta">📍 ${(t.location || '-')} &middot; ${document.getElementById('t2pTakeDuration')?.value || ''}s</span>
       </div>
