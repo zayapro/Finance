@@ -1341,30 +1341,6 @@ body[data-banner-anim="static"] .notif-btn.has-alert svg{animation:none !importa
   isolation:isolate;
 }
 .lap-filter-card.fastmenu-page-body-rest{margin-top:0;border-radius:0;}
-/* ---- Banner sticky halaman "Text to Prompt" (#t2pOverlay) -- pola
-   SAMA PERSIS dgn .fastmenu-sticky-head/.fastmenu-page-body-cap di
-   atas, cuma diberi nama scoped sendiri. Dipakai supaya header oren +
-   tombol Kembali/gir Pengaturan API tetap menempel di atas layar
-   selagi isi halaman (form karakter/naskah/opsi/hasil take yang
-   panjang) discroll -- SAMA PERSIS spt halaman Fast Menu/Notifikasi/
-   Unduh Video lain, bukan ikut discroll ke atas & hilang. ---- */
-.t2p-sticky-head{
-  position:sticky;top:0;z-index:6;
-  transform:translateZ(0);-webkit-transform:translateZ(0);
-  backface-visibility:hidden;-webkit-backface-visibility:hidden;
-  isolation:isolate;
-}
-.t2p-sticky-head .lap-filter-head{position:relative;z-index:1;}
-.t2p-page-body-cap{
-  position:relative;z-index:2;
-  background:var(--card);
-  margin:-24px 0 0;height:24px;
-  border-radius:28px 28px 0 0;
-  transform:translateZ(0);-webkit-transform:translateZ(0);
-  backface-visibility:hidden;-webkit-backface-visibility:hidden;
-  isolation:isolate;
-}
-.lap-filter-card.t2p-page-body-rest{margin-top:0;border-radius:0;}
 /* ---- Banner sticky halaman "Unduh Video" (#videoDlOverlay) -- pola
    SAMA PERSIS dgn .fastmenu-sticky-head/.fastmenu-page-body-cap tepat
    di atas (halaman Fast Menu): banner + "topi" lengkung kosong
@@ -3512,6 +3488,120 @@ tr.fade-up{animation:fadeRow .35s ease both;}
 }
 #ccSettingsSheet.cc-res-disabled .lap-cat-list{
   opacity:0.4;pointer-events:none;
+}
+
+/* ---- Halaman "Silent Heroics" (#silentHeroicsOverlay) ----
+   Tool baru (dulunya prototipe HTML terpisah "silent-heroics-opsi-b-
+   signal.html" bertema gelap/scarlet) -- diintegrasikan sbg halaman
+   penuh dgn kerangka SAMA PERSIS dgn tool lain di app ini
+   (.lap-filter-head + .lap-filter-card, pola yg sama dgn Kalkulator/
+   Unduh Video), dan SEMUA warnanya diganti total ke token tema global
+   app (var(--primary)/var(--card)/var(--paper)/var(--ink) dkk) supaya
+   otomatis senada apa pun tema oranye yg dipilih user di Pengaturan --
+   TIDAK ada lagi warna gelap/scarlet bawaan prototipe lamanya. ---- */
+.shp-card{display:flex;flex-direction:column;gap:18px;}
+.shp-intro{
+  display:flex;gap:12px;align-items:flex-start;background:var(--paper);border-radius:14px;padding:14px 16px;
+}
+.shp-intro-ic{
+  flex:none;width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+  background:color-mix(in srgb, var(--primary) 14%, var(--card));color:var(--primary-deep);
+}
+.shp-intro p{margin:0;font-size:12.5px;color:var(--ink-soft);line-height:1.6;}
+.shp-intro p b{color:var(--ink);}
+
+.shp-section-label{font-size:12px;font-weight:700;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.02em;margin:2px 0 -4px;}
+
+.shp-seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--paper);}
+.shp-seg button{
+  flex:1;padding:10px 0;background:transparent;color:var(--ink-faint);border:none;
+  font-family:var(--font-body);font-size:13px;font-weight:600;cursor:pointer;transition:.15s;min-height:40px;
+}
+.shp-seg button + button{border-left:1px solid var(--line);}
+.shp-seg button.active{background:var(--primary);color:#fff;}
+
+.shp-toggle-row{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.shp-toggle-row .shp-toggle-text{display:flex;flex-direction:column;gap:2px;}
+.shp-toggle-row .shp-toggle-title{font-size:13px;font-weight:700;color:var(--ink);}
+.shp-toggle-row .shp-toggle-hint{font-size:11.5px;color:var(--ink-faint);line-height:1.5;}
+
+.shp-duration-value{display:flex;align-items:baseline;gap:7px;margin-bottom:6px;}
+.shp-duration-value b{font-size:20px;font-weight:800;color:var(--primary-deep);}
+.shp-duration-value span{font-size:12.5px;color:var(--ink-faint);}
+.shp-range{width:100%;accent-color:var(--primary);height:20px;}
+
+.shp-generate-btn{width:100%;justify-content:center;font-size:14.5px;padding:13px 0;}
+.shp-generate-btn:disabled{opacity:.55;cursor:progress;}
+
+.shp-status{
+  display:none;margin-top:2px;padding:11px 14px;border-radius:11px;font-size:12.5px;font-weight:600;
+  border:1px solid var(--line);background:var(--paper);color:var(--ink-soft);
+}
+.shp-status.show{display:block;}
+.shp-status.error{background:rgba(225,29,72,0.08);border-color:rgba(225,29,72,0.3);color:#BE123C;}
+.shp-status.loading{background:color-mix(in srgb, var(--primary) 9%, var(--card));border-color:color-mix(in srgb, var(--primary) 35%, var(--line));color:var(--primary-deep);}
+
+.shp-results-head{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.shp-results-count{font-size:12px;color:var(--ink-faint);font-weight:600;}
+.shp-results-count b{color:var(--ink);font-weight:800;}
+
+.shp-empty{border:1px dashed var(--line);border-radius:14px;padding:40px 20px;text-align:center;color:var(--ink-faint);}
+.shp-empty .shp-empty-glyph{
+  width:44px;height:44px;border-radius:12px;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;
+  background:var(--paper);color:var(--primary);
+}
+.shp-empty p{max-width:340px;margin:0 auto;font-size:13px;line-height:1.6;}
+
+.shp-result-card{
+  position:relative;background:var(--card);border:1px solid var(--line);border-radius:16px;
+  padding:18px 18px 20px;box-shadow:var(--shadow-sm);
+}
+.shp-result-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:12px;}
+.shp-result-idx{font-size:11px;font-weight:800;letter-spacing:.03em;color:var(--primary-deep);text-transform:uppercase;}
+.shp-result-title{font-size:16.5px;font-weight:800;margin:4px 0 0;line-height:1.35;color:var(--ink);overflow-wrap:break-word;}
+.shp-copy-all{
+  flex:none;background:var(--paper);border:1px solid var(--line);color:var(--ink-soft);
+  padding:7px 12px;border-radius:8px;font-size:11.5px;cursor:pointer;font-weight:700;transition:.15s;
+}
+.shp-copy-all:hover{color:var(--ink);border-color:var(--primary);}
+.shp-block{margin-top:14px;}
+.shp-block-label{
+  font-size:11.5px;color:var(--ink-faint);font-weight:700;margin-bottom:6px;
+  display:flex;justify-content:space-between;align-items:center;
+}
+.shp-block-label .shp-copy{cursor:pointer;color:var(--primary-deep);font-weight:700;font-size:11px;}
+.shp-block-label .shp-copy:hover{text-decoration:underline;}
+.shp-block-body{font-size:13.5px;color:var(--ink);line-height:1.6;white-space:pre-wrap;overflow-wrap:break-word;word-break:break-word;}
+.shp-block-body.shp-hook{font-style:italic;font-weight:600;color:var(--primary-deep);}
+.shp-block-body.shp-prompt{
+  background:var(--paper);border:1px solid var(--line);border-radius:9px;padding:12px 14px;
+  font-size:12.5px;color:var(--ink-soft);font-family:'IBM Plex Mono',ui-monospace,monospace;line-height:1.65;
+}
+.shp-hashtags{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px;}
+.shp-hashtags span{
+  background:var(--paper);border:1px solid var(--line);color:var(--ink-soft);
+  padding:4px 10px;border-radius:20px;font-size:11.5px;font-weight:600;
+}
+.shp-footer-note{margin-top:6px;text-align:center;color:var(--ink-faint);font-size:11.5px;line-height:1.6;}
+
+.shp-key-input-row{display:flex;gap:8px;}
+.shp-key-input-row .pw-field-wrap{flex:1;min-width:0;}
+.shp-upload-key-btn{
+  flex:none;width:42px;height:42px;display:flex;align-items:center;justify-content:center;
+  background:var(--paper);border:1px solid var(--line);border-radius:10px;color:var(--ink-faint);
+  cursor:pointer;transition:.15s;
+}
+.shp-upload-key-btn:hover{color:var(--primary-deep);border-color:var(--primary);}
+.shp-upload-key-btn svg{width:17px;height:17px;}
+.shp-key-pool-status{
+  display:none;margin-top:10px;align-items:center;justify-content:space-between;gap:10px;
+  background:rgba(5,150,105,0.08);border:1px solid rgba(5,150,105,0.28);
+  padding:9px 12px;border-radius:10px;font-size:11.5px;color:#065F46;font-weight:600;
+}
+.shp-key-pool-status.show{display:flex;}
+.shp-key-pool-status button{
+  background:none;border:none;color:#065F46;cursor:pointer;font-size:11px;text-decoration:underline;
+  font-weight:700;flex:none;
 }
 
 /* ---- Halaman "Unduh Video" (#videoDlOverlay) ----
@@ -12147,20 +12237,11 @@ select#categoryFilter[hidden]{display:none;}
 .form-row{margin-bottom:13px;}
 .form-row label{display:block;font-size:12.5px;font-weight:700;color:var(--ink-soft);margin-bottom:6px;}
 .form-row input,.form-row select,.form-row textarea{
-  width:100%;max-width:100%;padding:10px 12px;border-radius:9px;border:1px solid var(--line);
+  width:100%;padding:10px 12px;border-radius:9px;border:1px solid var(--line);
   /* 16px, bukan 14px: di bawah 16px, Safari iOS auto-zoom begitu input
      disentuh (lihat catatan di media query mobile-nya juga). */
   font-size:16px;background:var(--paper);outline:none;
 }
-/* FIX BUG: textarea generik (mis. Sinopsis/Ide Cerita di kartu Naskah
-   Otomatis) sebelumnya TIDAK diberi "resize", jadi browser pakai
-   default resize:both -- gagang di pojok kanan-bawah bisa ditarik ke
-   SAMPING, bikin textarea melebar ngelewatin kartu/container-nya dan
-   nongol scrollbar horizontal aneh di halaman. Dikunci ke resize
-   vertikal saja (boleh ditinggiin, gak boleh dilebarin) -- pola yg
-   sama persis dgn textarea lain di app (t2p-char-desc, t2p-take-prompt,
-   dst yg sudah lebih dulu pakai resize:vertical). */
-.form-row textarea{resize:vertical;}
 .form-row select{
   appearance:none;-webkit-appearance:none;-moz-appearance:none;
   padding-right:36px;
@@ -12281,14 +12362,6 @@ select#categoryFilter[hidden]{display:none;}
    Account (z-index 700) masih terbuka -- tanpa override ini,
    popupnya kebuka tapi ketutup total di belakang halaman itu. */
 #confirmOverlay{z-index:750;}
-/* FIX SAMA PERSIS -- #t2pApiModalOverlay (Pengaturan API Gemini di
-   tool Text to Prompt) dibuka SAAT halaman #t2pOverlay (.lap-filter-overlay,
-   z-index 700) masih terbuka. Tanpa override ini, cuma ikut
-   z-index:var(--z-modal) generik (200) -> modalnya kebuka (class
-   "open" ke-add) tapi ketutup total di BELAKANG halaman Text to
-   Prompt -- keliatannya spt tombol gir "Pengaturan API" tidak
-   merespons sama sekali walau sebenarnya sudah kebuka. */
-#t2pApiModalOverlay{z-index:750;}
 /* FIX SAMA PERSIS -- modal "Pengaturan Tanya AI" (#aiSettingsModalOverlay)
    sekarang juga bisa dibuka lewat tombol gear di halaman "Tool AI"
    (#atkPanel, REDESIGN jadi halaman penuh class .lap-filter-overlay,
@@ -13380,17 +13453,6 @@ body.is-scrolling *{
   .section-subtitle{font-size:10px;}
   .eyebrow{font-size:10px;letter-spacing:0.12em;}
   .chip-total{font-size:10.5px;padding:5px 10px;}
-
-  /* ---- Kartu "Naskah Otomatis" (Text to Prompt) -- dipadatkan sama
-     spt kartu lain di breakpoint ini. Font input/textarea SENGAJA tidak
-     ikut dikecilkan (tetap ikut aturan global 16px di .form-row) supaya
-     Safari iOS tidak auto-zoom saat disentuh. ---- */
-  .t2p-auto-card{padding:14px;}
-  .t2p-auto-card-title{font-size:12px;margin-bottom:5px;gap:5px;}
-  .t2p-auto-card-desc{font-size:11px;line-height:1.55;margin-bottom:12px;}
-  .t2p-auto-card-label{font-size:9px;margin-bottom:6px;}
-  .t2p-section-title{font-size:12.5px;gap:5px;}
-  .t2p-section-title-ic{width:14px;height:14px;}
 
   /* ---- Banner atas: logo, nama app, tanggal, ikon lonceng ---- */
   /* PENTING (fix overflow/geser horizontal tipis di HP): margin negatif
@@ -14894,476 +14956,6 @@ html.dark-mode .bd-row-close{
   background:var(--paper) !important;
   border-color:rgba(255,255,255,0.09) !important;
 }
-
-/* ================================================================
-   TOOL "TEXT TO PROMPT" (#t2pOverlay) -- generator prompt video
-   drama (utk model text-to-video/extend-video) dari naskah user.
-   Lihat komentar panjang di markup #t2pOverlay & di script.js
-   (cari komentar "TEXT TO PROMPT") utk alur lengkapnya.
-================================================================ */
-.t2p-section-title{font-size:14px;font-weight:700;color:var(--ink);margin:0 0 12px;display:flex;align-items:center;gap:6px;}
-.t2p-section-title-ic{color:var(--violet);flex-shrink:0;width:15px;height:15px;}
-.t2p-section{padding-bottom:14px;margin-bottom:14px;border-bottom:1px dashed var(--line);}
-.t2p-section:last-of-type{border-bottom:none;margin-bottom:0;padding-bottom:0;}
-
-.t2p-char-row{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:8px;transition:border-color .15s ease;}
-.t2p-char-row-top{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
-.t2p-char-row-top input{flex:1;min-width:0;padding:10px 12px;border-radius:9px;border:1.5px solid var(--line);font-size:14.5px;background:var(--card);outline:none;font-weight:600;color:var(--ink);transition:border-color .15s ease,box-shadow .15s ease;}
-.t2p-char-row-top input:focus{border-color:var(--primary);box-shadow:0 0 0 3px color-mix(in srgb, var(--primary) 14%, transparent);}
-.t2p-char-remove{flex-shrink:0;width:30px;height:30px;border-radius:50%;border:none;background:rgba(220,38,38,0.1);color:#DC2626;font-size:15px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s ease,transform .15s ease;}
-.t2p-char-remove:hover{background:rgba(220,38,38,0.18);transform:scale(1.05);}
-.t2p-char-desc{width:100%;padding:10px 12px;border-radius:9px;border:1.5px solid var(--line);font-size:13.5px;line-height:1.55;background:var(--card);outline:none;resize:vertical;min-height:64px;font-family:inherit;color:var(--ink);transition:border-color .15s ease,box-shadow .15s ease;scrollbar-width:thin;}
-.t2p-char-desc:focus{border-color:var(--primary);box-shadow:0 0 0 3px color-mix(in srgb, var(--primary) 14%, transparent);}
-.t2p-char-desc::-webkit-scrollbar{width:6px;}
-.t2p-char-desc::-webkit-scrollbar-track{background:transparent;}
-.t2p-char-desc::-webkit-scrollbar-thumb{background:var(--line);border-radius:10px;}
-.t2p-add-char-btn{width:100%;padding:11px;border-radius:10px;border:1.5px dashed var(--primary);background:color-mix(in srgb, var(--primary) 5%, transparent);color:var(--primary);font-weight:700;font-size:13px;cursor:pointer;transition:background .15s ease,transform .15s ease;}
-.t2p-add-char-btn:hover{background:color-mix(in srgb, var(--primary) 10%, transparent);}
-.t2p-add-char-btn:active{transform:scale(0.98);}
-
-/* Kartu ini dulu SENGAJA dibikin gelap terus (spt kartu promo) apapun
-   temanya -- sesuai permintaan user, sekarang dibikin TERANG & ikut
-   var(--card)/var(--paper)/var(--ink) spt kartu form lain, otomatis
-   nyesuaiin diri ke Mode Terang maupun Mode Dark. Aksennya (judul,
-   "TAKE", border tipis) tetap dari var(--primary) biar masih kerasa
-   sbg kartu unggulan, bukan cuma dibedain lewat warna gelap doang. */
-.t2p-auto-card{
-  background:var(--card);
-  border:1px solid color-mix(in srgb, var(--primary) 22%, var(--line));
-  border-radius:16px;padding:16px;
-}
-.t2p-auto-card--plain{background:none;border:none;border-radius:0;padding:0;}
-.t2p-section--merged{border-bottom:none;padding-bottom:0;margin-bottom:14px;}
-.t2p-auto-card-title{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:800;line-height:1.3;margin-bottom:6px;color:var(--primary);}
-.t2p-auto-card-desc{font-size:13.5px;font-weight:500;line-height:1.6;color:var(--ink-faint);margin:0 0 16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.t2p-auto-card-desc b{font-weight:700;color:var(--ink);}
-.t2p-auto-card-highlight{color:var(--primary);font-weight:800;border-bottom:2px dotted var(--primary);cursor:help;}
-.t2p-auto-card-label{display:block;font-size:9.5px;font-weight:700;letter-spacing:.04em;line-height:1.3;color:var(--ink-faint);margin-bottom:8px;text-transform:uppercase;}
-.t2p-auto-card .form-row{margin-bottom:0;}
-.t2p-auto-card .form-row textarea,
-.t2p-auto-card .form-row input{background:var(--paper);border:1px solid var(--line);color:var(--ink);line-height:1.5;}
-.t2p-auto-card .form-row textarea::placeholder,
-.t2p-auto-card .form-row input::placeholder{color:var(--ink-faint);}
-.t2p-auto-card .form-row textarea:focus,
-.t2p-auto-card .form-row input:focus{border-color:var(--primary);}
-.t2p-opts-pillrow{display:flex;flex-wrap:wrap;gap:5px;}
-.t2p-opt-pill{display:flex;align-items:center;gap:4px;background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:6px 9px;font-size:11.5px;font-weight:700;color:var(--ink);cursor:pointer;user-select:none;flex-shrink:0;transition:background .15s ease,color .15s ease,border-color .15s ease;}
-.t2p-opt-pill-ic{font-size:12.5px;line-height:1;display:flex;align-items:center;color:var(--primary);flex-shrink:0;}
-.t2p-opt-pill-ic svg{display:block;}
-.t2p-opt-pill-suffix{color:var(--ink-faint);font-weight:600;}
-.t2p-opt-pill--num input[type="number"]{width:17px;border:none;background:transparent;padding:0;font-size:11.5px;font-weight:700;color:var(--ink);text-align:center;-moz-appearance:textfield;}
-.t2p-opt-pill--num input[type="number"]::-webkit-outer-spin-button,
-.t2p-opt-pill--num input[type="number"]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
-.t2p-opt-pill--num input[type="number"]:focus{outline:none;}
-.t2p-opt-pill--toggle{color:var(--ink-faint);}
-.t2p-opt-pill--toggle:has(input:checked){background:var(--primary);border-color:var(--primary);color:#fff;}
-/* Kotak centang di dalam pill "Dialog" -- kosong (outline) saat
-   tidak dicentang, isi putih transparan + tanda centang muncul
-   saat dicentang, biar kelihatan jelas ini opsi centang/toggle. */
-.t2p-opt-pill-check{width:16px;height:16px;border-radius:5px;border:1.6px solid currentColor;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:inherit;opacity:.55;}
-.t2p-opt-pill-check svg{opacity:0;transition:opacity .15s ease;}
-.t2p-opt-pill--toggle:has(input:checked) .t2p-opt-pill-check{background:rgba(255,255,255,.28);border-color:#fff;opacity:1;}
-.t2p-opt-pill--toggle:has(input:checked) .t2p-opt-pill-check svg{opacity:1;}
-.t2p-opt-pill--disabled{opacity:.4;cursor:not-allowed;pointer-events:none;}
-
-/* ---- Switch bahasa output video (ID / EN) di dalam "Opsi Sebelum
-   Generate" -- dulu 2 pill terpisah yang bisa aktif berbarengan,
-   sekarang 1 kontrol switch (radio ID/EN, exclusive) berbentuk pill
-   dgn "thumb" yg geser ke sisi yg aktif, biar jelas cuma 1 bahasa
-   output yg dipilih. Warna thumb ikut var(--primary) spy konsisten
-   dgn aksen tema. Lebar thumb 50% track & geser translateX(100%)
-   pas opsi EN aktif (class "lang-en" di-toggle via JS di t2pInit). */
-.t2p-lang-switch{position:relative;display:flex;background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:3px;width:96px;flex-shrink:0;}
-.t2p-lang-switch-thumb{position:absolute;top:3px;left:3px;width:calc(50% - 3px);height:calc(100% - 6px);background:var(--primary);border-radius:999px;transition:transform .2s ease;z-index:0;}
-.t2p-lang-switch.lang-en .t2p-lang-switch-thumb{transform:translateX(100%);}
-.t2p-lang-switch-opt{position:relative;z-index:1;flex:1;display:flex;align-items:center;justify-content:center;gap:4px;padding:6px 0;font-size:11.5px;font-weight:700;color:var(--ink-faint);cursor:pointer;user-select:none;transition:color .15s ease;}
-.t2p-lang-switch input:checked + .t2p-lang-switch-opt{color:#fff;}
-/* Layar HP (<=480px, mencakup hampir semua ukuran HP umum -- breakpoint
-   lama 380px kelewat sempit, HP 390-430px lolos jadi tetap ngelipat):
-   opt-pill (take/detik/Dialog/Subtitle) & switch bahasa dirapatkan lagi
-   supaya SATU baris penuh muat tanpa ngelipat ke baris ke-2. */
-@media (max-width:480px){
-  .t2p-opts-pillrow{gap:4px;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:1px;}
-  .t2p-opts-pillrow::-webkit-scrollbar{display:none;}
-  .t2p-opt-pill{padding:5px 8px;font-size:11px;gap:3px;}
-  .t2p-opt-pill-ic{font-size:12px;}
-  .t2p-opt-pill--num input[type="number"]{width:15px;font-size:11px;}
-  .t2p-lang-switch{width:88px;}
-  .t2p-lang-switch-opt{font-size:10.5px;padding:5px 0;}
-  .t2p-subtitle-actions{gap:6px;}
-  .t2p-subtitle-actions .t2p-copy-btn{padding:10px 4px;font-size:11px;}
-}
-
-.t2p-locked-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:#7C3AED;background:rgba(124,58,237,0.1);border-radius:20px;padding:5px 11px;margin-bottom:10px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.t2p-locked-badge-ic{flex-shrink:0;}
-.t2p-locked-badge-short{display:none;}
-
-.t2p-generate-btn{width:100%;padding:13px;border-radius:12px;border:none;background:var(--primary);color:#fff;font-weight:700;font-size:14.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:background-position 0.2s;}
-.t2p-generate-btn:disabled{cursor:default;}
-.t2p-generate-btn.loading{background:linear-gradient(100deg,var(--primary) 0%,var(--primary) 35%,#8fe0b8 50%,var(--primary) 65%,var(--primary) 100%);background-size:220% 100%;animation:t2pshimmer 1.6s ease-in-out infinite;}
-.t2p-dots{display:none;align-items:center;gap:5px;}
-.t2p-generate-btn.loading .t2p-dots{display:inline-flex;}
-.t2p-dots span{width:6px;height:6px;border-radius:50%;background:#fff;animation:t2pbounce 1.1s ease-in-out infinite;}
-.t2p-dots span:nth-child(2){animation-delay:0.15s;}
-.t2p-dots span:nth-child(3){animation-delay:0.3s;}
-@keyframes t2pbounce{0%,60%,100%{transform:scale(0.55);opacity:0.35;}30%{transform:scale(1);opacity:1;}}
-@keyframes t2pshimmer{0%{background-position:0% 50%;}100%{background-position:-220% 50%;}}
-.t2p-generate-btn.loading #t2pGenerateBtnLabel{animation:t2pfade 1.6s ease-in-out infinite;}
-@keyframes t2pfade{0%,100%{opacity:0.7;}50%{opacity:1;}}
-
-.t2p-empty-hint{text-align:center;color:var(--ink-soft);font-size:12.5px;padding:18px 8px;}
-
-.t2p-copy-progress{display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:500;color:#B45309;background:rgba(217,119,6,0.1);border-radius:12px;padding:10px 12px;margin-bottom:12px;line-height:1.45;}
-.t2p-copy-progress svg{flex-shrink:0;}
-.t2p-copy-progress span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.t2p-copy-progress b{font-weight:700;text-decoration:underline;text-underline-offset:2px;}
-.t2p-copy-progress--done{color:#059669;background:rgba(5,150,105,0.1);}
-.t2p-subtitle-actions{display:flex;gap:8px;margin-bottom:12px;}
-.t2p-subtitle-actions .t2p-copy-btn{flex:1;}
-
-.t2p-take-wrap{margin-bottom:14px;}
-.t2p-take-pill{display:inline-flex;align-items:center;flex-shrink:0;padding:7px 16px;border-radius:999px;background:linear-gradient(150deg, var(--primary) 0%, var(--primary-deep) 100%);color:#fff;font-weight:600;font-size:12.5px;letter-spacing:.03em;line-height:1.2;white-space:nowrap;box-shadow:0 5px 12px -6px color-mix(in srgb, var(--primary-deep) 60%, transparent);}
-.t2p-take-card{position:relative;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:0;box-shadow:0 2px 10px -6px rgba(15,23,42,0.08);transition:border-color .18s ease, background .18s ease, box-shadow .18s ease;overflow:hidden;}
-.t2p-take-card--copied{border-color:rgba(5,150,105,0.35);background:rgba(5,150,105,0.045);}
-.t2p-take-head{display:flex;align-items:center;gap:8px;margin-bottom:9px;flex-wrap:wrap;}
-.t2p-take-copied-tag{font-size:10.5px;font-weight:700;color:#059669;background:rgba(5,150,105,0.12);border-radius:20px;padding:4px 10px;}
-.t2p-take-cc-tag{font-size:10.5px;font-weight:700;color:#7c3aed;background:rgba(124,58,237,0.12);border-radius:20px;padding:4px 10px;}
-.t2p-take-meta{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;color:var(--primary-deep);background:color-mix(in srgb, var(--primary) 12%, transparent);border-radius:20px;padding:5px 11px;margin-left:auto;overflow:hidden;max-width:100%;min-width:0;}
-.t2p-take-meta-icon{flex-shrink:0;color:inherit;}
-.t2p-take-meta-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
-.t2p-take-chars{display:flex;align-items:center;flex-wrap:wrap;gap:8px;font-size:12.5px;font-weight:600;color:var(--ink-soft);margin-bottom:10px;padding-bottom:10px;border-bottom:1px dashed var(--line);}
-.t2p-take-chars-icon{display:inline-flex;align-items:center;color:var(--primary);flex-shrink:0;}
-.t2p-take-chars b{color:var(--ink);font-weight:700;margin-right:1px;}
-.t2p-take-char-chip{border:none;background:var(--paper);color:var(--ink);font-weight:700;font-size:12.5px;padding:8px 16px;border-radius:999px;cursor:pointer;min-height:32px;line-height:1.3;-webkit-tap-highlight-color:transparent;transition:background .15s ease,color .15s ease;}
-.t2p-take-char-chip:hover,
-.t2p-take-char-chip:active{background:color-mix(in srgb, var(--primary) 14%, var(--paper));color:var(--primary);}
-.t2p-chardock-item-readonly{font-size:12px;color:var(--ink-soft);line-height:1.55;margin:0 0 6px;word-break:break-word;}
-.t2p-chardock-item-editbar{display:flex;gap:8px;margin:8px 0;}
-.t2p-chardock-apply-btn{flex:1;border:none;background:var(--primary);color:#fff;font-weight:700;font-size:12.5px;padding:9px 4px;border-radius:8px;cursor:pointer;min-height:38px;display:inline-flex;align-items:center;justify-content:center;gap:5px;}
-.t2p-chardock-cancel-btn{flex:1;border:1px solid var(--line);background:var(--paper);color:var(--ink-soft);font-weight:700;font-size:12.5px;padding:9px 4px;border-radius:8px;cursor:pointer;min-height:38px;}
-.t2p-take-prompt-label{display:block;font-size:12.5px;font-weight:500;letter-spacing:.1px;text-transform:none;color:var(--ink-soft);margin-bottom:6px;}
-.t2p-take-prompt{width:100%;padding:11px 12px;border-radius:11px;border:1px solid var(--line);font-size:13.5px;line-height:1.6;color:var(--ink);background:var(--paper);outline:none;resize:vertical;min-height:120px;font-family:inherit;margin-bottom:9px;}
-.t2p-take-prompt:focus{border-color:var(--forest-glow);background:var(--card);}
-.t2p-take-sub{margin-bottom:9px;}
-.t2p-take-sub label{display:block;font-size:12.5px;font-weight:700;letter-spacing:.1px;text-transform:none;color:var(--ink-soft);margin-bottom:6px;}
-.t2p-take-sub textarea{width:100%;padding:9px 11px;border-radius:10px;border:1px solid var(--line);font-size:12.5px;line-height:1.5;color:var(--ink);background:var(--paper);outline:none;resize:vertical;font-family:inherit;}
-.t2p-take-continuity{display:flex;align-items:flex-start;gap:6px;font-size:11.5px;font-weight:500;color:#0891B2;background:rgba(8,145,178,0.08);border-radius:10px;padding:8px 10px;margin-bottom:9px;line-height:1.45;}
-.t2p-take-actions{display:flex;gap:8px;}
-.t2p-copy-btn{flex:1;padding:11px 8px;border-radius:11px;border:1.5px solid var(--primary);background:transparent;color:var(--primary);font-weight:700;font-size:13px;cursor:pointer;transition:background .15s ease,color .15s ease;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.t2p-copy-btn svg{vertical-align:-2px;margin-right:5px;flex-shrink:0;}
-.t2p-copy-btn:hover{background:color-mix(in srgb, var(--primary) 8%, transparent);}
-.t2p-copy-btn.copied{background:var(--primary);color:#fff;border-color:var(--primary);}
-
-/* ---- Kartu take versi "dipecah per kotak" (Aksi/Gerakan
-   Kamera/Dialog/Deskripsi Akhir Frame + Prompt Siap Pakai
-   terpisah), badge TAKE+rentang waktu, & tombol reset/hapus per
-   kartu -- lihat t2pRenderTakes() di script.js. Semua pakai
-   variabel warna yg sama dgn kartu take lama (var(--card),
-   var(--primary), dst) supaya tetap ikut tema terang/gelap app
-   tanpa perlu warna hardcode baru. ---- */
-.t2p-take-headrow{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:nowrap;margin-bottom:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
-.t2p-take-headrow::-webkit-scrollbar{display:none;}
-.t2p-take-headactions{display:flex;align-items:center;gap:6px;flex-shrink:0;}
-.t2p-take-headbtn{font-size:11px;font-weight:700;padding:6px 10px;border-radius:20px;border:1px solid var(--line);background:var(--paper);color:var(--ink-soft);cursor:pointer;white-space:nowrap;transition:border-color .15s ease,color .15s ease,background .15s ease;}
-.t2p-take-headbtn:hover:not(:disabled){border-color:var(--primary);color:var(--primary);}
-.t2p-take-headbtn:disabled{opacity:.45;cursor:default;}
-.t2p-take-headbtn--danger:hover:not(:disabled){border-color:#DC2626;color:#DC2626;background:rgba(220,38,38,0.08);}
-.t2p-take-tagsrow{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:9px;}
-.t2p-take-tagsrow .t2p-take-meta{margin-left:auto;}
-.t2p-take-fieldgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:9px;}
-.t2p-take-fieldgrid .t2p-take-sub{margin-bottom:0;}
-.t2p-take-tip{display:flex;align-items:flex-start;gap:7px;font-size:11.5px;font-weight:500;line-height:1.5;color:#BE185D;background:rgba(219,39,119,0.09);border-left:3px solid #DB2777;border-radius:8px;padding:9px 11px;margin-bottom:12px;}
-.t2p-take-tip-ic{flex-shrink:0;margin-top:2px;}
-.t2p-copy-pill{display:flex;align-items:center;justify-content:center;gap:8px;padding:13px 20px;border-radius:999px;font-size:13.5px;background:linear-gradient(150deg, var(--primary) 0%, var(--primary-deep) 100%);color:#fff;border:2px solid color-mix(in srgb, var(--primary-light) 45%, transparent);box-shadow:0 6px 14px -6px color-mix(in srgb, var(--primary-deep) 60%, transparent);transition:background .18s ease;}
-.t2p-copy-pill svg{flex-shrink:0;}
-.t2p-copy-pill:hover{background:linear-gradient(150deg, var(--primary-deep) 0%, color-mix(in srgb, var(--primary-deep) 80%, black) 100%);}
-.t2p-copy-pill.copied{background:#059669;border-color:rgba(5,150,105,0.35);animation:t2pCopyPop .42s cubic-bezier(.34,1.56,.64,1);}
-@keyframes t2pCopyPop{0%{transform:scale(1);}40%{transform:scale(1.09);}65%{transform:scale(0.97);}100%{transform:scale(1);}}
-.t2p-copy-pill.copied .t2p-check-icon{stroke-dasharray:24;stroke-dashoffset:24;animation:t2pCheckDraw .34s ease-out .06s forwards;}
-@keyframes t2pCheckDraw{to{stroke-dashoffset:0;}}
-.t2p-copy-pill.copied .t2p-copy-label{display:inline-block;animation:t2pCopyLabelIn .28s ease .1s both;}
-@keyframes t2pCopyLabelIn{from{opacity:0;transform:translateY(3px);}to{opacity:1;transform:translateY(0);}}
-
-@media (max-width:560px){
-  .t2p-take-fieldgrid{grid-template-columns:1fr;}
-}
-@media (max-width:480px){
-  .t2p-take-headrow{gap:6px;}
-  .t2p-take-headactions{justify-content:flex-end;}
-  .t2p-take-headbtn{font-size:10.5px;padding:5px 9px;}
-}
-@media (max-width:380px){
-  .t2p-take-tagsrow .t2p-take-meta{margin-left:0;flex-basis:100%;}
-  .t2p-take-tagsrow .t2p-take-meta-text{white-space:normal;}
-}
-
-.t2p-showmore-btn{width:100%;padding:11px;border-radius:10px;border:1.5px dashed var(--line);background:transparent;color:var(--ink);font-weight:700;font-size:13px;cursor:pointer;margin-top:2px;}
-.t2p-addsegment-btn{width:100%;padding:11px;border-radius:10px;border:1.5px dashed var(--primary);background:color-mix(in srgb, var(--primary) 6%, transparent);color:var(--primary);font-weight:700;font-size:13px;cursor:pointer;margin-top:8px;}
-.t2p-addsegment-btn:disabled{opacity:0.6;cursor:default;}
-
-/* ---- Modal "Pengaturan API Gemini" (#t2pApiModalOverlay) --
-   didesain ulang: kartu info ringkas, model dipilih lewat pil
-   segmented (bukan <select> polos), & tiap key ditampilkan sbg kartu
-   dgn titik status berwarna + label teks (Aktif/Siap/Kuota
-   habis/Tidak valid/Belum diuji) supaya user tahu persis kondisi
-   tiap key tanpa perlu generate dulu buat ketahuan -- ada tombol
-   "Tes" per key utk cek status kapan saja (panggilan ringan ke
-   endpoint list model, TIDAK makan kuota generate), & tombol "Pakai"
-   utk pindah key aktif secara manual. ---- */
-/* Modal ini dibikin flex-column: bagian atas (judul, pilih Model,
-   form Tambah API Key) TIDAK ikut scroll (flex-shrink:0), cuma
-   ".t2p-api-modal-scroll" (Daftar Key & Status) yang scroll sendiri
-   di dalam -- jadi biar key-nya udah puluhan & panjang ke bawah,
-   bagian atas tetap kelihatan terus tanpa perlu scroll balik. Cuma
-   scope ke .ai-settings-modal, modal lain yg masih pakai
-   ".modal{overflow-y:auto}" polos di atas TIDAK kena efek ini. */
-.ai-settings-modal{
-  display:flex;flex-direction:column;
-  max-height:86vh;overflow:hidden;
-}
-.ai-settings-modal .modal-head{flex-shrink:0;}
-.ai-settings-modal .t2p-api-modal-top{flex-shrink:0;padding-top:2px;}
-.ai-settings-modal .t2p-api-modal-scroll{
-  flex:1;min-height:0;overflow-y:auto;padding:2px 2px 0;
-  overscroll-behavior:contain;
-}
-.t2p-api-info-card{display:flex;gap:9px;align-items:flex-start;background:rgba(124,58,237,0.08);border-radius:12px;padding:12px 13px;margin-bottom:16px;}
-.t2p-api-info-card-ic{flex-shrink:0;line-height:1.3;color:#7C3AED;display:inline-flex;align-items:center;margin-top:1px;}
-.t2p-api-info-card p{margin:0;font-size:12.5px;line-height:1.6;color:var(--ink);}
-.t2p-api-info-card a{color:#7C3AED;font-weight:700;}
-
-.t2p-api-section-label{font-size:12.5px;font-weight:700;color:var(--ink);text-transform:uppercase;letter-spacing:.02em;margin:0 0 9px;}
-
-.t2p-model-pills{display:flex;gap:5px;background:var(--paper);border-radius:14px;padding:4px;margin-bottom:16px;}
-.t2p-model-pill{flex:1;min-width:0;padding:10px 6px;border-radius:11px;border:none;background:transparent;cursor:pointer;text-align:center;line-height:1.35;transition:background .18s ease, box-shadow .18s ease;}
-.t2p-model-pill-name{display:block;font-size:13px;font-weight:700;color:var(--ink);}
-.t2p-model-pill-sub{display:block;font-size:11px;font-weight:500;color:var(--ink-soft);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.t2p-model-pill.active{background:#fff;box-shadow:0 2px 8px -2px rgba(15,23,42,0.18);}
-.t2p-model-pill.active .t2p-model-pill-name{color:#7C3AED;}
-.t2p-model-pill.active .t2p-model-pill-sub{color:#7C3AED;opacity:.85;}
-
-.t2p-key-add-row{display:flex;gap:8px;margin-bottom:8px;}
-.t2p-key-add-row input{flex:1;min-width:0;}
-.t2p-upload-btn{flex-shrink:0;width:38px;height:38px;padding:0;border-radius:9px;border:1.5px dashed var(--line);background:transparent;color:var(--ink);font-weight:700;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
-
-.t2p-key-section-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:18px;margin-bottom:8px;flex-wrap:wrap;}
-.t2p-key-section-head .t2p-api-section-label{margin:0;}
-.t2p-key-summary{display:flex;gap:6px;flex-wrap:wrap;}
-.t2p-key-chip{font-size:10.5px;font-weight:700;border-radius:20px;padding:3px 9px;white-space:nowrap;}
-.t2p-key-chip--ok{color:#059669;background:rgba(5,150,105,0.12);}
-.t2p-key-chip--quota{color:#B45309;background:rgba(217,119,6,0.12);}
-.t2p-key-chip--invalid,
-.t2p-key-chip--error{color:#DC2626;background:rgba(220,38,38,0.12);}
-.t2p-key-chip--unknown{color:var(--ink-soft);background:var(--paper);}
-
-.t2p-key-list{display:flex;flex-direction:column;gap:8px;margin-bottom:4px;}
-.t2p-key-item{display:flex;align-items:center;gap:9px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:11px;}
-.t2p-key-item.is-active{border-color:rgba(124,58,237,0.35);background:rgba(124,58,237,0.06);}
-.t2p-key-status-dot{flex-shrink:0;width:9px;height:9px;border-radius:50%;margin-top:2px;}
-.t2p-key-status-dot--ok{background:#059669;}
-.t2p-key-status-dot--quota{background:#D97706;}
-.t2p-key-status-dot--invalid,
-.t2p-key-status-dot--error{background:#DC2626;}
-.t2p-key-status-dot--unknown{background:var(--ink-faint);}
-.t2p-key-status-dot--testing{background:#7C3AED;animation:t2pKeyPulse 0.9s ease-in-out infinite;}
-@keyframes t2pKeyPulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.4;transform:scale(0.7);}}
-.t2p-key-item-main{flex:1;min-width:0;}
-.t2p-key-item-top{display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
-.t2p-key-item .t2p-key-label{font-size:13px;font-family:monospace;color:var(--ink);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.t2p-key-item .t2p-key-active-tag{flex-shrink:0;font-size:10px;font-weight:700;color:#7C3AED;background:rgba(124,58,237,0.12);border-radius:20px;padding:2px 8px;}
-.t2p-key-status-text{display:block;font-size:11.5px;font-weight:600;color:var(--ink-soft);margin-top:3px;}
-.t2p-key-status-text--ok{color:#059669;}
-.t2p-key-status-text--quota{color:#B45309;}
-.t2p-key-status-text--invalid,
-.t2p-key-status-text--error{color:#DC2626;}
-.t2p-key-item-actions{flex-shrink:0;display:flex;align-items:center;gap:5px;}
-.t2p-key-test-btn,
-.t2p-key-use-btn{flex-shrink:0;font-size:11px;font-weight:600;padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;white-space:nowrap;}
-.t2p-key-test-btn:disabled{opacity:.55;cursor:default;}
-.t2p-key-use-btn{border-color:rgba(124,58,237,0.4);color:#7C3AED;font-weight:700;}
-.t2p-key-remove{flex-shrink:0;width:26px;height:26px;border-radius:50%;border:none;background:rgba(220,38,38,0.12);color:#DC2626;font-size:14px;line-height:1;cursor:pointer;}
-
-@media (max-width:380px){
-  .t2p-key-item-actions{flex-wrap:wrap;justify-content:flex-end;}
-}
-
-/* Penyesuaian layar sempit (HP kecil <380px) khusus fitur Text to
-   Prompt: badge lokasi/durasi pindah baris sendiri drpd kepotong,
-   chip nama karakter & tombol Terapkan/Batal sedikit lebih ringkas,
-   panel dock melebar hampir penuh layar supaya teks tidak sempit. */
-@media (max-width:380px){
-  .t2p-take-head{gap:6px;}
-  .t2p-take-meta{margin-left:0;flex-basis:100%;}
-  .t2p-take-meta-text{white-space:normal;}
-  .t2p-take-char-chip{font-size:12px;padding:5px 11px;}
-  .t2p-chardock-panel{width:92vw;padding:16px 13px;}
-  .t2p-chardock-item{padding:10px;}
-  .t2p-chardock-apply-btn,
-  .t2p-chardock-cancel-btn{font-size:12px;padding:9px 2px;}
-  .t2p-generate-btn{font-size:13.5px;padding:12px;}
-  .t2p-subtitle-actions .t2p-copy-btn{padding:9px 3px;font-size:10px;}
-  .t2p-auto-card-desc{font-size:10px;}
-  .t2p-section-title{font-size:12px;}
-  .t2p-section-title-ic{width:13px;height:13px;}
-}
-
-/* ---- Dock "Karakter di Video Ini" -- tab nyelip di pinggir kanan
-   #t2pOverlay, cuma tampil (.show) setelah generate berhasil punya
-   >=1 take (lihat t2pRenderCharDock() di script.js). Ditaruh
-   position:fixed relatif ke #t2pOverlay yang sudah fullscreen, jadi
-   posisinya konsisten walau isi halaman panjang & discroll.
-   ---- REDESAIN: dulu cuma pil kecil ikon+angka yang gampang
-   kelihatan "kepotong" (emoji 👤 sering ke-clip beda-beda tinggi
-   antar device krn line-height font emoji tidak presisi). Sekarang
-   jadi ribbon vertikal flush ke tepi kanan layar: ikon SVG (bukan
-   emoji, supaya selalu tajam & tidak kepotong di device manapun),
-   label teks berdiri (writing-mode:vertical-rl) "Kunci Konsistensi"
-   supaya fungsinya langsung kebaca tanpa perlu tap dulu, lalu badge
-   jumlah karakter di bawahnya. Warnanya dipakai dari var(--primary)
-   (oranye brand utama app ini) ke var(--violet) (aksen ungu yang
-   sama dipakai di badge2 fitur AI lain, mis. .t2p-locked-badge) --
-   supaya senada dgn identitas app, bukan warna asing. Interaksinya
-   disederhanakan: SELALU full terlihat (tidak lagi setengah
-   disembunyikan di balik tepi layar), geser dikit ke kiri + bayangan
-   membesar saat hover/tap sbg umpan balik. ---- */
-/* ---- FIX "tidak muncul di halaman Text to Prompt": tab ini dipindah
-   jadi anak langsung <body> oleh t2pRelocateCharDockToBody() (lihat
-   script.js) supaya position:fixed-nya benar relatif ke viewport asli
-   (bukan relatif ke #t2pOverlay yang punya CSS transform). TAPI begitu
-   jadi anak <body>, tab ini jadi SEJAJAR (sibling) dengan #t2pOverlay
-   dalam stacking context yang sama -- dan #t2pOverlay (class
-   .lap-filter-overlay) di-set z-index:700 supaya menutupi .bottom-nav.
-   z-index lama di sini (30/39/40) jauh di bawah 700, jadi tab & panel
-   ini SELALU KETUTUP halaman Text to Prompt begitu halamannya dibuka --
-   itulah kenapa "Kunci Konsistensi" seperti tidak pernah muncul.
-   FIX: naikkan z-index ketiganya sedikit di atas 700, tapi tetap di
-   bawah modal2 yang juga sengaja dinaikkan melebihi 700 (mis.
-   #t2pApiModalOverlay, #userAccountFormModalOverlay = 750) supaya modal
-   itu tetap bisa menutupi tab/panel ini kalau kebetulan dibuka bareng. */
-.t2p-chardock-tab{
-  position:fixed;right:max(2px, calc(50vw - 320px));top:64%;transform:translate(0,-50%);
-  z-index:705;display:none;flex-direction:column;align-items:center;gap:4px;
-  padding:7px 6px 8px;border:none;border-radius:13px 0 0 13px;cursor:pointer;
-  background:linear-gradient(165deg, var(--primary) 0%, var(--primary-deep) 55%, var(--violet) 130%);
-  color:#fff;
-  box-shadow:-6px 6px 16px -8px rgba(194,65,12,.45), -2px 3px 8px rgba(15,23,42,.18);
-  transition:transform .22s ease, box-shadow .22s ease, right .2s ease;
-}
-/* ---- Ukuran & posisi mobile vs desktop: di HP, tab nempel pas di
-   tepi kanan layar (right:0, lihat rumus di atas -- utk viewport
-   <=640px, calc(50vw-320px) selalu negatif jadi max() membulatkannya
-   ke 0). Di layar lebar (tablet/desktop), halaman #t2pOverlay TETAP
-   dibatasi max-width:640px & ditengahkan (.lap-filter-page), jadi
-   kalau tab dibiarkan nempel di tepi BENAR layar (mis. monitor lebar),
-   dia akan "mengambang" jauh terpisah dari kartu halaman yg cuma
-   selebar 640px di tengah. Rumus right:max(0px, calc(50vw - 320px))
-   otomatis menggeser tab supaya tetap nempel di tepi kanan KARTU
-   640px itu (320px = separuh dari 640px), bukan di tepi kanan
-   monitor -- terlihat menyatu di ukuran layar manapun.
-   UKURAN: PERMINTAAN TERBARU -- tab dibuat lebih RAMPING/kecil drpd
-   versi sebelumnya (padding, ikon, font semua diciutkan) supaya lebih
-   pas & tidak kebesaran/mendominasi tepi layar di HP. Di layar lebar
-   (>820px) tetap dinaikkan sedikit drpd versi HP-nya (bukan sebesar
-   versi lama) supaya proporsinya tetap wajar dgn kartu 640px yg lebih
-   besar drpd HP, tapi tidak sebesar sebelumnya. ---- */
-@media (min-width:821px){
-  .t2p-chardock-tab{padding:9px 7px 10px;gap:5px;}
-  .t2p-chardock-tab-ic{width:16px;height:16px;}
-  .t2p-chardock-tab-label{font-size:10px;}
-  .t2p-chardock-tab-count{font-size:9px;padding:1.5px 6px;min-width:14px;}
-}
-.t2p-chardock-tab.show{display:flex;animation:t2pDockPop .32s ease;}
-.t2p-chardock-tab:hover,
-.t2p-chardock-tab:focus-visible{transform:translate(-4px,-50%);box-shadow:-8px 8px 20px -8px rgba(194,65,12,.55), -2px 4px 10px rgba(15,23,42,.22);}
-.t2p-chardock-tab:active{transform:translate(-4px,-50%) scale(0.97);}
-.t2p-chardock-tab-ic{width:14px;height:14px;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
-.t2p-chardock-tab-ic svg{width:100%;height:100%;display:block;filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.2));}
-.t2p-chardock-tab-label{
-  writing-mode:vertical-rl;transform:rotate(180deg);
-  font-size:9px;font-weight:800;letter-spacing:.2px;white-space:nowrap;
-  text-shadow:0 1px 2px rgba(0,0,0,.15);
-}
-.t2p-chardock-tab-count{
-  flex-shrink:0;font-size:8.5px;font-weight:800;color:var(--primary-deep);
-  background:#fff;border-radius:20px;padding:1px 6px;min-width:13px;text-align:center;
-  box-shadow:0 1px 3px rgba(0,0,0,.15);
-}
-@keyframes t2pDockPop{0%{transform:translate(60px,-50%);opacity:0;}100%{transform:translate(0,-50%);opacity:1;}}
-
-.t2p-chardock-scrim{
-  position:fixed;inset:0;z-index:706;background:rgba(11,29,22,0.45);
-  opacity:0;pointer-events:none;transition:opacity .2s ease;
-}
-.t2p-chardock-scrim.show{opacity:1;pointer-events:auto;}
-
-.t2p-chardock-panel{
-  /* right SENGAJA tetap 0 (bukan pakai rumus calc(50vw-320px) spt tab
-     di atas) -- panel ini disembunyikan lewat transform:translateX(100%)
-     yang cuma menggeser sejauh LEBAR KOTAKNYA SENDIRI. Kalau "right"
-     digeser masuk (spt di layar desktop), translateX(100%) jadi tidak
-     cukup jauh utk membawanya keluar viewport sepenuhnya -- sisa
-     sepotong panel akan nongol permanen di tepi kanan layar walau
-     lagi "tertutup". Jadi utk panel (drawer penuh tinggi layar) tetap
-     nempel ke tepi ASLI layar spt drawer pada umumnya; yang disesuaikan
-     ke tepi kartu 640px cukup tab kecilnya saja di atas. */
-  position:fixed;right:0;top:0;bottom:0;z-index:707;width:min(84vw,340px);
-  background:var(--card);box-shadow:-12px 0 30px -10px rgba(15,23,42,0.35);
-  transform:translateX(100%);transition:transform .26s ease;
-  display:flex;flex-direction:column;padding:18px 16px;
-  padding-top:calc(18px + env(safe-area-inset-top, 0px));
-  padding-bottom:calc(18px + env(safe-area-inset-bottom, 0px));
-}
-@media (min-width:821px){.t2p-chardock-panel{width:380px;padding:22px 20px;}}
-.t2p-chardock-panel.show{transform:translateX(0);}
-.t2p-chardock-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:14px;padding-bottom:14px;border-bottom:1px dashed var(--line);}
-.t2p-chardock-head h4{font-size:16px;font-weight:800;color:var(--ink);margin:0 0 4px;display:flex;align-items:center;gap:7px;}
-.t2p-chardock-head-ic{flex-shrink:0;width:22px;height:22px;border-radius:50%;background:linear-gradient(145deg, var(--forest-glow), var(--violet));color:#fff;display:flex;align-items:center;justify-content:center;}
-.t2p-chardock-head-ic svg{width:13px;height:13px;}
-.t2p-chardock-head p{font-size:12px;color:var(--ink-soft);margin:0;line-height:1.55;}
-.t2p-chardock-close{flex-shrink:0;width:30px;height:30px;border-radius:50%;border:none;background:var(--paper);color:var(--ink-soft);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s ease,color .15s ease;}
-.t2p-chardock-close:hover{background:var(--line);color:var(--ink);}
-.t2p-chardock-list{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:10px;scrollbar-width:thin;}
-.t2p-chardock-list::-webkit-scrollbar{width:6px;}
-.t2p-chardock-list::-webkit-scrollbar-track{background:transparent;}
-.t2p-chardock-list::-webkit-scrollbar-thumb{background:var(--line);border-radius:10px;}
-
-.t2p-chardock-item{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:13px;cursor:pointer;transition:border-color .15s ease,box-shadow .15s ease;}
-.t2p-chardock-item:hover{border-color:color-mix(in srgb, var(--primary) 35%, var(--line));box-shadow:0 6px 16px -8px color-mix(in srgb, var(--primary) 25%, transparent);}
-.t2p-chardock-item-top{display:flex;align-items:center;gap:10px;}
-.t2p-chardock-item-avatar{flex-shrink:0;width:32px;height:32px;border-radius:50%;background:linear-gradient(145deg, var(--forest-glow), var(--violet));color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;box-shadow:0 4px 10px -4px color-mix(in srgb, var(--violet) 55%, transparent);}
-.t2p-chardock-item-name{flex:1;min-width:0;font-weight:700;font-size:14px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.t2p-chardock-item-chevron{flex-shrink:0;color:var(--ink-faint);transition:transform .18s ease;}
-.t2p-chardock-item.open .t2p-chardock-item-chevron{transform:rotate(90deg);}
-.t2p-chardock-item-desc{margin-top:10px;}
-.t2p-chardock-item-desc textarea{display:block;width:100%;padding:10px 11px;border-radius:10px;border:1.5px solid var(--line);font-size:12.5px;line-height:1.6;background:var(--card);outline:none;resize:vertical;min-height:76px;font-family:inherit;color:var(--ink);transition:border-color .15s ease,box-shadow .15s ease;scrollbar-width:thin;}
-.t2p-chardock-item-desc textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px color-mix(in srgb, var(--primary) 14%, transparent);}
-.t2p-chardock-item-desc textarea::-webkit-scrollbar{width:6px;}
-.t2p-chardock-item-desc textarea::-webkit-scrollbar-track{background:transparent;}
-.t2p-chardock-item-desc textarea::-webkit-scrollbar-thumb{background:var(--line);border-radius:10px;}
-.t2p-chardock-item-hint{display:block;font-size:11px;color:var(--ink-faint);margin-top:7px;line-height:1.5;}
-.t2p-chardock-item-badge{display:inline-block;margin-top:8px;font-size:10px;font-weight:700;color:#B45309;background:rgba(217,119,6,0.12);border-radius:20px;padding:3px 9px;}
-.t2p-chardock-extra-heading{font-size:11.5px;font-weight:700;color:var(--ink-soft);margin:18px 0 9px;padding-top:16px;border-top:1px dashed var(--line);}
-.t2p-seo-box{margin-top:4px;}
-.t2p-seo-field{margin-bottom:12px;}
-.t2p-seo-field label{display:block;font-size:10.5px;font-weight:700;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.02em;margin-bottom:4px;}
-.t2p-seo-value-row{display:flex;align-items:flex-start;gap:8px;background:var(--paper);border:1px solid var(--line);border-radius:9px;padding:9px 10px;}
-.t2p-seo-value-row p{flex:1;min-width:0;margin:0;font-size:12.5px;line-height:1.5;color:var(--ink);white-space:pre-wrap;word-break:break-word;}
-.t2p-seo-copy-btn{flex-shrink:0;border:none;background:transparent;cursor:pointer;font-size:14px;padding:2px;line-height:1;display:inline-flex;align-items:center;color:var(--ink-soft);}
-.t2p-seo-copy-btn.copied{transform:scale(1.15);}
-#t2pCharDockScrollArea #t2pAddCharBtn{margin-bottom:4px;}
-
-@media (max-width:480px){
-  .t2p-copy-progress{font-size:10.5px;padding:9px 10px;line-height:1.4;}
-}
-@media (max-width:380px){
-  .t2p-locked-badge-full{display:none;}
-  .t2p-locked-badge-short{display:inline;}
-  .t2p-copy-progress{font-size:10px;padding:8px 9px;line-height:1.4;}
-}
-@media (max-width:340px){
-  .t2p-locked-badge{font-size:10px;padding:5px 9px;}
-  .t2p-copy-progress{font-size:9.5px;padding:7px 8px;}
-}
 </style>
 </head>
 
@@ -15736,17 +15328,17 @@ html.dark-mode .bd-row-close{
         </span>
         <span class="fm-menu-label">Unduh Video</span>
       </button>
+      <button type="button" class="fm-menu-item" id="fmHomeSilentHeroicsBtn" data-fmkey="silentheroics" title="Silent Heroics">
+        <span class="fm-menu-ic" style="--fm-color:#16213A;">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 3 6.5v5.2c0 5.1 3.7 8.9 9 10.3 5.3-1.4 9-5.2 9-10.3V6.5L12 2Z"/><path d="M9 12.2 11.2 14.5 15.5 9.8"/></svg>
+        </span>
+        <span class="fm-menu-label">Silent Heroics</span>
+      </button>
       <button type="button" class="fm-menu-item" id="fmHomeAiToolBtn" data-fmkey="aitool" title="Tool AI">
         <span class="fm-menu-ic" style="--fm-color:#7C3AED;">
           <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4M22 5h-4M4 17v2M5 18H3"/></svg>
         </span>
         <span class="fm-menu-label">Tool AI</span>
-      </button>
-      <button type="button" class="fm-menu-item" id="fmHomeT2pBtn" data-fmkey="texttoprompt" title="Text to Prompt">
-        <span class="fm-menu-ic" style="--fm-color:#9333EA;">
-          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.5 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8.5z"/><path d="M15.5 3v5.5H21"/><path d="M8 13h8M8 17h5"/></svg>
-        </span>
-        <span class="fm-menu-label">Text to Prompt</span>
       </button>
     </div>
   </section>
@@ -16798,17 +16390,17 @@ html.dark-mode .bd-row-close{
             </span>
             <span class="fm-menu-label">Unduh Video</span>
           </button>
+          <button type="button" class="fm-menu-item" id="fmGridSilentHeroicsBtn" data-fmkey="silentheroics" title="Silent Heroics">
+            <span class="fm-menu-ic" style="--fm-color:#16213A;">
+              <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 3 6.5v5.2c0 5.1 3.7 8.9 9 10.3 5.3-1.4 9-5.2 9-10.3V6.5L12 2Z"/><path d="M9 12.2 11.2 14.5 15.5 9.8"/></svg>
+            </span>
+            <span class="fm-menu-label">Silent Heroics</span>
+          </button>
           <button type="button" class="fm-menu-item" id="fmGridAiToolBtn" data-fmkey="aitool" title="Tool AI">
             <span class="fm-menu-ic" style="--fm-color:#7C3AED;">
               <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4M22 5h-4M4 17v2M5 18H3"/></svg>
             </span>
             <span class="fm-menu-label">Tool AI</span>
-          </button>
-          <button type="button" class="fm-menu-item" id="fmGridT2pBtn" data-fmkey="texttoprompt" title="Text to Prompt">
-            <span class="fm-menu-ic" style="--fm-color:#9333EA;">
-              <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.5 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8.5z"/><path d="M15.5 3v5.5H21"/><path d="M8 13h8M8 17h5"/></svg>
-            </span>
-            <span class="fm-menu-label">Text to Prompt</span>
           </button>
         </div>
       </div>
@@ -16883,272 +16475,6 @@ html.dark-mode .bd-row-close{
     </div>
   </div>
   <!-- ===== /HALAMAN "KALKULATOR" ===== -->
-
-  <!-- ===== HALAMAN "TEXT TO PROMPT" (#t2pOverlay) =====
-       Tool baru: generator PROMPT video (utk model AI text-to-video /
-       extend-video seperti Veo dkk) dari naskah/cerita yang user tempel
-       sendiri (naskahnya sendiri dibuat pakai AI lain, di luar tool ini).
-       Dibuka dari pintasan "Text to Prompt" di kartu Fast Menu Beranda
-       (#fmHomeT2pBtn) maupun grid "Menu Utama" halaman Fast Menu
-       (#fmGridT2pBtn). Struktur luar SAMA PERSIS dgn #kalkulatorOverlay
-       (.detail-page-overlay.lap-filter-overlay > .lap-filter-page >
-       .lap-filter-head + .lap-filter-card).
-
-       Alur: user isi daftar KARAKTER (nama + ciri fisik lengkap -- ini
-       yang dipakai buat "kunci karakter full body" di tiap take, supaya
-       wujud karakter di take manapun konsisten), tempel NASKAH/CERITA,
-       atur OPSI (jumlah take, durasi/take, subtitle, bahasa output --
-       semua dalam bentuk centang/angka spt diminta), lalu klik "Generate
-       Prompt". script.js (cari komentar "TEXT TO PROMPT" di script.js)
-       mengirim SATU instruksi besar ke Gemini API (key disimpan sendiri
-       oleh user lewat modal #t2pApiModalOverlay, bisa >1 key dgn
-       auto-ganti kalau kuota salah satu key habis) yang memaksa modelnya
-       membagi cerita jadi N-take JSON terstruktur, tiap take berisi
-       prompt video siap-pakai yang:
-       - mengulang PERSIS deskripsi fisik lengkap tiap karakter yang
-         muncul di take itu (bukan cuma nama) supaya wujudnya konsisten
-         tiap take/generate (poin "kunci karakter full body").
-       - kasih blocking posisi jelas pas 2 karakter ngobrol (siapa di
-         kiri/kanan, saling berhadapan) supaya lawan bicara tidak
-         nongol aneh di belakang/samping karakter utama.
-       - kasih instruksi eksplisit soal adegan naik kendaraan (arah
-         pintu & posisi masuk yang benar, gerak kendaraan yang wajar,
-         bukan gerak "kebalik"/tidak natural).
-       - kasih catatan "frame awal take ini = frame akhir take
-         sebelumnya" supaya sambungan antar-take/generate mulus.
-       - lokasi disesuaikan otomatis per take mengikuti isi cerita.
-       Hasilnya dirender sbg kartu per-take (t2pRenderTakes di script.js)
-       -- cuma 3 kartu pertama yang tampil, sisanya disembunyikan dulu
-       di balik tombol "Tampilkan Take Berikutnya" (per 3 kartu) biar
-       halaman tidak kepanjangan ke bawah. Tiap kartu prompt-nya bisa
-       diedit langsung (textarea) & ada tombol "Salin" (clipboard). ---->
-  <div class="detail-page-overlay lap-filter-overlay" id="t2pOverlay">
-    <div class="lap-filter-page">
-      <div class="t2p-sticky-head">
-        <div class="lap-filter-head">
-          <button class="lap-filter-back-btn" id="t2pBackBtn" type="button" aria-label="Tutup Text to Prompt">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
-          </button>
-          <h2>Text to Prompt</h2>
-          <button class="lap-filter-back-btn" id="t2pApiSettingsBtn" type="button" aria-label="Pengaturan API Gemini">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-          </button>
-        </div>
-        <div class="t2p-page-body-cap" aria-hidden="true"></div>
-      </div>
-
-      <div class="lap-filter-card t2p-page-body-rest">
-        <div class="t2p-section t2p-section--merged">
-          <div class="t2p-auto-card t2p-auto-card--plain">
-            <div class="t2p-auto-card-title"><span aria-hidden="true">✦</span> Naskah Otomatis</div>
-            <p class="t2p-auto-card-desc"><b>Tool</b> akan membuatkan urutan <span class="t2p-auto-card-highlight" title="Take dibuat otomatis oleh AI berdasarkan sinopsis di bawah">TAKE <span aria-hidden="true">ⓘ</span></span> dari sinopsis ceritamu.</p>
-            <label class="t2p-auto-card-label" for="t2pStoryInput">Judul / Sinopsis / Ide Cerita</label>
-            <div class="form-row" style="margin-bottom:14px;">
-              <textarea id="t2pStoryInput" rows="4" placeholder="cth: seorang pewaris kembali ke mansion keluarga dan menemukan rahasia ibunya..."></textarea>
-            </div>
-            <label class="t2p-auto-card-label" for="t2pWorldNote">Catatan Tambahan (Opsional)</label>
-            <div class="form-row" style="margin-bottom:0;">
-              <input type="text" id="t2pWorldNote" placeholder="cth: genre, mood/nuansa, gaya visual, dsb">
-            </div>
-          </div>
-        </div>
-
-        <div class="t2p-section">
-          <div class="t2p-section-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="t2p-section-title-ic" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> Opsi Sebelum Generate</div>
-          <div class="t2p-opts-pillrow" id="t2pOptsPillRow">
-            <label class="t2p-opt-pill t2p-opt-pill--num">
-              <span class="t2p-opt-pill-ic" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5V19a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V8.5H3Z"/><path d="M3 8.5 4.4 4h3.2L6.2 8.5"/><path d="M9.8 8.5 11.2 4h3.2l-1.4 4.5"/><path d="M16.6 8.5 18 4h2a1 1 0 0 1 1 1v3.5"/></svg></span>
-              <input type="number" id="t2pTakeCount" min="1" max="30" step="1" value="6" aria-label="Jumlah Take">
-              <span class="t2p-opt-pill-suffix">take</span>
-            </label>
-            <label class="t2p-opt-pill t2p-opt-pill--num">
-              <span class="t2p-opt-pill-ic" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5"/><path d="M9 2h6"/><path d="M12 2v3"/></svg></span>
-              <input type="number" id="t2pTakeDuration" min="2" max="60" step="1" value="8" aria-label="Durasi per Take (detik)">
-              <span class="t2p-opt-pill-suffix">detik</span>
-            </label>
-            <input type="checkbox" id="t2pOptSubtitle" checked style="display:none;">
-            <label class="t2p-opt-pill t2p-opt-pill--toggle" id="t2pOptBurnSubtitleLabel" title="Video hasil menampilkan teks subtitle (burned-in) di layar sesuai isi Dialog">
-              <input type="checkbox" id="t2pOptBurnSubtitle" style="display:none;">
-              <span class="t2p-opt-pill-check" aria-hidden="true"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg></span><span>Subtitle</span>
-            </label>
-            <div class="t2p-lang-switch" id="t2pLangSwitch" title="Bahasa suara/dialog yang terdengar di video hasil (ID dan/atau EN)">
-              <input type="radio" name="t2pLang" id="t2pLangId" checked style="display:none;">
-              <label class="t2p-lang-switch-opt" for="t2pLangId">ID</label>
-              <input type="radio" name="t2pLang" id="t2pLangEn" style="display:none;">
-              <label class="t2p-lang-switch-opt" for="t2pLangEn">EN</label>
-              <span class="t2p-lang-switch-thumb" aria-hidden="true"></span>
-            </div>
-          </div>
-        </div>
-
-        <div class="t2p-section" style="border-bottom:none;padding-bottom:0;">
-          <span class="t2p-locked-badge"><svg class="t2p-locked-badge-ic" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span class="t2p-locked-badge-full">Karakter full body terkunci &amp; lokasi otomatis per take</span><span class="t2p-locked-badge-short">Karakter &amp; lokasi otomatis terkunci</span></span>
-          <button type="button" class="t2p-generate-btn" id="t2pGenerateBtn">
-            <span class="t2p-dots"><span></span><span></span><span></span></span>
-            <span id="t2pGenerateBtnLabel">Generate Prompt</span>
-          </button>
-
-          <div id="t2pResultsWrap" style="margin-top:14px;">
-            <p class="t2p-empty-hint" id="t2pResultsEmpty">Hasil prompt tiap take akan muncul di sini setelah kamu klik Generate Prompt.</p>
-            <div class="t2p-copy-progress" id="t2pCopyProgress" style="display:none;"></div>
-            <div class="t2p-subtitle-actions" id="t2pSubtitleActions" style="display:none;">
-              <button type="button" class="t2p-copy-btn" id="t2pCopyAllSubBtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg> Salin Semua Prompt</button>
-              <button type="button" class="t2p-copy-btn" id="t2pDownloadSrtBtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 19h16"/></svg> Download Semua Prompt</button>
-            </div>
-            <div id="t2pResultsList"></div>
-            <button type="button" class="t2p-showmore-btn" id="t2pShowMoreBtn" style="display:none;">Tampilkan Take Berikutnya</button>
-            <button type="button" class="t2p-addsegment-btn" id="t2pAddSegmentBtn" style="display:none;">+ Segmen Berikutnya</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- ---- Dock "Karakter" -- tab kecil nyelip di pinggir kanan
-           halaman #t2pOverlay. PERMINTAAN TERBARU: tab ini HANYA
-           tampil SETELAH generate berhasil (bukan lagi sejak halaman
-           dibuka) -- lihat t2pRenderCharDock() di script.js, yang
-           men-toggle class "show" berdasarkan isi t2pAllTakes (kosong
-           = belum generate = tab disembunyikan). Isi panel
-           #t2pCharDockPanel = form Karakter (#t2pCharList,
-           #t2pAddCharBtn) yang dipindah ke sini oleh t2pInit(), lalu
-           setelah generate berhasil panel ini JUGA menampilkan
-           karakter tambahan yang terdeteksi otomatis dari naskah tapi
-           belum ada di form, supaya user gampang cek konsistensi
-           wujud karakter tanpa scroll balik ke atas.
-           PENTING: class "show" SENGAJA TIDAK ditaruh di markup ini --
-           karena tab ini dipindah jadi anak langsung <body> oleh
-           t2pRelocateCharDockToBody() (lihat script.js), kalau
-           default-nya sudah "show" di sini, tombol ini akan permanen
-           tampil MENIMPA SEMUA HALAMAN APLIKASI (Beranda, dsb), bukan
-           cuma saat halaman Text to Prompt dibuka & sudah generate.
-           Visibility-nya MURNI dikontrol lewat JS: di-toggle tiap kali
-           t2pRenderCharDock() jalan (termasuk sesudah generate), dan
-           dipaksa dilepas lagi saat closeT2pOverlay() (lihat
-           script.js). ---- -->
-      <button type="button" class="t2p-chardock-tab" id="t2pCharDockTab" aria-label="Isi/lihat karakter video ini">
-        <span class="t2p-chardock-tab-ic">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="9" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        </span>
-        <span class="t2p-chardock-tab-label">Kunci Konsistensi</span>
-        <span class="t2p-chardock-tab-count" id="t2pCharDockCount">0</span>
-      </button>
-      <div class="t2p-chardock-scrim" id="t2pCharDockScrim"></div>
-      <div class="t2p-chardock-panel" id="t2pCharDockPanel">
-        <div class="t2p-chardock-head">
-          <div>
-            <h4><span class="t2p-chardock-head-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg></span> Karakter</h4>
-            <p>Isi ciri fisik SELENGKAP mungkin -- teks ini diulang persis di tiap take supaya wujud karakternya konsisten (kunci karakter full body).</p>
-          </div>
-          <button type="button" class="t2p-chardock-close" id="t2pCharDockCloseBtn" aria-label="Tutup panel karakter">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6 6 18M6 6l12 12"/></svg>
-          </button>
-        </div>
-        <div class="t2p-chardock-list" id="t2pCharDockScrollArea">
-          <div id="t2pCharList"></div>
-          <button type="button" class="t2p-add-char-btn" id="t2pAddCharBtn">+ Tambah Karakter</button>
-          <div id="t2pCharDockList"></div>
-          <div class="t2p-seo-box" id="t2pSeoBox" style="display:none;">
-            <p class="t2p-chardock-extra-heading">Judul, Hashtag &amp; Deskripsi (SEO)</p>
-            <div class="t2p-seo-field">
-              <label>Judul paling SEO</label>
-              <div class="t2p-seo-value-row">
-                <p id="t2pSeoTitle"></p>
-                <button type="button" class="t2p-seo-copy-btn" data-target="title" aria-label="Salin judul"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg></button>
-              </div>
-            </div>
-            <div class="t2p-seo-field">
-              <label>Hashtag</label>
-              <div class="t2p-seo-value-row">
-                <p id="t2pSeoHashtags"></p>
-                <button type="button" class="t2p-seo-copy-btn" data-target="hashtags" aria-label="Salin hashtag"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg></button>
-              </div>
-            </div>
-            <div class="t2p-seo-field">
-              <label>Deskripsi</label>
-              <div class="t2p-seo-value-row">
-                <p id="t2pSeoDesc"></p>
-                <button type="button" class="t2p-seo-copy-btn" data-target="description" aria-label="Salin deskripsi"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg></button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <!-- ===== /HALAMAN "TEXT TO PROMPT" ===== -->
-
-  <!-- ===== MODAL PENGATURAN API GEMINI -- TEXT TO PROMPT
-       (#t2pApiModalOverlay) =====
-       Dibuka dari tombol gir di header #t2pOverlay (#t2pApiSettingsBtn).
-       Simpan >1 API key Gemini (array, di localStorage lewat
-       cloudStorage) -- saat generate, script.js coba key aktif dulu,
-       kalau responsnya kuota habis/invalid (429/403) otomatis pindah
-       & coba key berikutnya di daftar (lihat t2pCallGemini di
-       script.js) -- supaya generate tidak berhenti cuma krn 1 key
-       kehabisan kuota gratis harian. Juga bisa unggah banyak key
-       sekaligus dari file .txt (satu key per baris). ===== -->
-  <div class="modal-overlay" id="t2pApiModalOverlay">
-    <div class="modal ai-settings-modal">
-      <div class="modal-head">
-        <h3>Pengaturan API Gemini</h3>
-        <button class="modal-close" id="t2pApiModalCloseBtn" type="button">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6 6 18M6 6l12 12"/></svg>
-        </button>
-      </div>
-      <!-- Bagian ini SENGAJA dipisah dari bagian scroll di bawah &
-           dibikin "menempel" (tidak ikut ke-scroll) -- supaya waktu
-           daftar API key di bawah udah banyak & panjang, pilihan
-           model & form tambah key tetap kelihatan tanpa perlu
-           scroll balik ke atas tiap mau nambah/ganti model. -->
-      <div class="t2p-api-modal-top">
-        <div class="t2p-api-section-label">Model Gemini</div>
-        <!-- ---- UPDATE MODEL (Sept 2026): 3 pilihan lama (gemini-2.5-flash,
-             gemini-2.5-pro, gemini-2.0-flash) diganti karena:
-             - gemini-2.0-flash SUDAH DIMATIKAN TOTAL sejak 1 Juni 2026 --
-               kalau ini yang aktif dipakai, generate PASTI gagal HTTP 404.
-             - gemini-2.5-flash & gemini-2.5-pro masih jalan per hari ini,
-               TAPI Google sudah umumkan keduanya dimatikan 16 Okt 2026.
-             Diganti ke lineup Gemini 3.x yang stabil/GA saat ini supaya
-             tidak langsung 404 lagi & tidak perlu diganti²
-             lagi dalam waktu dekat. ---- -->
-        <div class="t2p-model-pills" id="t2pModelPills">
-          <button type="button" class="t2p-model-pill" data-model="gemini-3.6-flash">
-            <span class="t2p-model-pill-name">3.6 Flash</span>
-            <span class="t2p-model-pill-sub">Cepat, disarankan</span>
-          </button>
-          <button type="button" class="t2p-model-pill" data-model="gemini-3.5-flash">
-            <span class="t2p-model-pill-name">3.5 Flash</span>
-            <span class="t2p-model-pill-sub">Lebih detail</span>
-          </button>
-          <button type="button" class="t2p-model-pill" data-model="gemini-3.1-flash-lite">
-            <span class="t2p-model-pill-name">3.1 Flash-Lite</span>
-            <span class="t2p-model-pill-sub">Alternatif hemat</span>
-          </button>
-        </div>
-
-        <div class="t2p-api-section-label">Tambah API Key</div>
-        <div class="t2p-key-add-row">
-          <input type="text" id="t2pKeyInput" placeholder="Tempel API key Gemini di sini">
-          <button type="button" class="btn btn-primary" id="t2pKeyAddBtn" style="flex-shrink:0;padding:0 16px;">Tambah</button>
-          <button type="button" class="t2p-upload-btn" id="t2pKeyUploadBtn" aria-label="Unggah dari file .txt, 1 key per baris" title="Unggah dari file .txt (1 key per baris)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V4"/><path d="M7 9l5-5 5 5"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg></button>
-        </div>
-        <input type="file" id="t2pKeyFileInput" accept=".txt" style="display:none;">
-      </div>
-
-      <div class="t2p-api-modal-scroll">
-        <div class="t2p-key-section-head">
-          <div class="t2p-api-section-label">Daftar Key &amp; Status</div>
-          <div class="t2p-key-summary" id="t2pKeySummary"></div>
-        </div>
-        <div class="t2p-key-list" id="t2pKeyList"></div>
-
-        <div class="t2p-api-info-card" style="margin-bottom:0;margin-top:16px;">
-          <span class="t2p-api-info-card-ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l1.8 5.4L19 9l-5.2 1.6L12 16l-1.8-5.4L5 9l5.2-1.6z"/><path d="M19 15l.9 2.6L22 18.5l-2.1.9L19 22l-.9-2.6-2.1-.9 2.1-.9z"/></svg></span>
-          <p>Tool ini pakai Gemini API milik kamu sendiri (gratis, dapatkan di <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a>).</p>
-        </div>
-      </div>
-    </div>
-  </div>
-  <!-- ===== /MODAL PENGATURAN API GEMINI -- TEXT TO PROMPT ===== -->
 
   <!-- ===== HALAMAN "UNDUH VIDEO" (#videoDlOverlay) =====
        Halaman baru, dibuka dari pintasan "Unduh Video" di kartu Fast
@@ -17321,6 +16647,135 @@ html.dark-mode .bd-row-close{
     </div>
   </div>
   <!-- ===== /MODAL PENGATURAN API UNDUH VIDEO ===== -->
+
+  <!-- ===== HALAMAN "SILENT HEROICS" (#silentHeroicsOverlay) =====
+       Pintasan baru di kartu Fast Menu Beranda (#fmHomeSilentHeroicsBtn)
+       & grid "Menu Utama" halaman Fast Menu (#fmGridSilentHeroicsBtn).
+       Kerangka luar SAMA PERSIS dgn halaman tool lain di app ini
+       (.detail-page-overlay.lap-filter-overlay > .lap-filter-page >
+       .lap-filter-head + .lap-filter-card), buka/tutup pola SAMA PERSIS
+       dgn Kalkulator/Unduh Video (lihat script.js dekat komentar
+       "SILENT HEROICS"). Generator ide/hook/prompt image-to-video utk
+       tema "Silent Heroics" pakai Google Gemini API -- key disimpan di
+       browser lewat cloudStorage (modal #silentHeroicsSettingsModalOverlay,
+       tombol gir di header), boleh 1 key atau banyak key (upload file
+       .txt/.csv) yg bergilir otomatis kalau salah satu kena limit. ---- -->
+  <div class="detail-page-overlay lap-filter-overlay" id="silentHeroicsOverlay">
+    <div class="lap-filter-page">
+      <div class="lap-filter-head">
+        <button class="lap-filter-back-btn" id="shBackBtn" type="button" aria-label="Tutup Silent Heroics">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <h2>Silent Heroics</h2>
+        <button class="lap-filter-back-btn" id="shSettingsBtn" type="button" title="Pengaturan API Gemini" aria-label="Pengaturan API Gemini">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </button>
+      </div>
+
+      <div class="lap-filter-card shp-card">
+        <div class="shp-intro">
+          <span class="shp-intro-ic">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 3 6.5v5.2c0 5.1 3.7 8.9 9 10.3 5.3-1.4 9-5.2 9-10.3V6.5L12 2Z"/><path d="M9 12.2 11.2 14.5 15.5 9.8"/></svg>
+          </span>
+          <p><b>Prompt Studio Silent Heroics</b> — buat ide, hook, dan prompt image-to-video siap pakai untuk konten pahlawan tanpa nama & penyelamatan tak terduga, ditenagai Gemini AI.</p>
+        </div>
+
+        <div class="form-row">
+          <label for="shScenarioInput">Skenario / elemen wajib <span style="font-weight:400;color:var(--ink-faint);">(opsional)</span></label>
+          <textarea id="shScenarioInput" rows="2" placeholder="Cth: di stasiun kereta, korban anak kecil, penyelamat kurir paket..."></textarea>
+          <p class="ai-settings-hint">Kosongkan kalau mau ide 100% random dari AI.</p>
+        </div>
+
+        <div>
+          <div class="shp-section-label">Jumlah variasi ide</div>
+          <div class="shp-seg" id="shCountSeg" style="margin-top:8px;">
+            <button type="button" data-val="1">1</button>
+            <button type="button" data-val="3" class="active">3</button>
+            <button type="button" data-val="5">5</button>
+          </div>
+        </div>
+
+        <div>
+          <div class="shp-section-label">Bahasa hasil</div>
+          <div class="shp-seg" id="shLangSeg" style="margin-top:8px;">
+            <button type="button" data-val="id" class="active">Indonesia</button>
+            <button type="button" data-val="en">English</button>
+          </div>
+        </div>
+
+        <div class="shp-toggle-row">
+          <span class="shp-toggle-text">
+            <span class="shp-toggle-title">Video prompt selalu Inggris</span>
+            <span class="shp-toggle-hint">Direkomendasikan — mayoritas model image-to-video paling akurat dgn prompt Inggris.</span>
+          </span>
+          <button type="button" class="ws-switch active" id="shForceEnToggle" role="switch" aria-checked="true" aria-label="Video prompt selalu Inggris"><span class="ws-switch-knob"></span></button>
+        </div>
+
+        <div>
+          <div class="shp-duration-value"><b id="shDurVal">15</b><span>detik durasi video target</span></div>
+          <input type="range" class="shp-range" id="shDurationInput" min="5" max="60" step="1" value="15">
+        </div>
+
+        <button class="btn btn-primary shp-generate-btn" id="shGenerateBtn" type="button">Generate Ide</button>
+        <div class="shp-status" id="shStatusBanner"></div>
+
+        <div class="shp-results-head">
+          <span class="shp-section-label" style="margin:0;">Hasil</span>
+          <span class="shp-results-count"><b id="shGenCount">0</b> ide dibuat sesi ini</span>
+        </div>
+        <div id="shResults">
+          <div class="shp-empty" id="shEmptyState">
+            <div class="shp-empty-glyph">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 3 6.5v5.2c0 5.1 3.7 8.9 9 10.3 5.3-1.4 9-5.2 9-10.3V6.5L12 2Z"/></svg>
+            </div>
+            <p>Belum ada ide. Atur API key Gemini kamu lewat ikon gir di pojok kanan atas, atur durasi &amp; bahasa, lalu tekan <b>Generate Ide</b>.</p>
+          </div>
+        </div>
+        <p class="shp-footer-note">Dibuat untuk konten tema Silent Heroics — pahlawan tak dikenal, momen penyelamatan tak terduga, dan hook yang bikin scroll berhenti.</p>
+      </div>
+    </div>
+  </div>
+  <!-- ===== /HALAMAN "SILENT HEROICS" ===== -->
+
+  <!-- ===== MODAL PENGATURAN API SILENT HEROICS (#silentHeroicsSettingsModalOverlay) =====
+       Pola SAMA PERSIS dgn #videoDlSettingsModalOverlay/#aiSettingsModalOverlay:
+       API key disimpan di localStorage lewat cloudStorage, tidak pernah
+       dikirim ke server ZAYAIN. Tambahan: boleh upload file berisi banyak
+       key (satu key per baris) yg bergilir otomatis. ---- -->
+  <div class="modal-overlay" id="silentHeroicsSettingsModalOverlay">
+    <div class="modal ai-settings-modal">
+      <div class="modal-head">
+        <h3>Pengaturan Silent Heroics</h3>
+        <button class="modal-close" id="shSettingsCloseBtn" type="button">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <form id="shSettingsForm">
+        <div class="form-row">
+          <label for="shApiKeyInput">Gemini API Key</label>
+          <div class="shp-key-input-row">
+            <div class="pw-field-wrap">
+              <input type="password" id="shApiKeyInput" placeholder="AIza... (satu key)" autocomplete="off">
+              <button type="button" class="pw-eye-toggle" id="shApiKeyToggle" tabindex="-1" aria-label="Tampilkan API key" aria-pressed="false">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+            <button type="button" class="shp-upload-key-btn" id="shUploadKeyBtn" title="Upload file berisi banyak API key">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            </button>
+            <input type="file" id="shKeyFileInput" accept=".txt,.csv" style="display:none">
+          </div>
+          <p class="ai-settings-hint">Butuh API key gratis dari <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a>. Ketik satu key, atau klik ikon upload utk file .txt/.csv berisi banyak key (satu key per baris) — tool bergilir otomatis & lompat ke key berikutnya kalau ada yg kena limit. Semua tersimpan hanya di browser ini.</p>
+          <div class="shp-key-pool-status" id="shKeyPoolStatus"></div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" id="shSettingsClearBtn">Hapus Key</button>
+          <button type="submit" class="btn btn-primary">Simpan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <!-- ===== /MODAL PENGATURAN API SILENT HEROICS ===== -->
 
   <!-- ===== HALAMAN "KURS MATA UANG" (#kursOverlay) =====
        Halaman baru, dibuka dari pintasan "Kurs" di kartu Fast Menu

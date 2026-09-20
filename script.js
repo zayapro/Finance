@@ -10852,7 +10852,7 @@ document.getElementById('fmGridSayaBtn')?.addEventListener('click', () => {
    disimpan (auto-save), jadi tombol pil cuma berfungsi buka/tutup
    mode-edit -- teksnya berubah jadi "Selesai Mengatur" selama aktif. */
 const FAST_MENU_SETTINGS_KEY = 'alirin_fast_menu_settings_v1';
-const FAST_MENU_ORDER_DEFAULT = ['addtx', 'tagihan', 'laporan', 'dompet', 'pendapatan', 'pengaturan', 'kalkulator', 'kurs', 'scanner', 'camera', 'unduhvideo', 'aitool', 'texttoprompt'];
+const FAST_MENU_ORDER_DEFAULT = ['addtx', 'tagihan', 'laporan', 'dompet', 'pendapatan', 'pengaturan', 'kalkulator', 'kurs', 'scanner', 'camera', 'unduhvideo', 'silentheroics', 'aitool'];
 let fastMenuEditMode = false;
 
 function loadFastMenuSettings() {
@@ -11043,1409 +11043,6 @@ document.getElementById('fmHomeKalkulatorBtn')?.addEventListener('click', openKa
 document.getElementById('fmGridKalkulatorBtn')?.addEventListener('click', () => {
   closeFastMenuOverlay();
   openKalkulatorOverlay();
-});
-
-/* ==========================================================
-   TEXT TO PROMPT (#t2pOverlay) -- pintasan baru di kartu Fast Menu
-   Beranda (#fmHomeT2pBtn) & grid "Menu Utama" halaman Fast Menu
-   (#fmGridT2pBtn). Buka/tutup pola SAMA PERSIS dgn
-   openKalkulatorOverlay/closeKalkulatorOverlay di atas.
-
-   RINGKASAN ALUR (lihat juga komentar panjang di markup #t2pOverlay
-   pada index.html):
-   1. User isi daftar karakter (nama + ciri fisik LENGKAP), tempel
-      naskah/cerita, atur opsi (jumlah take, durasi/take, subtitle,
-      bahasa output -- semua checkbox/angka spt diminta).
-   2. Klik Generate -> t2pGeneratePrompts() menyusun SATU instruksi
-      besar (t2pBuildMasterPrompt) yang memaksa Gemini membagi cerita
-      jadi N-take JSON terstruktur dgn deskripsi karakter full-body
-      diulang persis di tiap take, blocking posisi bicara yang wajar,
-      instruksi adegan kendaraan yang realistis, catatan sambungan
-      frame antar-take, & lokasi per take mengikuti cerita.
-   3. t2pCallGemini() memanggil REST API Gemini
-      (generativelanguage.googleapis.com) langsung dari browser pakai
-      key milik user sendiri (disimpan di cloudStorage, bisa >1 --
-      lihat t2pApiModalOverlay) -- kalau key yang aktif kena limit
-      kuota (HTTP 429) atau invalid (400/403), otomatis coba key
-      berikutnya di daftar sampai salah satu berhasil / semua gagal.
-   4. Hasil JSON di-parse jadi array take, disimpan di t2pAllTakes,
-      dirender 3 per halaman (t2pRenderTakes) lewat tombol "Tampilkan
-      Take Berikutnya" supaya halaman tidak kepanjangan ke bawah.
-      Tiap kartu take bisa diedit langsung (textarea) & disalin lewat
-      tombol Salin (clipboard). ---- */
-function openT2pOverlay() {
-  document.getElementById('t2pOverlay')?.classList.add('open');
-  lockBodyScroll();
-}
-function closeT2pOverlay() {
-  document.getElementById('t2pOverlay')?.classList.remove('open');
-  unlockBodyScroll();
-  t2pCloseCharDock();
-  // FIX "tab Kunci Konsistensi nongol di semua halaman": tab ini anak
-  // langsung <body> (lihat t2pRelocateCharDockToBody()), jadi begitu
-  // halaman Text to Prompt ditutup, tab-nya HARUS ikut disembunyikan
-  // manual di sini -- kalau tidak, dia tetap kelihatan menimpa
-  // halaman lain (Beranda, dsb) walau #t2pOverlay sudah tertutup.
-  document.getElementById('t2pCharDockTab')?.classList.remove('show');
-}
-document.getElementById('t2pBackBtn')?.addEventListener('click', closeT2pOverlay);
-document.getElementById('fmHomeT2pBtn')?.addEventListener('click', () => {
-  if (!requireCloudLogin('Masuk untuk menggunakan Text to Prompt.')) return;
-  openT2pOverlay();
-  t2pInit();
-});
-document.getElementById('fmGridT2pBtn')?.addEventListener('click', () => {
-  closeFastMenuOverlay();
-  if (!requireCloudLogin('Masuk untuk menggunakan Text to Prompt.')) return;
-  openT2pOverlay();
-  t2pInit();
-});
-
-/* ---------- Penyimpanan: karakter, opsi, & API key Gemini ---------- */
-const T2P_STATE_KEY = 'zayapro_t2p_state_v1';
-const T2P_KEYS_KEY = 'zayapro_t2p_gemini_keys_v1';
-let t2pInited = false;
-let t2pAllTakes = [];      // seluruh take hasil generate terakhir
-let t2pSeoData = null;     // {title, hashtags[], description} hasil generate SEO, null = belum ada
-let t2pVisibleCount = 0;   // berapa kartu take yang sudah ditampilkan
-let t2pCharIdxSeq = 0;
-
-function t2pLoadState() {
-  try {
-    const raw = cloudStorage.getItem(T2P_STATE_KEY);
-    if (raw) {
-      const state = Object.assign({ characters: [], story: '', worldNote: '', takeCount: 6, takeDuration: 8, subtitle: true, burnSubtitle: false, langId: true, langEn: false, dialogDefaultApplied: false }, JSON.parse(raw));
-      // MIGRASI TOGGLE DIALOG: dulu opsi ini namanya "Subtitle" & default-nya
-      // OFF. Sekarang jadi "Dialog" dan HARUS ON secara default tiap
-      // generate. User lama yang sempat kesimpan state dgn subtitle:false
-      // dari sebelum migrasi ini dipaksa ON sekali di sini saja -- abis itu
-      // (ditandai dialogDefaultApplied) pilihan manual mereka dihormati lagi.
-      if (!state.dialogDefaultApplied) {
-        state.subtitle = true;
-        state.dialogDefaultApplied = true;
-      }
-      return state;
-    }
-  } catch (e) { /* abaikan, pakai default */ }
-  return { characters: [{ name: '', desc: '' }], story: '', worldNote: '', takeCount: 6, takeDuration: 8, subtitle: true, burnSubtitle: false, langId: true, langEn: false, dialogDefaultApplied: true };
-}
-function t2pSaveState() {
-  try {
-    const characters = [...document.querySelectorAll('#t2pCharList .t2p-char-row')].map((row) => ({
-      name: row.querySelector('.t2p-char-name')?.value.trim() || '',
-      desc: row.querySelector('.t2p-char-desc')?.value.trim() || '',
-    }));
-    const state = {
-      characters,
-      story: document.getElementById('t2pStoryInput')?.value || '',
-      worldNote: document.getElementById('t2pWorldNote')?.value || '',
-      takeCount: parseInt(document.getElementById('t2pTakeCount')?.value, 10) || 6,
-      takeDuration: parseInt(document.getElementById('t2pTakeDuration')?.value, 10) || 8,
-      subtitle: !!document.getElementById('t2pOptSubtitle')?.checked,
-      // Subtitle (burned-in ke video) cuma masuk akal kalau Dialog aktif
-      // -- tanpa Dialog, tidak ada teks yang bisa ditampilkan di video.
-      // Dipaksa false di sini sbg jaring pengaman terakhir kalau somehow
-      // checkbox-nya kecentang sementara Dialog mati (mis. race kondisi
-      // toggle), supaya prompt yang dikirim ke Gemini tidak pernah minta
-      // subtitle tanpa ada isi dialog sama sekali.
-      burnSubtitle: !!document.getElementById('t2pOptSubtitle')?.checked && !!document.getElementById('t2pOptBurnSubtitle')?.checked,
-      langId: !!document.getElementById('t2pLangId')?.checked,
-      langEn: !!document.getElementById('t2pLangEn')?.checked,
-      dialogDefaultApplied: true,
-    };
-    cloudStorage.setItem(T2P_STATE_KEY, JSON.stringify(state));
-  } catch (e) { /* riwayat form tidak kritikal, biarkan gagal senyap */ }
-}
-
-function t2pLoadKeys() {
-  try {
-    const raw = JSON.parse(cloudStorage.getItem(T2P_KEYS_KEY) || '{}');
-    // MIGRASI MODEL LAMA: user yang sebelumnya sudah pernah pilih salah
-    // satu dari 3 model lama (gemini-2.5-flash/2.5-pro/2.0-flash) akan
-    // punya "model" tersimpan persis nama itu di penyimpanannya --
-    // walau pilihan di UI sudah diganti ke lineup 3.x, nilai LAMA yang
-    // tersimpan ini tetap dipakai selamanya kalau tidak dipetakan ulang
-    // di sini (gemini-2.0-flash malah sudah 404 sejak 1 Juni 2026, dan
-    // 2.5-flash/2.5-pro menyusul mati 16 Okt 2026) -- makanya tiap kali
-    // key data dimuat, nama model lama otomatis "diupgrade" ke
-    // padanannya di lineup 3.x yang masih aktif, TANPA user perlu buka
-    // Pengaturan API & pilih ulang manual.
-    const T2P_MODEL_MIGRATE = {
-      'gemini-2.0-flash': 'gemini-3.1-flash-lite',
-      'gemini-2.5-flash': 'gemini-3.6-flash',
-      'gemini-2.5-pro': 'gemini-3.5-flash',
-    };
-    const savedModel = raw.model || 'gemini-3.6-flash';
-    return {
-      keys: Array.isArray(raw.keys) ? raw.keys : [],
-      activeIdx: raw.activeIdx || 0,
-      model: T2P_MODEL_MIGRATE[savedModel] || savedModel,
-      // status: peta "key string" -> 'ok' | 'quota' | 'invalid' | 'error'
-      // (belum ada entri = belum pernah diuji). Diisi otomatis tiap
-      // key dicoba lewat generate (t2pCallGemini) ATAU lewat tombol
-      // "Tes" manual di modal (t2pTestKey) -- lihat t2pRenderKeyList.
-      status: (raw.status && typeof raw.status === 'object') ? raw.status : {},
-    };
-  } catch (e) { return { keys: [], activeIdx: 0, model: 'gemini-3.6-flash', status: {} }; }
-}
-function t2pSaveKeys(data) {
-  try { cloudStorage.setItem(T2P_KEYS_KEY, JSON.stringify(data)); } catch (e) { /* abaikan */ }
-}
-
-/* ---------- Baris karakter (tambah/hapus dinamis) ---------- */
-function t2pAddCharRow(name, desc) {
-  const list = document.getElementById('t2pCharList');
-  if (!list) return;
-  const idx = t2pCharIdxSeq++;
-  const row = document.createElement('div');
-  row.className = 't2p-char-row';
-  row.dataset.idx = idx;
-  row.innerHTML =
-    `<div class="t2p-char-row-top">
-      <input type="text" class="t2p-char-name" placeholder="Nama karakter, misal: Rangga" value="${(name || '').replace(/"/g, '&quot;')}">
-      <button type="button" class="t2p-char-remove" aria-label="Hapus karakter">×</button>
-    </div>
-    <textarea class="t2p-char-desc" rows="2" placeholder="Ciri fisik lengkap (full body): tinggi/postur, wajah, warna &amp; model rambut, warna kulit, pakaian &amp; warna, aksesoris -- makin detail makin konsisten hasilnya">${desc || ''}</textarea>`;
-  row.querySelector('.t2p-char-remove').addEventListener('click', () => {
-    if (document.querySelectorAll('#t2pCharList .t2p-char-row').length <= 1) {
-      showToast('Minimal harus ada 1 karakter.', 'err');
-      return;
-    }
-    row.remove();
-    t2pSaveState();
-    t2pRenderCharDock();
-  });
-  row.querySelectorAll('input,textarea').forEach((el) => el.addEventListener('change', () => {
-    t2pSaveState();
-    t2pRenderCharDock();
-  }));
-  list.appendChild(row);
-}
-document.getElementById('t2pAddCharBtn')?.addEventListener('click', () => {
-  t2pAddCharRow('', '');
-  t2pSaveState();
-  t2pRenderCharDock();
-});
-
-/* ---------- Inisialisasi form saat halaman dibuka (isi ulang dari
-   penyimpanan supaya draft user tidak hilang tiap buka-tutup). ---------- */
-function t2pInit() {
-  if (t2pInited) return; // cukup sekali per load halaman
-  t2pInited = true;
-  const state = t2pLoadState();
-  const list = document.getElementById('t2pCharList');
-  if (list) list.innerHTML = '';
-  (state.characters.length ? state.characters : [{ name: '', desc: '' }]).forEach((c) => t2pAddCharRow(c.name, c.desc));
-  if (document.getElementById('t2pStoryInput')) document.getElementById('t2pStoryInput').value = state.story;
-  if (document.getElementById('t2pWorldNote')) document.getElementById('t2pWorldNote').value = state.worldNote;
-  if (document.getElementById('t2pTakeCount')) document.getElementById('t2pTakeCount').value = state.takeCount;
-  if (document.getElementById('t2pTakeDuration')) document.getElementById('t2pTakeDuration').value = state.takeDuration;
-  if (document.getElementById('t2pOptSubtitle')) document.getElementById('t2pOptSubtitle').checked = state.subtitle;
-  if (document.getElementById('t2pOptBurnSubtitle')) document.getElementById('t2pOptBurnSubtitle').checked = state.burnSubtitle;
-  // Toggle "Subtitle" (burned-in ke video) cuma masuk akal kalau
-  // "Dialog" aktif -- tanpa Dialog tidak ada teks buat ditampilkan.
-  // t2pSyncBurnSubtitleToggle() mengunci/nonaktifkan pill-nya (visual
-  // & fungsional) tiap kali status Dialog berubah, supaya user tidak
-  // bisa nyalakan Subtitle sendirian dalam keadaan tidak masuk akal.
-  const t2pSyncBurnSubtitleToggle = () => {
-    const dialogOn = !!document.getElementById('t2pOptSubtitle')?.checked;
-    const burnInput = document.getElementById('t2pOptBurnSubtitle');
-    const burnLabel = document.getElementById('t2pOptBurnSubtitleLabel');
-    if (!dialogOn && burnInput?.checked) burnInput.checked = false;
-    if (burnInput) burnInput.disabled = !dialogOn;
-    burnLabel?.classList.toggle('t2p-opt-pill--disabled', !dialogOn);
-  };
-  t2pSyncBurnSubtitleToggle();
-  document.getElementById('t2pOptSubtitle')?.addEventListener('change', t2pSyncBurnSubtitleToggle);
-  // Switch bahasa output (ID/EN) -- exclusive: EN aktif cuma kalau
-  // langEn true DAN langId eksplisit false, selain itu default ID.
-  const t2pLangSwitchEl = document.getElementById('t2pLangSwitch');
-  const t2pLangIdInput = document.getElementById('t2pLangId');
-  const t2pLangEnInput = document.getElementById('t2pLangEn');
-  const t2pEnActive = !!state.langEn && !state.langId;
-  if (t2pLangIdInput) t2pLangIdInput.checked = !t2pEnActive;
-  if (t2pLangEnInput) t2pLangEnInput.checked = t2pEnActive;
-  t2pLangSwitchEl?.classList.toggle('lang-en', t2pEnActive);
-  [t2pLangIdInput, t2pLangEnInput].forEach((el) => {
-    el?.addEventListener('change', () => {
-      t2pLangSwitchEl?.classList.toggle('lang-en', !!t2pLangEnInput?.checked);
-    });
-  });
-  ['t2pStoryInput', 't2pWorldNote', 't2pTakeCount', 't2pTakeDuration'].forEach((id) => {
-    document.getElementById(id)?.addEventListener('change', t2pSaveState);
-  });
-  ['t2pOptSubtitle', 't2pOptBurnSubtitle', 't2pLangId', 't2pLangEn'].forEach((id) => {
-    document.getElementById(id)?.addEventListener('change', t2pSaveState);
-  });
-  t2pRenderKeyList();
-  t2pRenderCharDock(); // tab langsung tampil (lihat catatan di t2pRenderCharDock)
-}
-
-/* ---------- Modal Pengaturan API Gemini ---------- */
-// Metadata tampilan per status key -- dipakai utk titik warna, label
-// teks di tiap kartu key, & chip ringkasan di atas daftar.
-const T2P_KEY_STATUS_META = {
-  ok: { label: 'Siap dipakai', chip: 'Siap' },
-  quota: { label: 'Kuota harian habis', chip: 'Kuota habis' },
-  invalid: { label: 'Key tidak valid', chip: 'Tidak valid' },
-  error: { label: 'Gagal dites (jaringan/lainnya)', chip: 'Error' },
-  unknown: { label: 'Belum pernah diuji', chip: 'Belum diuji' },
-};
-
-function t2pKeyStatusOf(data, key) {
-  return data.status && data.status[key] ? data.status[key] : 'unknown';
-}
-
-// Panggilan RINGAN cuma utk cek apakah sebuah key valid & masih ada
-// kuota -- pakai endpoint list model (metadata), BUKAN generateContent,
-// supaya tombol "Tes" tidak ikut makan kuota generate harian user.
-async function t2pTestKey(key) {
-  try {
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(key)}`);
-    if (res.status === 429) return 'quota';
-    if (res.status === 400 || res.status === 401 || res.status === 403) return 'invalid';
-    if (!res.ok) return 'error';
-    return 'ok';
-  } catch (e) { return 'error'; }
-}
-
-function t2pRenderKeySummary(data) {
-  const el = document.getElementById('t2pKeySummary');
-  if (!el) return;
-  if (!data.keys.length) { el.innerHTML = ''; return; }
-  const counts = { ok: 0, quota: 0, invalid: 0, error: 0, unknown: 0 };
-  data.keys.forEach((k) => { counts[t2pKeyStatusOf(data, k)]++; });
-  el.innerHTML = Object.entries(counts)
-    .filter(([, n]) => n > 0)
-    .map(([status, n]) => `<span class="t2p-key-chip t2p-key-chip--${status}">${n} ${T2P_KEY_STATUS_META[status].chip.toLowerCase()}</span>`)
-    .join('');
-}
-
-function t2pRenderKeyList() {
-  const wrap = document.getElementById('t2pKeyList');
-  if (!wrap) return;
-  const data = t2pLoadKeys();
-  document.querySelectorAll('#t2pModelPills .t2p-model-pill').forEach((btn) => {
-    btn.classList.toggle('active', btn.dataset.model === data.model);
-  });
-  t2pRenderKeySummary(data);
-  wrap.innerHTML = '';
-  if (!data.keys.length) {
-    wrap.innerHTML = '<p class="t2p-empty-hint" style="padding:8px;">Belum ada API key Gemini. Tambahkan minimal 1 key di atas.</p>';
-    return;
-  }
-  data.keys.forEach((key, i) => {
-    const masked = key.length > 8 ? `${key.slice(0, 4)}••••${key.slice(-4)}` : '••••••••';
-    const isActive = i === data.activeIdx;
-    const status = t2pKeyStatusOf(data, key);
-    const meta = T2P_KEY_STATUS_META[status];
-    const item = document.createElement('div');
-    item.className = 't2p-key-item' + (isActive ? ' is-active' : '');
-    item.innerHTML =
-      `<span class="t2p-key-status-dot t2p-key-status-dot--${status}"></span>
-      <div class="t2p-key-item-main">
-        <div class="t2p-key-item-top">
-          <span class="t2p-key-label">${masked}</span>
-          ${isActive ? '<span class="t2p-key-active-tag">AKTIF</span>' : ''}
-        </div>
-        <span class="t2p-key-status-text t2p-key-status-text--${status}">${meta.label}</span>
-      </div>
-      <div class="t2p-key-item-actions">
-        <button type="button" class="t2p-key-test-btn">Tes</button>
-        ${isActive ? '' : '<button type="button" class="t2p-key-use-btn">Pakai</button>'}
-        <button type="button" class="t2p-key-remove" aria-label="Hapus key">×</button>
-      </div>`;
-    item.querySelector('.t2p-key-test-btn').addEventListener('click', async function () {
-      const dot = item.querySelector('.t2p-key-status-dot');
-      this.disabled = true;
-      this.textContent = '...';
-      dot.className = 't2p-key-status-dot t2p-key-status-dot--testing';
-      const result = await t2pTestKey(key);
-      const d = t2pLoadKeys();
-      d.status[key] = result;
-      t2pSaveKeys(d);
-      t2pRenderKeyList();
-      const resultMeta = T2P_KEY_STATUS_META[result];
-      showToast(`Key #${i + 1}: ${resultMeta.label}.`, result === 'ok' ? undefined : 'err');
-    });
-    item.querySelector('.t2p-key-use-btn')?.addEventListener('click', () => {
-      const d = t2pLoadKeys();
-      d.activeIdx = i;
-      t2pSaveKeys(d);
-      t2pRenderKeyList();
-      showToast(`Key #${i + 1} dijadikan key aktif.`);
-    });
-    item.querySelector('.t2p-key-remove').addEventListener('click', () => {
-      const d = t2pLoadKeys();
-      d.keys.splice(i, 1);
-      delete d.status[key];
-      if (d.activeIdx >= d.keys.length) d.activeIdx = 0;
-      t2pSaveKeys(d);
-      t2pRenderKeyList();
-      showToast('Key dihapus.');
-    });
-    wrap.appendChild(item);
-  });
-}
-document.getElementById('t2pApiSettingsBtn')?.addEventListener('click', () => {
-  openModal(document.getElementById('t2pApiModalOverlay'));
-  t2pRenderKeyList();
-});
-document.getElementById('t2pApiModalCloseBtn')?.addEventListener('click', () => closeModal(document.getElementById('t2pApiModalOverlay')));
-document.getElementById('t2pApiModalOverlay')?.addEventListener('click', (e) => {
-  if (e.target.id === 't2pApiModalOverlay') closeModal(document.getElementById('t2pApiModalOverlay'));
-});
-document.getElementById('t2pModelPills')?.addEventListener('click', (e) => {
-  const btn = e.target.closest('.t2p-model-pill');
-  if (!btn) return;
-  const d = t2pLoadKeys();
-  d.model = btn.dataset.model;
-  t2pSaveKeys(d);
-  t2pRenderKeyList();
-});
-document.getElementById('t2pKeyAddBtn')?.addEventListener('click', () => {
-  const input = document.getElementById('t2pKeyInput');
-  const val = (input?.value || '').trim();
-  if (!val) { showToast('Isi API key dulu.', 'err'); return; }
-  const d = t2pLoadKeys();
-  if (d.keys.includes(val)) { showToast('Key ini sudah ada di daftar.', 'err'); return; }
-  d.keys.push(val);
-  t2pSaveKeys(d);
-  input.value = '';
-  t2pRenderKeyList();
-  showToast('Key ditambahkan.');
-});
-// Unggah banyak key sekaligus dari file .txt (satu key per baris) --
-// mempermudah user yang sudah punya daftar key siap pakai, tanpa
-// perlu tempel satu-satu lewat input di atas.
-document.getElementById('t2pKeyUploadBtn')?.addEventListener('click', () => {
-  document.getElementById('t2pKeyFileInput')?.click();
-});
-document.getElementById('t2pKeyFileInput')?.addEventListener('change', (e) => {
-  const file = e.target.files && e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = () => {
-    const lines = String(reader.result || '').split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
-    if (!lines.length) { showToast('File kosong atau tidak berisi key.', 'err'); return; }
-    const d = t2pLoadKeys();
-    let added = 0;
-    lines.forEach((k) => {
-      if (!d.keys.includes(k)) { d.keys.push(k); added++; }
-    });
-    t2pSaveKeys(d);
-    t2pRenderKeyList();
-    showToast(`${added} key ditambahkan dari file.`);
-  };
-  reader.onerror = () => showToast('Gagal membaca file.', 'err');
-  reader.readAsText(file);
-  e.target.value = '';
-});
-
-/* ---------- Panggilan ke Gemini API dgn auto-ganti key ---------- */
-// FIX BUG "CONTINUITY NOTE TIDAK MUNCUL": sebelumnya panggilan Gemini
-// cuma pakai responseMimeType:'application/json' TANPA responseSchema,
-// jadi walau instruksi teks bilang field continuity_note "wajib
-// diisi", Gemini kadang tetap mengosongkan/skip field itu karena
-// tidak ada validasi struktur yang memaksa. responseSchema di bawah
-// memaksa API mengembalikan SEMUA field ini di tiap objek take,
-// termasuk continuity_note (boleh string kosong "" utk take 1, tapi
-// field-nya harus tetap ada & diisi kalau bukan take 1).
-const T2P_TAKE_PROPS = {
-  take: { type: 'integer' },
-  location: { type: 'string' },
-  characters: { type: 'array', items: { type: 'string' }, description: 'HANYA nama singkat tiap karakter yang muncul di take ini (mis. "Bram", "Sari") -- JANGAN sertakan deskripsi fisik, pakaian, atau narasi apapun di sini, itu semua taruh di field prompt.' },
-  // FIX "kotak deskripsi karakter di panel Kunci Konsistensi selalu
-  // kosong": sebelumnya field "characters" di atas SENGAJA cuma nama
-  // singkat (tanpa deskripsi), jadi panel #t2pCharDockPanel tidak
-  // punya sumber data apapun utk mengisi otomatis kotak deskripsi
-  // karakter yang terdeteksi dari naskah (yg belum ada di form
-  // Karakter) -- makanya selalu kosong nunggu diisi manual. Field
-  // BARU ini isinya deskripsi full-body PERSIS SAMA seperti yang
-  // dipakai Gemini di teks "prompt" take ini (lihat aturan wajib no.1)
-  // utk SETIAP nama yang ada di "characters" -- termasuk karakter yg
-  // sudah didefinisikan user (nilainya akan sama dgn input) MAUPUN yg
-  // baru ditemukan Gemini sendiri dari naskah. Dipakai t2pCollectExtraCharacters()
-  // utk auto-isi kotak deskripsi (masih bisa diedit manual oleh user).
-  character_descriptions: {
-    type: 'array',
-    items: {
-      type: 'object',
-      properties: {
-        name: { type: 'string' },
-        description: { type: 'string' },
-      },
-      required: ['name', 'description'],
-    },
-    description: 'Utk SETIAP nama di field "characters" di atas, sertakan satu entri {name, description} di sini -- "description" WAJIB diisi deskripsi fisik full-body PERSIS SAMA (kata demi kata) dengan yang kamu tulis di dalam field "prompt" utk karakter tsb (wajah, tinggi/postur, warna kulit, model & warna rambut, pakaian saat ini). Jangan dikosongkan.',
-  },
-  prompt: { type: 'string' },
-  continuity_note: { type: 'string' },
-  subtitle: { type: 'string' },
-  // FIELD BARU (kartu take dipecah jadi kotak terpisah spy lebih
-  // enak dibaca/diedit user, bukan cuma satu textarea besar):
-  // "action", "camera_movement", "end_frame_description" masing2
-  // WAJIB konsisten (tidak boleh bertentangan) dgn isi teks "prompt"
-  // -- 3 field ini murni ringkasan/pecahan utk ditampilkan di kartu,
-  // field "prompt" tetap yang lengkap & yang disalin ke tool video-gen.
-  action: { type: 'string', description: 'Ringkasan aksi/kejadian utama di take ini (gerakan & perbuatan karakter), 2-4 kalimat, HARUS konsisten dgn isi field "prompt".' },
-  camera_movement: { type: 'string', description: 'Deskripsi gerak & framing kamera di take ini (mis. "medium shot handheld mengikuti gerak tubuh Ryan, lalu geser ke..."), HARUS konsisten dgn isi field "prompt".' },
-  end_frame_description: { type: 'string', description: 'Deskripsi visual FRAME PALING AKHIR take ini (posisi akhir karakter, ekspresi, sudut kamera, pencahayaan) -- dipakai user sbg acuan screenshot utk generate take berikutnya, jadi WAJIB sangat spesifik & konkret, bukan kalimat umum.' },
-};
-const T2P_TAKE_REQUIRED = ['take', 'location', 'characters', 'character_descriptions', 'prompt', 'continuity_note', 'subtitle', 'action', 'camera_movement', 'end_frame_description'];
-const T2P_ARRAY_SCHEMA = { type: 'array', items: { type: 'object', properties: T2P_TAKE_PROPS, required: T2P_TAKE_REQUIRED } };
-const T2P_OBJECT_SCHEMA = { type: 'object', properties: T2P_TAKE_PROPS, required: T2P_TAKE_REQUIRED };
-const T2P_SEO_SCHEMA = {
-  type: 'object',
-  properties: {
-    title: { type: 'string' },
-    hashtags: { type: 'array', items: { type: 'string' } },
-    description: { type: 'string' },
-  },
-  required: ['title', 'hashtags', 'description'],
-};
-
-async function t2pCallGemini(promptText, responseSchema) {
-  const data = t2pLoadKeys();
-  if (!data.keys.length) {
-    throw new Error('NOKEY');
-  }
-  const model = data.model || 'gemini-3.6-flash';
-  let lastErr = null;
-  let statusChanged = false;
-  // Mulai dari key aktif tersimpan, lalu muter ke seluruh daftar
-  // sekali putaran penuh -- key yang berhasil dipakai jadi key aktif
-  // baru (disimpan) supaya panggilan berikutnya langsung mulai dari
-  // situ, bukan mengulang key yang barusan gagal dari awal lagi.
-  // Status tiap key yang dicoba (ok/kuota habis/invalid/error) ikut
-  // dicatat ke data.status supaya langsung kelihatan di modal
-  // Pengaturan API tanpa user perlu klik "Tes" manual satu-satu.
-  for (let step = 0; step < data.keys.length; step++) {
-    const idx = (data.activeIdx + step) % data.keys.length;
-    const key = data.keys[idx];
-    try {
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(key)}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ role: 'user', parts: [{ text: promptText }] }],
-          // FIX BUG KONSISTENSI: temperature lama (0.9) terlalu tinggi
-          // utk task yang butuh Gemini MENGIKUTI INSTRUKSI SECARA
-          // LITERAL (mengulang persis deskripsi fisik karakter &
-          // continuity_note antar take) -- makin tinggi temperature,
-          // makin besar kecenderungan model memparafrase/improvisasi
-          // ketimbang patuh ke instruksi "PERSIS SAMA". Diturunkan ke
-          // 0.35 supaya keluarannya jauh lebih taat/konsisten, tapi
-          // masih cukup longgar utk variasi aksi & framing tiap take
-          // (bukan 0 yang bisa bikin hasil kaku/repetitif).
-          generationConfig: Object.assign(
-            { temperature: 0.35, responseMimeType: 'application/json' },
-            responseSchema ? { responseSchema } : {}
-          ),
-        }),
-      });
-      if (res.status === 429 || res.status === 403 || res.status === 400) {
-        // Kuota habis / key invalid / diblokir -- catat lalu coba key
-        // berikutnya di daftar, jangan langsung menyerah.
-        const body = await res.text().catch(() => '');
-        data.status[key] = (res.status === 429) ? 'quota' : 'invalid';
-        statusChanged = true;
-        lastErr = new Error(`Key #${idx + 1} gagal (HTTP ${res.status}): ${body.slice(0, 200)}`);
-        continue;
-      }
-      if (!res.ok) {
-        data.status[key] = 'error';
-        statusChanged = true;
-        lastErr = new Error(`HTTP ${res.status}`);
-        continue;
-      }
-      const json = await res.json();
-      const text = json?.candidates?.[0]?.content?.parts?.map((p) => p.text || '').join('') || '';
-      if (!text) {
-        data.status[key] = 'error';
-        statusChanged = true;
-        lastErr = new Error('Respons kosong dari Gemini.');
-        continue;
-      }
-      // Key ini berhasil -- jadikan key aktif utk panggilan berikutnya.
-      data.status[key] = 'ok';
-      if (data.activeIdx !== idx) data.activeIdx = idx;
-      t2pSaveKeys(data);
-      return text;
-    } catch (e) {
-      data.status[key] = 'error';
-      statusChanged = true;
-      lastErr = e;
-      continue;
-    }
-  }
-  if (statusChanged) t2pSaveKeys(data);
-  throw lastErr || new Error('Semua API key gagal dipakai.');
-}
-
-/* ---------- Menyusun instruksi besar ke Gemini ---------- */
-// FIX BUG KONSISTENSI: dulu charBlock cuma diambil dari state.characters
-// (murni isi form "+ Tambah Karakter"), padahal panel dock "Karakter"
-// (t2p-chardock-panel) juga membolehkan user mengisi ciri fisik utk
-// tokoh yang DITEMUKAN OTOMATIS dari naskah/hasil generate sebelumnya
-// (belum ada di form) -- deskripsi itu tersimpan di t2pDockExtraDesc
-// via t2pCollectExtraCharacters(), TAPI sebelumnya tidak pernah ikut
-// dikirim ke Gemini sama sekali (baik di sini maupun di
-// t2pBuildContinuationPrompt), padahal hint di panelnya sendiri sudah
-// menjanjikan "dipakai saat kamu generate ulang". Akibatnya wujud
-// tokoh pendukung sering berubah-ubah antar take krn Gemini terpaksa
-// mengarang ulang deskripsinya dari nol tiap kali. Sekarang keduanya
-// digabung lewat t2pBuildCharBlock() supaya dipakai konsisten di
-// SEMUA pemanggilan prompt (generate awal maupun continuation).
-function t2pBuildCharBlock(state, emptyFallback) {
-  const formChars = state.characters
-    .filter((c) => c.name.trim())
-    .map((c) => ({ name: c.name.trim(), desc: c.desc.trim() }));
-  // Cuma tokoh dock yang SUDAH diisi deskripsinya yang ikut dikunci --
-  // yang masih kosong tetap dibiarkan diimprovisasi Gemini spt biasa
-  // (tidak ada info baru yang bisa dikunci utk tokoh itu).
-  const extraChars = t2pCollectExtraCharacters()
-    .filter((c) => c.desc.trim())
-    .map((c) => ({ name: c.name, desc: c.desc.trim() }));
-  const allChars = [...formChars, ...extraChars];
-  if (!allChars.length) return emptyFallback;
-  return allChars
-    .map((c) => `- ${c.name}: ${c.desc || '(deskripsi fisik belum diisi user -- karang deskripsi full body yang masuk akal & detail sendiri, lalu PAKAI DESKRIPSI YANG SAMA di tiap take)'}`)
-    .join('\n');
-}
-
-function t2pBuildMasterPrompt(state) {
-  const langs = [];
-  if (state.langId) langs.push('Bahasa Indonesia');
-  if (state.langEn) langs.push('English');
-  if (!langs.length) langs.push('Bahasa Indonesia');
-  const charBlock = t2pBuildCharBlock(state, '(user belum mengisi karakter -- deteksi sendiri tokoh dari naskah & buatkan deskripsi full body lengkap utk masing-masing)');
-
-  return `Kamu adalah AI PENYUSUN PROMPT VIDEO profesional untuk model AI text-to-video / extend-video (mis. Veo, Kling, dsb) yang dipakai membuat video drama bersambung take demi take.
-
-TUGAS: pecah NASKAH/CERITA di bawah menjadi TEPAT ${state.takeCount} take/adegan berurutan, masing-masing berdurasi sekitar ${state.takeDuration} detik. Untuk SETIAP take, buatkan SATU prompt video yang detail, siap tempel langsung ke tool video-gen, dalam bahasa: ${langs.join(' dan ')}.
-
-DAFTAR KARAKTER (WAJIB DIKUNCI FULL BODY):
-${charBlock}
-
-ATURAN WAJIB (supaya hasil videonya konsisten & tidak berantakan):
-1. KUNCI IDENTITAS FISIK: setiap kali karakter di atas muncul di suatu take, ulangi PERSIS ciri fisik tubuhnya (wajah, tinggi/postur, warna kulit, model & warna rambut) di DALAM TEKS FIELD "prompt" -- jangan pernah mengubah/menyingkat ciri fisik ini antar take, supaya wujud/identitas karakter identik di semua take. (Field "characters" HANYA berisi nama singkat, bukan deskripsi -- lihat FORMAT OUTPUT.)
-1a. Field "character_descriptions" WAJIB diisi utk SETIAP nama yang ada di "characters" pada take ini -- isinya deskripsi fisik full-body yang PERSIS SAMA (kata demi kata) dengan yang kamu tulis di field "prompt" utk karakter tsb. Ini dipakai aplikasi utk menampilkan ringkasan konsistensi karakter ke user, jadi jangan dikosongkan atau disingkat.
-1b. KOSTUM/PAKAIAN MENGIKUTI NASKAH: pakaian karakter BOLEH berubah kalau naskah memang menceritakan pergantian baju/kostum (mis. pulang kerja -> mandi -> ganti baju rumah/piyama). Begitu sebuah kostum baru dipakai sesuai momen di naskah, kostum itu WAJIB dikunci & diulang identik (warna, model, detail) DI DALAM TEKS FIELD "prompt" di take-take berikutnya sampai naskah menyebutkan pergantian lagi. Jangan mengganti kostum tanpa alasan jelas dari naskah, dan jangan biarkan kostum berubah-ubah sendiri secara acak antar take.
-1c. KUNCI GAYA BICARA: tiap karakter WAJIB punya gaya bicara yang konsisten di semua take dia muncul -- tingkat formalitas (baku/santai/kasar), pilihan kata & ciri khas ucapan (mis. suka pakai panggilan tertentu, logat, kebiasaan bicara) tidak boleh berubah-ubah tanpa alasan dari naskah. Kalau naskah tidak menentukan gaya bicara karakter, tentukan sendiri gaya yang wajar & konsisten sejak take pertama dia bicara, lalu pertahankan.
-2. POSISI SAAT BERBICARA: kalau ada 2+ karakter mengobrol dalam satu take, jelaskan blocking spasial secara eksplisit (siapa berdiri/duduk di sisi kiri, siapa di sisi kanan, saling berhadapan, arah pandang, framing kamera medium/close-up) supaya lawan bicara TIDAK muncul aneh di belakang atau di samping tubuh karakter utama -- posisi awal adegan bicara harus jelas dan wajar sejak frame pertama.
-3. ADEGAN KENDARAAN: kalau ada adegan naik/turun mobil atau motor, jelaskan eksplisit arah bukaan pintu yang benar & sisi masuk yang wajar (bukan terbalik), serta gerak kendaraan yang realistis (roda berputar sesuai arah jalan, kecepatan wajar, tidak "meluncur" tidak natural) saat datang maupun pergi.
-4. SAMBUNGAN ANTAR-TAKE: kecuali take pertama, sertakan catatan "continuity_note" yang menjelaskan bahwa FRAME AWAL take ini harus sama persis dengan FRAME AKHIR take sebelumnya (posisi karakter, sudut kamera, pencahayaan, lokasi) supaya saat disambung (extend video) hasilnya mulus tanpa lompatan/bug.
-5. LOKASI: tentukan lokasi/setting tiap take mengikuti alur cerita (boleh sama atau berbeda antar take sesuai naskah), sebutkan eksplisit di field "location" DAN WAJIB tuliskan juga deskripsi lokasi/setting tsb (tempat, warna dinding/tembok, pencahayaan, perabotan/elemen jalan, cuaca, waktu) DI DALAM TEKS FIELD "prompt" -- field "location" saja TIDAK CUKUP karena itu cuma label singkat yang ditampilkan di kartu, sedangkan field "prompt" itulah yang ditempel ke tool video-gen, jadi setting-nya harus jelas kebaca di teks prompt.
-5b. KUNCI DESKRIPSI LOKASI: begitu sebuah lokasi (mis. "kamar tidur Rani", "gang belakang toko") pertama kali dideskripsikan detail (warna dinding/tembok, pencahayaan, perabotan/elemen jalan, cuaca, waktu) di dalam field "prompt", deskripsi detail itu WAJIB diulang persis sama di dalam field "prompt" setiap kali lokasi yang SAMA muncul lagi di take lain -- jangan menulis ulang dengan detail berbeda (mis. warna dinding berubah, pencahayaan berubah tanpa alasan cerita). Kalau ceritanya memang berpindah ke lokasi BARU, baru boleh mendeskripsikan tempat baru dengan detail baru; kalau kembali lagi ke lokasi lama, pakai deskripsi lama yang sudah dikunci.
-6. Jangan menambah tokoh baru yang tidak ada hubungannya dengan naskah kecuali benar-benar diperlukan alur cerita.
-${state.subtitle ? '7. Sertakan juga field "subtitle" berisi dialog/narasi take tsb (siap dipakai sbg teks subtitle), dalam bahasa yang sama dgn prompt.' : '7. Field "subtitle" boleh dikosongkan ("").'}
-7b. FORMAT DIALOG: kalau dalam satu take ada 2+ karakter yang bicara, tulis field "subtitle" per baris dengan format "Nama: ucapan" (satu baris per giliran bicara, urut sesuai adegan) supaya jelas siapa ngomong apa -- jangan digabung jadi satu paragraf tanpa label nama. Kalau cuma 1 karakter bicara atau isinya narasi (bukan dialog), boleh tanpa label nama.
-${state.burnSubtitle ? `7c. SUBTITLE TERBAKAR DI VIDEO: user mengaktifkan opsi "Subtitle" -- artinya video hasil generate WAJIB menampilkan teks subtitle di layar (burned-in/hardcoded), bukan cuma disimpan sbg data terpisah. Kalau field "subtitle" take ini berisi teks, WAJIB tambahkan instruksi eksplisit DI DALAM TEKS FIELD "prompt" yang menyuruh video-gen menampilkan teks subtitle itu PERSIS SAMA (kata demi kata dgn field "subtitle") di bagian bawah frame (lower-third), dengan font jelas terbaca, kontras cukup (mis. teks putih + outline/shadow gelap), tanpa mengubah/menyingkat kata-katanya. Kalau field "subtitle" take ini kosong, tidak perlu tambahan instruksi subtitle di prompt.` : ''}
-8. FIELD RINGKASAN UTK TAMPILAN KARTU (selain "prompt" yang lengkap, isi juga 3 field ringkas berikut -- WAJIB konsisten/tidak bertentangan dgn isi "prompt", jangan kosongkan):
-   - "action": ringkasan aksi/kejadian utama take ini (gerakan & perbuatan karakter), 2-4 kalimat.
-   - "camera_movement": deskripsi gerak & framing kamera take ini.
-   - "end_frame_description": deskripsi visual FRAME PALING AKHIR take ini (posisi akhir karakter, ekspresi, sudut kamera, pencahayaan) -- ditampilkan ke user sbg acuan screenshot utk generate take berikutnya, jadi WAJIB sangat spesifik & konkret.
-
-CATATAN TAMBAHAN DARI USER: ${state.worldNote || '(tidak ada)'}
-
-NASKAH/CERITA:
-"""
-${state.story || '(kosong -- kalau naskah kosong, karang cerita drama pendek yang masuk akal berdasarkan daftar karakter & catatan tambahan di atas)'}
-"""
-
-FORMAT OUTPUT: balas HANYA dengan JSON valid (tanpa markdown/backtick/teks lain), berbentuk array dengan TEPAT ${state.takeCount} elemen, tiap elemen berstruktur persis:
-{"take": <nomor take, mulai 1>, "location": "<lokasi/setting take ini>", "characters": ["<nama karakter yang muncul di take ini>"], "character_descriptions": [{"name": "<nama, cocok dgn salah satu di characters>", "description": "<deskripsi fisik full-body persis sama dgn di prompt>"}], "prompt": "<prompt video lengkap & detail siap pakai, WAJIB diawali/mengandung deskripsi lokasi & setting take ini, lalu deskripsi full body tiap karakter yang muncul, blocking posisi, gerak kamera, aksi, pencahayaan>", "continuity_note": "<catatan sambungan dari take sebelumnya, kosongkan string untuk take 1>", "subtitle": "<dialog/narasi take ini, sesuai aturan no.7>", "action": "<ringkasan aksi take ini, sesuai aturan no.8>", "camera_movement": "<deskripsi gerak kamera take ini, sesuai aturan no.8>", "end_frame_description": "<deskripsi frame akhir take ini, sesuai aturan no.8>"}`;
-}
-
-/* ---------- Prompt utk fitur "+ Segmen Berikutnya" -- beda dari
-   t2pBuildMasterPrompt di atas (yang minta N take SEKALIGUS dari
-   naskah baru), fungsi ini minta Gemini membuatkan SATU take BARU
-   sebagai sambungan take TERAKHIR yang sudah ada, dipakai saat user
-   mau memperpanjang cerita melebihi jumlah take awal tanpa generate
-   ulang dari nol (take-take lama yang sudah ada/sudah disalin tidak
-   ikut berubah). Outputnya SATU OBJEK JSON (bukan array) dgn skema
-   field yang sama persis spy bisa langsung didorong ke t2pAllTakes. */
-function t2pBuildContinuationPrompt(state, lastTake) {
-  const langs = [];
-  if (state.langId) langs.push('Bahasa Indonesia');
-  if (state.langEn) langs.push('English');
-  if (!langs.length) langs.push('Bahasa Indonesia');
-  const charBlock = t2pBuildCharBlock(state, '(user belum mengisi karakter -- lanjutkan pakai tokoh & deskripsi full body yang SAMA seperti take sebelumnya)');
-  const nextTakeNum = (lastTake.take || 0) + 1;
-  return `Kamu adalah AI PENYUSUN PROMPT VIDEO profesional untuk model AI text-to-video/extend-video (mis. Veo, Kling, dsb) yang dipakai membuat video drama bersambung take demi take.
-
-TUGAS: buatkan SATU take/adegan BARU (take nomor ${nextTakeNum}), berdurasi sekitar ${state.takeDuration} detik, sebagai KELANJUTAN LOGIS dari take sebelumnya di bawah -- bukan mengulang isinya, dan bukan menyusun ulang take-take lama. Balas dalam bahasa: ${langs.join(' dan ')}.
-
-DAFTAR KARAKTER (WAJIB DIKUNCI FULL BODY, deskripsi HARUS identik dgn take-take sebelumnya):
-${charBlock}
-
-TAKE TERAKHIR YANG SUDAH ADA (take ${lastTake.take}, jadikan acuan sambungan):
-- Lokasi: ${lastTake.location || '-'}
-- Karakter yang muncul: ${(Array.isArray(lastTake.characters) ? lastTake.characters.join(', ') : '') || '-'}
-- Isi prompt take itu: ${lastTake.prompt || '-'}
-- Dialog/subtitle take itu: ${lastTake.subtitle || '(tidak ada dialog)'}
-- Catatan sambungan take itu: ${lastTake.continuity_note || '(tidak ada)'}
-- Deskripsi frame akhir take itu: ${lastTake.end_frame_description || '(tidak ada)'}
-
-NASKAH/CERITA ASLI (acuan alur -- kalau ceritanya sudah habis di sini, kembangkan kelanjutan yang wajar & masuk akal):
-"""
-${state.story || '(kosong -- lanjutkan alur secara wajar berdasarkan karakter & take sebelumnya)'}
-"""
-
-CATATAN TAMBAHAN DARI USER: ${state.worldNote || '(tidak ada)'}
-
-ATURAN WAJIB (sama seperti take-take sebelumnya):
-1. KUNCI IDENTITAS FISIK: ulangi PERSIS ciri fisik tubuh (wajah, tinggi/postur, warna kulit, model & warna rambut) tiap karakter yang muncul di take baru ini di DALAM TEKS FIELD "prompt" -- harus identik dgn take-take sebelumnya. (Field "characters" HANYA nama singkat, bukan deskripsi.)
-1a. Field "character_descriptions" WAJIB diisi utk SETIAP nama di "characters" take ini, isinya deskripsi fisik full-body PERSIS SAMA dgn yang kamu tulis di field "prompt" -- jangan dikosongkan.
-1b. KOSTUM/PAKAIAN MENGIKUTI NASKAH: cek TAKE TERAKHIR di bawah -- kalau di take baru ini karakter masih dalam adegan/momen yang sama (belum ada momen ganti baju di naskah), pakai kostum yang SAMA PERSIS seperti take terakhir, DAN tuliskan kostum itu DI DALAM TEKS FIELD "prompt". Kalau naskah memang menceritakan pergantian baju di titik ini (mis. selesai mandi, ganti seragam, dll), baru boleh ganti kostum sesuai naskah -- lalu kostum baru itu jadi acuan yang harus dikunci lagi di take-take setelahnya.
-1c. KUNCI GAYA BICARA: lanjutkan gaya bicara tiap karakter (tingkat formalitas, ciri khas ucapan) SAMA seperti terlihat di "Dialog/subtitle take itu" pada TAKE TERAKHIR -- jangan berubah nada/gaya tanpa alasan dari naskah.
-2. POSISI SAAT BERBICARA: kalau ada 2+ karakter mengobrol, jelaskan blocking spasial eksplisit (kiri/kanan, saling berhadapan, framing kamera).
-3. ADEGAN KENDARAAN: kalau ada adegan naik/turun mobil/motor, jelaskan arah pintu & sisi masuk yang benar, gerak kendaraan realistis.
-4. SAMBUNGAN ANTAR-TAKE: WAJIB isi "continuity_note" yang menjelaskan FRAME AWAL take baru ini SAMA PERSIS dengan FRAME AKHIR take sebelumnya (posisi karakter, sudut kamera, pencahayaan, lokasi) supaya nyambung mulus.
-5. LOKASI: tentukan di field "location" (boleh sama/berbeda dari take sebelumnya sesuai alur) DAN WAJIB tuliskan juga deskripsi lokasi/setting tsb DI DALAM TEKS FIELD "prompt" -- field "location" saja TIDAK CUKUP karena itu cuma label singkat di kartu, sedangkan field "prompt" itulah yang ditempel ke tool video-gen.
-5b. KUNCI DESKRIPSI LOKASI: kalau take baru ini masih di lokasi yang SAMA dengan take terakhir di atas (atau lokasi yang pernah muncul sebelumnya di cerita), pakai deskripsi detail lokasi yang SAMA PERSIS seperti sebelumnya (warna dinding/tembok, pencahayaan, perabotan/elemen jalan, cuaca, waktu) di dalam field "prompt" -- jangan mengubah/menulis ulang detailnya. Kalau memang pindah ke lokasi baru sesuai alur, baru boleh deskripsi baru.
-6. Jangan menambah tokoh baru yang tidak perlu.
-${state.subtitle ? '7. Sertakan field "subtitle" berisi dialog/narasi take ini.' : '7. Field "subtitle" boleh dikosongkan ("").'}
-7b. FORMAT DIALOG: kalau 2+ karakter bicara di take ini, tulis "subtitle" per baris format "Nama: ucapan" (satu baris per giliran bicara) -- jangan digabung jadi satu paragraf tanpa label nama.
-${state.burnSubtitle ? `7c. SUBTITLE TERBAKAR DI VIDEO: user mengaktifkan opsi "Subtitle" -- video hasil generate WAJIB menampilkan teks subtitle di layar (burned-in/hardcoded). Kalau field "subtitle" take ini berisi teks, WAJIB tambahkan instruksi eksplisit DI DALAM TEKS FIELD "prompt" yang menyuruh video-gen menampilkan teks subtitle itu PERSIS SAMA (kata demi kata) di bagian bawah frame (lower-third), font jelas terbaca, kontras cukup. Kalau field "subtitle" kosong, tidak perlu instruksi tambahan.` : ''}
-8. FIELD RINGKASAN UTK TAMPILAN KARTU (selain "prompt" yang lengkap, isi juga 3 field ringkas berikut -- WAJIB konsisten/tidak bertentangan dgn isi "prompt", jangan kosongkan):
-   - "action": ringkasan aksi/kejadian utama take ini (gerakan & perbuatan karakter), 2-4 kalimat.
-   - "camera_movement": deskripsi gerak & framing kamera take ini.
-   - "end_frame_description": deskripsi visual FRAME PALING AKHIR take ini (posisi akhir karakter, ekspresi, sudut kamera, pencahayaan) -- ditampilkan ke user sbg acuan screenshot utk generate take berikutnya, jadi WAJIB sangat spesifik & konkret.
-
-FORMAT OUTPUT: balas HANYA dengan JSON valid (tanpa markdown/backtick/teks lain), berupa SATU OBJEK (bukan array) berstruktur persis:
-{"take": ${nextTakeNum}, "location": "<lokasi take ini>", "characters": ["<nama karakter yang muncul>"], "character_descriptions": [{"name": "<nama, cocok dgn salah satu di characters>", "description": "<deskripsi fisik full-body persis sama dgn di prompt>"}], "prompt": "<prompt video lengkap & detail siap pakai, WAJIB diawali/mengandung deskripsi lokasi & setting take ini>", "continuity_note": "<catatan sambungan dari take sebelumnya>", "subtitle": "<dialog/narasi take ini>", "action": "<ringkasan aksi take ini, sesuai aturan no.8>", "camera_movement": "<deskripsi gerak kamera take ini, sesuai aturan no.8>", "end_frame_description": "<deskripsi frame akhir take ini, sesuai aturan no.8>"}`;
-}
-
-/* ---------- Helper format rentang waktu "0:00-0:10" per take,
-   dihitung dari nomor take & Durasi per Take di form (dibaca live
-   spy ikut update kalau user ganti durasi setelah generate, sama
-   spt t2p-take-meta yang sudah ada). ---------- */
-function t2pFormatMMSS(totalSeconds) {
-  const s = Math.max(0, Math.round(totalSeconds));
-  const h = Math.floor(s / 3600);
-  const m = Math.floor((s % 3600) / 60);
-  const sec = s % 60;
-  const mm = h > 0 ? String(m).padStart(2, '0') : String(m);
-  const ss = String(sec).padStart(2, '0');
-  return h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
-}
-function t2pTakeTimeRange(takeNum, durationSec) {
-  const dur = durationSec || 0;
-  const start = Math.max(0, (takeNum - 1)) * dur;
-  const end = takeNum * dur;
-  return `${t2pFormatMMSS(start)}\u2013${t2pFormatMMSS(end)}`;
-}
-
-/* ---------- Cek apakah kartu take ini sudah diedit user dari hasil
-   AI aslinya (dipakai utk aktif/nonaktifkan tombol "reset ke hasil
-   AI") ---------- */
-function t2pIsTakeEdited(t) {
-  const orig = t._t2pOriginal;
-  if (!orig) return false;
-  return (t.action || '') !== (orig.action || '')
-    || (t.camera_movement || '') !== (orig.camera_movement || '')
-    || (t.prompt || '') !== (orig.prompt || '')
-    || (t.subtitle || '') !== (orig.subtitle || '')
-    || (t.end_frame_description || '') !== (orig.end_frame_description || '')
-    || (t.location || '') !== (orig.location || '');
-}
-
-/* ---------- Render kartu take (3 per halaman, tombol "tampilkan
-   berikutnya" utk sisanya) ---------- */
-function t2pRenderTakes() {
-  const listEl = document.getElementById('t2pResultsList');
-  const emptyEl = document.getElementById('t2pResultsEmpty');
-  const moreBtn = document.getElementById('t2pShowMoreBtn');
-  const addSegBtn = document.getElementById('t2pAddSegmentBtn');
-  const subActionsEl = document.getElementById('t2pSubtitleActions');
-  if (!listEl) return;
-  if (!t2pAllTakes.length) {
-    listEl.innerHTML = '';
-    if (emptyEl) emptyEl.style.display = '';
-    if (moreBtn) moreBtn.style.display = 'none';
-    if (addSegBtn) addSegBtn.style.display = 'none';
-    if (subActionsEl) subActionsEl.style.display = 'none';
-    t2pRenderCopyProgress();
-    return;
-  }
-  if (emptyEl) emptyEl.style.display = 'none';
-  listEl.innerHTML = '';
-  const takeDuration = parseInt(document.getElementById('t2pTakeDuration')?.value, 10) || 0;
-  const shown = t2pAllTakes.slice(0, t2pVisibleCount);
-  shown.forEach((t) => {
-    const copied = !!t._t2pCopied;
-    const wrap = document.createElement('div');
-    wrap.className = 't2p-take-wrap';
-    const card = document.createElement('div');
-    card.className = 't2p-take-card' + (copied ? ' t2p-take-card--copied' : '');
-    const chars = Array.isArray(t.characters) ? t.characters : [];
-    const charsHtml = chars.map((n) => `<button type="button" class="t2p-take-char-chip" onclick="t2pOpenCharDock()">${n}</button>`).join('');
-    const edited = t2pIsTakeEdited(t);
-    const timeRange = t2pTakeTimeRange(t.take, takeDuration);
-    card.innerHTML =
-      `<div class="t2p-take-headrow">
-        <span class="t2p-take-pill" aria-label="Take ${t.take}">TAKE ${String(t.take).padStart(2, '0')} &mdash; ${timeRange}</span>
-        <div class="t2p-take-headactions">
-          <button type="button" class="t2p-take-headbtn t2p-take-resetbtn" ${edited ? '' : 'disabled'} title="Kembalikan semua kotak di take ini ke hasil AI semula">\u21ba reset ke hasil AI</button>
-          <button type="button" class="t2p-take-headbtn t2p-take-headbtn--danger t2p-take-delbtn" title="Hapus take ini">hapus</button>
-        </div>
-      </div>
-      <div class="t2p-take-tagsrow">
-        <span class="t2p-take-copied-tag" style="display:${copied ? '' : 'none'};">✓ Disalin</span>
-        ${t.burnSubtitleWanted ? '<span class="t2p-take-cc-tag" title="Instruksi subtitle burned-in sudah disisipkan ke Prompt Video">CC Subtitle</span>' : ''}
-      </div>
-      ${chars.length ? `<div class="t2p-take-chars"><span class="t2p-take-chars-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.761 0 5-2.239 5-5s-2.239-5-5-5-5 2.239-5 5 2.239 5 5 5zm0 2c-3.333 0-10 1.667-10 5v3h20v-3c0-3.333-6.667-5-10-5z"></path></svg></span><b>Karakter:</b>${charsHtml}</div>` : ''}
-      <div class="t2p-take-sub"><label>Lokasi</label><textarea class="t2p-take-location" rows="2">${t.location || ''}</textarea></div>
-      ${t.continuity_note ? `<div class="t2p-take-continuity"><span>\u21b3</span><span>menyambung dari akhir Take ${Math.max(1, t.take - 1)}: ${t.continuity_note}</span></div>` : ''}
-      <div class="t2p-take-fieldgrid">
-        <div class="t2p-take-sub"><label>Aksi yang Terjadi</label><textarea class="t2p-take-action" rows="4">${t.action || ''}</textarea></div>
-        <div class="t2p-take-sub"><label>Gerakan Kamera</label><textarea class="t2p-take-camera" rows="4">${t.camera_movement || ''}</textarea></div>
-      </div>
-      ${t.dialogWanted
-        ? `<div class="t2p-take-fieldgrid">
-        <div class="t2p-take-sub"><label>${t.burnSubtitleWanted ? 'Dialog (sudah burned-in di Prompt Video)' : 'Dialog'}</label><textarea class="t2p-take-dialog" rows="3" placeholder="Belum ada dialog di take ini.">${t.subtitle || ''}</textarea></div>
-        <div class="t2p-take-sub"><label>Deskripsi Akhir Frame</label><textarea class="t2p-take-endframe" rows="3">${t.end_frame_description || ''}</textarea></div>
-      </div>`
-        : `<div class="t2p-take-sub"><label>Deskripsi Akhir Frame</label><textarea class="t2p-take-endframe" rows="3">${t.end_frame_description || ''}</textarea></div>`}
-      <div class="t2p-take-tip"><svg class="t2p-take-tip-ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg><span>Setelah Take ${String(t.take).padStart(2, '0')} selesai - Jika tidak memakai fitur extend pada AI, maka screenshot frame paling akhir videonya, lalu upload sebagai gambar acuan untuk generate berikutnya.</span></div>
-      <label class="t2p-take-prompt-label">Prompt Siap Pakai</label>
-      <textarea class="t2p-take-prompt" rows="6">${t.prompt || ''}</textarea>
-      <div class="t2p-take-actions">
-        <button type="button" class="t2p-copy-btn t2p-copy-pill ${copied ? 'copied' : ''}" title="${copied ? 'Sudah disalin' : 'Salin Prompt'}" aria-label="Salin Prompt Take ${t.take}">${t2pCopyBtnInnerHTML(copied)}</button>
-      </div>`;
-    const promptTa = card.querySelector('.t2p-take-prompt');
-    const dialogTa = card.querySelector('.t2p-take-dialog');
-    const actionTa = card.querySelector('.t2p-take-action');
-    const cameraTa = card.querySelector('.t2p-take-camera');
-    const endframeTa = card.querySelector('.t2p-take-endframe');
-    const locationTa = card.querySelector('.t2p-take-location');
-    const resetBtn = card.querySelector('.t2p-take-resetbtn');
-    const delBtn = card.querySelector('.t2p-take-delbtn');
-
-    // Update tombol "reset ke hasil AI" (aktif/nonaktif) tiap kali
-    // salah satu kotak yang bisa diedit berubah isinya.
-    const refreshResetBtn = () => {
-      if (resetBtn) resetBtn.disabled = !t2pIsTakeEdited(t);
-    };
-    // Tandai "belum disalin" lagi kalau field manapun (prompt, dialog,
-    // aksi, kamera, deskripsi akhir frame) diedit setelah sempat
-    // disalin -- dipakai semua listener input di bawah supaya
-    // konsisten memicu status yang sama.
-    const markUncopiedIfNeeded = () => {
-      if (t._t2pCopied) {
-        t._t2pCopied = false;
-        t2pMarkCardCopied(card, false);
-        t2pRenderCopyProgress();
-      }
-    };
-    dialogTa?.addEventListener('input', () => {
-      t.subtitle = dialogTa.value;
-      if (subActionsEl) subActionsEl.style.display = t2pAllTakes.length ? '' : 'none';
-      markUncopiedIfNeeded();
-      refreshResetBtn();
-    });
-    actionTa?.addEventListener('input', () => { t.action = actionTa.value; markUncopiedIfNeeded(); refreshResetBtn(); });
-    cameraTa?.addEventListener('input', () => { t.camera_movement = cameraTa.value; markUncopiedIfNeeded(); refreshResetBtn(); });
-    endframeTa?.addEventListener('input', () => { t.end_frame_description = endframeTa.value; markUncopiedIfNeeded(); refreshResetBtn(); });
-    locationTa?.addEventListener('input', () => {
-      t.location = locationTa.value;
-      markUncopiedIfNeeded();
-      refreshResetBtn();
-    });
-    promptTa?.addEventListener('input', () => { t.prompt = promptTa.value; markUncopiedIfNeeded(); refreshResetBtn(); });
-
-    card.querySelector('.t2p-copy-btn')?.addEventListener('click', function () {
-      // Gabungkan Prompt Video + Dialog jadi SATU teks supaya user
-      // cukup sekali klik "Salin Prompt" lalu tempel langsung ke tool
-      // video-gen. KECUALI kalau take ini digenerate dengan opsi
-      // "Subtitle" (burn-in) aktif -- saat itu Gemini SUDAH menyisipkan
-      // instruksi tampilkan-subtitle & isi dialognya sendiri DI DALAM
-      // teks prompt (lihat rule 7c di t2pBuildMasterPrompt), jadi
-      // menambahkan baris "Dialog: ..." lagi di sini cuma bikin isi
-      // dialognya dobel/mubazir di teks yang ditempel ke video-gen.
-      const promptTxt = (promptTa?.value || '').trim();
-      const dialogTxt = (dialogTa?.value || '').trim();
-      const txt = (dialogTxt && !t.burnSubtitleWanted) ? `${promptTxt}\n\nDialog: ${dialogTxt}` : promptTxt;
-      navigator.clipboard.writeText(txt).then(() => {
-        t._t2pCopied = true;
-        t2pMarkCardCopied(card, true);
-        showToast(`Prompt Take ${t.take} disalin.`);
-        t2pRenderCopyProgress();
-      }).catch(() => showToast('Gagal menyalin, salin manual dari kotak teks.', 'err'));
-    });
-
-    // Tombol "reset ke hasil AI" -- balikkan kotak Aksi/Gerakan
-    // Kamera/Dialog/Deskripsi Akhir Frame/Prompt Siap Pakai ke isi
-    // asli hasil generate Gemini (sebelum sempat diedit user), tanpa
-    // perlu generate ulang lewat API.
-    resetBtn?.addEventListener('click', () => {
-      const orig = t._t2pOriginal;
-      if (!orig) return;
-      t.action = orig.action;
-      t.camera_movement = orig.camera_movement;
-      t.prompt = orig.prompt;
-      t.subtitle = orig.subtitle;
-      t.end_frame_description = orig.end_frame_description;
-      t.location = orig.location;
-      if (actionTa) actionTa.value = t.action || '';
-      if (cameraTa) cameraTa.value = t.camera_movement || '';
-      if (promptTa) promptTa.value = t.prompt || '';
-      if (dialogTa) dialogTa.value = t.subtitle || '';
-      if (endframeTa) endframeTa.value = t.end_frame_description || '';
-      if (locationTa) locationTa.value = t.location || '';
-      if (subActionsEl) subActionsEl.style.display = t2pAllTakes.length ? '' : 'none';
-      markUncopiedIfNeeded();
-      refreshResetBtn();
-      showToast(`Take ${t.take} dikembalikan ke hasil AI.`);
-    });
-
-    // Tombol "hapus" -- hilangkan take ini dari daftar (tidak
-    // memengaruhi take lain, nomor take yang tersisa tidak diubah
-    // supaya continuity_note/prompt yang sudah menyebut nomor take
-    // tertentu tetap akurat).
-    delBtn?.addEventListener('click', () => {
-      if (!confirm(`Hapus Take ${t.take}? Tindakan ini tidak bisa dibatalkan.`)) return;
-      const idx = t2pAllTakes.indexOf(t);
-      if (idx === -1) return;
-      t2pAllTakes.splice(idx, 1);
-      t2pVisibleCount = Math.max(0, Math.min(t2pVisibleCount - 1, t2pAllTakes.length));
-      t2pRenderTakes();
-      t2pRenderCharDock();
-      showToast(`Take ${t.take} dihapus.`);
-    });
-
-    wrap.appendChild(card);
-    listEl.appendChild(wrap);
-  });
-  if (moreBtn) moreBtn.style.display = (t2pVisibleCount < t2pAllTakes.length) ? '' : 'none';
-  if (addSegBtn) addSegBtn.style.display = ''; // selalu tampil selama sudah ada minimal 1 take
-  if (subActionsEl) subActionsEl.style.display = t2pAllTakes.length ? '' : 'none';
-  t2pRenderCopyProgress();
-}
-
-/* ---------- Gabungkan Prompt Siap Pakai dari SELURUH take (bukan
-   cuma yang sedang ditampilkan di layar) jadi satu teks rapi --
-   dipakai tombol "Salin Semua Prompt" (ke clipboard) dan tombol
-   "Download Semua Prompt" (jadi file .txt). Tiap take diberi header
-   nomor take + rentang durasinya (mis. "TAKE 01 — 0:00–0:08") biar
-   waktu ditempel/dibaca ulang tetap jelas urutan & durasi tiap
-   segmennya. Isi tiap take SAMA PERSIS dgn logika tombol "Salin
-   Prompt" per-kartu: Prompt Video digabung dgn Dialog (kalau ada &
-   bukan mode burn-in subtitle) supaya hasil salin-semua ini
-   konsisten dgn hasil salin satu-satu. Take tanpa prompt (belum
-   sempat digenerate/isinya dikosongkan manual) tetap disertakan
-   headernya supaya urutan take tidak bolong saat dibaca ulang. ---------- */
-function t2pBuildCombinedPromptText() {
-  const takeDuration = parseInt(document.getElementById('t2pTakeDuration')?.value, 10) || 8;
-  return t2pAllTakes
-    .map((t) => {
-      const promptTxt = (t.prompt || '').trim();
-      const dialogTxt = (t.subtitle || '').trim();
-      const body = (dialogTxt && !t.burnSubtitleWanted) ? `${promptTxt}\n\nDialog: ${dialogTxt}` : promptTxt;
-      const header = `TAKE ${String(t.take).padStart(2, '0')} \u2014 ${t2pTakeTimeRange(t.take, takeDuration)}`;
-      return `${header}\n${body}`;
-    })
-    .join('\n\n---\n\n');
-}
-
-function t2pDownloadCombinedPrompts() {
-  const blob = new Blob([t2pBuildCombinedPromptText()], { type: 'text/plain;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'prompt-zayapro.txt';
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
-}
-
-document.getElementById('t2pCopyAllSubBtn')?.addEventListener('click', function () {
-  if (!t2pAllTakes.length) { showToast('Belum ada prompt utk disalin.', 'err'); return; }
-  const txt = t2pBuildCombinedPromptText();
-  navigator.clipboard.writeText(txt).then(() => {
-    const original = this.textContent;
-    this.classList.add('copied');
-    this.textContent = '✓ Tersalin';
-    showToast('Semua Prompt Siap Pakai disalin, dipisah per take beserta nomor & durasinya.');
-    setTimeout(() => {
-      this.classList.remove('copied');
-      this.textContent = original;
-    }, 1800);
-  }).catch(() => showToast('Gagal menyalin, coba lagi.', 'err'));
-});
-
-document.getElementById('t2pDownloadSrtBtn')?.addEventListener('click', () => {
-  if (!t2pAllTakes.length) { showToast('Belum ada prompt utk didownload.', 'err'); return; }
-  t2pDownloadCombinedPrompts();
-  showToast('File semua prompt berhasil didownload.');
-});
-
-/* ---------- Icon + label tombol "Salin Prompt" (SVG copy/check,
-   dipakai saat render awal & saat toggle status disalin lewat
-   t2pMarkCardCopied, supaya konsisten satu sumber). ---------- */
-function t2pCopyBtnInnerHTML(copied) {
-  const icon = copied
-    ? '<svg class="t2p-check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>'
-    : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
-  const label = copied ? 'Disalin' : 'Salin Prompt';
-  return `${icon}<span class="t2p-copy-label">${label}</span>`;
-}
-
-/* ---------- Tandai satu kartu take sudah/belum disalin tanpa perlu
-   render ulang semua kartu (biar tidak kedip & tidak ganggu kartu
-   lain yang sedang diedit). ---------- */
-function t2pMarkCardCopied(card, copied) {
-  card.classList.toggle('t2p-take-card--copied', copied);
-  const btn = card.querySelector('.t2p-copy-btn');
-  if (btn) {
-    btn.classList.toggle('copied', copied);
-    btn.innerHTML = t2pCopyBtnInnerHTML(copied);
-    btn.title = copied ? 'Sudah disalin' : 'Salin Prompt';
-  }
-  const tag = card.querySelector('.t2p-take-copied-tag');
-  if (tag) tag.style.display = copied ? '' : 'none';
-
-}
-
-/* ---------- Ringkasan "sudah disalin berapa dari berapa take" di
-   atas daftar hasil -- biar user yang generate banyak take sekaligus
-   gampang lihat sekilas mana yang KELEWATAN belum ditempel ke
-   tool video-gen, tanpa harus scroll cek satu-satu. ---------- */
-function t2pRenderCopyProgress() {
-  const el = document.getElementById('t2pCopyProgress');
-  if (!el) return;
-  if (!t2pAllTakes.length) { el.style.display = 'none'; return; }
-  const copiedCount = t2pAllTakes.filter((t) => t._t2pCopied).length;
-  const total = t2pAllTakes.length;
-  el.style.display = '';
-  el.classList.toggle('t2p-copy-progress--done', copiedCount === total);
-  const iconClipboard = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"></path><rect x="9" y="3" width="6" height="4" rx="1" ry="1"></rect><line x1="9" y1="12" x2="15" y2="12"></line><line x1="9" y1="16" x2="13" y2="16"></line></svg>';
-  const iconCheckCircle = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>';
-  el.innerHTML = copiedCount === total
-    ? `${iconCheckCircle}<span>Semua ${total} take sudah disalin</span>`
-    : `${iconClipboard}<span>${copiedCount}/${total} take sudah disalin -- sisanya ditandai <b>belum disalin</b></span>`;
-}
-document.getElementById('t2pShowMoreBtn')?.addEventListener('click', () => {
-  t2pVisibleCount = Math.min(t2pVisibleCount + 3, t2pAllTakes.length);
-  t2pRenderTakes();
-});
-
-/* ---------- Dock "Karakter di Video Ini" (tab nyelip di pinggir,
-   muncul OTOMATIS setelah generate selesai) ----------
-   Tujuan: sekali generate berhasil, user langsung bisa lihat SEMUA
-   karakter yang benar-benar muncul di hasil take (bukan cuma yang
-   diketik di form atas) -- termasuk kalau Gemini mendeteksi/menambah
-   tokoh dari naskah yang tidak sempat diisi manual -- supaya gampang
-   dicek konsistensi wujudnya. Diambil dari field "characters" tiap
-   elemen t2pAllTakes, dicocokkan ke deskripsi lengkap di
-   #t2pCharList (case-insensitive, oleh t2pFindCharDesc). Klik satu
-   nama -> baris itu expand jadi textarea, isinya bisa diedit
-   langsung dari panel ini; kalau namanya cocok dgn salah satu baris
-   form Karakter, editan disini ditulis balik ke baris itu (via
-   t2pSaveState) supaya generate ulang berikutnya ikut pakai versi
-   terbaru. Kalau namanya BUKAN dari form (tokoh temuan AI), editan
-   cuma disimpan di dock ini sendiri (t2pDockExtraDesc) & dikasih
-   label "dari naskah, belum ada di form Karakter" supaya user sadar
-   kalau mau dikunci permanen sebaiknya ditambahkan lewat "+ Tambah
-   Karakter" di atas. */
-let t2pDockExtraDesc = {}; // nama(lowercase) -> deskripsi, utk karakter yg tak ada di form
-
-function t2pFindCharRow(name) {
-  const target = (name || '').trim().toLowerCase();
-  if (!target) return null;
-  return [...document.querySelectorAll('#t2pCharList .t2p-char-row')].find((row) => {
-    const rowName = (row.querySelector('.t2p-char-name')?.value || '').trim().toLowerCase();
-    return rowName === target;
-  }) || null;
-}
-
-function t2pCollectFormCharNames() {
-  return [...document.querySelectorAll('#t2pCharList .t2p-char-row')]
-    .map((row) => (row.querySelector('.t2p-char-name')?.value || '').trim())
-    .filter(Boolean);
-}
-
-// Sama seperti t2pCollectFormCharNames tapi ikut ambil deskripsinya --
-// dipakai supaya panel dock bisa menampilkan SEMUA karakter (form +
-// temuan otomatis) sebagai referensi cepat, bukan cuma yang belum
-// ada di form.
-function t2pCollectFormCharsWithDesc() {
-  return [...document.querySelectorAll('#t2pCharList .t2p-char-row')]
-    .map((row) => ({
-      name: (row.querySelector('.t2p-char-name')?.value || '').trim(),
-      desc: (row.querySelector('.t2p-char-desc')?.value || '').trim(),
-    }))
-    .filter((c) => c.name);
-}
-
-// Karakter yang MUNCUL di hasil generate (t2pAllTakes) tapi TIDAK ada
-// di form #t2pCharList -- misal Gemini menemukan/menambah tokoh dari
-// naskah yang belum sempat diisi manual. Karakter yang SUDAH ada di
-// form sengaja tidak dimasukkan sini lagi, karena sudah bisa diedit
-// langsung lewat baris form-nya sendiri (satu tempat, tidak dobel).
-function t2pCollectExtraCharacters() {
-  const formNames = new Set(t2pCollectFormCharNames().map((n) => n.toLowerCase()));
-  const seen = new Map(); // key: nama lowercase, value: nama asli (dari take pertama muncul)
-  // FIX "kotak deskripsi selalu kosong": ambil deskripsi full-body yg
-  // Gemini kirim lewat field "character_descriptions" (lihat
-  // T2P_TAKE_PROPS) -- diambil dari kemunculan PERTAMA nama tsb yang
-  // sudah punya deskripsi tidak kosong, di take manapun. Kalau Gemini
-  // kebetulan tidak mengisi field ini (respons lama / model lain yg
-  // tidak taat skema), otomatis jatuh balik ke string kosong seperti
-  // sebelumnya -- tidak error.
-  const aiDesc = new Map(); // key: nama lowercase -> deskripsi dari AI
-  t2pAllTakes.forEach((t) => {
-    (Array.isArray(t.character_descriptions) ? t.character_descriptions : []).forEach((cd) => {
-      const name = String(cd?.name || '').trim();
-      const desc = String(cd?.description || '').trim();
-      if (!name || !desc) return;
-      const key = name.toLowerCase();
-      if (!aiDesc.has(key)) aiDesc.set(key, desc);
-    });
-  });
-  t2pAllTakes.forEach((t) => {
-    (Array.isArray(t.characters) ? t.characters : []).forEach((raw) => {
-      const name = String(raw || '').trim();
-      if (!name) return;
-      const key = name.toLowerCase();
-      if (formNames.has(key) || seen.has(key)) return;
-      seen.set(key, name);
-    });
-  });
-  // Urutan prioritas isi kotak deskripsi: editan manual user di panel
-  // ini (t2pDockExtraDesc, kalau sudah pernah diisi/diubah) > saran
-  // deskripsi dari AI (aiDesc) > kosong (fallback lama).
-  return [...seen.entries()].map(([key, name]) => ({
-    key,
-    name,
-    desc: (key in t2pDockExtraDesc) ? t2pDockExtraDesc[key] : (aiDesc.get(key) || ''),
-  }));
-}
-
-function t2pRenderCharDock() {
-  const tab = document.getElementById('t2pCharDockTab');
-  const countEl = document.getElementById('t2pCharDockCount');
-  const listEl = document.getElementById('t2pCharDockList');
-  if (!tab || !listEl) return;
-  // PERMINTAAN TERBARU: tab ini HANYA boleh muncul setelah user
-  // berhasil generate (bukan lagi tampil dari awal begitu halaman
-  // Text to Prompt dibuka) -- jadi kondisinya diikat ke isi
-  // t2pAllTakes (array hasil generate terakhir, diisi di listener
-  // klik #t2pGenerateBtn setelah parsing hasil Gemini berhasil).
-  // Selama t2pAllTakes masih kosong (belum pernah generate / baru
-  // dibuka & belum klik tombol Generate), tab TETAP disembunyikan,
-  // walau fungsi ini dipanggil berkali-kali (mis. saat isi form
-  // karakter). Begitu t2pAllTakes terisi (>=1 take), tab langsung
-  // ditampilkan -- dan tetap tampil selama halaman ini masih terbuka
-  // (termasuk kalau user tambah/kurangi karakter setelah generate).
-  tab.classList.toggle('show', t2pAllTakes.length > 0);
-  const formChars = t2pCollectFormCharsWithDesc();
-  const formNames = formChars.map((c) => c.name);
-  const extra = t2pCollectExtraCharacters();
-  const totalCount = new Set([...formNames.map((n) => n.toLowerCase()), ...extra.map((c) => c.key)]).size;
-  if (countEl) countEl.textContent = String(totalCount);
-  listEl.innerHTML = '';
-  if (!formChars.length && !extra.length) return;
-  // Karakter yang sudah diisi lewat form "+ Tambah Karakter" --
-  // ditampilkan sbg referensi cepat (baca saja) di panel ini juga,
-  // supaya klik nama karakter di kartu take manapun SELALU membawa ke
-  // info lengkap, bukan cuma utk tokoh temuan otomatis.
-  if (formChars.length) {
-    const headingForm = document.createElement('p');
-    headingForm.className = 't2p-chardock-extra-heading';
-    headingForm.textContent = 'Dari form Karakter:';
-    listEl.appendChild(headingForm);
-    formChars.forEach((c) => {
-      const item = document.createElement('div');
-      item.className = 't2p-chardock-item';
-      const initial = (c.name.trim()[0] || '?').toUpperCase();
-      item.innerHTML =
-        `<div class="t2p-chardock-item-top">
-          <span class="t2p-chardock-item-avatar">${initial}</span>
-          <span class="t2p-chardock-item-name">${c.name}</span>
-        </div>
-        <div class="t2p-chardock-item-desc">
-          <p class="t2p-chardock-item-readonly">${c.desc || '(deskripsi belum diisi -- lengkapi lewat form Karakter di atas)'}</p>
-          <p class="t2p-chardock-item-hint">Diisi lewat form Karakter -- edit langsung di sana, bukan di sini.</p>
-        </div>`;
-      listEl.appendChild(item);
-    });
-  }
-  if (!extra.length) return;
-  const heading = document.createElement('p');
-  heading.className = 't2p-chardock-extra-heading';
-  heading.textContent = 'Terdeteksi otomatis dari naskah (belum ada di atas):';
-  listEl.appendChild(heading);
-  extra.forEach((c) => {
-    const item = document.createElement('div');
-    item.className = 't2p-chardock-item';
-    const initial = (c.name.trim()[0] || '?').toUpperCase();
-    item.innerHTML =
-      `<div class="t2p-chardock-item-top">
-        <span class="t2p-chardock-item-avatar">${initial}</span>
-        <span class="t2p-chardock-item-name">${c.name}</span>
-      </div>
-      <div class="t2p-chardock-item-desc">
-        <textarea rows="3" placeholder="Ciri fisik lengkap (full body) belum diisi...">${escapeHtml(c.desc)}</textarea>
-        <div class="t2p-chardock-item-badge">${c.desc ? 'Saran deskripsi dari hasil generate -- boleh diedit' : 'Dari naskah -- belum ada di form Karakter'}</div>
-        <div class="t2p-chardock-item-editbar" style="display:none;">
-          <button type="button" class="t2p-chardock-apply-btn"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg> Terapkan</button>
-          <button type="button" class="t2p-chardock-cancel-btn">Batal</button>
-        </div>
-        <p class="t2p-chardock-item-hint">Perubahan dipakai saat kamu generate ulang atau tambah segmen -- TIDAK mengubah take yang sudah jadi sekarang.</p>
-      </div>`;
-    const textarea = item.querySelector('textarea');
-    const editbar = item.querySelector('.t2p-chardock-item-editbar');
-    const applyBtn = item.querySelector('.t2p-chardock-apply-btn');
-    const cancelBtn = item.querySelector('.t2p-chardock-cancel-btn');
-    const original = c.desc;
-    textarea.addEventListener('input', () => {
-      editbar.style.display = (textarea.value !== (t2pDockExtraDesc[c.key] || original)) ? 'flex' : 'none';
-    });
-    applyBtn.addEventListener('click', () => {
-      t2pDockExtraDesc[c.key] = textarea.value;
-      editbar.style.display = 'none';
-      showToast('Deskripsi tersimpan -- dipakai saat generate ulang / tambah segmen berikutnya.');
-    });
-    cancelBtn.addEventListener('click', () => {
-      textarea.value = t2pDockExtraDesc[c.key] || original;
-      editbar.style.display = 'none';
-    });
-    listEl.appendChild(item);
-  });
-}
-
-/* ---------- Judul/Hashtag/Deskripsi (SEO) -- dibuat OTOMATIS lewat
-   panggilan Gemini terpisah, jalan tepat setelah Generate Prompt
-   utama sukses (lihat pemanggilannya di listener #t2pGenerateBtn).
-   Gagal generate SEO TIDAK boleh mengganggu hasil take yang sudah
-   jadi -- makanya dibungkus try/catch sendiri & ditampilkan sbg
-   boks terpisah di bagian bawah panel dock "Karakter". ---------- */
-function t2pBuildSeoPrompt(state) {
-  const charNames = state.characters.map((c) => c.name.trim()).filter(Boolean).join(', ');
-  return `Kamu adalah ahli SEO & copywriting media sosial (YouTube/TikTok/Instagram Reels).
-Berdasarkan naskah/cerita drama pendek berikut, buatkan metadata siap-pakai utk upload videonya.
-
-NASKAH:
-"""${state.story || '(tidak ada naskah, pakai nama karakter sbg konteks)'}"""
-${charNames ? `Karakter: ${charNames}` : ''}
-
-Balas HANYA dalam format JSON valid (tanpa markdown/backtick), dgn field:
-- "title": SATU judul video paling SEO-friendly & clickable, bahasa Indonesia, maksimal 60 karakter, tanpa tanda kutip di dalamnya.
-- "hashtags": array 8-12 hashtag relevan (setiap item sudah diawali "#", tanpa spasi di dalam satu hashtag, campuran hashtag niche & broad).
-- "description": deskripsi caption 2-4 kalimat yang mengundang orang nonton sampai habis, bahasa Indonesia, natural (bukan daftar kata kunci).`;
-}
-
-async function t2pGenerateSeo(state) {
-  const box = document.getElementById('t2pSeoBox');
-  if (box) {
-    box.style.display = '';
-    box.querySelectorAll('.t2p-seo-value-row p').forEach((p) => { p.textContent = 'Menyusun...'; });
-  }
-  try {
-    const rawText = await t2pCallGemini(t2pBuildSeoPrompt(state), T2P_SEO_SCHEMA);
-    const cleaned = rawText.trim().replace(/^```json/i, '').replace(/^```/, '').replace(/```$/, '').trim();
-    let parsed;
-    try { parsed = JSON.parse(cleaned); }
-    catch (e) {
-      const match = cleaned.match(/\{[\s\S]*\}/);
-      if (match) parsed = JSON.parse(match[0]);
-      else throw new Error('parse-fail');
-    }
-    if (!parsed || typeof parsed.title !== 'string') throw new Error('parse-fail');
-    t2pSeoData = {
-      title: parsed.title.trim(),
-      hashtags: Array.isArray(parsed.hashtags) ? parsed.hashtags.map((h) => String(h).trim()).filter(Boolean) : [],
-      description: String(parsed.description || '').trim(),
-    };
-  } catch (e) {
-    t2pSeoData = null;
-    if (box) box.style.display = 'none';
-    return;
-  }
-  t2pRenderSeoBox();
-}
-
-function t2pRenderSeoBox() {
-  const box = document.getElementById('t2pSeoBox');
-  if (!box) return;
-  if (!t2pSeoData) { box.style.display = 'none'; return; }
-  box.style.display = '';
-  const titleEl = document.getElementById('t2pSeoTitle');
-  const hashtagsEl = document.getElementById('t2pSeoHashtags');
-  const descEl = document.getElementById('t2pSeoDesc');
-  if (titleEl) titleEl.textContent = t2pSeoData.title;
-  if (hashtagsEl) hashtagsEl.textContent = t2pSeoData.hashtags.join(' ');
-  if (descEl) descEl.textContent = t2pSeoData.description;
-}
-
-document.getElementById('t2pSeoBox')?.addEventListener('click', (e) => {
-  const btn = e.target.closest('.t2p-seo-copy-btn');
-  if (!btn || !t2pSeoData) return;
-  const target = btn.dataset.target;
-  const text = target === 'hashtags' ? t2pSeoData.hashtags.join(' ') : (t2pSeoData[target] || '');
-  if (!text) return;
-  navigator.clipboard.writeText(text).then(() => {
-    btn.classList.add('copied');
-    showToast(target === 'title' ? 'Judul disalin.' : target === 'hashtags' ? 'Hashtag disalin.' : 'Deskripsi disalin.');
-    setTimeout(() => btn.classList.remove('copied'), 400);
-  }).catch(() => showToast('Gagal menyalin, coba lagi.', 'err'));
-});
-
-// FIX responsivitas: tab & panel dock ini "position:fixed" supaya
-// nempel di layar, tapi markupnya semula ada DI DALAM #t2pOverlay --
-// dan #t2pOverlay punya CSS transform (.lap-filter-overlay, dipakai
-// utk animasi buka/tutup halaman). Elemen manapun yang diberi
-// transform otomatis jadi containing-block baru buat semua turunan
-// position:fixed di dalamnya, jadi tab & panel ini sebenarnya
-// "fixed" relatif ke kotak #t2pOverlay, bukan ke viewport asli --
-// makanya posisi & ukurannya bisa meleset/tidak konsisten di
-// berbagai ukuran layar. Solusinya: pindahkan ketiga elemen ini jadi
-// anak langsung <body> sekali saat load, supaya position:fixed-nya
-// benar-benar relatif ke layar seperti seharusnya.
-(function t2pRelocateCharDockToBody() {
-  ['t2pCharDockTab', 't2pCharDockScrim', 't2pCharDockPanel'].forEach((id) => {
-    const el = document.getElementById(id);
-    if (el && el.parentElement !== document.body) document.body.appendChild(el);
-  });
-})();
-
-function t2pOpenCharDock() {
-  document.getElementById('t2pCharDockPanel')?.classList.add('show');
-  document.getElementById('t2pCharDockScrim')?.classList.add('show');
-}
-function t2pCloseCharDock() {
-  document.getElementById('t2pCharDockPanel')?.classList.remove('show');
-  document.getElementById('t2pCharDockScrim')?.classList.remove('show');
-}
-document.getElementById('t2pCharDockTab')?.addEventListener('click', t2pOpenCharDock);
-document.getElementById('t2pCharDockCloseBtn')?.addEventListener('click', t2pCloseCharDock);
-document.getElementById('t2pCharDockScrim')?.addEventListener('click', t2pCloseCharDock);
-
-function t2pSetGenerating(on) {
-  const btn = document.getElementById('t2pGenerateBtn');
-  const label = document.getElementById('t2pGenerateBtnLabel');
-  if (!btn) return;
-  btn.disabled = on;
-  btn.classList.toggle('loading', on);
-  if (label) label.textContent = on ? 'Menyusun prompt...' : 'Generate Prompt';
-}
-
-document.getElementById('t2pGenerateBtn')?.addEventListener('click', async () => {
-  t2pSaveState();
-  const state = t2pLoadState();
-  const hasCharName = state.characters.some((c) => c.name.trim());
-  if (!state.story.trim() && !hasCharName) {
-    showToast('Isi naskah/cerita atau minimal 1 nama karakter dulu.', 'err');
-    return;
-  }
-  const keysData = t2pLoadKeys();
-  if (!keysData.keys.length) {
-    showToast('Tambahkan API key Gemini dulu lewat tombol gir di pojok kanan atas.', 'err');
-    openModal(document.getElementById('t2pApiModalOverlay'));
-    t2pRenderKeyList();
-    return;
-  }
-  t2pSetGenerating(true);
-  try {
-    const masterPrompt = t2pBuildMasterPrompt(state);
-    const rawText = await t2pCallGemini(masterPrompt, T2P_ARRAY_SCHEMA);
-    let cleaned = rawText.trim().replace(/^```json/i, '').replace(/^```/, '').replace(/```$/, '').trim();
-    let parsed;
-    try { parsed = JSON.parse(cleaned); }
-    catch (e) {
-      // Jaga-jaga kalau model tetap menyisipkan teks di luar JSON --
-      // ambil bagian array [...] pertama yg ketemu.
-      const match = cleaned.match(/\[[\s\S]*\]/);
-      if (match) parsed = JSON.parse(match[0]);
-      else throw new Error('Gagal membaca hasil dari Gemini (bukan JSON valid).');
-    }
-    if (!Array.isArray(parsed) || !parsed.length) throw new Error('Hasil dari Gemini kosong/tidak sesuai format.');
-    parsed.forEach((t) => {
-      t.dialogWanted = !!state.subtitle;
-      t.burnSubtitleWanted = !!state.burnSubtitle;
-      // Simpan salinan asli hasil AI (sebelum sempat diedit user) --
-      // dipakai tombol "reset ke hasil AI" per kartu take.
-      t._t2pOriginal = { action: t.action || '', camera_movement: t.camera_movement || '', prompt: t.prompt || '', subtitle: t.subtitle || '', end_frame_description: t.end_frame_description || '', location: t.location || '' };
-    });
-    t2pAllTakes = parsed;
-    t2pVisibleCount = Math.min(3, t2pAllTakes.length);
-    t2pDockExtraDesc = {};
-    t2pSeoData = null;
-    t2pRenderTakes();
-    t2pRenderCharDock();
-    showToast(`${t2pAllTakes.length} take berhasil dibuat.`);
-    t2pGenerateSeo(state);
-  } catch (e) {
-    if (e && e.message === 'NOKEY') {
-      showToast('Tambahkan API key Gemini dulu.', 'err');
-      openModal(document.getElementById('t2pApiModalOverlay'));
-    } else {
-      showToast('Gagal generate: ' + (e?.message || 'terjadi kesalahan.'), 'err');
-    }
-  } finally {
-    t2pSetGenerating(false);
-  }
-});
-
-/* ---------- Tombol "+ Segmen Berikutnya" -- generate SATU take
-   tambahan sbg sambungan take terakhir, tanpa mengubah/menghapus
-   take-take yang sudah ada (lihat catatan di t2pBuildContinuationPrompt
-   di atas). Take baru langsung ditambahkan ke t2pAllTakes & otomatis
-   ikut ditampilkan (t2pVisibleCount ikut nambah 1). ---------- */
-document.getElementById('t2pAddSegmentBtn')?.addEventListener('click', async () => {
-  if (!t2pAllTakes.length) return;
-  t2pSaveState();
-  const state = t2pLoadState();
-  const keysData = t2pLoadKeys();
-  if (!keysData.keys.length) {
-    showToast('Tambahkan API key Gemini dulu lewat tombol gir di pojok kanan atas.', 'err');
-    openModal(document.getElementById('t2pApiModalOverlay'));
-    t2pRenderKeyList();
-    return;
-  }
-  const addBtn = document.getElementById('t2pAddSegmentBtn');
-  const lastTake = t2pAllTakes[t2pAllTakes.length - 1];
-  if (addBtn) { addBtn.disabled = true; addBtn.textContent = 'Menyusun segmen...'; }
-  try {
-    const contPrompt = t2pBuildContinuationPrompt(state, lastTake);
-    const rawText = await t2pCallGemini(contPrompt, T2P_OBJECT_SCHEMA);
-    let cleaned = rawText.trim().replace(/^```json/i, '').replace(/^```/, '').replace(/```$/, '').trim();
-    let parsed;
-    try { parsed = JSON.parse(cleaned); }
-    catch (e) {
-      // Jaga-jaga kalau model tetap menyisipkan teks di luar JSON --
-      // ambil objek {...} pertama yg ketemu.
-      const match = cleaned.match(/\{[\s\S]*\}/);
-      if (match) parsed = JSON.parse(match[0]);
-      else throw new Error('Gagal membaca hasil dari Gemini (bukan JSON valid).');
-    }
-    if (Array.isArray(parsed)) parsed = parsed[0]; // jaga-jaga kalau model tetap balas array
-    if (!parsed || typeof parsed !== 'object') throw new Error('Hasil dari Gemini kosong/tidak sesuai format.');
-    parsed.take = lastTake.take + 1; // paksa nomor urut lanjut, jangan percaya nomor dari model
-    parsed.dialogWanted = !!state.subtitle;
-    parsed.burnSubtitleWanted = !!state.burnSubtitle;
-    // Simpan salinan asli hasil AI (sebelum sempat diedit user) --
-    // dipakai tombol "reset ke hasil AI" per kartu take.
-    parsed._t2pOriginal = { action: parsed.action || '', camera_movement: parsed.camera_movement || '', prompt: parsed.prompt || '', subtitle: parsed.subtitle || '', end_frame_description: parsed.end_frame_description || '', location: parsed.location || '' };
-    t2pAllTakes.push(parsed);
-    t2pVisibleCount = t2pAllTakes.length;
-    t2pRenderTakes();
-    t2pRenderCharDock();
-    showToast(`Segmen/take ${parsed.take} berhasil ditambahkan.`);
-  } catch (e) {
-    if (e && e.message === 'NOKEY') {
-      showToast('Tambahkan API key Gemini dulu.', 'err');
-      openModal(document.getElementById('t2pApiModalOverlay'));
-    } else {
-      showToast('Gagal menambah segmen: ' + (e?.message || 'terjadi kesalahan.'), 'err');
-    }
-  } finally {
-    if (addBtn) { addBtn.disabled = false; addBtn.textContent = '+ Segmen Berikutnya'; }
-  }
 });
 
 /* ==========================================================
@@ -13527,6 +12124,350 @@ document.getElementById('calcKeypad')?.addEventListener('click', (e) => {
 // Reset kalkulator tiap kali halamannya ditutup, supaya user berikutnya
 // selalu mulai dari layar bersih ("0") -- bukan nyisa hitungan terakhir.
 document.getElementById('kalkulatorBackBtn')?.addEventListener('click', calcClearAll);
+
+/* ==========================================================
+   SILENT HEROICS (#silentHeroicsOverlay) -- pintasan baru di kartu
+   Fast Menu Beranda (#fmHomeSilentHeroicsBtn) & grid "Menu Utama"
+   halaman Fast Menu (#fmGridSilentHeroicsBtn). Buka/tutup pola SAMA
+   PERSIS dgn openKalkulatorOverlay/openVideoDlOverlay di atas.
+
+   Generator ide + hook + prompt image-to-video utk tema "Silent
+   Heroics" (pahlawan tanpa nama yg menyelamatkan orang lain lalu
+   pergi tanpa mengharap pujian), pakai Google Gemini API langsung dari
+   browser user (tanpa Worker/backend sendiri, krn Gemini sudah
+   mendukung CORS). API key TIDAK ditanam bawaan aplikasi (beda dgn
+   Unduh Video) -- user WAJIB isi key Gemini miliknya sendiri (gratis
+   dari Google AI Studio) lewat modal Pengaturan (#silentHeroicsSettingsModalOverlay,
+   tombol gir di header), boleh 1 key atau upload file berisi banyak
+   key yg bergilir otomatis kalau salah satu kena limit harian. Semua
+   tersimpan di localStorage lewat cloudStorage, PERSIS pola
+   #videoDlSettingsModalOverlay di atas. ---- */
+const SH_SETTINGS_KEY = 'zayapro_silentheroics_settings';
+function loadShSettings() {
+  try {
+    const raw = JSON.parse(cloudStorage.getItem(SH_SETTINGS_KEY) || '{}');
+    return { apiKey: raw.apiKey || '', keyPool: Array.isArray(raw.keyPool) ? raw.keyPool : [] };
+  } catch (e) { return { apiKey: '', keyPool: [] }; }
+}
+function persistShSettings(data) {
+  try { cloudStorage.setItem(SH_SETTINGS_KEY, JSON.stringify(data)); }
+  catch (e) { /* biarkan gagal senyap */ }
+}
+const shState = { lang: 'id', count: 3, model: 'gemini-2.5-flash', keyIndex: 0, genCount: 0 };
+let shSettings = loadShSettings();
+
+function openSilentHeroicsOverlay() {
+  document.getElementById('silentHeroicsOverlay')?.classList.add('open');
+  lockBodyScroll();
+}
+function closeSilentHeroicsOverlay() {
+  document.getElementById('silentHeroicsOverlay')?.classList.remove('open');
+  unlockBodyScroll();
+}
+document.getElementById('shBackBtn')?.addEventListener('click', closeSilentHeroicsOverlay);
+document.getElementById('fmHomeSilentHeroicsBtn')?.addEventListener('click', openSilentHeroicsOverlay);
+document.getElementById('fmGridSilentHeroicsBtn')?.addEventListener('click', () => {
+  closeFastMenuOverlay();
+  openSilentHeroicsOverlay();
+});
+
+/* ---- Modal Pengaturan API (#silentHeroicsSettingsModalOverlay) -- pola
+   SAMA PERSIS dgn modal Pengaturan Unduh Video, ditambah upload file
+   key pool (banyak key sekaligus, satu key per baris). ---- */
+const shSettingsModal = document.getElementById('silentHeroicsSettingsModalOverlay');
+const shSettingsForm = document.getElementById('shSettingsForm');
+const shApiKeyInput = document.getElementById('shApiKeyInput');
+const shApiKeyToggle = document.getElementById('shApiKeyToggle');
+bindPasswordEyeToggle(shApiKeyInput, shApiKeyToggle);
+
+function shRenderKeyPoolStatus() {
+  const el = document.getElementById('shKeyPoolStatus');
+  if (!el) return;
+  if (shSettings.keyPool.length) {
+    el.classList.add('show');
+    el.innerHTML = `<span>🔑 ${shSettings.keyPool.length} API key dimuat dari file — bergilir otomatis</span><button type="button" id="shClearKeyPoolBtn">Hapus</button>`;
+    document.getElementById('shClearKeyPoolBtn')?.addEventListener('click', () => {
+      shSettings = { ...shSettings, keyPool: [] };
+      shState.keyIndex = 0;
+      persistShSettings(shSettings);
+      const fileInput = document.getElementById('shKeyFileInput');
+      if (fileInput) fileInput.value = '';
+      shRenderKeyPoolStatus();
+    });
+  } else {
+    el.classList.remove('show');
+    el.innerHTML = '';
+  }
+}
+
+function openSilentHeroicsSettingsModal() {
+  shSettings = loadShSettings();
+  if (shApiKeyInput) shApiKeyInput.value = shSettings.apiKey || '';
+  shRenderKeyPoolStatus();
+  openModal(shSettingsModal);
+}
+document.getElementById('shSettingsBtn')?.addEventListener('click', openSilentHeroicsSettingsModal);
+document.getElementById('shSettingsCloseBtn')?.addEventListener('click', () => closeModal(shSettingsModal));
+shSettingsModal?.addEventListener('click', (e) => { if (e.target === shSettingsModal) closeModal(shSettingsModal); });
+shSettingsForm?.addEventListener('submit', (e) => {
+  e.preventDefault();
+  shSettings = { ...shSettings, apiKey: (shApiKeyInput.value || '').trim() };
+  persistShSettings(shSettings);
+  closeModal(shSettingsModal);
+  showToast('Pengaturan Silent Heroics disimpan.');
+});
+document.getElementById('shSettingsClearBtn')?.addEventListener('click', () => {
+  if (shApiKeyInput) shApiKeyInput.value = '';
+  shSettings = { apiKey: '', keyPool: [] };
+  shState.keyIndex = 0;
+  persistShSettings(shSettings);
+  shRenderKeyPoolStatus();
+  showToast('Key Silent Heroics dihapus.');
+});
+document.getElementById('shUploadKeyBtn')?.addEventListener('click', () => {
+  document.getElementById('shKeyFileInput')?.click();
+});
+document.getElementById('shKeyFileInput')?.addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  try {
+    const text = await file.text();
+    const keys = text.split(/[\r\n,;\t]+/).map((s) => s.trim()).filter((s) => s && !s.startsWith('#'));
+    const unique = [...new Set(keys)];
+    if (!unique.length) {
+      showToast('File tidak berisi API key yang bisa dibaca.', 'err');
+      return;
+    }
+    shSettings = { ...shSettings, keyPool: unique };
+    shState.keyIndex = 0;
+    persistShSettings(shSettings);
+    shRenderKeyPoolStatus();
+    showToast(`${unique.length} API key dimuat dari file.`);
+  } catch (err) {
+    showToast('Gagal membaca file. Pastikan formatnya .txt atau .csv biasa.', 'err');
+  }
+});
+
+/* ---- Segmented control (jumlah ide & bahasa) + toggle + slider durasi ---- */
+function shWireSeg(id, onPick) {
+  const seg = document.getElementById(id);
+  if (!seg) return;
+  seg.querySelectorAll('button').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      seg.querySelectorAll('button').forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+      onPick(btn.dataset.val);
+    });
+  });
+}
+shWireSeg('shLangSeg', (v) => { shState.lang = v; });
+shWireSeg('shCountSeg', (v) => { shState.count = parseInt(v, 10); });
+
+const shForceEnToggle = document.getElementById('shForceEnToggle');
+shForceEnToggle?.addEventListener('click', () => {
+  const willActive = !shForceEnToggle.classList.contains('active');
+  shForceEnToggle.classList.toggle('active', willActive);
+  shForceEnToggle.setAttribute('aria-checked', String(willActive));
+});
+
+const shDurationInput = document.getElementById('shDurationInput');
+const shDurVal = document.getElementById('shDurVal');
+shDurationInput?.addEventListener('input', () => { if (shDurVal) shDurVal.textContent = shDurationInput.value; });
+
+function shShowStatus(type, msg) {
+  const el = document.getElementById('shStatusBanner');
+  if (!el) return;
+  el.className = 'shp-status show ' + type;
+  el.textContent = msg;
+}
+function shHideStatus() {
+  document.getElementById('shStatusBanner')?.classList.remove('show');
+}
+
+function shGetActiveKeys() {
+  if (shSettings.keyPool.length) return shSettings.keyPool;
+  const single = (shSettings.apiKey || '').trim();
+  return single ? [single] : [];
+}
+
+/* ---- Susun prompt utk Gemini -- definisi tema & instruksi format
+   dipertahankan sama persis dgn prototipe awal, cuma sumber input
+   (skenario/durasi/jumlah/bahasa/toggle) diarahkan ke elemen halaman
+   penuh di app ini. ---- */
+function shBuildPrompt() {
+  const duration = shDurationInput?.value || '15';
+  const scenario = (document.getElementById('shScenarioInput')?.value || '').trim();
+  const langLabel = shState.lang === 'id' ? 'Bahasa Indonesia' : 'English';
+  const forceEn = !!shForceEnToggle?.classList.contains('active');
+
+  return `Kamu adalah creative strategist untuk konten video pendek Facebook bertema "Silent Heroics".
+
+DEFINISI TEMA (wajib dipatuhi persis):
+Silent Heroics adalah cerita tentang seseorang biasa (bukan petugas resmi, bukan pahlawan berseragam) yang secara TIDAK SENGAJA berada di lokasi yang tepat dan menyelamatkan orang lain dari kecelakaan fatal atau bahaya besar — lalu pergi begitu saja tanpa mengharapkan pujian, sering kali baru diketahui identitasnya lewat rekaman CCTV atau saksi mata setelah kejadian. Nuansa cerita: senyap, tak terduga, mengharukan, twist emosional di akhir (baru terungkap siapa penolongnya / apa yang nyaris terjadi).
+
+TUGAS:
+Buat ${shState.count} ide konten video berbeda untuk tema ini${scenario ? `, dengan elemen wajib berikut yang harus dimasukkan ke SEMUA ide: "${scenario}"` : ''}. Setiap ide harus punya premis kecelakaan/bahaya yang BERBEDA (misal: nyaris tertabrak kereta, nyaris tenggelam, nyaris kebakaran, benda jatuh, dsb) — jangan mengulang premis yang sama antar ide.
+
+Untuk setiap ide, berikan:
+1. "concept" — ringkasan cerita 2-3 kalimat dalam ${langLabel}, jelas menunjukkan siapa penyelamat, siapa korban, bahaya apa, dan twist di akhir.
+2. "hook" — satu kalimat pembuka (untuk 3 detik pertama video) dalam ${langLabel} yang dirancang memaksimalkan retention & viral di algoritma Facebook, gunakan gaya curiosity-gap atau emotional-pull tanpa clickbait bohong.
+3. "video_prompt" — prompt detail untuk AI image-to-video (durasi target ${duration} detik), ${forceEn ? 'WAJIB ditulis dalam BAHASA INGGRIS' : `ditulis dalam ${langLabel}`}. Prompt harus sinematik dan mencakup: deskripsi adegan & setting, gerakan kamera (cth: slow push-in, handheld tracking, static wide), pencahayaan & mood, ekspresi/emosi karakter, dan breakdown beat waktu yang membagi ${duration} detik menjadi 3-5 segmen berurutan (format "0-3s: ...", "3-8s: ...", dst) supaya bisa langsung dipakai generate dari gambar diam ke video. Jangan sertakan dialog/teks di layar — tema ini silent, andalkan visual & musik.
+4. "title" — judul video yang sangat berpotensi viral, ${langLabel}, maksimal 90 karakter, gunakan gaya storytelling/curiosity tanpa terasa clickbait murahan.
+5. "hashtags" — array 10-14 hashtag campuran: hashtag besar/umum (cth #fyp, #viral) dan hashtag niche relevan tema silent heroics, tanpa spasi, dalam format #tag.
+
+Balas HANYA dalam format JSON sesuai schema yang diberikan, tanpa teks tambahan apa pun.`;
+}
+
+const SH_SCHEMA = {
+  type: 'object',
+  properties: {
+    ideas: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          concept: { type: 'string' },
+          hook: { type: 'string' },
+          video_prompt: { type: 'string' },
+          title: { type: 'string' },
+          hashtags: { type: 'array', items: { type: 'string' } },
+        },
+        required: ['concept', 'hook', 'video_prompt', 'title', 'hashtags'],
+      },
+    },
+  },
+  required: ['ideas'],
+};
+
+async function shCallGemini(apiKey, promptText) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${shState.model}:generateContent?key=${encodeURIComponent(apiKey)}`;
+  const body = {
+    contents: [{ role: 'user', parts: [{ text: promptText }] }],
+    generationConfig: { temperature: 1.05, responseMimeType: 'application/json', responseSchema: SH_SCHEMA },
+  };
+  const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  if (!res.ok) {
+    let detail = '';
+    try { const j = await res.json(); detail = (j && j.error && j.error.message) || ''; } catch (e) { /* abaikan */ }
+    throw new Error(`Gemini API error (${res.status}). ${detail}`);
+  }
+  const data = await res.json();
+  const text = (data && data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts || [])
+    .map((p) => p.text || '').join('');
+  if (!text) throw new Error('Respons kosong dari Gemini. Coba lagi.');
+  let parsed;
+  try { parsed = JSON.parse(text); }
+  catch (e) { throw new Error('Gagal parsing hasil JSON dari model.'); }
+  if (!parsed.ideas || !Array.isArray(parsed.ideas)) throw new Error('Format hasil tidak sesuai schema.');
+  return parsed.ideas;
+}
+
+async function shCallGeminiWithRotation(keys, promptText) {
+  let lastErr;
+  const startIdx = shState.keyIndex % keys.length;
+  for (let i = 0; i < keys.length; i++) {
+    const idx = (startIdx + i) % keys.length;
+    const key = keys[idx];
+    if (keys.length > 1) shShowStatus('loading', `Menghubungi Gemini dengan key ${idx + 1}/${keys.length}...`);
+    try {
+      const ideas = await shCallGemini(key, promptText);
+      shState.keyIndex = (idx + 1) % keys.length;
+      return ideas;
+    } catch (err) {
+      lastErr = err;
+      const msg = (err.message || '').toLowerCase();
+      const isQuotaOrAuthIssue = msg.includes('429') || msg.includes('quota') || msg.includes('resource_exhausted')
+        || msg.includes('403') || msg.includes('permission') || msg.includes('api key not valid') || msg.includes('400');
+      if (keys.length > 1 && isQuotaOrAuthIssue) {
+        shShowStatus('loading', `Key ${idx + 1}/${keys.length} bermasalah (limit/invalid), mencoba key berikutnya...`);
+        continue;
+      }
+      throw err;
+    }
+  }
+  throw lastErr || new Error('Semua API key di pool gagal digunakan.');
+}
+
+function shCopyText(txt, btnEl) {
+  if (!(navigator.clipboard && navigator.clipboard.writeText)) return;
+  navigator.clipboard.writeText(txt).then(() => showToast('Disalin ke clipboard')).catch(() => showToast('Gagal menyalin', 'err'));
+}
+
+function shRenderIdeas(ideas) {
+  const results = document.getElementById('shResults');
+  const empty = document.getElementById('shEmptyState');
+  if (!results) return;
+  if (empty) empty.remove();
+
+  ideas.forEach((idea) => {
+    shState.genCount++;
+    const genCountEl = document.getElementById('shGenCount');
+    if (genCountEl) genCountEl.textContent = shState.genCount;
+
+    const card = document.createElement('div');
+    card.className = 'shp-result-card';
+    const hashtagsHtml = (idea.hashtags || []).map((h) => `<span>${escapeHtml(h)}</span>`).join('');
+    const allText = `JUDUL: ${idea.title}\n\nHOOK: ${idea.hook}\n\nKONSEP: ${idea.concept}\n\nVIDEO PROMPT:\n${idea.video_prompt}\n\nHASHTAG: ${(idea.hashtags || []).join(' ')}`;
+
+    card.innerHTML = `
+      <div class="shp-result-head">
+        <div>
+          <div class="shp-result-idx">Shot ${String(shState.genCount).padStart(2, '0')}</div>
+          <div class="shp-result-title">${escapeHtml(idea.title || '')}</div>
+        </div>
+        <button type="button" class="shp-copy-all">Salin semua</button>
+      </div>
+      <div class="shp-block">
+        <div class="shp-block-label"><span>Hook</span><span class="shp-copy" data-copy="hook">salin</span></div>
+        <div class="shp-block-body shp-hook">${escapeHtml(idea.hook || '')}</div>
+      </div>
+      <div class="shp-block">
+        <div class="shp-block-label"><span>Konsep</span></div>
+        <div class="shp-block-body">${escapeHtml(idea.concept || '')}</div>
+      </div>
+      <div class="shp-block">
+        <div class="shp-block-label"><span>Video prompt (image-to-video)</span><span class="shp-copy" data-copy="prompt">salin</span></div>
+        <div class="shp-block-body shp-prompt">${escapeHtml(idea.video_prompt || '')}</div>
+      </div>
+      <div class="shp-block">
+        <div class="shp-block-label"><span>Hashtag</span><span class="shp-copy" data-copy="tags">salin</span></div>
+        <div class="shp-hashtags">${hashtagsHtml}</div>
+      </div>
+    `;
+
+    card.querySelector('.shp-copy-all')?.addEventListener('click', (e) => shCopyText(allText, e.target));
+    card.querySelector('[data-copy="hook"]')?.addEventListener('click', () => shCopyText(idea.hook || ''));
+    card.querySelector('[data-copy="prompt"]')?.addEventListener('click', () => shCopyText(idea.video_prompt || ''));
+    card.querySelector('[data-copy="tags"]')?.addEventListener('click', () => shCopyText((idea.hashtags || []).join(' ')));
+
+    results.prepend(card);
+  });
+}
+
+document.getElementById('shGenerateBtn')?.addEventListener('click', async () => {
+  const keys = shGetActiveKeys();
+  const btn = document.getElementById('shGenerateBtn');
+  if (!keys.length) {
+    shShowStatus('error', 'Atur dulu API key Gemini kamu lewat ikon gir di pojok kanan atas.');
+    return;
+  }
+  btn.disabled = true;
+  const originalLabel = btn.textContent;
+  btn.textContent = 'Membuat ide...';
+  shShowStatus('loading', `Menghubungi Gemini untuk membuat ${shState.count} ide baru...`);
+
+  try {
+    const promptText = shBuildPrompt();
+    const ideas = await shCallGeminiWithRotation(keys, promptText);
+    shRenderIdeas(ideas);
+    shHideStatus();
+  } catch (err) {
+    shShowStatus('error', err.message || 'Terjadi kesalahan saat memanggil Gemini API.');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = originalLabel;
+  }
+});
 
 /* ==========================================================
    KURS MATA UANG (#kursOverlay) -- pintasan baru di kartu Fast Menu
